@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { toast } from 'sonner';
 import { useObjects, useLegalEntities } from '../../hooks';
@@ -23,14 +23,14 @@ interface FrontOfWorkRow {
 interface CreateTechnicalProposalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  tkp?: TechnicalProposalDetail;
 }
 
-export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: CreateTechnicalProposalDialogProps) {
+export function CreateTechnicalProposalDialog({ open, onOpenChange }: CreateTechnicalProposalDialogProps) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: '',
     date: new Date().toISOString().split('T')[0],
+    due_date: '',
     object: '',
     object_area: '',
     legal_entity: '',
@@ -39,9 +39,6 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
     work_duration: '',
     validity_days: '30',
     notes: '',
-    status: 'draft',
-    checked_by: '',
-    approved_by: '',
   });
   const [file, setFile] = useState<File | null>(null);
   const [selectedEstimateIds, setSelectedEstimateIds] = useState<number[]>([]);
@@ -50,11 +47,6 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
   const { data: objects } = useObjects();
   const { data: legalEntities } = useLegalEntities();
 
-  const { data: users } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => api.getUsers(),
-    staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
-  });
 
   const selectedObjectId = formData.object ? Number(formData.object) : undefined;
 
@@ -65,14 +57,16 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
-  const { data: frontOfWorkItems } = useQuery({
+  const { data: frontOfWorkItems, isLoading: isFrontLoading, isError: isFrontError } = useQuery({
     queryKey: ['front-of-work-items', 'active'],
     queryFn: () => api.getFrontOfWorkItems({ is_active: true }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
+    enabled: open,
+    retry: 1,
   });
 
   useEffect(() => {
-    if (frontOfWorkItems && frontOfWorkRows.length === 0 && !tkp) {
+    if (frontOfWorkItems && frontOfWorkRows.length === 0) {
       const rows: FrontOfWorkRow[] = frontOfWorkItems.map((item: FrontOfWorkItem) => ({
         front_item_id: item.id,
         name: item.name,
@@ -83,40 +77,11 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
       }));
       setFrontOfWorkRows(rows);
     }
-  }, [frontOfWorkItems, frontOfWorkRows.length, tkp]);
-
-  useEffect(() => {
-    if (tkp) {
-      setFormData({
-        name: tkp.name,
-        date: tkp.date,
-        object: tkp.object.toString(),
-        object_area: tkp.object_area?.toString() || '',
-        legal_entity: tkp.legal_entity.toString(),
-        outgoing_number: tkp.outgoing_number || '',
-        advance_required: tkp.advance_required || '',
-        work_duration: tkp.work_duration || '',
-        validity_days: tkp.validity_days.toString(),
-        notes: tkp.notes || '',
-        status: tkp.status,
-        checked_by: tkp.checked_by?.toString() || '',
-        approved_by: tkp.approved_by?.toString() || '',
-      });
-      if (tkp.estimates) {
-        setSelectedEstimateIds(
-          Array.isArray(tkp.estimates) ? tkp.estimates.map((e: number | { id: number }) => typeof e === 'number' ? e : e.id) : []
-        );
-      }
-    }
-  }, [tkp]);
+  }, [frontOfWorkItems, frontOfWorkRows.length]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      if (tkp) {
-        return api.updateTechnicalProposal(tkp.id, data);
-      } else {
-        return api.createTechnicalProposal(data);
-      }
+      return api.createTechnicalProposal(data);
     },
     onSuccess: async (result) => {
       if (selectedEstimateIds.length > 0 && result?.id) {
@@ -144,10 +109,7 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
       }
 
       queryClient.invalidateQueries({ queryKey: ['technical-proposals'] });
-      if (tkp) {
-        queryClient.invalidateQueries({ queryKey: ['technical-proposal', tkp.id.toString()] });
-      }
-      toast.success(tkp ? 'ТКП обновлено' : 'ТКП создано');
+      toast.success('ТКП создано');
       onOpenChange(false);
       resetForm();
     },
@@ -160,6 +122,7 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
     setFormData({
       name: '',
       date: new Date().toISOString().split('T')[0],
+      due_date: '',
       object: '',
       object_area: '',
       legal_entity: '',
@@ -168,9 +131,6 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
       work_duration: '',
       validity_days: '30',
       notes: '',
-      status: 'draft',
-      checked_by: '',
-      approved_by: '',
     });
     setFile(null);
     setSelectedEstimateIds([]);
@@ -226,6 +186,7 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
     const formDataToSend = new FormData();
     formDataToSend.append('name', formData.name);
     formDataToSend.append('date', formData.date);
+    if (formData.due_date) formDataToSend.append('due_date', formData.due_date);
     formDataToSend.append('object', formData.object);
     if (formData.object_area) formDataToSend.append('object_area', formData.object_area);
     formDataToSend.append('legal_entity', formData.legal_entity);
@@ -234,9 +195,7 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
     if (formData.work_duration) formDataToSend.append('work_duration', formData.work_duration);
     formDataToSend.append('validity_days', formData.validity_days);
     if (formData.notes) formDataToSend.append('notes', formData.notes);
-    formDataToSend.append('status', formData.status);
-    if (formData.checked_by) formDataToSend.append('checked_by', formData.checked_by);
-    if (formData.approved_by) formDataToSend.append('approved_by', formData.approved_by);
+    formDataToSend.append('status', 'draft');
 
     if (file) {
       formDataToSend.append('file', file);
@@ -247,14 +206,15 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{tkp ? 'Редактировать ТКП' : 'Создать ТКП'}</DialogTitle>
+      <DialogContent className="max-w-5xl w-[95vw] h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
+          <DialogTitle>Создать ТКП</DialogTitle>
+          <DialogDescription>Заполните данные для нового технико-коммерческого предложения</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Tabs defaultValue="main" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <Tabs defaultValue="main" className="w-full flex-1 flex flex-col min-h-0">
+            <TabsList className="grid w-full grid-cols-3 shrink-0">
               <TabsTrigger value="main">Основные поля</TabsTrigger>
               <TabsTrigger value="estimates">
                 Сметы {selectedEstimateIds.length > 0 && `(${selectedEstimateIds.length})`}
@@ -264,7 +224,7 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="main" className="space-y-4 mt-4">
+            <TabsContent value="main" className="space-y-4 mt-4 flex-1 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label htmlFor="name">Название *</Label>
@@ -285,6 +245,16 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="due_date">Дата выдачи (крайний срок)</Label>
+                  <Input
+                    id="due_date"
+                    type="date"
+                    value={formData.due_date}
+                    onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                   />
                 </div>
 
@@ -311,7 +281,7 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
                     required
                   >
                     <option value="">Выберите объект</option>
-                    {objects?.results?.map((obj) => (
+                    {objects?.map((obj) => (
                       <option key={obj.id} value={obj.id}>{obj.name}</option>
                     ))}
                   </select>
@@ -339,7 +309,7 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
                     required
                   >
                     <option value="">Выберите компанию</option>
-                    {legalEntities?.results?.map((entity) => (
+                    {legalEntities?.map((entity) => (
                       <option key={entity.id} value={entity.id}>{entity.name}</option>
                     ))}
                   </select>
@@ -392,23 +362,6 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
                 </div>
 
                 <div>
-                  <Label htmlFor="status">Статус *</Label>
-                  <select
-                    id="status"
-                    className="w-full px-3 py-2 border rounded-md"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    required
-                  >
-                    <option value="draft">Черновик</option>
-                    <option value="in_progress">В работе</option>
-                    <option value="checking">На проверке</option>
-                    <option value="approved">Утверждено</option>
-                    <option value="sent">Отправлено</option>
-                  </select>
-                </div>
-
-                <div>
                   <Label htmlFor="file">Файл ТКП (PDF)</Label>
                   <Input
                     id="file"
@@ -426,39 +379,10 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="checked_by">Кто проверил</Label>
-                  <select
-                    id="checked_by"
-                    className="w-full px-3 py-2 border rounded-md"
-                    value={formData.checked_by}
-                    onChange={(e) => setFormData({ ...formData, checked_by: e.target.value })}
-                  >
-                    <option value="">Не выбрано</option>
-                    {users?.results?.map((user) => (
-                      <option key={user.id} value={user.id}>{user.username}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <Label htmlFor="approved_by">Кто утвердил</Label>
-                  <select
-                    id="approved_by"
-                    className="w-full px-3 py-2 border rounded-md"
-                    value={formData.approved_by}
-                    onChange={(e) => setFormData({ ...formData, approved_by: e.target.value })}
-                  >
-                    <option value="">Не выбрано</option>
-                    {users?.results?.map((user) => (
-                      <option key={user.id} value={user.id}>{user.username}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="estimates" className="mt-4">
+            <TabsContent value="estimates" className="mt-4 flex-1 overflow-y-auto">
               {!formData.object ? (
                 <div className="text-center text-muted-foreground py-8">
                   Сначала выберите объект на вкладке «Основные поля»
@@ -518,8 +442,20 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
               )}
             </TabsContent>
 
-            <TabsContent value="front-of-work" className="mt-4">
-              {frontOfWorkRows.length === 0 ? (
+            <TabsContent value="front-of-work" className="mt-4 flex-1 overflow-y-auto">
+              {isFrontLoading ? (
+                <div className="text-center text-muted-foreground py-8">
+                  Загрузка справочника фронта работ...
+                </div>
+              ) : isFrontError ? (
+                <div className="text-center text-red-500 py-8">
+                  Не удалось загрузить справочник фронта работ. Попробуйте позже.
+                </div>
+              ) : frontOfWorkRows.length === 0 && frontOfWorkItems && frontOfWorkItems.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  Справочник фронта работ пуст. Добавьте элементы в настройках.
+                </div>
+              ) : frontOfWorkRows.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   Загрузка справочника фронта работ...
                 </div>
@@ -580,12 +516,12 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange, tkp }: Creat
             </TabsContent>
           </Tabs>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Отмена
             </Button>
             <Button type="submit" disabled={saveMutation.isPending}>
-              {tkp ? 'Сохранить' : 'Создать'}
+              Создать
             </Button>
           </DialogFooter>
         </form>

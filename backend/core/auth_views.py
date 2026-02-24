@@ -1,5 +1,6 @@
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from personnel.models import resolve_permission_level
 
 
 class ERPTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -15,29 +16,31 @@ class ERPTokenObtainPairSerializer(TokenObtainPairSerializer):
         employee = getattr(user, 'employee', None)
         erp_permissions = (employee.erp_permissions if employee else None) or {}
 
+        def _level(key):
+            return resolve_permission_level(erp_permissions, key)
+
         roles = []
         if user.is_superuser or user.is_staff:
             roles.append('admin')
 
-        if erp_permissions.get('supply') == 'edit':
+        if _level('supply') == 'edit':
             roles.append('supply_operator')
 
-        if erp_permissions.get('warehouse') == 'edit':
+        if _level('supply.warehouse') == 'edit':
             roles.append('warehouse')
 
-        if erp_permissions.get('object_tasks') in ('read', 'edit'):
+        if _level('objects') in ('read', 'edit'):
             roles.append('object_tasks')
 
-        if erp_permissions.get('kanban_admin') == 'edit':
+        if _level('kanban_admin') == 'edit':
             roles.append('kanban_admin')
 
-        if erp_permissions.get('supply_approve') == 'edit':
+        if _level('supply_approve') == 'edit':
             roles.append('director')
 
         token['roles'] = roles
         token['erp_permissions'] = erp_permissions
 
-        # Опционально: удобные поля для аудита/отладки
         token['username'] = user.username
         token['is_staff'] = bool(user.is_staff)
 

@@ -14,6 +14,10 @@ import { Textarea } from '../ui/textarea';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '../ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount } from '../../lib/utils';
 import { CONSTANTS } from '../../constants';
@@ -26,6 +30,7 @@ export function IncomeRecordsPage() {
   const [pageSize] = useState(25);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     account: '',
@@ -141,9 +146,7 @@ export function IncomeRecordsPage() {
   };
 
   const handleConfirmDelete = (id: number) => {
-    if (window.confirm('Удалить запись дохода?')) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteTarget(id);
   };
 
   return (
@@ -369,6 +372,29 @@ export function IncomeRecordsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить запись дохода?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Запись будет удалена безвозвратно.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteTarget !== null) deleteMutation.mutate(deleteTarget);
+                setDeleteTarget(null);
+              }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

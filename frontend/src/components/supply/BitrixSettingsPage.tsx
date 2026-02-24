@@ -15,6 +15,10 @@ import { Badge } from '../ui/badge';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '../ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate } from '../../lib/utils';
 import { CONSTANTS } from '../../constants';
@@ -24,6 +28,7 @@ export function BitrixSettingsPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     portal_url: '',
@@ -126,9 +131,7 @@ export function BitrixSettingsPage() {
   };
 
   const handleConfirmDelete = (id: number, name: string) => {
-    if (window.confirm(`Удалить интеграцию "${name}"?`)) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteTarget({ id, name });
   };
 
   const handleCopyWebhookUrl = () => {
@@ -355,6 +358,29 @@ export function BitrixSettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить интеграцию?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Интеграция «{deleteTarget?.name}» будет удалена безвозвратно. Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+                setDeleteTarget(null);
+              }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

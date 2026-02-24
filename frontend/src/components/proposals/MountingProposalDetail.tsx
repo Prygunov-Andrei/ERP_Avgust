@@ -22,6 +22,16 @@ import { api } from '../../lib/api';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { toast } from 'sonner';
 import { CreateMountingProposalDialog } from './CreateMountingProposalDialog';
 import { CreateVersionDialog } from './CreateVersionDialog';
@@ -37,6 +47,8 @@ export function MountingProposalDetail() {
   const [activeTab, setActiveTab] = useState<TabType>('info');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateVersionDialogOpen, setIsCreateVersionDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isTelegramDialogOpen, setIsTelegramDialogOpen] = useState(false);
 
   // Загрузка МП
   const { data: mp, isLoading } = useQuery({
@@ -80,15 +92,11 @@ export function MountingProposalDetail() {
   });
 
   const handleDelete = () => {
-    if (confirm(`Вы уверены, что хотите удалить МП \"${mp?.name}\"?`)) {
-      deleteMutation.mutate();
-    }
+    setIsDeleteDialogOpen(true);
   };
 
   const handlePublishToTelegram = () => {
-    if (mp && confirm(`Опубликовать МП ${mp.number} в Telegram?`)) {
-      publishToTelegramMutation.mutate();
-    }
+    setIsTelegramDialogOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -224,6 +232,43 @@ export function MountingProposalDetail() {
         currentDate={mp.date}
         currentVersionNumber={mp.version_number}
       />
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить МП</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить МП &quot;{mp.name}&quot;? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate()}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isTelegramDialogOpen} onOpenChange={setIsTelegramDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Публикация в Telegram</AlertDialogTitle>
+            <AlertDialogDescription>
+              Опубликовать МП {mp.number} в Telegram?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={() => publishToTelegramMutation.mutate()}>
+              Опубликовать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

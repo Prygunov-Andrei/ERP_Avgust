@@ -1,34 +1,144 @@
+from collections import OrderedDict
+
 from django.db import models
 from django.contrib.auth.models import User
 from core.models import TimestampedModel
 
 
-# ---------- Константы ERP-разделов ----------
-ERP_SECTIONS = [
-    ('objects', 'Объекты'),
-    ('payments', 'Платежи'),
-    ('projects', 'Проекты и Сметы'),
-    ('proposals', 'Предложения'),
-    ('contracts', 'Договоры'),
-    ('catalog', 'Каталог'),
-    ('communications', 'Переписка'),
-    ('settings', 'Настройки'),
-    ('banking', 'Банковские операции'),
-    ('banking_approve', 'Одобрение платежей'),
-    ('supply', 'Снабжение'),
-    ('supply_approve', 'Одобрение счетов'),
-    ('recurring_payments', 'Периодические платежи'),
-    ('warehouse', 'Склад'),
-    ('object_tasks', 'Задачи по объектам'),
-    ('kanban_admin', 'Администрирование канбана'),
-]
+# ---------- Иерархический реестр ERP-разрешений ----------
+# Каждый раздел может содержать подразделы (children).
+# Ключи подразделов хранятся в формате «section.subsection».
+ERP_PERMISSION_TREE = OrderedDict([
+    ('dashboard', {
+        'label': 'Пункт управления',
+        'children': OrderedDict(),
+    }),
+    ('commercial', {
+        'label': 'Коммерческие предложения',
+        'children': OrderedDict([
+            ('kanban', 'Канбан КП'),
+            ('tkp', 'ТКП'),
+            ('mp', 'МП'),
+            ('estimates', 'Сметы'),
+            ('pricelists', 'Прайс-листы'),
+        ]),
+    }),
+    ('objects', {
+        'label': 'Объекты',
+        'children': OrderedDict(),
+    }),
+    ('finance', {
+        'label': 'Финансы',
+        'children': OrderedDict([
+            ('dashboard', 'Дашборд'),
+            ('payments', 'Платежи'),
+            ('statements', 'Выписки'),
+            ('recurring', 'Периодические платежи'),
+            ('debtors', 'Дебиторская задолженность'),
+            ('accounting', 'Бухгалтерия'),
+            ('budget', 'Расходный бюджет'),
+            ('indicators', 'Финансовые показатели'),
+        ]),
+    }),
+    ('contracts', {
+        'label': 'Договоры',
+        'children': OrderedDict([
+            ('framework', 'Рамочные договоры'),
+            ('object_contracts', 'Договоры по объектам'),
+            ('estimates', 'Сметы'),
+            ('mounting_estimates', 'Монтажные сметы'),
+            ('acts', 'Акты'),
+            ('household', 'Хозяйственные договоры'),
+        ]),
+    }),
+    ('supply', {
+        'label': 'Снабжение и Склад',
+        'children': OrderedDict([
+            ('kanban', 'Канбан снабжения'),
+            ('invoices', 'Счета на оплату'),
+            ('drivers', 'Календарь водителей'),
+            ('moderation', 'Модерация товаров'),
+            ('warehouse', 'Склад'),
+        ]),
+    }),
+    ('pto', {
+        'label': 'ПТО',
+        'children': OrderedDict([
+            ('projects', 'Проекты'),
+            ('production', 'Производственная документация'),
+            ('executive', 'Исполнительная документация'),
+            ('samples', 'Образцы документов'),
+            ('knowledge', 'Руководящие документы'),
+        ]),
+    }),
+    ('marketing', {
+        'label': 'Маркетинг',
+        'children': OrderedDict([
+            ('kanban', 'Канбан поиска объектов'),
+            ('potential_customers', 'Потенциальные заказчики'),
+            ('executors', 'Поиск исполнителей'),
+        ]),
+    }),
+    ('communications', {
+        'label': 'Переписка',
+        'children': OrderedDict(),
+    }),
+    ('settings', {
+        'label': 'Справочники и настройки',
+        'children': OrderedDict([
+            ('goods', 'Товары и услуги'),
+            ('work_conditions', 'Фронт работ и монтажные условия'),
+            ('personnel', 'Персонал'),
+            ('counterparties', 'Контрагенты'),
+            ('config', 'Настройки'),
+        ]),
+    }),
+    ('help', {
+        'label': 'Справка',
+        'children': OrderedDict(),
+    }),
+    # Спец-разрешения (критические операции)
+    ('finance_approve', {
+        'label': 'Одобрение платежей',
+        'children': OrderedDict(),
+    }),
+    ('supply_approve', {
+        'label': 'Одобрение счетов',
+        'children': OrderedDict(),
+    }),
+    ('kanban_admin', {
+        'label': 'Администрирование канбана',
+        'children': OrderedDict(),
+    }),
+])
 
 PERMISSION_LEVELS = ('none', 'read', 'edit')
 
 
+def get_all_permission_keys():
+    """Возвращает плоский список всех допустимых ключей разрешений."""
+    keys = []
+    for section_code, section_data in ERP_PERMISSION_TREE.items():
+        keys.append(section_code)
+        for child_code in section_data['children']:
+            keys.append(f'{section_code}.{child_code}')
+    return keys
+
+
 def default_erp_permissions():
-    """Возвращает словарь с дефолтными правами (none) для всех разделов."""
-    return {code: 'none' for code, _ in ERP_SECTIONS}
+    """Возвращает словарь с дефолтными правами (none) для всех ключей."""
+    return {key: 'none' for key in get_all_permission_keys()}
+
+
+def resolve_permission_level(perms, section_key):
+    """Разрешает уровень доступа с fallback на родительский раздел."""
+    level = perms.get(section_key)
+    if level is not None:
+        return level
+    if '.' in section_key:
+        parent = section_key.split('.')[0]
+        return perms.get(parent, 'none')
+    return 'none'
 
 
 class Employee(TimestampedModel):

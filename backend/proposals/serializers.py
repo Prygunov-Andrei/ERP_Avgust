@@ -4,6 +4,7 @@ from .models import (
     FrontOfWorkItem,
     MountingCondition,
     TechnicalProposal,
+    TKPStatusHistory,
     TKPEstimateSection,
     TKPEstimateSubsection,
     TKPCharacteristic,
@@ -52,11 +53,23 @@ class TKPEstimateSectionSerializer(serializers.ModelSerializer):
     subsections = TKPEstimateSubsectionSerializer(many=True, read_only=True)
     total_sale = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
     total_purchase = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
-    
+    profit = serializers.SerializerMethodField()
+    estimate_name = serializers.SerializerMethodField()
+    estimate_number = serializers.SerializerMethodField()
+
     class Meta:
         model = TKPEstimateSection
         fields = '__all__'
         read_only_fields = ['id', 'created_at']
+
+    def get_profit(self, obj):
+        return str(obj.total_sale - obj.total_purchase)
+
+    def get_estimate_name(self, obj):
+        return obj.source_estimate.name if obj.source_estimate else None
+
+    def get_estimate_number(self, obj):
+        return obj.source_estimate.number if obj.source_estimate and hasattr(obj.source_estimate, 'number') else None
 
 
 class TKPCharacteristicSerializer(serializers.ModelSerializer):
@@ -79,12 +92,28 @@ class TKPFrontOfWorkSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
+class TKPStatusHistorySerializer(serializers.ModelSerializer):
+    """Сериализатор для истории смены статусов ТКП"""
+    changed_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TKPStatusHistory
+        fields = ['id', 'old_status', 'new_status', 'changed_by', 'changed_by_name', 'changed_at', 'comment']
+        read_only_fields = fields
+
+    def get_changed_by_name(self, obj):
+        if obj.changed_by:
+            full = obj.changed_by.get_full_name()
+            return full if full else obj.changed_by.username
+        return None
+
+
 class TechnicalProposalListSerializer(serializers.ModelSerializer):
     """Сериализатор для списка ТКП"""
     object_name = serializers.CharField(source='object.name', read_only=True)
     object_address = serializers.CharField(source='object.address', read_only=True)
     legal_entity_name = serializers.CharField(source='legal_entity.short_name', read_only=True)
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    created_by_name = serializers.SerializerMethodField()
     total_amount = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
     total_with_vat = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
     validity_date = serializers.DateField(read_only=True)
@@ -92,7 +121,7 @@ class TechnicalProposalListSerializer(serializers.ModelSerializer):
     class Meta:
         model = TechnicalProposal
         fields = [
-            'id', 'number', 'outgoing_number', 'name', 'date', 'object', 'object_name',
+            'id', 'number', 'outgoing_number', 'name', 'date', 'due_date', 'object', 'object_name',
             'object_address', 'object_area', 'legal_entity', 'legal_entity_name',
             'status', 'validity_days', 'validity_date', 'created_by', 'created_by_name',
             'checked_by', 'approved_by', 'approved_at', 'total_amount', 'total_with_vat',
@@ -100,13 +129,19 @@ class TechnicalProposalListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'number', 'created_at', 'updated_at', 'total_amount', 'total_with_vat', 'validity_date']
 
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            full = obj.created_by.get_full_name()
+            return full if full else obj.created_by.username
+        return None
+
 
 class TechnicalProposalDetailSerializer(serializers.ModelSerializer):
     """Сериализатор для детальной информации ТКП"""
     object_name = serializers.CharField(source='object.name', read_only=True)
     object_address = serializers.CharField(source='object.address', read_only=True)
     legal_entity_name = serializers.CharField(source='legal_entity.short_name', read_only=True)
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    created_by_name = serializers.SerializerMethodField()
     checked_by_name = serializers.SerializerMethodField()
     approved_by_name = serializers.SerializerMethodField()
     signatory_name = serializers.CharField(read_only=True)
@@ -128,8 +163,9 @@ class TechnicalProposalDetailSerializer(serializers.ModelSerializer):
     currency_rates = serializers.DictField(read_only=True)
     file_url = serializers.SerializerMethodField()
     versions_count = serializers.SerializerMethodField()
-    
-    
+    is_latest_version = serializers.SerializerMethodField()
+    status_history = TKPStatusHistorySerializer(many=True, read_only=True)
+
     class Meta:
         model = TechnicalProposal
         fields = '__all__'
@@ -140,11 +176,23 @@ class TechnicalProposalDetailSerializer(serializers.ModelSerializer):
             'created_by'
         ]
     
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            full = obj.created_by.get_full_name()
+            return full if full else obj.created_by.username
+        return None
+
     def get_checked_by_name(self, obj):
-        return obj.checked_by.get_full_name() if obj.checked_by else None
-    
+        if obj.checked_by:
+            full = obj.checked_by.get_full_name()
+            return full if full else obj.checked_by.username
+        return None
+
     def get_approved_by_name(self, obj):
-        return obj.approved_by.get_full_name() if obj.approved_by else None
+        if obj.approved_by:
+            full = obj.approved_by.get_full_name()
+            return full if full else obj.approved_by.username
+        return None
     
     def get_file_url(self, obj):
         if obj.file:
@@ -159,6 +207,9 @@ class TechnicalProposalDetailSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'annotated_versions_count'):
             return obj.annotated_versions_count
         return obj.child_versions.count()
+
+    def get_is_latest_version(self, obj):
+        return obj.child_versions.count() == 0
 
 
 def get_mounting_estimate_queryset():

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, AlertCircle, Pencil, Trash2, Copy, FileText, Plus, History } from 'lucide-react';
+import { useBreadcrumb } from '../../hooks/useBreadcrumb';
+import { ArrowLeft, AlertCircle, Pencil, Trash2, Copy, FileText, Plus, History, Building2, Calendar, Clock, DollarSign, TrendingUp, User, FileCheck, X, Save, ChevronDown } from 'lucide-react';
 import {
   api,
   TechnicalProposalDetail as TKPDetail,
@@ -14,12 +15,43 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 import { toast } from "sonner";
-import { CreateTechnicalProposalDialog } from "./CreateTechnicalProposalDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 import { CreateMountingProposalFromTKPDialog } from "./CreateMountingProposalFromTKPDialog";
 import { CreateVersionDialog } from "./CreateVersionDialog";
-import { formatDate, formatAmount, formatCurrency, getStatusBadgeClass, getStatusLabel } from '../../lib/utils';
+import { formatDate, formatDateTime, formatAmount, formatCurrency, getStatusBadgeClass, getStatusLabel } from '../../lib/utils';
 import { CONSTANTS } from '../../constants';
+import { useObjects, useLegalEntities } from '../../hooks';
+
+interface EditFormData {
+  name: string;
+  date: string;
+  due_date: string;
+  outgoing_number: string;
+  object: string;
+  object_area: string;
+  legal_entity: string;
+  advance_required: string;
+  work_duration: string;
+  validity_days: string;
+  notes: string;
+}
 
 type TabType =
   | "info"
@@ -33,9 +65,23 @@ export function TechnicalProposalDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>("info");
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [isMountingProposalDialogOpen, setIsMountingProposalDialogOpen] = useState(false);
   const [isVersionDialogOpen, setIsVersionDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<EditFormData | null>(null);
+  const [statusChangeTarget, setStatusChangeTarget] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { setDetailLabel } = useBreadcrumb();
+
+  const STATUS_OPTIONS = [
+    { value: 'draft', label: 'Черновик' },
+    { value: 'in_progress', label: 'В работе' },
+    { value: 'checking', label: 'На проверке' },
+    { value: 'approved', label: 'Утверждён' },
+    { value: 'sent', label: 'Отправлено Заказчику' },
+    { value: 'agreed', label: 'Согласовано Заказчиком' },
+    { value: 'rejected', label: 'Отклонено' },
+  ];
 
   // Загрузка ТКП
   const { data: tkp, isLoading } = useQuery({
@@ -44,6 +90,11 @@ export function TechnicalProposalDetail() {
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
+
+  useEffect(() => {
+    if (tkp) setDetailLabel(`ТКП ${tkp.number}`);
+    return () => setDetailLabel(null);
+  }, [tkp?.number, setDetailLabel]);
 
   // Загрузка версий
   const { data: versions } = useQuery({
@@ -70,27 +121,114 @@ export function TechnicalProposalDetail() {
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
+  const { data: objectsData } = useObjects(undefined, { enabled: isEditing });
+  const objects = Array.isArray(objectsData) ? objectsData : (objectsData as any)?.results ?? [];
+  const { data: legalEntitiesData } = useLegalEntities();
+  const legalEntities = Array.isArray(legalEntitiesData) ? legalEntitiesData : (legalEntitiesData as any)?.results ?? [];
+
   // Удаление ТКП
   const deleteMutation = useMutation({
     mutationFn: () =>
       api.deleteTechnicalProposal(parseInt(id!)),
     onSuccess: () => {
       toast.success("ТКП удалено");
-      navigate("/technical-proposals");
+      navigate("/proposals/technical-proposals");
     },
     onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: FormData) =>
+      api.updateTechnicalProposal(parseInt(id!), data),
+    onSuccess: () => {
+      toast.success("ТКП обновлено");
+      queryClient.invalidateQueries({ queryKey: ["technical-proposal", id] });
+      queryClient.invalidateQueries({ queryKey: ["technical-proposals"] });
+      setIsEditing(false);
+      setEditFormData(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`Ошибка: ${error.message}`);
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: (newStatus: string) => {
+      const formData = new FormData();
+      formData.append('status', newStatus);
+      return api.updateTechnicalProposal(parseInt(id!), formData);
+    },
+    onSuccess: () => {
+      toast.success("Статус обновлён");
+      queryClient.invalidateQueries({ queryKey: ["technical-proposal", id] });
+      queryClient.invalidateQueries({ queryKey: ["technical-proposals"] });
+      setStatusChangeTarget(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`Ошибка: ${error.message}`);
+      setStatusChangeTarget(null);
+    },
+  });
+
+  const handleStatusChange = (newStatus: string) => {
+    if (newStatus === tkp?.status) return;
+    setStatusChangeTarget(newStatus);
+  };
+
+  const handleConfirmStatusChange = () => {
+    if (!statusChangeTarget) return;
+    statusMutation.mutate(statusChangeTarget);
+  };
+
+  const handleStartEditing = () => {
+    if (!tkp) return;
+    setEditFormData({
+      name: tkp.name,
+      date: tkp.date,
+      due_date: tkp.due_date || '',
+      outgoing_number: tkp.outgoing_number || '',
+      object: tkp.object.toString(),
+      object_area: tkp.object_area?.toString() || '',
+      legal_entity: tkp.legal_entity.toString(),
+      advance_required: tkp.advance_required || '',
+      work_duration: tkp.work_duration || '',
+      validity_days: tkp.validity_days.toString(),
+      notes: tkp.notes || '',
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setIsEditing(false);
+    setEditFormData(null);
+  };
+
+  const handleSaveEditing = () => {
+    if (!editFormData) return;
+    const formData = new FormData();
+    formData.append('name', editFormData.name);
+    formData.append('date', editFormData.date);
+    if (editFormData.due_date) formData.append('due_date', editFormData.due_date);
+    formData.append('object', editFormData.object);
+    if (editFormData.object_area) formData.append('object_area', editFormData.object_area);
+    formData.append('legal_entity', editFormData.legal_entity);
+    if (editFormData.outgoing_number) formData.append('outgoing_number', editFormData.outgoing_number);
+    if (editFormData.advance_required) formData.append('advance_required', editFormData.advance_required);
+    if (editFormData.work_duration) formData.append('work_duration', editFormData.work_duration);
+    formData.append('validity_days', editFormData.validity_days);
+    if (editFormData.notes) formData.append('notes', editFormData.notes);
+    updateMutation.mutate(formData);
+  };
+
   const handleDelete = () => {
-    if (
-      confirm(
-        `Вы уверены, что хотите удалить ТКП "${tkp?.name}"?`,
-      )
-    ) {
-      deleteMutation.mutate();
-    }
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteMutation.mutate();
+    setIsDeleteDialogOpen(false);
   };
 
   const getStatusBadge = (status: string) => {
@@ -113,7 +251,7 @@ export function TechnicalProposalDetail() {
         <AlertCircle className="w-12 h-12 text-gray-400 mb-4" />
         <div className="text-gray-500">ТКП не найдено</div>
         <Button
-          onClick={() => navigate("/technical-proposals")}
+          onClick={() => navigate("/proposals/technical-proposals")}
           className="mt-4"
         >
           Вернуться к списку
@@ -129,7 +267,7 @@ export function TechnicalProposalDetail() {
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start gap-4">
             <Button
-              onClick={() => navigate("/technical-proposals")}
+              onClick={() => navigate("/proposals/technical-proposals")}
               className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -137,7 +275,26 @@ export function TechnicalProposalDetail() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-gray-900">{tkp.name}</h1>
-                {getStatusBadge(tkp.status)}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex items-center gap-1 cursor-pointer" aria-label="Сменить статус">
+                      {getStatusBadge(tkp.status)}
+                      <ChevronDown className="w-3 h-3 text-gray-400" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {STATUS_OPTIONS.map(opt => (
+                      <DropdownMenuItem
+                        key={opt.value}
+                        onClick={() => handleStatusChange(opt.value)}
+                        disabled={opt.value === tkp.status}
+                        className={opt.value === tkp.status ? 'font-bold' : ''}
+                      >
+                        {opt.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 {tkp.is_latest_version && (
                   <Badge className="bg-blue-50 text-blue-700 border border-blue-200">
                     Актуальная версия
@@ -156,37 +313,60 @@ export function TechnicalProposalDetail() {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={() => setIsEditDialogOpen(true)}
-              className="bg-blue-600 text-white hover:bg-blue-700"
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              Редактировать
-            </Button>
-            <Button
-              onClick={() => setIsVersionDialogOpen(true)}
-              className="bg-purple-600 text-white hover:bg-purple-700"
-              disabled={!tkp.is_latest_version}
-            >
-              <Copy className="w-4 h-4 mr-2" />
-              Создать версию
-            </Button>
-            <Button
-              onClick={handleDelete}
-              className="bg-red-600 text-white hover:bg-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-            {tkp.status === "approved" && (
-              <Button
-                onClick={() =>
-                  setIsMountingProposalDialogOpen(true)
-                }
-                className="bg-green-600 text-white hover:bg-green-700"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Создать МП
-              </Button>
+            {isEditing ? (
+              <>
+                <Button
+                  onClick={handleSaveEditing}
+                  className="bg-green-600 text-white hover:bg-green-700"
+                  disabled={updateMutation.isPending}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {updateMutation.isPending ? 'Сохранение...' : 'Сохранить'}
+                </Button>
+                <Button
+                  onClick={handleCancelEditing}
+                  className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  disabled={updateMutation.isPending}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Отмена
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  onClick={handleStartEditing}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Редактировать
+                </Button>
+                <Button
+                  onClick={() => setIsVersionDialogOpen(true)}
+                  className="bg-purple-600 text-white hover:bg-purple-700"
+                  disabled={!tkp.is_latest_version}
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Создать версию
+                </Button>
+                <Button
+                  onClick={handleDelete}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                {tkp.status === "approved" && (
+                  <Button
+                    onClick={() =>
+                      setIsMountingProposalDialogOpen(true)
+                    }
+                    className="bg-green-600 text-white hover:bg-green-700"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Создать МП
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -248,7 +428,15 @@ export function TechnicalProposalDetail() {
 
       {/* Контент вкладок */}
       {activeTab === "info" && (
-        <InfoTab tkp={tkp} versions={versions} />
+        <InfoTab
+          tkp={tkp}
+          versions={versions}
+          isEditing={isEditing}
+          editFormData={editFormData}
+          onFieldChange={(field, value) => setEditFormData(prev => prev ? { ...prev, [field]: value } : null)}
+          objects={objects}
+          legalEntities={legalEntities}
+        />
       )}
       {activeTab === "estimates" && <EstimatesTab tkp={tkp} />}
       {activeTab === "sections" && <SectionsTab tkp={tkp} />}
@@ -265,13 +453,6 @@ export function TechnicalProposalDetail() {
         />
       )}
 
-      {/* Диалог редактирования */}
-      <CreateTechnicalProposalDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        tkp={tkp}
-      />
-
       {/* Диалог создания монтажного проекта */}
       <CreateMountingProposalFromTKPDialog
         open={isMountingProposalDialogOpen}
@@ -279,6 +460,7 @@ export function TechnicalProposalDetail() {
         tkpId={tkp.id}
         tkpNumber={tkp.number}
         tkpName={tkp.name}
+        tkpObjectId={tkp.object}
       />
 
       {/* Диалог создания версии */}
@@ -290,6 +472,42 @@ export function TechnicalProposalDetail() {
         currentDate={tkp.date}
         currentVersionNumber={tkp.version_number}
       />
+
+      {/* Диалог подтверждения смены статуса */}
+      <AlertDialog open={!!statusChangeTarget} onOpenChange={(open) => { if (!open) setStatusChangeTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Подтверждение смены статуса</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите изменить статус на «{STATUS_OPTIONS.find(o => o.value === statusChangeTarget)?.label}»?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmStatusChange} disabled={statusMutation.isPending}>
+              {statusMutation.isPending ? 'Сохранение...' : 'Подтвердить'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Диалог подтверждения удаления ТКП */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удаление ТКП</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить ТКП «{tkp?.name}»? Это действие необратимо.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700" disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? 'Удаление...' : 'Удалить'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -298,9 +516,19 @@ export function TechnicalProposalDetail() {
 function InfoTab({
   tkp,
   versions,
+  isEditing,
+  editFormData,
+  onFieldChange,
+  objects,
+  legalEntities,
 }: {
   tkp: TKPDetail;
   versions?: any[];
+  isEditing: boolean;
+  editFormData: EditFormData | null;
+  onFieldChange: (field: keyof EditFormData, value: string) => void;
+  objects: any[];
+  legalEntities: any[];
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -311,95 +539,210 @@ function InfoTab({
           Основная информация
         </h2>
         <div className="space-y-4">
-          <div>
-            <Label className="text-gray-600">Объект</Label>
-            <div className="mt-1 flex items-start gap-2">
-              <Building2 className="w-4 h-4 text-gray-400 mt-1" />
+          {isEditing && editFormData ? (
+            <>
               <div>
-                <div className="text-gray-900">
-                  {tkp.object_name}
+                <Label htmlFor="edit-name">Название</Label>
+                <Input
+                  id="edit-name"
+                  value={editFormData.name}
+                  onChange={(e) => onFieldChange('name', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-object">Объект</Label>
+                <select
+                  id="edit-object"
+                  value={editFormData.object}
+                  onChange={(e) => onFieldChange('object', e.target.value)}
+                  className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="">Выберите объект</option>
+                  {objects?.map((obj: any) => (
+                    <option key={obj.id} value={obj.id}>{obj.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-legal-entity">Юридическое лицо</Label>
+                <select
+                  id="edit-legal-entity"
+                  value={editFormData.legal_entity}
+                  onChange={(e) => onFieldChange('legal_entity', e.target.value)}
+                  className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="">Выберите юрлицо</option>
+                  {legalEntities?.map((le: any) => (
+                    <option key={le.id} value={le.id}>{le.short_name || le.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-date">Дата</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={editFormData.date}
+                    onChange={(e) => onFieldChange('date', e.target.value)}
+                    className="mt-1"
+                  />
                 </div>
-                {tkp.object_address && (
-                  <div className="text-gray-500">
-                    {tkp.object_address}
+                <div>
+                  <Label htmlFor="edit-due-date">Дата выдачи (крайний срок)</Label>
+                  <Input
+                    id="edit-due-date"
+                    type="date"
+                    value={editFormData.due_date}
+                    onChange={(e) => onFieldChange('due_date', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-outgoing">Исходящий номер</Label>
+                  <Input
+                    id="edit-outgoing"
+                    value={editFormData.outgoing_number}
+                    onChange={(e) => onFieldChange('outgoing_number', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-area">Площадь объекта (м²)</Label>
+                  <Input
+                    id="edit-area"
+                    type="number"
+                    value={editFormData.object_area}
+                    onChange={(e) => onFieldChange('object_area', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-validity">Срок действия (дни)</Label>
+                <Input
+                  id="edit-validity"
+                  type="number"
+                  value={editFormData.validity_days}
+                  onChange={(e) => onFieldChange('validity_days', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-advance">Требуемый аванс</Label>
+                  <Input
+                    id="edit-advance"
+                    value={editFormData.advance_required}
+                    onChange={(e) => onFieldChange('advance_required', e.target.value)}
+                    className="mt-1"
+                    placeholder="Например: 30%"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-duration">Срок выполнения работ</Label>
+                  <Input
+                    id="edit-duration"
+                    value={editFormData.work_duration}
+                    onChange={(e) => onFieldChange('work_duration', e.target.value)}
+                    className="mt-1"
+                    placeholder="Например: 14 рабочих дней"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-notes">Примечания</Label>
+                <Textarea
+                  id="edit-notes"
+                  value={editFormData.notes}
+                  onChange={(e) => onFieldChange('notes', e.target.value)}
+                  className="mt-1"
+                  rows={4}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <Label className="text-gray-600">Объект</Label>
+                <div className="mt-1 flex items-start gap-2">
+                  <Building2 className="w-4 h-4 text-gray-400 mt-1" />
+                  <div>
+                    <div className="text-gray-900">{tkp.object_name}</div>
+                    {tkp.object_address && (
+                      <div className="text-gray-500">{tkp.object_address}</div>
+                    )}
+                    {tkp.object_area && (
+                      <div className="text-gray-500">Площадь: {tkp.object_area} м²</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-gray-600">Юридическое лицо</Label>
+                <div className="mt-1 text-gray-900">{tkp.legal_entity_name}</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-600">Дата создания</Label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-900">{formatDate(tkp.date)}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-gray-600">Срок действия</Label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-900">
+                      {tkp.validity_days} дн. (до {formatDate(tkp.validity_date)})
+                    </span>
+                  </div>
+                </div>
+                {tkp.due_date && (
+                  <div>
+                    <Label className="text-gray-600">Дата выдачи (крайний срок)</Label>
+                    <div className="mt-1 flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-900">{formatDate(tkp.due_date)}</span>
+                    </div>
                   </div>
                 )}
-                {tkp.object_area && (
-                  <div className="text-gray-500">
-                    Площадь: {tkp.object_area} м²
-                  </div>
-                )}
               </div>
-            </div>
-          </div>
 
-          <div>
-            <Label className="text-gray-600">
-              Юридическое лицо
-            </Label>
-            <div className="mt-1 text-gray-900">
-              {tkp.legal_entity_name}
-            </div>
-          </div>
+              {tkp.advance_required && (
+                <div>
+                  <Label className="text-gray-600">Требуемый аванс</Label>
+                  <div className="mt-1 text-gray-900">{formatCurrency(tkp.advance_required)}</div>
+                </div>
+              )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-gray-600">
-                Дата создания
-              </Label>
-              <div className="mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-900">
-                  {formatDate(tkp.date)}
-                </span>
-              </div>
-            </div>
+              {tkp.work_duration && (
+                <div>
+                  <Label className="text-gray-600">Срок выполнения работ</Label>
+                  <div className="mt-1 text-gray-900">{tkp.work_duration}</div>
+                </div>
+              )}
 
-            <div>
-              <Label className="text-gray-600">
-                Срок действия
-              </Label>
-              <div className="mt-1 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-900">
-                  {tkp.validity_days} дн. (до{" "}
-                  {formatDate(tkp.validity_date)})
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {tkp.advance_required && (
-            <div>
-              <Label className="text-gray-600">
-                Требуемый аванс
-              </Label>
-              <div className="mt-1 text-gray-900">
-                {formatCurrency(tkp.advance_required)}
-              </div>
-            </div>
-          )}
-
-          {tkp.work_duration && (
-            <div>
-              <Label className="text-gray-600">
-                Срок выполнения работ
-              </Label>
-              <div className="mt-1 text-gray-900">
-                {tkp.work_duration}
-              </div>
-            </div>
-          )}
-
-          {tkp.notes && (
-            <div>
-              <Label className="text-gray-600">
-                Примечания
-              </Label>
-              <div className="mt-1 text-gray-900 whitespace-pre-wrap">
-                {tkp.notes}
-              </div>
-            </div>
+              {tkp.notes && (
+                <div>
+                  <Label className="text-gray-600">Примечания</Label>
+                  <div className="mt-1 text-gray-900 whitespace-pre-wrap">{tkp.notes}</div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -410,13 +753,16 @@ function InfoTab({
           <DollarSign className="w-5 h-5 text-green-600" />
           Финансовая информация
         </h2>
-        <div className="space-y-4">
+        <div className="grid grid-cols-3 gap-4 mb-4">
           <div className="bg-blue-50 rounded-lg p-4">
-            <div className="text-gray-600 mb-1">
-              Общая сумма
-            </div>
-            <div className="text-blue-900">
-              {formatCurrency(tkp.total_amount)}
+            <div className="text-gray-600 mb-1">Продажа</div>
+            <div className="text-blue-900">{formatCurrency(tkp.total_amount)}</div>
+          </div>
+
+          <div className="bg-red-50 rounded-lg p-4">
+            <div className="text-gray-600 mb-1">Закупка</div>
+            <div className="text-red-900">
+              {formatCurrency(String(parseFloat(tkp.total_amount) - parseFloat(tkp.total_profit)))}
             </div>
           </div>
 
@@ -430,62 +776,39 @@ function InfoTab({
               </span>
             </div>
           </div>
+        </div>
+        <div className="space-y-4">
 
           {tkp.total_man_hours && (
             <div className="bg-purple-50 rounded-lg p-4">
-              <div className="text-gray-600 mb-1">
-                Трудозатраты
-              </div>
+              <div className="text-gray-600 mb-1">Трудозатраты</div>
               <div className="text-purple-900 flex items-center gap-2">
                 <Clock className="w-5 h-5" />
-                {parseFloat(tkp.total_man_hours).toFixed(
-                  2,
-                )}{" "}
-                чел/час
+                {parseFloat(tkp.total_man_hours).toFixed(2)} чел/час
               </div>
             </div>
           )}
 
-          {/* Курсы валют */}
-          {(tkp.currency_rates.usd ||
-            tkp.currency_rates.eur ||
-            tkp.currency_rates.cny) && (
+          {(tkp.currency_rates.usd || tkp.currency_rates.eur || tkp.currency_rates.cny) && (
             <div>
-              <Label className="text-gray-600 mb-2 block">
-                Курсы валют
-              </Label>
+              <Label className="text-gray-600 mb-2 block">Курсы валют</Label>
               <div className="space-y-2">
                 {tkp.currency_rates.usd && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">USD:</span>
-                    <span className="text-gray-900">
-                      {parseFloat(
-                        tkp.currency_rates.usd,
-                      ).toFixed(2)}{" "}
-                      ₽
-                    </span>
+                    <span className="text-gray-900">{parseFloat(tkp.currency_rates.usd).toFixed(2)} ₽</span>
                   </div>
                 )}
                 {tkp.currency_rates.eur && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">EUR:</span>
-                    <span className="text-gray-900">
-                      {parseFloat(
-                        tkp.currency_rates.eur,
-                      ).toFixed(2)}{" "}
-                      ₽
-                    </span>
+                    <span className="text-gray-900">{parseFloat(tkp.currency_rates.eur).toFixed(2)} ₽</span>
                   </div>
                 )}
                 {tkp.currency_rates.cny && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">CNY:</span>
-                    <span className="text-gray-900">
-                      {parseFloat(
-                        tkp.currency_rates.cny,
-                      ).toFixed(2)}{" "}
-                      ₽
-                    </span>
+                    <span className="text-gray-900">{parseFloat(tkp.currency_rates.cny).toFixed(2)} ₽</span>
                   </div>
                 )}
               </div>
@@ -494,42 +817,55 @@ function InfoTab({
         </div>
       </div>
 
-      {/* Ответственные лица */}
+      {/* Ответственные лица и история статусов */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-gray-900 mb-4 flex items-center gap-2">
           <User className="w-5 h-5 text-purple-600" />
           Ответственные лица
         </h2>
-        <div className="space-y-4">
-          <div>
-            <Label className="text-gray-600">Создал</Label>
-            <div className="mt-1 text-gray-900">
-              {tkp.created_by_username}
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <Label className="text-gray-500 text-xs">Создал</Label>
+            <div className="mt-1 text-gray-900 font-medium">{tkp.created_by_name || '—'}</div>
+            <div className="text-xs text-gray-400 mt-0.5">{formatDate(tkp.created_at)}</div>
           </div>
 
-          {tkp.reviewer_username && (
-            <div>
-              <Label className="text-gray-600">
-                Проверяющий
-              </Label>
-              <div className="mt-1 text-gray-900">
-                {tkp.reviewer_username}
-              </div>
-            </div>
-          )}
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <Label className="text-gray-500 text-xs">Проверил</Label>
+            <div className="mt-1 text-gray-900 font-medium">{tkp.checked_by_name || '—'}</div>
+            {tkp.checked_at && (
+              <div className="text-xs text-gray-400 mt-0.5">{formatDate(tkp.checked_at)}</div>
+            )}
+          </div>
 
-          {tkp.approver_username && (
-            <div>
-              <Label className="text-gray-600">
-                Утверждающий
-              </Label>
-              <div className="mt-1 text-gray-900">
-                {tkp.approver_username}
-              </div>
-            </div>
-          )}
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <Label className="text-gray-500 text-xs">Утвердил</Label>
+            <div className="mt-1 text-gray-900 font-medium">{tkp.approved_by_name || '—'}</div>
+            {tkp.approved_at && (
+              <div className="text-xs text-gray-400 mt-0.5">{formatDate(tkp.approved_at)}</div>
+            )}
+          </div>
         </div>
+
+        {tkp.status_history && tkp.status_history.length > 0 && (
+          <>
+            <h3 className="text-gray-700 text-sm font-medium mb-3 flex items-center gap-2">
+              <History className="w-4 h-4 text-gray-500" />
+              История смены статусов
+            </h3>
+            <div className="space-y-2">
+              {tkp.status_history.map((entry) => (
+                <div key={entry.id} className="flex items-center gap-3 text-sm py-1.5 border-b border-gray-100 last:border-0">
+                  <span className="text-gray-400 text-xs whitespace-nowrap">{formatDateTime(entry.changed_at)}</span>
+                  <span className="text-gray-600">{entry.changed_by_name || '—'}</span>
+                  <span className="text-gray-400">→</span>
+                  <Badge className={getStatusBadgeClass(entry.new_status)}>{getStatusLabel(entry.new_status)}</Badge>
+                  {entry.comment && <span className="text-gray-500 italic text-xs">({entry.comment})</span>}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* История версий */}
@@ -540,7 +876,7 @@ function InfoTab({
             История версий ({versions.length})
           </h2>
           <div className="space-y-2">
-            {versions.map((version) => (
+            {versions.map((version: any) => (
               <div
                 key={version.id}
                 className={`p-3 rounded-lg border ${
@@ -554,22 +890,15 @@ function InfoTab({
                     <div className="text-gray-900">
                       Версия {version.version_number}
                       {version.is_latest_version && (
-                        <Badge className="ml-2 bg-blue-100 text-blue-700">
-                          Актуальная
-                        </Badge>
+                        <Badge className="ml-2 bg-blue-100 text-blue-700">Актуальная</Badge>
                       )}
                     </div>
-                    <div className="text-gray-500">
-                      {formatDate(version.date)}
-                    </div>
+                    <div className="text-gray-500">{formatDate(version.date)}</div>
                   </div>
                   {version.id !== tkp.id && (
                     <Button
                       onClick={() =>
-                        window.open(
-                          `/technical-proposals/${version.id}`,
-                          "_blank",
-                        )
+                        window.open(`/proposals/technical-proposals/${version.id}`, "_blank")
                       }
                       className="bg-gray-100 text-gray-700 hover:bg-gray-200"
                     >
@@ -594,11 +923,13 @@ function EstimatesTab({ tkp }: { tkp: TKPDetail }) {
     number[]
   >([]);
   const [copyData, setCopyData] = useState(true);
+  const [removeTarget, setRemoveTarget] = useState<{ id: number; name: string } | null>(null);
+  const [isCopyDataDialogOpen, setIsCopyDataDialogOpen] = useState(false);
 
-  // Загрузка всех смет
+  // Загрузка смет объекта
   const { data: allEstimates } = useQuery({
-    queryKey: ["estimates"],
-    queryFn: () => api.getEstimates(),
+    queryKey: ["estimates", { object: tkp.object }],
+    queryFn: () => api.getEstimates({ object: tkp.object }),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -676,24 +1007,28 @@ function EstimatesTab({ tkp }: { tkp: TKPDetail }) {
     estimateId: number,
     estimateName: string,
   ) => {
-    if (confirm(`Удалить смету "${estimateName}" из ТКП?`)) {
-      removeEstimatesMutation.mutate([estimateId]);
+    setRemoveTarget({ id: estimateId, name: estimateName });
+  };
+
+  const handleConfirmRemove = () => {
+    if (removeTarget) {
+      removeEstimatesMutation.mutate([removeTarget.id]);
+      setRemoveTarget(null);
     }
   };
 
   const handleCopyData = () => {
-    if (
-      confirm(
-        "Скопировать характеристики и фронт работ из связанных смет? Это обновит данные в ТКП.",
-      )
-    ) {
-      copyDataMutation.mutate();
-    }
+    setIsCopyDataDialogOpen(true);
+  };
+
+  const handleConfirmCopyData = () => {
+    copyDataMutation.mutate();
+    setIsCopyDataDialogOpen(false);
   };
 
   // Получаем ID смет, которые уже добавлены
   const addedEstimateIds = tkp.estimate_sections.map(
-    (section) => section.estimate_id,
+    (section) => section.source_estimate,
   );
 
   // Фильтруем доступные для добавления сметы
@@ -702,7 +1037,7 @@ function EstimatesTab({ tkp }: { tkp: TKPDetail }) {
       (est) => !addedEstimateIds.includes(est.id),
     ) || [];
 
-  if (tkp.estimate_sections.length === 0) {
+  if (tkp.estimates.length === 0 && tkp.estimate_sections.length === 0) {
     return (
       <>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
@@ -823,7 +1158,7 @@ function EstimatesTab({ tkp }: { tkp: TKPDetail }) {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-gray-900">
-              Сметы в ТКП ({tkp.estimate_sections.length})
+              Сметы в ТКП ({tkp.estimates.length})
             </h2>
             <div className="flex gap-2">
               <Button
@@ -845,51 +1180,62 @@ function EstimatesTab({ tkp }: { tkp: TKPDetail }) {
           </div>
 
           <div className="space-y-4">
-            {tkp.estimate_sections.map((section) => (
-              <div
-                key={section.id}
-                className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="text-gray-900">
-                      {section.estimate_number}
-                    </h3>
-                    <p className="text-gray-600">
-                      {section.name}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() =>
-                      handleRemoveEstimate(
-                        section.estimate_id,
-                        section.name,
-                      )
-                    }
-                    className="bg-red-100 text-red-700 hover:bg-red-200"
-                    title="Удалить смету из ТКП"
+            {(() => {
+              const grouped = new Map<number | null, typeof tkp.estimate_sections>();
+              tkp.estimate_sections.forEach((section) => {
+                const key = section.source_estimate;
+                if (!grouped.has(key)) grouped.set(key, []);
+                grouped.get(key)!.push(section);
+              });
+              return Array.from(grouped.entries()).map(([estimateId, sections]) => {
+                const estimateName = sections[0]?.estimate_name || sections[0]?.name || 'Смета';
+                const totalSale = sections.reduce((s, sec) => s + parseFloat(sec.total_sale || '0'), 0);
+                const totalPurchase = sections.reduce((s, sec) => s + parseFloat(sec.total_purchase || '0'), 0);
+                const totalProfit = totalSale - totalPurchase;
+                return (
+                  <div
+                    key={estimateId ?? 'unknown'}
+                    className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
                   >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-gray-100">
-                  <div>
-                    <div className="text-gray-600">
-                      Сумма продажи
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="text-gray-900">{estimateName}</h3>
+                        <p className="text-sm text-gray-500">{sections.length} {sections.length === 1 ? 'раздел' : sections.length < 5 ? 'раздела' : 'разделов'}</p>
+                      </div>
+                      <Button
+                        onClick={() => handleRemoveEstimate(estimateId || sections[0]?.id, estimateName)}
+                        className="bg-red-100 text-red-700 hover:bg-red-200"
+                        title="Удалить смету из ТКП"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <div className="text-gray-900">
-                      {formatCurrency(section.sale_total)}
+                    <div className="space-y-1 mb-3">
+                      {sections.map((section) => (
+                        <div key={section.id} className="flex items-center justify-between text-sm py-1 px-2 bg-gray-50 rounded">
+                          <span className="text-gray-700">{section.name}</span>
+                          <span className="text-gray-600">{formatCurrency(section.total_sale)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-100">
+                      <div>
+                        <div className="text-gray-600">Продажа</div>
+                        <div className="text-gray-900">{formatCurrency(String(totalSale))}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Закупка</div>
+                        <div className="text-gray-900">{formatCurrency(String(totalPurchase))}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Прибыль</div>
+                        <div className="text-green-700">{formatCurrency(String(totalProfit))}</div>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <div className="text-gray-600">Прибыль</div>
-                    <div className="text-green-700">
-                      {formatCurrency(section.profit)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                );
+              });
+            })()}
           </div>
         </div>
       </div>
@@ -988,6 +1334,38 @@ function EstimatesTab({ tkp }: { tkp: TKPDetail }) {
           </div>
         </div>
       )}
+
+      {/* Диалог подтверждения удаления сметы */}
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => { if (!open) setRemoveTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удаление сметы из ТКП</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить смету «{removeTarget?.name}» из ТКП?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemove} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Диалог подтверждения копирования данных */}
+      <AlertDialog open={isCopyDataDialogOpen} onOpenChange={setIsCopyDataDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Обновление данных из смет</AlertDialogTitle>
+            <AlertDialogDescription>
+              Скопировать характеристики и фронт работ из связанных смет? Это обновит данные в ТКП.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCopyData}>Подтвердить</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -1196,53 +1574,101 @@ function SectionsTab({ tkp }: { tkp: TKPDetail }) {
                                 <td className="px-2 py-2 text-gray-900">
                                   {subsection.name}
                                 </td>
-                                <td className="px-2 py-2 text-right text-gray-900">
-                                  {formatCurrency(
-                                    subsection.materials_sale,
-                                  )}
-                                </td>
-                                <td className="px-2 py-2 text-right text-gray-900">
-                                  {formatCurrency(
-                                    subsection.works_sale,
-                                  )}
-                                </td>
-                                <td className="px-2 py-2 text-right text-gray-900">
-                                  {formatCurrency(
-                                    subsection.materials_purchase,
-                                  )}
-                                </td>
-                                <td className="px-2 py-2 text-right text-gray-900">
-                                  {formatCurrency(
-                                    subsection.works_purchase,
-                                  )}
-                                </td>
-                                <td className="px-2 py-2 text-right text-gray-900">
-                                  {formatCurrency(
-                                    subsection.total_sale,
-                                  )}
-                                </td>
-                                <td className="px-2 py-2 text-right text-green-700">
-                                  {formatCurrency(
-                                    parseFloat(
-                                      subsection.total_sale,
-                                    ) -
-                                      parseFloat(
-                                        subsection.total_purchase,
-                                      ),
-                                  )}
-                                </td>
-                                <td className="px-2 py-2 text-right">
-                                  <Button
-                                    onClick={() =>
-                                      handleEditSubsection(
-                                        subsection,
-                                      )
-                                    }
-                                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-2 py-1"
-                                  >
-                                    <Pencil className="w-4 h-4" />
-                                  </Button>
-                                </td>
+                                {editingSubsectionId === subsection.id ? (
+                                  <>
+                                    <td className="px-2 py-2">
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={editFormData.materials_sale}
+                                        onChange={(e) => setEditFormData({ ...editFormData, materials_sale: e.target.value })}
+                                        className="w-28 text-right"
+                                      />
+                                    </td>
+                                    <td className="px-2 py-2">
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={editFormData.works_sale}
+                                        onChange={(e) => setEditFormData({ ...editFormData, works_sale: e.target.value })}
+                                        className="w-28 text-right"
+                                      />
+                                    </td>
+                                    <td className="px-2 py-2">
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={editFormData.materials_purchase}
+                                        onChange={(e) => setEditFormData({ ...editFormData, materials_purchase: e.target.value })}
+                                        className="w-28 text-right"
+                                      />
+                                    </td>
+                                    <td className="px-2 py-2">
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={editFormData.works_purchase}
+                                        onChange={(e) => setEditFormData({ ...editFormData, works_purchase: e.target.value })}
+                                        className="w-28 text-right"
+                                      />
+                                    </td>
+                                    <td className="px-2 py-2 text-right text-gray-500">
+                                      {formatCurrency(String(parseFloat(editFormData.materials_sale || '0') + parseFloat(editFormData.works_sale || '0')))}
+                                    </td>
+                                    <td className="px-2 py-2 text-right text-gray-500">
+                                      {formatCurrency(String(
+                                        (parseFloat(editFormData.materials_sale || '0') + parseFloat(editFormData.works_sale || '0')) -
+                                        (parseFloat(editFormData.materials_purchase || '0') + parseFloat(editFormData.works_purchase || '0'))
+                                      ))}
+                                    </td>
+                                    <td className="px-2 py-2 text-right flex gap-1">
+                                      <Button
+                                        onClick={handleSaveSubsection}
+                                        disabled={updateSubsectionMutation.isPending}
+                                        className="bg-green-600 text-white hover:bg-green-700 px-2 py-1"
+                                      >
+                                        <Save className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        onClick={handleCancelEdit}
+                                        className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-2 py-1"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </td>
+                                  </>
+                                ) : (
+                                  <>
+                                    <td className="px-2 py-2 text-right text-gray-900">
+                                      {formatCurrency(subsection.materials_sale)}
+                                    </td>
+                                    <td className="px-2 py-2 text-right text-gray-900">
+                                      {formatCurrency(subsection.works_sale)}
+                                    </td>
+                                    <td className="px-2 py-2 text-right text-gray-900">
+                                      {formatCurrency(subsection.materials_purchase)}
+                                    </td>
+                                    <td className="px-2 py-2 text-right text-gray-900">
+                                      {formatCurrency(subsection.works_purchase)}
+                                    </td>
+                                    <td className="px-2 py-2 text-right text-gray-900">
+                                      {formatCurrency(subsection.total_sale)}
+                                    </td>
+                                    <td className="px-2 py-2 text-right text-green-700">
+                                      {formatCurrency(
+                                        parseFloat(subsection.total_sale) - parseFloat(subsection.total_purchase),
+                                      )}
+                                    </td>
+                                    <td className="px-2 py-2 text-right">
+                                      <Button
+                                        onClick={() => handleEditSubsection(subsection)}
+                                        className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-2 py-1"
+                                      >
+                                        <Pencil className="w-4 h-4" />
+                                      </Button>
+                                    </td>
+                                  </>
+                                )}
                               </tr>
                             ),
                           )}
@@ -1308,6 +1734,7 @@ function CharacteristicsTab({
   const [editingId, setEditingId] = useState<number | null>(
     null,
   );
+  const [deleteCharTarget, setDeleteCharTarget] = useState<{ id: number; name: string } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     purchase_amount: "",
@@ -1569,15 +1996,7 @@ function CharacteristicsTab({
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
-                        onClick={() => {
-                          if (
-                            confirm(
-                              `Удалить характеристику "${char.name}"?`,
-                            )
-                          ) {
-                            deleteMutation.mutate(char.id);
-                          }
-                        }}
+                        onClick={() => setDeleteCharTarget({ id: char.id, name: char.name })}
                         className="bg-red-100 text-red-700 hover:bg-red-200 px-3"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1590,6 +2009,21 @@ function CharacteristicsTab({
           </table>
         </div>
       )}
+
+      <AlertDialog open={!!deleteCharTarget} onOpenChange={(open) => { if (!open) setDeleteCharTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удаление характеристики</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить характеристику «{deleteCharTarget?.name}»?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (deleteCharTarget) { deleteMutation.mutate(deleteCharTarget.id); setDeleteCharTarget(null); } }} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -1607,6 +2041,7 @@ function FrontOfWorkTab({
   const [editingId, setEditingId] = useState<number | null>(
     null,
   );
+  const [deleteFrontTarget, setDeleteFrontTarget] = useState<{ id: number; name: string } | null>(null);
   const [formData, setFormData] = useState({
     front_item: "",
     when_text: "",
@@ -1882,15 +2317,7 @@ function FrontOfWorkTab({
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
-                        onClick={() => {
-                          if (
-                            confirm(
-                              `Удалить элемент "${item.front_item_name}"?`,
-                            )
-                          ) {
-                            deleteMutation.mutate(item.id);
-                          }
-                        }}
+                        onClick={() => setDeleteFrontTarget({ id: item.id, name: item.front_item_name })}
                         className="bg-red-100 text-red-700 hover:bg-red-200 px-3"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1903,6 +2330,21 @@ function FrontOfWorkTab({
           </table>
         </div>
       )}
+
+      <AlertDialog open={!!deleteFrontTarget} onOpenChange={(open) => { if (!open) setDeleteFrontTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удаление элемента фронта работ</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить элемент «{deleteFrontTarget?.name}»?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (deleteFrontTarget) { deleteMutation.mutate(deleteFrontTarget.id); setDeleteFrontTarget(null); } }} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

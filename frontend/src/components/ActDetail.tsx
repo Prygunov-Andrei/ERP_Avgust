@@ -11,6 +11,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import { toast } from 'sonner';
 import { Progress } from './ui/progress';
 
@@ -20,6 +30,8 @@ export function ActDetail() {
   const queryClient = useQueryClient();
   const actId = parseInt(id || '0');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSignDialogOpen, setIsSignDialogOpen] = useState(false);
 
   const { data: act, isLoading, error } = useQuery({
     queryKey: ['act', actId],
@@ -51,15 +63,11 @@ export function ActDetail() {
   });
 
   const handleDelete = () => {
-    if (confirm(`Вы уверены, что хотите удалить акт "${act?.number}"?`)) {
-      deleteMutation.mutate();
-    }
+    setIsDeleteDialogOpen(true);
   };
 
   const handleSign = () => {
-    if (confirm(`Подписать акт "${act?.number}"?`)) {
-      signMutation.mutate();
-    }
+    setIsSignDialogOpen(true);
   };
 
   const getStatusLabel = (status: string) => {
@@ -345,6 +353,43 @@ export function ActDetail() {
             </div>
           )}
         </Card>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить акт</AlertDialogTitle>
+              <AlertDialogDescription>
+                Вы уверены, что хотите удалить акт &quot;{act.number}&quot;? Это действие нельзя отменить.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteMutation.mutate()}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                Удалить
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={isSignDialogOpen} onOpenChange={setIsSignDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Подписать акт</AlertDialogTitle>
+              <AlertDialogDescription>
+                Подписать акт &quot;{act.number}&quot;?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction onClick={() => signMutation.mutate()}>
+                Подписать
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

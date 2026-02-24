@@ -20,6 +20,16 @@ import { api, FrameworkContractDetail as FCDetail } from '../lib/api';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Label } from './ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount, formatCurrency } from '../lib/utils';
 import { CONSTANTS } from '../constants';
@@ -31,6 +41,9 @@ export function FrameworkContractDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('info');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isActivateDialogOpen, setIsActivateDialogOpen] = useState(false);
+  const [isTerminateDialogOpen, setIsTerminateDialogOpen] = useState(false);
 
   // Загрузка рамочного договора
   const { data: frameworkContract, isLoading } = useQuery({
@@ -87,21 +100,15 @@ export function FrameworkContractDetail() {
   });
 
   const handleDelete = () => {
-    if (frameworkContract && confirm(`Вы уверены, что хотите удалить рамочный договор "${frameworkContract.name}"?`)) {
-      deleteMutation.mutate();
-    }
+    setIsDeleteDialogOpen(true);
   };
 
   const handleActivate = () => {
-    if (confirm('Активировать рамочный договор?')) {
-      activateMutation.mutate();
-    }
+    setIsActivateDialogOpen(true);
   };
 
   const handleTerminate = () => {
-    if (confirm('Расторгнуть рамочный договор? Это действие нельзя отменить.')) {
-      terminateMutation.mutate();
-    }
+    setIsTerminateDialogOpen(true);
   };
 
   const getStatusBadge = (status: string, isActive: boolean) => {
@@ -269,6 +276,63 @@ export function FrameworkContractDetail() {
       {activeTab === 'info' && <InfoTab frameworkContract={frameworkContract} />}
       {activeTab === 'price-lists' && <PriceListsTab frameworkContract={frameworkContract} />}
       {activeTab === 'contracts' && <ContractsTab contracts={contracts || []} />}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить рамочный договор</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить рамочный договор &quot;{frameworkContract.name}&quot;? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate()}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isActivateDialogOpen} onOpenChange={setIsActivateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Активировать договор</AlertDialogTitle>
+            <AlertDialogDescription>
+              Активировать рамочный договор?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={() => activateMutation.mutate()}>
+              Активировать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isTerminateDialogOpen} onOpenChange={setIsTerminateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Расторгнуть договор</AlertDialogTitle>
+            <AlertDialogDescription>
+              Расторгнуть рамочный договор? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => terminateMutation.mutate()}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Расторгнуть
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -395,6 +459,7 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedPriceLists, setSelectedPriceLists] = useState<number[]>([]);
+  const [removePriceListTarget, setRemovePriceListTarget] = useState<{ id: number; name: string } | null>(null);
 
   // Загрузка всех прайс-листов
   const { data: allPriceLists } = useQuery({
@@ -440,9 +505,7 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
   };
 
   const handleRemovePriceList = (priceListId: number, priceListName: string) => {
-    if (confirm(`Удалить прайс-лист "${priceListName}" из договора?`)) {
-      removePriceListMutation.mutate([priceListId]);
-    }
+    setRemovePriceListTarget({ id: priceListId, name: priceListName });
   };
 
   // Фильтруем доступные для добавления прайс-листы
@@ -477,6 +540,26 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
             isPending={addPriceListsMutation.isPending}
           />
         )}
+
+        <AlertDialog open={removePriceListTarget !== null} onOpenChange={(open) => { if (!open) setRemovePriceListTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить прайс-лист</AlertDialogTitle>
+              <AlertDialogDescription>
+                Удалить прайс-лист &quot;{removePriceListTarget?.name}&quot; из договора?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => { if (removePriceListTarget) removePriceListMutation.mutate([removePriceListTarget.id]); }}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                Удалить
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
@@ -532,6 +615,26 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
           isPending={addPriceListsMutation.isPending}
         />
       )}
+
+      <AlertDialog open={removePriceListTarget !== null} onOpenChange={(open) => { if (!open) setRemovePriceListTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить прайс-лист</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить прайс-лист &quot;{removePriceListTarget?.name}&quot; из договора?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (removePriceListTarget) removePriceListMutation.mutate([removePriceListTarget.id]); }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

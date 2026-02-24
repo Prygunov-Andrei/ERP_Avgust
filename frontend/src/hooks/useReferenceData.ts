@@ -16,24 +16,26 @@ const GC_TIME = CONSTANTS.QUERY_GC_TIME_MS;
 /**
  * Хук для загрузки списка объектов строительства
  */
-export const useObjects = (filters?: { status?: string; search?: string }) => {
+export const useObjects = (filters?: { status?: string; search?: string }, options?: { enabled?: boolean; retry?: boolean | number }) => {
   return useQuery({
     queryKey: ['objects', filters],
     queryFn: () => api.getObjects(filters),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
+    ...options,
   });
 };
 
 /**
  * Хук для загрузки списка контрагентов
  */
-export const useCounterparties = (filters?: { search?: string }) => {
+export const useCounterparties = (filters?: { search?: string }, options?: { enabled?: boolean; retry?: boolean | number }) => {
   return useQuery({
     queryKey: ['counterparties', filters],
     queryFn: () => api.getCounterparties(filters),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
+    ...options,
   });
 };
 

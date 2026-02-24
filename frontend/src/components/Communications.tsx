@@ -10,6 +10,16 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount, formatCurrency } from '../lib/utils';
 import { CONSTANTS } from '../constants';
@@ -18,6 +28,7 @@ export function Communications() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCorrespondence, setSelectedCorrespondence] = useState<Correspondence | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     contract: '',
@@ -178,9 +189,7 @@ export function Communications() {
   };
 
   const handleDelete = (id: number) => {
-    if (confirm('Вы уверены, что хотите удалить это письмо?')) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteTargetId(id);
   };
 
   const resetForm = () => {
@@ -850,6 +859,26 @@ export function Communications() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteTargetId !== null} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить письмо</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить это письмо? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (deleteTargetId !== null) deleteMutation.mutate(deleteTargetId); }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Detail Dialog */}
       {selectedCorrespondence && !isEditDialogOpen && (

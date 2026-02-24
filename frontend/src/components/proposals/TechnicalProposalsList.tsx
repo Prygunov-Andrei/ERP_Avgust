@@ -1,28 +1,53 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
-import { Plus, Search, Trash2, Copy, FileText } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { api, TechnicalProposalListItem } from '../../lib/api';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
-import { toast } from 'sonner';
 import { CreateTechnicalProposalDialog } from './CreateTechnicalProposalDialog';
 import { useObjects, useLegalEntities } from '../../hooks';
 import { formatDate, formatCurrency } from '../../lib/utils';
 import { CONSTANTS } from '../../constants';
 
+const getDueDateStyle = (dueDate: string | null): string => {
+  if (!dueDate) return '';
+  const due = new Date(dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 'bg-red-50';
+  if (diffDays <= 3) return 'bg-orange-50';
+  return '';
+};
+
+const getDueDateBadge = (dueDate: string | null) => {
+  if (!dueDate) return null;
+  const due = new Date(dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) {
+    return <Badge className="bg-red-100 text-red-800 ml-1 text-[10px]">просрочено</Badge>;
+  }
+  if (diffDays <= 3) {
+    return <Badge className="bg-orange-100 text-orange-800 ml-1 text-[10px]">{diffDays === 0 ? 'сегодня' : `${diffDays} дн.`}</Badge>;
+  }
+  return null;
+};
+
 export function TechnicalProposalsList() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [objectFilter, setObjectFilter] = useState('');
   const [legalEntityFilter, setLegalEntityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  // Загрузка ТКП
   const { data: tkpData, isLoading } = useQuery({
     queryKey: ['technical-proposals', { search: searchQuery, object: objectFilter, legal_entity: legalEntityFilter, status: statusFilter }],
     queryFn: () => api.getTechnicalProposals({
@@ -34,46 +59,8 @@ export function TechnicalProposalsList() {
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
-  // Загрузка справочников для фильтров с кешированием
   const { data: objects } = useObjects();
   const { data: legalEntities } = useLegalEntities();
-
-  // Удаление ТКП
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteTechnicalProposal(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['technical-proposals'] });
-      toast.success('ТКП удалено');
-    },
-    onError: (error: Error) => {
-      toast.error(`Ошибка: ${error.message}`);
-    },
-  });
-
-  // Создание версии
-  const createVersionMutation = useMutation({
-    mutationFn: (id: number) => api.createTechnicalProposalVersion(id),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['technical-proposals'] });
-      toast.success('Версия создана');
-      navigate(`/proposals/technical-proposals/${data.id}`);
-    },
-    onError: (error: Error) => {
-      toast.error(`Ошибка: ${error.message}`);
-    },
-  });
-
-  const handleDelete = (id: number, name: string) => {
-    if (confirm(`Вы уверены, что хотите удалить ТКП "${name}"?`)) {
-      deleteMutation.mutate(id);
-    }
-  };
-
-  const handleCreateVersion = (id: number, versionNumber: number) => {
-    if (confirm(`Создать новую версию ТКП? Текущая версия: ${versionNumber}. Новая версия будет: ${versionNumber + 1}`)) {
-      createVersionMutation.mutate(id);
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -89,9 +76,12 @@ export function TechnicalProposalsList() {
 
   const tkpList = tkpData?.results || [];
 
+  const handleRowClick = (tkp: TechnicalProposalListItem) => {
+    navigate(`/proposals/technical-proposals/${tkp.id}`);
+  };
+
   return (
     <div className="p-6 space-y-6">
-      {/* Заголовок */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl">Технико-Коммерческие Предложения</h1>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -100,7 +90,6 @@ export function TechnicalProposalsList() {
         </Button>
       </div>
 
-      {/* Фильтры */}
       <div className="bg-white p-4 rounded-lg border space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
@@ -124,7 +113,7 @@ export function TechnicalProposalsList() {
               onChange={(e) => setObjectFilter(e.target.value)}
             >
               <option value="">Все объекты</option>
-              {objects?.results?.map((obj) => (
+              {objects?.map((obj) => (
                 <option key={obj.id} value={obj.id}>{obj.name}</option>
               ))}
             </select>
@@ -138,7 +127,7 @@ export function TechnicalProposalsList() {
               onChange={(e) => setLegalEntityFilter(e.target.value)}
             >
               <option value="">Все компании</option>
-              {legalEntities?.results?.map((entity) => (
+              {legalEntities?.map((entity) => (
                 <option key={entity.id} value={entity.id}>{entity.name}</option>
               ))}
             </select>
@@ -177,49 +166,57 @@ export function TechnicalProposalsList() {
         </div>
       </div>
 
-      {/* Таблица */}
       <div className="bg-white rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Номер</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Исх. номер</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Название</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Создано</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата выдачи</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Объект</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Компания</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Сумма</th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Версия</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {isLoading ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                     Загрузка...
                   </td>
                 </tr>
               ) : tkpList.length > 0 ? (
                 tkpList.map((tkp) => (
-                  <tr key={tkp.id} className="hover:bg-gray-50">
+                  <tr
+                    key={tkp.id}
+                    className={`hover:bg-gray-100 cursor-pointer transition-colors ${getDueDateStyle(tkp.due_date)}`}
+                    onClick={() => handleRowClick(tkp)}
+                    role="link"
+                    tabIndex={0}
+                    aria-label={`Открыть ТКП ${tkp.number}`}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleRowClick(tkp); }}
+                  >
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => navigate(`/proposals/technical-proposals/${tkp.id}`)}
-                        className="text-blue-600 hover:underline font-medium"
-                      >
-                        {tkp.number}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {tkp.outgoing_number || <span className="text-gray-400">—</span>}
+                      <span className="text-blue-600 font-medium">{tkp.number}</span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="max-w-xs truncate">{tkp.name}</div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(tkp.date)}</td>
+                    <td className="px-4 py-3 text-gray-600 text-sm">{formatDate(tkp.created_at)}</td>
+                    <td className="px-4 py-3 text-sm">
+                      {tkp.due_date ? (
+                        <span className="flex items-center gap-1">
+                          {formatDate(tkp.due_date)}
+                          {getDueDateBadge(tkp.due_date)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="max-w-xs truncate text-gray-600">{tkp.object_name}</div>
                     </td>
@@ -231,47 +228,13 @@ export function TechnicalProposalsList() {
                       {formatCurrency(tkp.total_amount)}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        {tkp.parent_version && (
-                          <FileText className="w-3 h-3 text-gray-400" />
-                        )}
-                        <span className="text-sm text-gray-600">v{tkp.version_number}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/proposals/technical-proposals/${tkp.id}`)}
-                          title="Открыть"
-                        >
-                          <FileText className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCreateVersion(tkp.id, tkp.version_number)}
-                          title="Создать версию"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(tkp.id, tkp.name)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Удалить"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <span className="text-sm text-gray-600">v{tkp.version_number}</span>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                     Нет данных
                   </td>
                 </tr>
@@ -280,7 +243,6 @@ export function TechnicalProposalsList() {
           </table>
         </div>
 
-        {/* Пагинация */}
         {tkpData && tkpData.count > 0 && (
           <div className="px-4 py-3 border-t bg-gray-50">
             <div className="text-sm text-gray-600">
@@ -290,7 +252,6 @@ export function TechnicalProposalsList() {
         )}
       </div>
 
-      {/* Диалог создания */}
       <CreateTechnicalProposalDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}

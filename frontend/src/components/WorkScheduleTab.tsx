@@ -9,6 +9,16 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount, formatCurrency } from '../lib/utils';
 import { CONSTANTS } from '../constants';
@@ -20,6 +30,7 @@ interface WorkScheduleTabProps {
 export function WorkScheduleTab({ contractId }: WorkScheduleTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<WorkScheduleItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<WorkScheduleItem | null>(null);
   const queryClient = useQueryClient();
 
   // Получаем данные договора для валидации дат
@@ -80,9 +91,7 @@ export function WorkScheduleTab({ contractId }: WorkScheduleTabProps) {
   };
 
   const handleDelete = (item: WorkScheduleItem) => {
-    if (confirm(`Удалить задачу "${item.name}"?`)) {
-      deleteMutation.mutate(item.id);
-    }
+    setDeleteTarget(item);
   };
 
   const getStatusLabel = (status: string) => {
@@ -248,6 +257,26 @@ export function WorkScheduleTab({ contractId }: WorkScheduleTabProps) {
           </div>
         </div>
       )}
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить задачу</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить задачу &quot;{deleteTarget?.name}&quot;? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

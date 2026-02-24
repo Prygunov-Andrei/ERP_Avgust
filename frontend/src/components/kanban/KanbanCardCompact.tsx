@@ -37,6 +37,7 @@ export const KanbanCardCompact = ({ card, index, onDoubleClick, tunnelAction }: 
   const color = (card.meta?.color as CardColor) || null;
   const objectName = card.meta?.erp_object_name || '';
   const systemName = card.meta?.system_name || '';
+  const counterpartyName = card.meta?.erp_counterparty_name || '';
   const colorStyle = color ? COLOR_STYLES[color] || {} : {};
 
   return (
@@ -71,6 +72,10 @@ export const KanbanCardCompact = ({ card, index, onDoubleClick, tunnelAction }: 
 
           {systemName && (
             <div className="text-xs text-muted-foreground/70 truncate">{systemName}</div>
+          )}
+
+          {counterpartyName && (
+            <div className="text-xs text-muted-foreground/60 truncate mt-0.5">{counterpartyName}</div>
           )}
 
           {tunnelAction && (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   api,
@@ -11,7 +11,7 @@ import {
   CreateSalaryRecordData,
   LegalEntity,
   EmployeeBrief,
-  ERP_SECTIONS,
+  ERP_PERMISSION_TREE,
   ERPPermissionLevel,
   ERPPermissions,
 } from '../lib/api';
@@ -324,8 +324,11 @@ interface EmployeeFormDialogProps {
 
 const defaultErpPermissions = (): ERPPermissions => {
   const perms: ERPPermissions = {};
-  ERP_SECTIONS.forEach((s) => {
-    perms[s.code] = 'none';
+  ERP_PERMISSION_TREE.forEach((section) => {
+    perms[section.code] = 'none';
+    section.children.forEach((child) => {
+      perms[`${section.code}.${child.code}`] = 'none';
+    });
   });
   return perms;
 };
@@ -363,6 +366,23 @@ function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities }: Emp
     queryKey: ['employees', '', 'all', 'all'],
     queryFn: () => api.getEmployees(),
   });
+
+  // All users for account linking
+  const { data: usersData } = useQuery({
+    queryKey: ['users-for-link'],
+    queryFn: async () => {
+      const res = await api.getUsers();
+      return res.results || [];
+    },
+  });
+  const allUsers = (usersData || []) as Array<{ id: number; username: string; first_name: string; last_name: string }>;
+
+  const linkedUserIds = new Set(
+    allEmployees
+      .filter((e: any) => e.id !== employee?.id && e.user)
+      .map((e: any) => e.user),
+  );
+  const availableUsers = allUsers.filter((u) => !linkedUserIds.has(u.id) || u.id === formData.user);
 
   const saveMutation = useMutation({
     mutationFn: (data: CreateEmployeeData) =>
@@ -508,6 +528,28 @@ function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities }: Emp
                     onChange={(e) => handleFieldChange('full_name', e.target.value)}
                     placeholder="Иванов Иван Иванович"
                   />
+                </div>
+                <div className="col-span-2">
+                  <Label>Учётная запись (User)</Label>
+                  <Select
+                    value={formData.user ? String(formData.user) : '_none'}
+                    onValueChange={(v) => handleFieldChange('user', v === '_none' ? null : Number(v))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Не привязана" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">— Не привязана —</SelectItem>
+                      {availableUsers.map((u) => (
+                        <SelectItem key={u.id} value={String(u.id)}>
+                          {u.username}{u.first_name || u.last_name ? ` (${[u.first_name, u.last_name].filter(Boolean).join(' ')})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Привязка к учётной записи даёт сотруднику возможность входить в систему и определяет его права доступа
+                  </p>
                 </div>
                 <div>
                   <Label>Дата рождения</Label>
@@ -994,8 +1036,8 @@ function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities }: Emp
                   Разграничение доступа по разделам ERP
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Настройте уровень доступа сотрудника к каждому разделу системы.
-                  Действует только если сотрудник привязан к учётной записи ERP.
+                  Настройте уровень доступа сотрудника к каждому разделу и подразделу системы.
+                  При изменении уровня раздела все подразделы обновятся каскадно.
                 </p>
                 <div className="border rounded-xl overflow-hidden">
                   <table className="w-full text-sm">
@@ -1020,24 +1062,61 @@ function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities }: Emp
                       </tr>
                     </thead>
                     <tbody>
-                      {ERP_SECTIONS.map((section, idx) => {
-                        const currentLevel = formData.erp_permissions?.[section.code] || 'none';
+                      {ERP_PERMISSION_TREE.map((section, idx) => {
+                        const sectionLevel = formData.erp_permissions?.[section.code] || 'none';
+                        const hasChildren = section.children.length > 0;
+
+                        const handleSectionChange = (level: ERPPermissionLevel) => {
+                          setFormData((prev) => {
+                            const updated = { ...prev.erp_permissions, [section.code]: level };
+                            section.children.forEach((child) => {
+                              updated[`${section.code}.${child.code}`] = level;
+                            });
+                            return { ...prev, erp_permissions: updated };
+                          });
+                        };
+
                         return (
-                          <tr key={section.code} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                            <td className="px-4 py-3 font-medium">{section.label}</td>
-                            {(['none', 'read', 'edit'] as ERPPermissionLevel[]).map((level) => (
-                              <td key={level} className="text-center px-4 py-3">
-                                <input
-                                  type="radio"
-                                  name={`perm-${section.code}`}
-                                  checked={currentLevel === level}
-                                  onChange={() => handlePermissionChange(section.code, level)}
-                                  className="w-4 h-4 cursor-pointer accent-blue-600"
-                                  aria-label={`${section.label}: ${level}`}
-                                />
-                              </td>
-                            ))}
-                          </tr>
+                          <Fragment key={section.code}>
+                            <tr className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                              <td className="px-4 py-3 font-semibold">{section.label}</td>
+                              {(['none', 'read', 'edit'] as ERPPermissionLevel[]).map((level) => (
+                                <td key={level} className="text-center px-4 py-3">
+                                  <input
+                                    type="radio"
+                                    name={`perm-${section.code}`}
+                                    checked={sectionLevel === level}
+                                    onChange={() => handleSectionChange(level)}
+                                    className="w-4 h-4 cursor-pointer accent-blue-600"
+                                    aria-label={`${section.label}: ${level}`}
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                            {hasChildren && section.children.map((child) => {
+                              const childKey = `${section.code}.${child.code}`;
+                              const childLevel = formData.erp_permissions?.[childKey] || sectionLevel;
+                              return (
+                                <tr key={childKey} className="bg-white/50">
+                                  <td className="pl-10 pr-4 py-2 text-gray-600">
+                                    <span className="text-gray-300 mr-2">└</span>{child.label}
+                                  </td>
+                                  {(['none', 'read', 'edit'] as ERPPermissionLevel[]).map((level) => (
+                                    <td key={level} className="text-center px-4 py-2">
+                                      <input
+                                        type="radio"
+                                        name={`perm-${childKey}`}
+                                        checked={childLevel === level}
+                                        onChange={() => handlePermissionChange(childKey, level)}
+                                        className="w-4 h-4 cursor-pointer accent-blue-500"
+                                        aria-label={`${child.label}: ${level}`}
+                                      />
+                                    </td>
+                                  ))}
+                                </tr>
+                              );
+                            })}
+                          </Fragment>
                         );
                       })}
                     </tbody>

@@ -10,8 +10,6 @@ import {
   Plus, 
   Search, 
   FileText, 
-  Copy, 
-  Trash2,
   Send,
   CheckCircle2,
   XCircle,
@@ -19,6 +17,16 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { toast } from 'sonner';
 import { CreateMountingProposalDialog } from './CreateMountingProposalDialog';
 import { useObjects, useCounterparties } from '../../hooks';
@@ -29,6 +37,9 @@ export function MountingProposalsList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [versionTarget, setVersionTarget] = useState<{ id: number; versionNumber: number } | null>(null);
+  const [telegramTarget, setTelegramTarget] = useState<{ id: number; number: string } | null>(null);
   
   // Фильтры
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,21 +111,15 @@ export function MountingProposalsList() {
   });
 
   const handleDelete = (id: number, name: string) => {
-    if (confirm(`Вы уверены, что хотите удалить МП "${name}"?`)) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteTarget({ id, name });
   };
 
   const handleCreateVersion = (id: number, versionNumber: number) => {
-    if (confirm(`Создать новую версию МП? Текущая версия: ${versionNumber}. Новая версия будет: ${versionNumber + 1}`)) {
-      createVersionMutation.mutate(id);
-    }
+    setVersionTarget({ id, versionNumber });
   };
 
   const handlePublishToTelegram = (id: number, number: string) => {
-    if (confirm(`Опубликовать МП ${number} в Telegram?`)) {
-      publishToTelegramMutation.mutate(id);
-    }
+    setTelegramTarget({ id, number });
   };
 
   const getStatusBadge = (status: string) => {
@@ -258,7 +263,7 @@ export function MountingProposalsList() {
                 <th className="px-4 py-3 text-left text-gray-600">Статус</th>
                 <th className="px-4 py-3 text-right text-gray-600">Сумма</th>
                 <th className="px-4 py-3 text-center text-gray-600">Версия</th>
-                <th className="px-4 py-3 text-right text-gray-600">Действия</th>
+                <th className="px-4 py-3 w-12" aria-hidden />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -270,15 +275,21 @@ export function MountingProposalsList() {
                 </tr>
               ) : mpList.length > 0 ? (
                 mpList.map((mp) => (
-                  <tr key={mp.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => navigate(`/proposals/mounting-proposals/${mp.id}`)}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {mp.number}
-                      </button>
-                    </td>
+                  <tr
+                    key={mp.id}
+                    role="link"
+                    tabIndex={0}
+                    className="hover:bg-gray-50 cursor-pointer"
+                    aria-label={`Открыть МП ${mp.number} ${mp.name}`}
+                    onClick={() => navigate(`/proposals/mounting-proposals/${mp.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(`/proposals/mounting-proposals/${mp.id}`);
+                      }
+                    }}
+                  >
+                    <td className="px-4 py-3 text-gray-900">{mp.number}</td>
                     <td className="px-4 py-3">
                       <div className="max-w-xs truncate text-gray-900">{mp.name}</div>
                     </td>
@@ -294,7 +305,11 @@ export function MountingProposalsList() {
                     <td className="px-4 py-3">
                       {mp.parent_tkp_number ? (
                         <button
-                          onClick={() => navigate(`/proposals/technical-proposals/${mp.parent_tkp}`)}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/proposals/technical-proposals/${mp.parent_tkp}`);
+                          }}
                           className="text-blue-600 hover:underline"
                         >
                           {mp.parent_tkp_number}
@@ -318,39 +333,20 @@ export function MountingProposalsList() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      {!mp.telegram_published && mp.status === 'published' && (
                         <Button
-                          onClick={() => navigate(`/proposals/mounting-proposals/${mp.id}`)}
-                          className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3"
-                          title="Открыть"
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handlePublishToTelegram(mp.id, mp.number)}
+                          className="h-8 w-8 p-0 bg-green-100 text-green-700 hover:bg-green-200"
+                          title="Опубликовать в Telegram"
+                          aria-label={`Опубликовать МП ${mp.number} в Telegram`}
                         >
-                          <FileText className="w-4 h-4" />
+                          <Send className="w-4 h-4" />
                         </Button>
-                        {!mp.telegram_published && mp.status === 'published' && (
-                          <Button
-                            onClick={() => handlePublishToTelegram(mp.id, mp.number)}
-                            className="bg-green-100 text-green-700 hover:bg-green-200 px-3"
-                            title="Опубликовать в Telegram"
-                          >
-                            <Send className="w-4 h-4" />
-                          </Button>
-                        )}
-                        <Button
-                          onClick={() => handleCreateVersion(mp.id, mp.version_number)}
-                          className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-3"
-                          title="Создать версию"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(mp.id, mp.name)}
-                          className="bg-red-100 text-red-700 hover:bg-red-200 px-3"
-                          title="Удалить"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -399,6 +395,70 @@ export function MountingProposalsList() {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить МП</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить МП &ldquo;{deleteTarget?.name}&rdquo;? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+              }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!versionTarget} onOpenChange={(open) => !open && setVersionTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Создать новую версию</AlertDialogTitle>
+            <AlertDialogDescription>
+              Создать новую версию МП? Текущая версия: {versionTarget?.versionNumber}. Новая версия будет: {(versionTarget?.versionNumber ?? 0) + 1}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (versionTarget) createVersionMutation.mutate(versionTarget.id);
+              }}
+            >
+              Создать версию
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!telegramTarget} onOpenChange={(open) => !open && setTelegramTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Публикация в Telegram</AlertDialogTitle>
+            <AlertDialogDescription>
+              Опубликовать МП {telegramTarget?.number} в Telegram?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (telegramTarget) publishToTelegramMutation.mutate(telegramTarget.id);
+              }}
+            >
+              Опубликовать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

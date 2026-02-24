@@ -9,6 +9,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { ArrowLeft, Loader2, FileSpreadsheet, Info, DollarSign, History, Users, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -28,6 +38,8 @@ export function MountingEstimateDetail() {
   const [isAgreeDialogOpen, setAgreeDialogOpen] = useState(false);
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCounterparty, setSelectedCounterparty] = useState<number>(0);
+
+  const [isVersionDialogOpen, setIsVersionDialogOpen] = useState(false);
 
   const [editForm, setEditForm] = useState({
     name: '',
@@ -97,9 +109,7 @@ export function MountingEstimateDetail() {
   });
 
   const handleCreateVersion = () => {
-    if (window.confirm('Создать новую версию монтажной сметы? Текущая версия будет помечена как неактуальная.')) {
-      createVersionMutation.mutate();
-    }
+    setIsVersionDialogOpen(true);
   };
 
   const handleAgree = () => {
@@ -403,6 +413,24 @@ export function MountingEstimateDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Version AlertDialog */}
+      <AlertDialog open={isVersionDialogOpen} onOpenChange={setIsVersionDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Новая версия монтажной сметы</AlertDialogTitle>
+            <AlertDialogDescription>
+              Создать новую версию монтажной сметы? Текущая версия будет помечена как неактуальная.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { createVersionMutation.mutate(); setIsVersionDialogOpen(false); }}>
+              Создать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Agree Dialog */}
       <Dialog open={isAgreeDialogOpen} onOpenChange={setAgreeDialogOpen}>

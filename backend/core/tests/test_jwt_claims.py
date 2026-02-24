@@ -3,21 +3,22 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from personnel.models import Employee
+from personnel.models import Employee, default_erp_permissions
 
 
 @pytest.mark.django_db
 def test_login_token_contains_roles_and_erp_permissions(api_client):
+    perms = default_erp_permissions()
+    perms['supply'] = 'edit'
+    perms['supply.warehouse'] = 'edit'
+    perms['objects'] = 'read'
+    perms['kanban_admin'] = 'none'
+
     user = User.objects.create_user(username='u1', password='pass12345')
     Employee.objects.create(
         full_name='Test User',
         user=user,
-        erp_permissions={
-            'supply': 'edit',
-            'warehouse': 'edit',
-            'object_tasks': 'read',
-            'kanban_admin': 'none',
-        },
+        erp_permissions=perms,
     )
 
     resp = api_client.post('/api/v1/auth/login/', {'username': 'u1', 'password': 'pass12345'}, format='json')
@@ -29,4 +30,5 @@ def test_login_token_contains_roles_and_erp_permissions(api_client):
     assert 'roles' in payload
     assert set(payload['roles']) >= {'supply_operator', 'warehouse', 'object_tasks'}
     assert payload['erp_permissions']['supply'] == 'edit'
+    assert payload['erp_permissions']['supply.warehouse'] == 'edit'
 

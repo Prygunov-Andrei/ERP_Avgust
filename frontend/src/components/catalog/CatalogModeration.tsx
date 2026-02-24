@@ -8,6 +8,10 @@ import { Product, ProductDuplicate } from '../../types/catalog';
 import { Button } from '../ui/button';
 import { CheckCircle, Archive, Search as SearchIcon, GitMerge } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { useNavigate } from 'react-router';
 import { MergeProductsModal } from './MergeProductsModal';
 
@@ -19,6 +23,7 @@ export function CatalogModeration() {
   const [isSearchingDuplicates, setIsSearchingDuplicates] = useState(false);
   const [mergeModalOpen, setMergeModalOpen] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [archiveTarget, setArchiveTarget] = useState<number | null>(null);
 
   // Загрузка новых товаров
   const { data: newProductsData, isLoading: newProductsLoading } = useQuery({
@@ -230,15 +235,7 @@ export function CatalogModeration() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  'Вы уверены, что хотите архивировать этот товар?'
-                                )
-                              ) {
-                                archiveMutation.mutate(product.id);
-                              }
-                            }}
+                            onClick={() => setArchiveTarget(product.id)}
                             disabled={archiveMutation.isPending}
                             className="text-red-600 hover:bg-red-50"
                           >
@@ -357,6 +354,28 @@ export function CatalogModeration() {
           await mergeMutation.mutateAsync({ target_id: targetId, source_ids: sourceIds });
         }}
       />
+
+      <AlertDialog open={archiveTarget !== null} onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Архивировать товар?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите архивировать этот товар? Архивированный товар не будет отображаться в каталоге.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (archiveTarget !== null) archiveMutation.mutate(archiveTarget);
+                setArchiveTarget(null);
+              }}
+            >
+              Архивировать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

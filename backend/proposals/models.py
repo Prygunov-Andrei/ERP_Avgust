@@ -162,6 +162,12 @@ class TechnicalProposal(CachedPropertyMixin, TimestampedModel):
         verbose_name='Срок проведения работ',
         help_text='Текст с описанием срока'
     )
+    due_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Дата выдачи ТКП',
+        help_text='Крайний срок, к которому ТКП должно быть выдано Заказчику'
+    )
     validity_days = models.PositiveIntegerField(
         default=30,
         verbose_name='Срок действия предложения (дни)'
@@ -203,6 +209,11 @@ class TechnicalProposal(CachedPropertyMixin, TimestampedModel):
         blank=True,
         related_name='approved_tkps',
         verbose_name='Кто утвердил'
+    )
+    checked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата проверки'
     )
     approved_at = models.DateTimeField(
         null=True,
@@ -501,6 +512,35 @@ class TechnicalProposal(CachedPropertyMixin, TimestampedModel):
             TKPFrontOfWork.objects.bulk_create(new_front_of_work)
         
         return new_tkp
+
+
+class TKPStatusHistory(models.Model):
+    """Лог смены статуса ТКП"""
+    tkp = models.ForeignKey(
+        TechnicalProposal,
+        on_delete=models.CASCADE,
+        related_name='status_history',
+        verbose_name='ТКП'
+    )
+    old_status = models.CharField(max_length=20, blank=True, verbose_name='Предыдущий статус')
+    new_status = models.CharField(max_length=20, verbose_name='Новый статус')
+    changed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='tkp_status_changes',
+        verbose_name='Кто изменил'
+    )
+    changed_at = models.DateTimeField(auto_now_add=True, verbose_name='Когда')
+    comment = models.TextField(blank=True, verbose_name='Комментарий')
+
+    class Meta:
+        ordering = ['-changed_at']
+        verbose_name = 'История статусов ТКП'
+        verbose_name_plural = 'История статусов ТКП'
+
+    def __str__(self):
+        return f"{self.tkp.number}: {self.old_status} → {self.new_status}"
 
 
 class TKPEstimateSection(CachedPropertyMixin, TimestampedModel):
@@ -883,16 +923,26 @@ class MountingProposal(TimestampedModel):
             self.man_hours = totals['hours'] or Decimal('0')
 
     @classmethod
-    def create_from_tkp(cls, tkp: TechnicalProposal, created_by: User) -> 'MountingProposal':
-        """Создать МП на основе ТКП"""
+    def create_from_tkp(cls, tkp: TechnicalProposal, created_by: User, **extra) -> 'MountingProposal':
+        """Создать МП на основе ТКП с возможностью передать дополнительные поля"""
         from datetime import date as date_today
-        return cls.objects.create(
-            name=f'МП к {tkp.name}',
-            date=date_today.today(),
-            object=tkp.object,
-            parent_tkp=tkp,
-            created_by=created_by
-        )
+        data = {
+            'name': f'МП к {tkp.name}',
+            'date': date_today.today(),
+            'object': tkp.object,
+            'parent_tkp': tkp,
+            'created_by': created_by,
+        }
+        for field in ('counterparty', 'total_amount', 'man_hours', 'notes'):
+            if field in extra:
+                data[field] = extra[field]
+        mp = cls.objects.create(**data)
+
+        if 'mounting_estimates_ids' in extra:
+            mp.mounting_estimates.set(extra['mounting_estimates_ids'])
+        if 'conditions_ids' in extra:
+            mp.conditions.set(extra['conditions_ids'])
+        return mp
 
     def create_new_version(self) -> 'MountingProposal':
         """Создать новую версию МП"""

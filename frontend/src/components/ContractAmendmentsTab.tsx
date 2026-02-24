@@ -8,6 +8,16 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Plus, Loader2, FileText, MoreVertical, Trash2, Download } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount, formatCurrency } from '../lib/utils';
 import { CONSTANTS } from '../constants';
@@ -19,6 +29,7 @@ interface ContractAmendmentsTabProps {
 export function ContractAmendmentsTab({ contractId }: ContractAmendmentsTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAmendment, setEditingAmendment] = useState<ContractAmendment | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ContractAmendment | null>(null);
   const queryClient = useQueryClient();
 
   const { data: amendments, isLoading } = useQuery({
@@ -55,9 +66,7 @@ export function ContractAmendmentsTab({ contractId }: ContractAmendmentsTabProps
   });
 
   const handleDelete = (amendment: ContractAmendment) => {
-    if (confirm(`Удалить дополнительное соглашение "${amendment.number}"?`)) {
-      deleteMutation.mutate(amendment.id);
-    }
+    setDeleteTarget(amendment);
   };
 
   if (isLoading) {
@@ -185,6 +194,28 @@ export function ContractAmendmentsTab({ contractId }: ContractAmendmentsTabProps
           </div>
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить соглашение</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить дополнительное соглашение &ldquo;{deleteTarget?.number}&rdquo;? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+              }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

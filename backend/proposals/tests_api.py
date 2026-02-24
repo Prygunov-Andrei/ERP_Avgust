@@ -708,3 +708,91 @@ class TKPFrontOfWorkAPITests(BaseAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.tkp_front.refresh_from_db()
         self.assertEqual(self.tkp_front.when_text, 'После начала работ')
+
+
+class TKPDueDateTests(BaseAPITestCase):
+    """Тесты для поля due_date в TechnicalProposal"""
+
+    def setUp(self):
+        super().setUp()
+        self.tkp = TechnicalProposal.objects.create(
+            name='ТКП с дедлайном',
+            date=date.today(),
+            object=self.object,
+            legal_entity=self.legal_entity,
+            created_by=self.user,
+            status='draft',
+        )
+
+    def test_create_tkp_without_due_date(self):
+        """ТКП создается без due_date (null)"""
+        self.assertIsNone(self.tkp.due_date)
+
+    def test_create_tkp_with_due_date(self):
+        """ТКП создается с due_date"""
+        tkp = TechnicalProposal.objects.create(
+            name='ТКП с дедлайном 2',
+            date=date.today(),
+            due_date=date.today() + timedelta(days=7),
+            object=self.object,
+            legal_entity=self.legal_entity,
+            created_by=self.user,
+        )
+        self.assertEqual(tkp.due_date, date.today() + timedelta(days=7))
+
+    def test_due_date_in_list_serializer(self):
+        """due_date присутствует в ответе списка ТКП"""
+        self.tkp.due_date = date.today() + timedelta(days=5)
+        self.tkp.save()
+        url = reverse('technical-proposal-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data.get('results', response.data)
+        tkp_data = next(t for t in results if t['id'] == self.tkp.id)
+        self.assertEqual(tkp_data['due_date'], str(date.today() + timedelta(days=5)))
+
+    def test_due_date_null_in_list_serializer(self):
+        """due_date = null в ответе списка ТКП, если не задан"""
+        url = reverse('technical-proposal-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data.get('results', response.data)
+        tkp_data = next(t for t in results if t['id'] == self.tkp.id)
+        self.assertIsNone(tkp_data['due_date'])
+
+    def test_due_date_in_detail_serializer(self):
+        """due_date присутствует в ответе детали ТКП"""
+        self.tkp.due_date = date.today() + timedelta(days=10)
+        self.tkp.save()
+        url = reverse('technical-proposal-detail', kwargs={'pk': self.tkp.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['due_date'], str(date.today() + timedelta(days=10)))
+
+    def test_update_due_date_via_api(self):
+        """due_date обновляется через PATCH"""
+        url = reverse('technical-proposal-detail', kwargs={'pk': self.tkp.pk})
+        new_date = date.today() + timedelta(days=14)
+        response = self.client.patch(url, {'due_date': str(new_date)}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.tkp.refresh_from_db()
+        self.assertEqual(self.tkp.due_date, new_date)
+
+    def test_clear_due_date_via_api(self):
+        """due_date можно очистить (null) через PATCH"""
+        self.tkp.due_date = date.today() + timedelta(days=5)
+        self.tkp.save()
+        url = reverse('technical-proposal-detail', kwargs={'pk': self.tkp.pk})
+        response = self.client.patch(url, {'due_date': None}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.tkp.refresh_from_db()
+        self.assertIsNone(self.tkp.due_date)
+
+    def test_due_date_past_is_allowed(self):
+        """due_date в прошлом допустима (ТКП может быть просроченным)"""
+        url = reverse('technical-proposal-detail', kwargs={'pk': self.tkp.pk})
+        past_date = date.today() - timedelta(days=5)
+        response = self.client.patch(url, {'due_date': str(past_date)}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.tkp.refresh_from_db()
+        self.assertEqual(self.tkp.due_date, past_date)

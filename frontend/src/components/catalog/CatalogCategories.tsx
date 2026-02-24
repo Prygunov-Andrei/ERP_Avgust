@@ -13,12 +13,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { ChevronRight, ChevronDown, Plus, Trash2, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '../ui/alert-dialog';
 
 export function CatalogCategories() {
   const queryClient = useQueryClient();
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Загрузка дерева категорий
   const { data: categoryTree, isLoading: treeLoading } = useCatalogCategoryTree();
@@ -129,10 +134,7 @@ export function CatalogCategories() {
 
   const handleDelete = () => {
     if (!selectedCategoryId) return;
-    
-    if (window.confirm('Вы уверены, что хотите удалить эту категорию?')) {
-      deleteMutation.mutate(selectedCategoryId);
-    }
+    setIsDeleteDialogOpen(true);
   };
 
   const toggleExpand = (id: number) => {
@@ -415,6 +417,29 @@ export function CatalogCategories() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить категорию?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить эту категорию? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (selectedCategoryId) deleteMutation.mutate(selectedCategoryId);
+                setIsDeleteDialogOpen(false);
+              }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

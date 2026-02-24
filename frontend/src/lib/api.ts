@@ -4002,6 +4002,7 @@ export interface TechnicalProposalListItem {
   outgoing_number: string | null;
   name: string;
   date: string;
+  due_date: string | null;
   object: number;
   object_name: string;
   object_address: string;
@@ -4049,6 +4050,9 @@ export interface TKPEstimateSection {
   subsections: TKPEstimateSubsection[];
   total_sale: string;
   total_purchase: string;
+  profit: string;
+  estimate_name: string | null;
+  estimate_number: string | null;
   created_at: string;
 }
 
@@ -4076,6 +4080,16 @@ export interface TKPFrontOfWork {
   created_at: string;
 }
 
+export interface TKPStatusHistoryItem {
+  id: number;
+  old_status: string;
+  new_status: string;
+  changed_by: number | null;
+  changed_by_name: string | null;
+  changed_at: string;
+  comment: string;
+}
+
 export interface TechnicalProposalDetail extends TechnicalProposalListItem {
   advance_required: string;
   work_duration: string;
@@ -4094,10 +4108,13 @@ export interface TechnicalProposalDetail extends TechnicalProposalListItem {
   };
   file_url: string | null;
   versions_count: number;
+  is_latest_version: boolean;
   signatory_name: string;
   signatory_position: string;
   checked_by_name: string | null;
   approved_by_name: string | null;
+  checked_at: string | null;
+  status_history: TKPStatusHistoryItem[];
 }
 
 // МП - Монтажные Предложения
@@ -4590,18 +4607,77 @@ export interface FNSEnrichResponse {
 // PERSONNEL TYPES (Персонал)
 // =====================================================================
 
-export const ERP_SECTIONS = [
-  { code: 'objects', label: 'Объекты' },
-  { code: 'payments', label: 'Платежи' },
-  { code: 'projects', label: 'Проекты и Сметы' },
-  { code: 'proposals', label: 'Предложения' },
-  { code: 'contracts', label: 'Договоры' },
-  { code: 'catalog', label: 'Каталог' },
-  { code: 'communications', label: 'Переписка' },
-  { code: 'settings', label: 'Настройки' },
-  { code: 'banking', label: 'Банковские операции' },
-  { code: 'banking_approve', label: 'Одобрение платежей' },
-] as const;
+export interface ERPPermissionChild {
+  code: string;
+  label: string;
+}
+
+export interface ERPPermissionSection {
+  code: string;
+  label: string;
+  children: ERPPermissionChild[];
+}
+
+export const ERP_PERMISSION_TREE: ERPPermissionSection[] = [
+  { code: 'dashboard', label: 'Пункт управления', children: [] },
+  { code: 'commercial', label: 'Коммерческие предложения', children: [
+    { code: 'kanban', label: 'Канбан КП' },
+    { code: 'tkp', label: 'ТКП' },
+    { code: 'mp', label: 'МП' },
+    { code: 'estimates', label: 'Сметы' },
+    { code: 'pricelists', label: 'Прайс-листы' },
+  ]},
+  { code: 'objects', label: 'Объекты', children: [] },
+  { code: 'finance', label: 'Финансы', children: [
+    { code: 'dashboard', label: 'Дашборд' },
+    { code: 'payments', label: 'Платежи' },
+    { code: 'statements', label: 'Выписки' },
+    { code: 'recurring', label: 'Периодические платежи' },
+    { code: 'debtors', label: 'Дебиторская задолженность' },
+    { code: 'accounting', label: 'Бухгалтерия' },
+    { code: 'budget', label: 'Расходный бюджет' },
+    { code: 'indicators', label: 'Финансовые показатели' },
+  ]},
+  { code: 'contracts', label: 'Договоры', children: [
+    { code: 'framework', label: 'Рамочные договоры' },
+    { code: 'object_contracts', label: 'Договоры по объектам' },
+    { code: 'estimates', label: 'Сметы' },
+    { code: 'mounting_estimates', label: 'Монтажные сметы' },
+    { code: 'acts', label: 'Акты' },
+    { code: 'household', label: 'Хозяйственные договоры' },
+  ]},
+  { code: 'supply', label: 'Снабжение и Склад', children: [
+    { code: 'kanban', label: 'Канбан снабжения' },
+    { code: 'invoices', label: 'Счета на оплату' },
+    { code: 'drivers', label: 'Календарь водителей' },
+    { code: 'moderation', label: 'Модерация товаров' },
+    { code: 'warehouse', label: 'Склад' },
+  ]},
+  { code: 'pto', label: 'ПТО', children: [
+    { code: 'projects', label: 'Проекты' },
+    { code: 'production', label: 'Производственная документация' },
+    { code: 'executive', label: 'Исполнительная документация' },
+    { code: 'samples', label: 'Образцы документов' },
+    { code: 'knowledge', label: 'Руководящие документы' },
+  ]},
+  { code: 'marketing', label: 'Маркетинг', children: [
+    { code: 'kanban', label: 'Канбан поиска объектов' },
+    { code: 'potential_customers', label: 'Потенциальные заказчики' },
+    { code: 'executors', label: 'Поиск исполнителей' },
+  ]},
+  { code: 'communications', label: 'Переписка', children: [] },
+  { code: 'settings', label: 'Справочники и настройки', children: [
+    { code: 'goods', label: 'Товары и услуги' },
+    { code: 'work_conditions', label: 'Фронт работ и монтажные условия' },
+    { code: 'personnel', label: 'Персонал' },
+    { code: 'counterparties', label: 'Контрагенты' },
+    { code: 'config', label: 'Настройки' },
+  ]},
+  { code: 'help', label: 'Справка', children: [] },
+  { code: 'finance_approve', label: 'Одобрение платежей', children: [] },
+  { code: 'supply_approve', label: 'Одобрение счетов', children: [] },
+  { code: 'kanban_admin', label: 'Администрирование канбана', children: [] },
+];
 
 export type ERPPermissionLevel = 'none' | 'read' | 'edit';
 export type ERPPermissions = Record<string, ERPPermissionLevel>;

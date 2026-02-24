@@ -9,6 +9,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { ArrowLeft, Loader2, FileText, Download, Plus, Edit2, Trash2, Check, Calendar, Users, Info, History } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,6 +33,8 @@ export function ProjectDetail() {
   const [editingNote, setEditingNote] = useState<ProjectNote | null>(null);
   const [approvalFile, setApprovalFile] = useState<File | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [deleteNoteTarget, setDeleteNoteTarget] = useState<number | null>(null);
+  const [isVersionDialogOpen, setIsVersionDialogOpen] = useState(false);
 
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['project', id],
@@ -150,9 +162,7 @@ export function ProjectDetail() {
   };
 
   const handleDeleteNote = (noteId: number) => {
-    if (window.confirm('Удалить это замечание?')) {
-      deleteNoteMutation.mutate(noteId);
-    }
+    setDeleteNoteTarget(noteId);
   };
 
   const handleApprovalSubmit = () => {
@@ -165,9 +175,7 @@ export function ProjectDetail() {
   };
 
   const handleCreateVersion = () => {
-    if (window.confirm('Создать новую версию проекта? Текущая версия будет помечена как неактуальная.')) {
-      createVersionMutation.mutate();
-    }
+    setIsVersionDialogOpen(true);
   };
 
   if (isLoading) {
@@ -609,6 +617,50 @@ export function ProjectDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Note AlertDialog */}
+      <AlertDialog open={deleteNoteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteNoteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить замечание</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить это замечание?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteNoteTarget !== null) {
+                  deleteNoteMutation.mutate(deleteNoteTarget);
+                  setDeleteNoteTarget(null);
+                }
+              }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Create Version AlertDialog */}
+      <AlertDialog open={isVersionDialogOpen} onOpenChange={setIsVersionDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Новая версия проекта</AlertDialogTitle>
+            <AlertDialogDescription>
+              Создать новую версию проекта? Текущая версия будет помечена как неактуальная.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { createVersionMutation.mutate(); setIsVersionDialogOpen(false); }}>
+              Создать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Version History Dialog */}
       <Dialog open={isVersionHistoryOpen} onOpenChange={setVersionHistoryOpen}>

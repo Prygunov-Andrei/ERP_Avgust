@@ -12,17 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { Textarea } from './ui/textarea';
-import { Building2, CreditCard, Loader2, Plus, MoreVertical, Pencil, Trash2, FolderTree, ListTree, ScrollText, Check, X, ChevronRight, ShieldCheck, RefreshCw, Users, Sparkles, Landmark } from 'lucide-react';
+import { Building2, CreditCard, Loader2, Plus, MoreVertical, Pencil, Trash2, FolderTree, ListTree, ScrollText, Check, X, ChevronRight, ShieldCheck, RefreshCw, Sparkles, Landmark } from 'lucide-react';
 import { toast } from 'sonner';
 import { TaxSystemsTab } from './TaxSystemsTab';
-import { PersonnelTab } from './PersonnelTab';
 import { LLMSettings } from './LLMSettings';
 import { BankConnectionsTab } from './BankConnectionsTab';
 import { useLegalEntities, useTaxSystems, useAccounts, useExpenseCategories } from '../hooks';
 import { formatAmount } from '../lib/utils';
 import { CONSTANTS } from '../constants';
 
-const SETTINGS_TABS = ['tax-systems', 'entities', 'personnel', 'accounts', 'categories', 'fns', 'llm', 'banking'] as const;
+const SETTINGS_TABS = ['tax-systems', 'entities', 'accounts', 'categories', 'fns', 'llm', 'banking'] as const;
 type SettingsTab = (typeof SETTINGS_TABS)[number];
 const DEFAULT_SETTINGS_TAB: SettingsTab = 'entities';
 
@@ -60,10 +59,6 @@ export function Settings() {
               <Building2 className="w-4 h-4" />
               Мои компании
             </TabsTrigger>
-            <TabsTrigger value="personnel" className="flex shrink-0 items-center gap-2">
-              <Users className="w-4 h-4" />
-              Персонал
-            </TabsTrigger>
             <TabsTrigger value="accounts" className="flex shrink-0 items-center gap-2">
               <CreditCard className="w-4 h-4" />
               Счета
@@ -93,10 +88,6 @@ export function Settings() {
           
           <TabsContent value="entities">
             <LegalEntitiesTab />
-          </TabsContent>
-          
-          <TabsContent value="personnel">
-            <PersonnelTab />
           </TabsContent>
           
           <TabsContent value="accounts">

@@ -9,8 +9,17 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { Plus, Loader2, Users, MoreVertical, Pencil, Trash2, Search, Database, Globe, ShieldCheck, ShieldAlert, ShieldX, AlertTriangle, FileText, StickyNote, XCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, Loader2, Users, Search, Database, Globe, ShieldCheck, ShieldAlert, ShieldX, AlertTriangle, FileText, StickyNote, XCircle, CheckCircle2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import { toast } from 'sonner';
 import { useCounterparties } from '../hooks';
 
@@ -28,6 +37,7 @@ export function Counterparties({ lockedFilter, lockedCreateType, pageTitle }: Co
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCounterparty, setEditingCounterparty] = useState<Counterparty | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Counterparty | null>(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -81,9 +91,7 @@ export function Counterparties({ lockedFilter, lockedCreateType, pageTitle }: Co
   };
 
   const handleDelete = (counterparty: Counterparty) => {
-    if (confirm(`Вы уверены, что хотите удалить контрагента "${counterparty.name}"?`)) {
-      deleteMutation.mutate(counterparty.id);
-    }
+    setDeleteTarget(counterparty);
   };
 
   const handleRowClick = (counterparty: Counterparty) => {
@@ -225,9 +233,6 @@ export function Counterparties({ lockedFilter, lockedCreateType, pageTitle }: Co
                     <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Контакты
                     </th>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
-                      Действия
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -237,7 +242,7 @@ export function Counterparties({ lockedFilter, lockedCreateType, pageTitle }: Co
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => handleRowClick(counterparty)}
                       tabIndex={0}
-                      role="button"
+                      role="link"
                       aria-label={`Открыть карточку ${counterparty.name}`}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleRowClick(counterparty); }}
                     >
@@ -292,28 +297,6 @@ export function Counterparties({ lockedFilter, lockedCreateType, pageTitle }: Co
                           {counterparty.contact_info || '—'}
                         </div>
                       </td>
-                      <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => handleEdit(counterparty)}>
-                              <Pencil className="w-4 h-4 mr-2" />
-                              Редактировать
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDelete(counterparty)}
-                              className="text-red-600 focus:text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Удалить
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -321,6 +304,26 @@ export function Counterparties({ lockedFilter, lockedCreateType, pageTitle }: Co
             </div>
           </div>
         )}
+
+        <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить контрагента</AlertDialogTitle>
+              <AlertDialogDescription>
+                Вы уверены, что хотите удалить контрагента &quot;{deleteTarget?.name}&quot;? Это действие нельзя отменить.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); }}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                Удалить
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Диалог редактирования */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

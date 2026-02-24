@@ -16,6 +16,10 @@ import { Switch } from '../ui/switch';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '../ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount } from '../../lib/utils';
 import { CONSTANTS } from '../../constants';
@@ -32,6 +36,7 @@ export function RecurringPaymentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -153,9 +158,7 @@ export function RecurringPaymentsPage() {
   };
 
   const handleConfirmDelete = (id: number, name: string) => {
-    if (window.confirm(`Удалить периодический платёж "${name}"?`)) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteTarget({ id, name });
   };
 
   return (
@@ -437,6 +440,29 @@ export function RecurringPaymentsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить периодический платёж?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Платёж «{deleteTarget?.name}» будет удалён безвозвратно. Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+                setDeleteTarget(null);
+              }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -10,6 +10,16 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { ArrowLeft, Loader2, FileText, Plus, Edit2, Trash2, Info, DollarSign, History, FileSpreadsheet, Table2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EstimateItemsEditor } from './EstimateItemsEditor';
@@ -37,6 +47,13 @@ export function EstimateDetail() {
   const [editingSubsection, setEditingSubsection] = useState<EstimateSubsection | null>(null);
   const [editingCharacteristic, setEditingCharacteristic] = useState<EstimateCharacteristic | null>(null);
   const [currentSectionId, setCurrentSectionId] = useState<number | null>(null);
+
+  const [deleteSectionTarget, setDeleteSectionTarget] = useState<number | null>(null);
+  const [deleteSubsectionTarget, setDeleteSubsectionTarget] = useState<number | null>(null);
+  const [autoCharWarning, setAutoCharWarning] = useState<EstimateCharacteristic | null>(null);
+  const [deleteCharTarget, setDeleteCharTarget] = useState<number | null>(null);
+  const [isVersionDialogOpen, setIsVersionDialogOpen] = useState(false);
+  const [isMountingDialogOpen, setIsMountingDialogOpen] = useState(false);
 
   const [sectionForm, setSectionForm] = useState({ name: '', sort_order: 0 });
   const [subsectionForm, setSubsectionForm] = useState({
@@ -313,9 +330,7 @@ export function EstimateDetail() {
   };
 
   const handleDeleteSection = (sectionId: number) => {
-    if (window.confirm('Удалить этот раздел? Все подразделы также будут удалены.')) {
-      deleteSectionMutation.mutate(sectionId);
-    }
+    setDeleteSectionTarget(sectionId);
   };
 
   const handleAddSubsection = (sectionId: number) => {
@@ -346,22 +361,12 @@ export function EstimateDetail() {
   };
 
   const handleDeleteSubsection = (subsectionId: number) => {
-    if (window.confirm('Удалить этот подраздел?')) {
-      deleteSubsectionMutation.mutate(subsectionId);
-    }
+    setDeleteSubsectionTarget(subsectionId);
   };
 
   const handleEditCharacteristic = (char: EstimateCharacteristic) => {
     if (char.is_auto_calculated) {
-      if (window.confirm('Эта характеристика рассчитывается автоматически. При редактировании она станет ручной. Продолжить?')) {
-        setEditingCharacteristic(char);
-        setCharacteristicForm({
-          name: char.name,
-          purchase_amount: char.purchase_amount,
-          sale_amount: char.sale_amount,
-        });
-        setCharacteristicDialogOpen(true);
-      }
+      setAutoCharWarning(char);
     } else {
       setEditingCharacteristic(char);
       setCharacteristicForm({
@@ -378,21 +383,15 @@ export function EstimateDetail() {
       toast.error('Автоматические характеристики нельзя удалить');
       return;
     }
-    if (window.confirm('Удалить эту характеристику?')) {
-      deleteCharacteristicMutation.mutate(charId);
-    }
+    setDeleteCharTarget(charId);
   };
 
   const handleCreateVersion = () => {
-    if (window.confirm('Создать новую версию сметы? Текущая версия будет помечена как неактуальная.')) {
-      createVersionMutation.mutate();
-    }
+    setIsVersionDialogOpen(true);
   };
 
   const handleCreateMountingEstimate = () => {
-    if (window.confirm('Создать монтажную смету на основе этой сметы?')) {
-      createMountingEstimateMutation.mutate();
-    }
+    setIsMountingDialogOpen(true);
   };
 
   if (isLoading) {
@@ -1024,6 +1023,151 @@ export function EstimateDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Section AlertDialog */}
+      <AlertDialog open={deleteSectionTarget !== null} onOpenChange={(open) => { if (!open) setDeleteSectionTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить раздел</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить этот раздел? Все подразделы также будут удалены.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteSectionTarget !== null) {
+                  deleteSectionMutation.mutate(deleteSectionTarget);
+                  setDeleteSectionTarget(null);
+                }
+              }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Subsection AlertDialog */}
+      <AlertDialog open={deleteSubsectionTarget !== null} onOpenChange={(open) => { if (!open) setDeleteSubsectionTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить подраздел</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить этот подраздел?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteSubsectionTarget !== null) {
+                  deleteSubsectionMutation.mutate(deleteSubsectionTarget);
+                  setDeleteSubsectionTarget(null);
+                }
+              }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Auto Characteristic Warning AlertDialog */}
+      <AlertDialog open={autoCharWarning !== null} onOpenChange={(open) => { if (!open) setAutoCharWarning(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Редактирование автоматической характеристики</AlertDialogTitle>
+            <AlertDialogDescription>
+              Эта характеристика рассчитывается автоматически. При редактировании она станет ручной. Продолжить?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (autoCharWarning) {
+                  setEditingCharacteristic(autoCharWarning);
+                  setCharacteristicForm({
+                    name: autoCharWarning.name,
+                    purchase_amount: autoCharWarning.purchase_amount,
+                    sale_amount: autoCharWarning.sale_amount,
+                  });
+                  setCharacteristicDialogOpen(true);
+                  setAutoCharWarning(null);
+                }
+              }}
+            >
+              Продолжить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Characteristic AlertDialog */}
+      <AlertDialog open={deleteCharTarget !== null} onOpenChange={(open) => { if (!open) setDeleteCharTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить характеристику</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить эту характеристику?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteCharTarget !== null) {
+                  deleteCharacteristicMutation.mutate(deleteCharTarget);
+                  setDeleteCharTarget(null);
+                }
+              }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Create Version AlertDialog */}
+      <AlertDialog open={isVersionDialogOpen} onOpenChange={setIsVersionDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Новая версия сметы</AlertDialogTitle>
+            <AlertDialogDescription>
+              Создать новую версию сметы? Текущая версия будет помечена как неактуальная.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { createVersionMutation.mutate(); setIsVersionDialogOpen(false); }}>
+              Создать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Create Mounting Estimate AlertDialog */}
+      <AlertDialog open={isMountingDialogOpen} onOpenChange={setIsMountingDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Создать монтажную смету</AlertDialogTitle>
+            <AlertDialogDescription>
+              Создать монтажную смету на основе этой сметы?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { createMountingEstimateMutation.mutate(); setIsMountingDialogOpen(false); }}>
+              Создать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Version History Dialog */}
       <Dialog open={isVersionHistoryOpen} onOpenChange={setVersionHistoryOpen}>

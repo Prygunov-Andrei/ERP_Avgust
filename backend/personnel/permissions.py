@@ -1,5 +1,6 @@
 import logging
 from rest_framework.permissions import BasePermission
+from personnel.models import resolve_permission_level
 
 logger = logging.getLogger(__name__)
 
@@ -10,50 +11,61 @@ class ERPSectionPermission(BasePermission):
 
     Определяет раздел по URL-prefix запроса и проверяет
     erp_permissions у связанного Employee.
+    Поддерживает точечную нотацию (section.subsection) с fallback
+    на родительский раздел.
 
-    Суперпользователи и staff — всегда имеют полный доступ.
-    Пользователи без привязанного Employee — полный доступ (обратная совместимость).
+    Суперпользователи — всегда имеют полный доступ.
+    Пользователи без привязанного Employee — полный доступ.
     """
 
-    # Маппинг URL-prefix → код раздела ERP
     SECTION_MAP = {
+        # Объекты
         '/api/v1/objects/': 'objects',
-        '/api/v1/payments/': 'payments',
-        # Payment registry is an approval workflow; we gate it separately from payment creation.
-        '/api/v1/payment-registry/': 'banking_approve',
-        '/api/v1/expense-categories/': 'payments',
-        '/api/v1/estimates/': 'projects',
-        '/api/v1/proposals/': 'proposals',
-        '/api/v1/contracts/': 'contracts',
-        '/api/v1/framework-contracts/': 'contracts',
-        '/api/v1/acts/': 'contracts',
-        '/api/v1/catalog/': 'catalog',
+        # Коммерческие предложения
+        '/api/v1/estimates/': 'commercial.estimates',
+        '/api/v1/proposals/': 'commercial.tkp',
+        '/api/v1/mounting-proposals/': 'commercial.mp',
+        '/api/v1/price-lists/': 'commercial.pricelists',
+        # Финансы
+        '/api/v1/payments/': 'finance.payments',
+        '/api/v1/expense-categories/': 'finance.payments',
+        '/api/v1/bank-connections/': 'finance.statements',
+        '/api/v1/bank-accounts/': 'finance.statements',
+        '/api/v1/bank-transactions/': 'finance.statements',
+        '/api/v1/bank-payment-orders/': 'finance.payments',
+        '/api/v1/payment-registry/': 'finance_approve',
+        # Договоры
+        '/api/v1/contracts/': 'contracts.object_contracts',
+        '/api/v1/framework-contracts/': 'contracts.framework',
+        '/api/v1/acts/': 'contracts.acts',
+        # Снабжение и Склад
+        '/api/v1/supply/': 'supply',
+        '/api/v1/invoices/': 'supply.invoices',
+        '/api/v1/warehouse/': 'supply.warehouse',
+        # Переписка
         '/api/v1/communications/': 'communications',
-        '/api/v1/tax-systems/': 'settings',
-        '/api/v1/legal-entities/': 'settings',
-        '/api/v1/accounts/': 'settings',
-        '/api/v1/personnel/': 'settings',
-        '/api/v1/bank-connections/': 'banking',
-        '/api/v1/bank-accounts/': 'banking',
-        '/api/v1/bank-transactions/': 'banking',
-        '/api/v1/bank-payment-orders/': 'banking',
+        # Справочники и настройки
+        '/api/v1/catalog/': 'settings.goods',
+        '/api/v1/tax-systems/': 'settings.config',
+        '/api/v1/legal-entities/': 'settings.config',
+        '/api/v1/accounts/': 'settings.config',
+        '/api/v1/personnel/': 'settings.personnel',
+        '/api/v1/front-of-work-items/': 'settings.work_conditions',
+        '/api/v1/mounting-conditions/': 'settings.work_conditions',
+        '/api/v1/counterparties/': 'settings.counterparties',
     }
 
-    # Методы, требующие только чтение
     SAFE_METHODS = ('GET', 'HEAD', 'OPTIONS')
 
     def has_permission(self, request, view):
         user = request.user
 
-        # Анонимные пользователи — нет доступа
         if not user or not user.is_authenticated:
             return False
 
-        # Суперпользователь / staff — всегда OK
-        if user.is_superuser or user.is_staff:
+        if user.is_superuser:
             return True
 
-        # Определяем раздел по URL
         path = request.path
         section = None
         for prefix, section_code in self.SECTION_MAP.items():
@@ -61,21 +73,16 @@ class ERPSectionPermission(BasePermission):
                 section = section_code
                 break
 
-        # URL не в маппинге — разрешаем (auth, users, fns и т.д.)
         if section is None:
             return True
 
-        # Ищем Employee по user
         employee = getattr(user, 'employee', None)
         if employee is None:
-            # Пользователь без Employee — полный доступ
             return True
 
-        # Проверяем права
         perms = employee.erp_permissions or {}
-        level = perms.get(section, 'none')
+        level = resolve_permission_level(perms, section)
 
         if request.method in self.SAFE_METHODS:
             return level in ('read', 'edit')
-        else:
-            return level == 'edit'
+        return level == 'edit'

@@ -10,6 +10,16 @@ import { Textarea } from '../ui/textarea';
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { toast } from 'sonner';
 
 export function FrontOfWorkItems() {
@@ -19,6 +29,7 @@ export function FrontOfWorkItems() {
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<FrontOfWorkItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [formData, setFormData] = useState<CreateFrontOfWorkItemData>({
     name: '',
     category: '',
@@ -136,9 +147,7 @@ export function FrontOfWorkItems() {
   };
 
   const handleDelete = (id: number) => {
-    if (confirm('Вы уверены, что хотите удалить этот пункт?')) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteTarget(id);
   };
 
   // Получаем уникальные категории для фильтра
@@ -382,6 +391,26 @@ export function FrontOfWorkItems() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить пункт</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить этот пункт? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (deleteTarget !== null) deleteMutation.mutate(deleteTarget); }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

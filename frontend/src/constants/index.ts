@@ -295,7 +295,7 @@ export const STATUS_LABELS: Record<string, string> = {
   // Сметы/ТКП/МП
   in_progress: 'В работе',
   checking: 'На проверке',
-  approved: 'Согласован',
+  approved: 'Утверждён',
   sent: 'Отправлен',
   agreed: 'Согласован исполнителем',
   rejected: 'Отклонён',

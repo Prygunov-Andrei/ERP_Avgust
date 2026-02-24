@@ -20,6 +20,12 @@
       "path": "/commercial/instructions"
     },
     {
+      "id": "settings-instructions",
+      "title": "Справочники и настройки",
+      "description": "Персонал, учётные записи, права доступа, юрлица, счета, категории расходов.",
+      "path": "/settings/instructions"
+    },
+    {
       "id": "getting-started",
       "title": "Начало работы",
       "description": "Общее описание системы, первые шаги, навигация по интерфейсу.",

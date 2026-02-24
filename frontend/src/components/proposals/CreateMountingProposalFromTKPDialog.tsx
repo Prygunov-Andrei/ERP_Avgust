@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { X } from 'lucide-react';
-import { api, MountingCondition } from '../../lib/api';
+import { api, MountingCondition, Counterparty } from '../../lib/api';
 import { CONSTANTS } from '../../constants';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -15,6 +15,7 @@ interface CreateMountingProposalFromTKPDialogProps {
   tkpId: number;
   tkpNumber: string;
   tkpName: string;
+  tkpObjectId?: number;
 }
 
 export function CreateMountingProposalFromTKPDialog({
@@ -23,6 +24,7 @@ export function CreateMountingProposalFromTKPDialog({
   tkpId,
   tkpNumber,
   tkpName,
+  tkpObjectId,
 }: CreateMountingProposalFromTKPDialogProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -40,16 +42,16 @@ export function CreateMountingProposalFromTKPDialog({
   const { data: counterparties } = useQuery({
     queryKey: ['counterparties-executors'],
     queryFn: async () => {
-      const response = await api.getCounterparties({ counterparty_type: 'vendor' });
-      return response.results.filter((c: any) => c.subtype === 'executor');
+      const all = await api.getCounterparties({ type: 'vendor' });
+      return all.filter((c) => c.vendor_subtype === 'executor' || c.vendor_subtype === 'both');
     },
     enabled: open,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: mountingEstimates } = useQuery({
-    queryKey: ['mounting-estimates'],
-    queryFn: () => api.getMountingEstimates(),
+    queryKey: ['mounting-estimates', tkpObjectId],
+    queryFn: () => api.getMountingEstimates(tkpObjectId ? { object: tkpObjectId } : undefined),
     enabled: open,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
@@ -160,7 +162,7 @@ export function CreateMountingProposalFromTKPDialog({
                 className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Выберите исполнителя</option>
-                {counterparties?.map((c: any) => (
+                {counterparties?.map((c: Counterparty) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>

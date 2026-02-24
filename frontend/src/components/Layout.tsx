@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { ReactNode, useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { 
   Home, Users, Building2, FileText, DollarSign, Settings, 
@@ -21,6 +21,8 @@ import {
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationBadge } from './NotificationBadge';
+import { usePermissions } from '../hooks/usePermissions';
+import { useBreadcrumb } from '../hooks/useBreadcrumb';
 import logo from '../assets/logo.png';
 
 interface LayoutProps {
@@ -37,11 +39,13 @@ interface MenuItem {
   children?: MenuItem[];
   isShortcut?: boolean;
   isSeparator?: boolean;
+  section?: string;
+  shortcutSection?: string;
 }
 
 const menuItems: MenuItem[] = [
   // 1. ПУНКТ УПРАВЛЕНИЯ
-  { id: 'dashboard', label: 'Пункт управления', icon: <Home className="w-5 h-5" />, path: '/dashboard' },
+  { id: 'dashboard', label: 'Пункт управления', icon: <Home className="w-5 h-5" />, path: '/dashboard', section: 'dashboard' },
 
   // 2. КОММЕРЧЕСКИЕ ПРЕДЛОЖЕНИЯ
   {
@@ -49,18 +53,19 @@ const menuItems: MenuItem[] = [
     label: 'Коммерческие предложения',
     icon: <Briefcase className="w-5 h-5" />,
     path: '/commercial',
+    section: 'commercial',
     children: [
-      { id: 'kanban-cp', label: 'Канбан КП', icon: <ClipboardList className="w-4 h-4" />, path: '/commercial/kanban' },
-      { id: 'technical-proposals', label: 'ТКП', icon: <FileText className="w-4 h-4" />, path: '/proposals/technical-proposals' },
-      { id: 'mounting-proposals', label: 'МП', icon: <Wrench className="w-4 h-4" />, path: '/proposals/mounting-proposals' },
-      { id: 'commercial-estimates', label: 'Сметы', icon: <FileText className="w-4 h-4" />, path: '/estimates/estimates', isShortcut: true },
-      { id: 'price-lists', label: 'Прайс-листы', icon: <List className="w-4 h-4" />, path: '/price-lists' },
+      { id: 'kanban-cp', label: 'Канбан КП', icon: <ClipboardList className="w-4 h-4" />, path: '/commercial/kanban', section: 'commercial.kanban' },
+      { id: 'technical-proposals', label: 'ТКП', icon: <FileText className="w-4 h-4" />, path: '/proposals/technical-proposals', section: 'commercial.tkp' },
+      { id: 'mounting-proposals', label: 'МП', icon: <Wrench className="w-4 h-4" />, path: '/proposals/mounting-proposals', section: 'commercial.mp' },
+      { id: 'commercial-estimates', label: 'Сметы', icon: <FileText className="w-4 h-4" />, path: '/estimates/estimates', section: 'commercial.estimates' },
+      { id: 'price-lists', label: 'Прайс-листы', icon: <List className="w-4 h-4" />, path: '/price-lists', section: 'commercial.pricelists' },
       { id: 'commercial-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/commercial/instructions' },
     ],
   },
 
   // 3. ОБЪЕКТЫ
-  { id: 'objects', label: 'Объекты', icon: <Building2 className="w-5 h-5" />, path: '/objects' },
+  { id: 'objects', label: 'Объекты', icon: <Building2 className="w-5 h-5" />, path: '/objects', section: 'objects' },
 
   // 4. ФИНАНСЫ
   {
@@ -68,15 +73,16 @@ const menuItems: MenuItem[] = [
     label: 'Финансы',
     icon: <DollarSign className="w-5 h-5" />,
     path: '/finance',
+    section: 'finance',
     children: [
-      { id: 'finance-dashboard', label: 'Дашборд Финансы', icon: <BarChart3 className="w-4 h-4" />, path: '/finance/dashboard' },
-      { id: 'finance-payments', label: 'Платежи', icon: <CreditCard className="w-4 h-4" />, path: '/finance/payments' },
-      { id: 'finance-statements', label: 'Выписки за период', icon: <Landmark className="w-4 h-4" />, path: '/bank-statements' },
-      { id: 'finance-recurring', label: 'Периодические платежи', icon: <CalendarClock className="w-4 h-4" />, path: '/supply/recurring' },
-      { id: 'finance-debtors', label: 'Дебиторская задолженность', icon: <Scale className="w-4 h-4" />, path: '/finance/debtors' },
-      { id: 'finance-accounting', label: 'Бухгалтерия', icon: <Calculator className="w-4 h-4" />, path: '/finance/accounting' },
-      { id: 'finance-budget', label: 'Расходный бюджет', icon: <Wallet className="w-4 h-4" />, path: '/finance/budget' },
-      { id: 'finance-indicators', label: 'Финансовые показатели', icon: <PieChart className="w-4 h-4" />, path: '/finance/indicators' },
+      { id: 'finance-dashboard', label: 'Дашборд Финансы', icon: <BarChart3 className="w-4 h-4" />, path: '/finance/dashboard', section: 'finance.dashboard' },
+      { id: 'finance-payments', label: 'Платежи', icon: <CreditCard className="w-4 h-4" />, path: '/finance/payments', section: 'finance.payments' },
+      { id: 'finance-statements', label: 'Выписки за период', icon: <Landmark className="w-4 h-4" />, path: '/bank-statements', section: 'finance.statements' },
+      { id: 'finance-recurring', label: 'Периодические платежи', icon: <CalendarClock className="w-4 h-4" />, path: '/supply/recurring', section: 'finance.recurring' },
+      { id: 'finance-debtors', label: 'Дебиторская задолженность', icon: <Scale className="w-4 h-4" />, path: '/finance/debtors', section: 'finance.debtors' },
+      { id: 'finance-accounting', label: 'Бухгалтерия', icon: <Calculator className="w-4 h-4" />, path: '/finance/accounting', section: 'finance.accounting' },
+      { id: 'finance-budget', label: 'Расходный бюджет', icon: <Wallet className="w-4 h-4" />, path: '/finance/budget', section: 'finance.budget' },
+      { id: 'finance-indicators', label: 'Финансовые показатели', icon: <PieChart className="w-4 h-4" />, path: '/finance/indicators', section: 'finance.indicators' },
       { id: 'finance-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/finance/instructions' },
     ],
   },
@@ -87,13 +93,13 @@ const menuItems: MenuItem[] = [
     label: 'Договоры',
     icon: <FileText className="w-5 h-5" />,
     path: '/contracts',
+    section: 'contracts',
     children: [
-      { id: 'framework-contracts', label: 'Рамочные Договора', icon: <FileText className="w-4 h-4" />, path: '/contracts/framework-contracts' },
-      { id: 'object-contracts', label: 'Договора по объектам', icon: <FileText className="w-4 h-4" />, path: '/contracts' },
-      { id: 'estimates', label: 'Сметы', icon: <ClipboardList className="w-4 h-4" />, path: '/estimates/estimates' },
-      { id: 'mounting-estimates', label: 'Монтажные сметы', icon: <Wrench className="w-4 h-4" />, path: '/estimates/mounting-estimates' },
-      { id: 'acts', label: 'Акты', icon: <FileText className="w-4 h-4" />, path: '/contracts/acts' },
-      { id: 'household-contracts', label: 'Хозяйственные Договора', icon: <FileText className="w-4 h-4" />, path: '/contracts/household' },
+      { id: 'framework-contracts', label: 'Рамочные Договора', icon: <FileText className="w-4 h-4" />, path: '/contracts/framework-contracts', section: 'contracts.framework' },
+      { id: 'object-contracts', label: 'Договора по объектам', icon: <FileText className="w-4 h-4" />, path: '/contracts', section: 'contracts.object_contracts' },
+      { id: 'estimates', label: 'Сметы', icon: <ClipboardList className="w-4 h-4" />, path: '/estimates/estimates', section: 'contracts.estimates' },
+      { id: 'acts', label: 'Акты', icon: <FileText className="w-4 h-4" />, path: '/contracts/acts', section: 'contracts.acts' },
+      { id: 'household-contracts', label: 'Хозяйственные Договора', icon: <FileText className="w-4 h-4" />, path: '/contracts/household', section: 'contracts.household' },
       { id: 'contracts-instructions', label: 'Инструкции', icon: <FileText className="w-4 h-4" />, path: '/contracts/instructions' },
     ],
   },
@@ -104,13 +110,14 @@ const menuItems: MenuItem[] = [
     label: 'Снабжение и Склад',
     icon: <Truck className="w-5 h-5" />,
     path: '/supply',
+    section: 'supply',
     children: [
-      { id: 'kanban-supply', label: 'Канбан Снабжения', icon: <ShoppingCart className="w-4 h-4" />, path: '/kanban/supply' },
-      { id: 'supply-invoices', label: 'Счета на оплату', icon: <Receipt className="w-4 h-4" />, path: '/finance/payments?tab=invoices', isShortcut: true },
-      { id: 'supply-drivers', label: 'Календарь водителей', icon: <Calendar className="w-4 h-4" />, path: '/supply/drivers' },
-      { id: 'supply-moderation', label: 'Модерация товаров', icon: <CheckSquare className="w-4 h-4" />, path: '/catalog/moderation', isShortcut: true },
-      { id: 'warehouse', label: 'Склад: Остатки', icon: <Package className="w-4 h-4" />, path: '/warehouse' },
-      { id: 'supply-counterparties', label: 'Поставщики', icon: <Users className="w-4 h-4" />, path: '/counterparties', isShortcut: true },
+      { id: 'kanban-supply', label: 'Канбан Снабжения', icon: <ShoppingCart className="w-4 h-4" />, path: '/kanban/supply', section: 'supply.kanban' },
+      { id: 'supply-invoices', label: 'Счета на оплату', icon: <Receipt className="w-4 h-4" />, path: '/finance/payments?tab=invoices', section: 'supply.invoices', isShortcut: true, shortcutSection: 'finance' },
+      { id: 'supply-drivers', label: 'Календарь водителей', icon: <Calendar className="w-4 h-4" />, path: '/supply/drivers', section: 'supply.drivers' },
+      { id: 'supply-moderation', label: 'Модерация товаров', icon: <CheckSquare className="w-4 h-4" />, path: '/catalog/moderation', section: 'supply.moderation', isShortcut: true, shortcutSection: 'settings.goods' },
+      { id: 'warehouse', label: 'Склад: Остатки', icon: <Package className="w-4 h-4" />, path: '/warehouse', section: 'supply.warehouse' },
+      { id: 'supply-counterparties', label: 'Поставщики', icon: <Users className="w-4 h-4" />, path: '/counterparties', section: 'settings.counterparties', isShortcut: true, shortcutSection: 'settings.counterparties' },
     ],
   },
 
@@ -120,12 +127,13 @@ const menuItems: MenuItem[] = [
     label: 'ПТО',
     icon: <HardHat className="w-5 h-5" />,
     path: '/pto',
+    section: 'pto',
     children: [
-      { id: 'pto-projects', label: 'Проекты', icon: <FolderOpen className="w-4 h-4" />, path: '/estimates/projects' },
-      { id: 'pto-production', label: 'Производственная документация', icon: <FileText className="w-4 h-4" />, path: '/pto/production-docs' },
-      { id: 'pto-executive', label: 'Исполнительная документация', icon: <FileText className="w-4 h-4" />, path: '/pto/executive-docs' },
-      { id: 'pto-samples', label: 'Образцы документов', icon: <FileText className="w-4 h-4" />, path: '/pto/samples' },
-      { id: 'pto-knowledge', label: 'Руководящие документы', icon: <BookOpen className="w-4 h-4" />, path: '/pto/knowledge-base' },
+      { id: 'pto-projects', label: 'Проекты', icon: <FolderOpen className="w-4 h-4" />, path: '/estimates/projects', section: 'pto.projects' },
+      { id: 'pto-production', label: 'Производственная документация', icon: <FileText className="w-4 h-4" />, path: '/pto/production-docs', section: 'pto.production' },
+      { id: 'pto-executive', label: 'Исполнительная документация', icon: <FileText className="w-4 h-4" />, path: '/pto/executive-docs', section: 'pto.executive' },
+      { id: 'pto-samples', label: 'Образцы документов', icon: <FileText className="w-4 h-4" />, path: '/pto/samples', section: 'pto.samples' },
+      { id: 'pto-knowledge', label: 'Руководящие документы', icon: <BookOpen className="w-4 h-4" />, path: '/pto/knowledge-base', section: 'pto.knowledge' },
     ],
   },
 
@@ -135,16 +143,17 @@ const menuItems: MenuItem[] = [
     label: 'Маркетинг',
     icon: <Megaphone className="w-5 h-5" />,
     path: '/marketing',
+    section: 'marketing',
     children: [
-      { id: 'marketing-objects', label: 'Канбан поиска объектов', icon: <ClipboardList className="w-4 h-4" />, path: '/marketing/objects' },
-      { id: 'marketing-potential-customers', label: 'Потенциальные заказчики', icon: <Users className="w-4 h-4" />, path: '/marketing/potential-customers' },
-      { id: 'marketing-objects-list', label: 'Объекты', icon: <Building2 className="w-4 h-4" />, path: '/marketing/objects-list', isShortcut: true },
-      { id: 'marketing-executors', label: 'Поиск Исполнителей', icon: <Search className="w-4 h-4" />, path: '/marketing/executors' },
+      { id: 'marketing-objects', label: 'Канбан поиска объектов', icon: <ClipboardList className="w-4 h-4" />, path: '/marketing/objects', section: 'marketing.kanban' },
+      { id: 'marketing-potential-customers', label: 'Потенциальные заказчики', icon: <Users className="w-4 h-4" />, path: '/marketing/potential-customers', section: 'marketing.potential_customers' },
+      { id: 'marketing-objects-list', label: 'Объекты', icon: <Building2 className="w-4 h-4" />, path: '/marketing/objects-list', isShortcut: true, shortcutSection: 'objects' },
+      { id: 'marketing-executors', label: 'Поиск Исполнителей', icon: <Search className="w-4 h-4" />, path: '/marketing/executors', section: 'marketing.executors' },
     ],
   },
 
   // 9. ПЕРЕПИСКА
-  { id: 'communications', label: 'Переписка', icon: <Mail className="w-5 h-5" />, path: '/communications' },
+  { id: 'communications', label: 'Переписка', icon: <Mail className="w-5 h-5" />, path: '/communications', section: 'communications' },
 
   // 10. СПРАВОЧНИКИ И НАСТРОЙКИ
   {
@@ -152,17 +161,19 @@ const menuItems: MenuItem[] = [
     label: 'Справочники и Настройки',
     icon: <BookOpen className="w-5 h-5" />,
     path: '/references',
+    section: 'settings',
     children: [
-      { id: 'ref-goods', label: 'Товары и услуги', icon: <Package className="w-4 h-4" />, path: '/references/goods' },
-      { id: 'ref-work-conditions', label: 'Фронт работ и монтажные условия', icon: <ClipboardList className="w-4 h-4" />, path: '/references/work-conditions' },
-      { id: 'ref-personnel', label: 'Персонал', icon: <Users className="w-4 h-4" />, path: '/personnel' },
-      { id: 'ref-counterparties', label: 'Контрагенты', icon: <Users className="w-4 h-4" />, path: '/counterparties' },
-      { id: 'ref-settings', label: 'Настройки', icon: <Settings className="w-4 h-4" />, path: '/settings' },
+      { id: 'ref-goods', label: 'Товары и услуги', icon: <Package className="w-4 h-4" />, path: '/references/goods', section: 'settings.goods' },
+      { id: 'ref-work-conditions', label: 'Фронт работ и монтажные условия', icon: <ClipboardList className="w-4 h-4" />, path: '/references/work-conditions', section: 'settings.work_conditions' },
+      { id: 'ref-personnel', label: 'Персонал', icon: <Users className="w-4 h-4" />, path: '/personnel', section: 'settings.personnel' },
+      { id: 'ref-counterparties', label: 'Контрагенты', icon: <Users className="w-4 h-4" />, path: '/counterparties', section: 'settings.counterparties' },
+      { id: 'ref-settings', label: 'Настройки', icon: <Settings className="w-4 h-4" />, path: '/settings', section: 'settings.config' },
+      { id: 'ref-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/settings/instructions' },
     ],
   },
 
   // 11. СПРАВКА
-  { id: 'help', label: 'Справка', icon: <HelpCircle className="w-5 h-5" />, path: '/help' },
+  { id: 'help', label: 'Справка', icon: <HelpCircle className="w-5 h-5" />, path: '/help', section: 'help' },
 
   // --- Разделитель ---
   { id: 'separator', label: '', icon: <></>, path: '', isSeparator: true },
@@ -243,6 +254,7 @@ const pageTitles: Record<string, string> = {
   'references/work-conditions': 'Фронт работ и монтажные условия',
   personnel: 'Персонал',
   settings: 'Настройки',
+  'settings/instructions': 'Инструкции',
   'settings/llm': 'Настройки LLM',
   // 11. Справка
   help: 'Справка',
@@ -262,6 +274,36 @@ const pageTitles: Record<string, string> = {
 };
 
 export function Layout({ children, onLogout, user }: LayoutProps) {
+  const { hasAccess } = usePermissions();
+  const { detailLabel } = useBreadcrumb();
+
+  const filteredMenuItems = useMemo(() => {
+    return menuItems
+      .map((item) => {
+        if (item.isSeparator) return item;
+        if (item.section && !hasAccess(item.section)) return null;
+
+        if (item.children) {
+          const visibleChildren = item.children.filter((child) => {
+            if (child.section && !hasAccess(child.section)) return false;
+            if (child.isShortcut && child.shortcutSection && !hasAccess(child.shortcutSection)) return false;
+            return true;
+          });
+          if (visibleChildren.length === 0 && item.section) return null;
+          return { ...item, children: visibleChildren };
+        }
+        return item;
+      })
+      .filter(Boolean) as MenuItem[];
+  }, [hasAccess]);
+
+  const homePath = useMemo(() => {
+    const first = filteredMenuItems.find((item) => !item.isSeparator && item.path);
+    if (!first) return '/dashboard';
+    if (first.children?.length) return first.children[0].path;
+    return first.path;
+  }, [filteredMenuItems]);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['commercial', 'finance', 'contracts', 'supply', 'pto', 'references']);
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -346,7 +388,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate(homePath)}
               className="flex items-center gap-3 hover:opacity-70 transition-opacity"
             >
               {isSidebarOpen ? (
@@ -368,7 +410,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             // Разделитель
             if (item.isSeparator) {
               if (!isSidebarOpen) return null;
@@ -423,7 +465,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                 </button>
                 {item.children && isSidebarOpen && expandedMenus.includes(item.id) && (
                   <div className="pl-8">
-                    {item.children.map(child => {
+                    {(item.children || []).map(child => {
                       const isChildActive = location.pathname === child.path;
                       
                       return (
@@ -536,19 +578,59 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
             {/* Breadcrumbs */}
             <div className="flex items-center text-sm text-gray-500">
               <button 
-                onClick={() => navigate('/')}
+                onClick={() => navigate(homePath)}
                 className="hover:text-gray-700 transition-colors"
               >
                 Главная
               </button>
-              {location.pathname !== '/' && (
-                <>
-                  <ChevronRight className="w-4 h-4 mx-2" />
-                  <span className="text-gray-900 font-medium">
-                    {pageTitles[location.pathname.slice(1)] || location.pathname.slice(1)}
+              {location.pathname !== '/' && (() => {
+                const fullPath = location.pathname.slice(1);
+                const exactTitle = pageTitles[fullPath];
+                if (exactTitle) {
+                  return (
+                    <>
+                      <ChevronRight className="w-4 h-4 mx-2" />
+                      <span className="text-gray-900 font-medium">{exactTitle}</span>
+                    </>
+                  );
+                }
+                const segments = fullPath.split('/');
+                const crumbs: { label: string; path: string }[] = [];
+                for (let i = segments.length - 1; i >= 1; i--) {
+                  const parentPath = segments.slice(0, i).join('/');
+                  const parentTitle = pageTitles[parentPath];
+                  if (parentTitle) {
+                    crumbs.push({ label: parentTitle, path: '/' + parentPath });
+                    const lastSegment = segments[segments.length - 1];
+                    const crumbLabel = detailLabel || (/^\d+$/.test(lastSegment) ? `№${lastSegment}` : lastSegment);
+                    crumbs.push({ label: crumbLabel, path: '' });
+                    break;
+                  }
+                }
+                if (crumbs.length === 0) {
+                  return (
+                    <>
+                      <ChevronRight className="w-4 h-4 mx-2" />
+                      <span className="text-gray-900 font-medium">{fullPath}</span>
+                    </>
+                  );
+                }
+                return crumbs.map((crumb, idx) => (
+                  <span key={idx} className="flex items-center">
+                    <ChevronRight className="w-4 h-4 mx-2" />
+                    {crumb.path ? (
+                      <button
+                        onClick={() => navigate(crumb.path)}
+                        className="hover:text-gray-700 transition-colors"
+                      >
+                        {crumb.label}
+                      </button>
+                    ) : (
+                      <span className="text-gray-900 font-medium">{crumb.label}</span>
+                    )}
                   </span>
-                </>
-              )}
+                ));
+              })()}
             </div>
 
             {/* Global Search */}

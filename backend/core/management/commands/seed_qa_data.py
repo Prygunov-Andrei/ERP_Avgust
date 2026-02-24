@@ -155,7 +155,7 @@ class Command(BaseCommand):
                     'first_name': first_name,
                     'last_name': last_name,
                     'email': email,
-                    'is_staff': True,
+                    'is_staff': False,
                 },
             )
             if created:
@@ -806,20 +806,25 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------
     def _create_personnel(self):
         roles_data = [
-            ('Прыгунов Андрей Владимирович', 'Генеральный директор', Decimal('300000'), Decimal('150000')),
-            ('Смирнов Сергей Петрович', 'Сметчик', Decimal('120000'), Decimal('80000')),
-            ('Козлов Михаил Андреевич', 'Менеджер коммерческого отдела', Decimal('100000'), Decimal('60000')),
-            ('Иванова Ольга Николаевна', 'Оператор снабжения', Decimal('90000'), Decimal('55000')),
-            ('Фёдорова Бэлла Витальевна', 'Бухгалтер', Decimal('110000'), Decimal('70000')),
-            ('Кузнецов Николай Иванович', 'Начальник участка', Decimal('130000'), Decimal('80000')),
-            ('Волков Игорь Дмитриевич', 'Инженер ПТО', Decimal('95000'), Decimal('60000')),
-            ('Морозова Катерина Сергеевна', 'Специалист договорного отдела', Decimal('100000'), Decimal('65000')),
+            ('Прыгунов Андрей Владимирович', 'Генеральный директор', Decimal('300000'), Decimal('150000'), 'director'),
+            ('Смирнов Сергей Петрович', 'Сметчик', Decimal('120000'), Decimal('80000'), 'smetschik'),
+            ('Козлов Михаил Андреевич', 'Менеджер коммерческого отдела', Decimal('100000'), Decimal('60000'), 'manager_kp'),
+            ('Иванова Ольга Николаевна', 'Оператор снабжения', Decimal('90000'), Decimal('55000'), 'supply'),
+            ('Фёдорова Бэлла Витальевна', 'Бухгалтер', Decimal('110000'), Decimal('70000'), 'accountant'),
+            ('Кузнецов Николай Иванович', 'Начальник участка', Decimal('130000'), Decimal('80000'), 'foreman'),
+            ('Волков Игорь Дмитриевич', 'Инженер ПТО', Decimal('95000'), Decimal('60000'), 'engineer'),
+            ('Морозова Катерина Сергеевна', 'Специалист договорного отдела', Decimal('100000'), Decimal('65000'), 'contract_dept'),
         ]
         created = 0
-        for full_name, position, salary_full, salary_official in roles_data:
+        for full_name, position, salary_full, salary_official, username in roles_data:
+            linked_user = self.test_users.get(username)
             emp, emp_created = Employee.objects.get_or_create(
                 full_name=full_name,
+                defaults={'user': linked_user},
             )
+            if not emp_created and not emp.user and linked_user:
+                emp.user = linked_user
+                emp.save(update_fields=['user'])
             if emp_created:
                 PositionRecord.objects.create(
                     employee=emp,
@@ -834,4 +839,4 @@ class Command(BaseCommand):
                     effective_date=date.today() - timedelta(days=random.randint(30, 365)),
                 )
                 created += 1
-        self.stdout.write(f'✓ Сотрудники: {created}')
+        self.stdout.write(f'✓ Сотрудники: {created} (привязаны к User)')

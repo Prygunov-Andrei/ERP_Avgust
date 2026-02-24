@@ -71,12 +71,12 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         Разрешения:
         - register: доступно всем
-        - me, change_password: только аутентифицированным
-        - list, create, update, destroy: только администраторам
+        - me, change_password, list, retrieve: аутентифицированным
+        - create, update, destroy: только администраторам
         """
         if self.action == 'register':
             return [permissions.AllowAny()]
-        elif self.action in ['me', 'change_password']:
+        elif self.action in ['me', 'change_password', 'list', 'retrieve']:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
     

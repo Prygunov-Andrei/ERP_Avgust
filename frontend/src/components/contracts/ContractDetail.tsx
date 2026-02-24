@@ -1,4 +1,14 @@
 import { Badge } from '../ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { toast } from 'sonner';
 import { CreateContractDialog } from '../CreateContractDialog';
 import { ContractAmendmentsTab } from '../ContractAmendmentsTab';
@@ -14,6 +24,7 @@ export function ContractDetail() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('info');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Загрузка договора
   const { data: contract, isLoading } = useQuery({
@@ -52,9 +63,7 @@ export function ContractDetail() {
   });
 
   const handleDelete = () => {
-    if (confirm(`Вы уверены, что хотите удалить договор "${contract?.name}"?`)) {
-      deleteMutation.mutate();
-    }
+    setIsDeleteDialogOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -273,6 +282,26 @@ export function ContractDetail() {
         onOpenChange={setIsEditDialogOpen}
         contract={contract}
       />
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить договор</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить договор &ldquo;{contract?.name}&rdquo;? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate()}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

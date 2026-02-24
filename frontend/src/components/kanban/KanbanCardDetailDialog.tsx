@@ -81,7 +81,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
   const { data: objectsData } = useObjects();
   const objects = Array.isArray(objectsData) ? objectsData : (objectsData as any)?.results ?? [];
 
-  const { data: counterpartiesData } = useCounterparties();
+  const { data: counterpartiesData } = useCounterparties(undefined, { enabled: open, retry: false });
   const allCounterparties = Array.isArray(counterpartiesData)
     ? counterpartiesData
     : (counterpartiesData as any)?.results ?? [];
@@ -144,6 +144,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
           erp_object_id: objectId ? Number(objectId) : null,
           erp_object_name: objectName,
           system_name: systemName,
+          erp_counterparty_name: counterpartyName || '',
         },
       });
 
@@ -299,7 +300,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[700px] h-[85vh] flex flex-col overflow-hidden" hideClose>
         <DialogHeader>
           <DialogTitle className="sr-only">Карточка</DialogTitle>
         </DialogHeader>
@@ -338,8 +339,8 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
           </div>
         </div>
 
-        <Tabs defaultValue="main" className="mt-2">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="main" className="mt-2 flex-1 flex flex-col min-h-0">
+          <TabsList className="grid w-full grid-cols-4 shrink-0">
             <TabsTrigger value="main">Основное</TabsTrigger>
             <TabsTrigger value="tkp">ТКП</TabsTrigger>
             <TabsTrigger value="files">
@@ -349,7 +350,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
           </TabsList>
 
           {/* --- Основное --- */}
-          <TabsContent value="main" className="space-y-4 mt-4">
+          <TabsContent value="main" className="space-y-4 mt-4 flex-1 overflow-y-auto">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Объект</label>
@@ -433,7 +434,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
           </TabsContent>
 
           {/* --- ТКП --- */}
-          <TabsContent value="tkp" className="space-y-4 mt-4">
+          <TabsContent value="tkp" className="space-y-4 mt-4 flex-1 overflow-y-auto">
             <div className="text-sm font-medium">Привязанные ТКП</div>
             {tkpIds.length === 0 && (
               <div className="text-sm text-muted-foreground">Нет привязанных ТКП</div>
@@ -498,7 +499,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
           </TabsContent>
 
           {/* --- Файлы --- */}
-          <TabsContent value="files" className="space-y-4 mt-4">
+          <TabsContent value="files" className="space-y-4 mt-4 flex-1 overflow-y-auto">
             <div className="flex items-center justify-between">
               <div className="text-sm font-medium">Вложения</div>
               <label className="cursor-pointer">
@@ -548,7 +549,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
           </TabsContent>
 
           {/* --- Комментарии --- */}
-          <TabsContent value="comments" className="space-y-4 mt-4">
+          <TabsContent value="comments" className="space-y-4 mt-4 flex-1 overflow-y-auto">
             <div className="space-y-1.5">
               <label htmlFor="detail-comments" className="text-sm font-medium">Комментарии</label>
               <Textarea
@@ -562,7 +563,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-between items-center pt-4 border-t mt-4">
+        <div className="flex justify-between items-center pt-4 border-t mt-4 shrink-0">
           <div className="text-xs text-muted-foreground">
             {card.created_at && `Создано: ${new Date(card.created_at).toLocaleDateString('ru-RU')}`}
             {card.created_by_username && ` (${card.created_by_username})`}

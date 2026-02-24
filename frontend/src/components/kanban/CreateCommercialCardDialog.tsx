@@ -61,7 +61,7 @@ export const CreateCommercialCardDialog = ({
     ? objectsData
     : (objectsData as any)?.results ?? [];
 
-  const { data: counterpartiesData } = useCounterparties();
+  const { data: counterpartiesData } = useCounterparties(undefined, { enabled: open, retry: false });
   const allCounterparties = Array.isArray(counterpartiesData)
     ? counterpartiesData
     : (counterpartiesData as any)?.results ?? [];
@@ -81,6 +81,7 @@ export const CreateCommercialCardDialog = ({
           erp_object_id: form.objectId ? Number(form.objectId) : null,
           erp_object_name: form.objectName,
           system_name: form.systemName,
+          erp_counterparty_name: form.counterpartyName || '',
         },
       });
 

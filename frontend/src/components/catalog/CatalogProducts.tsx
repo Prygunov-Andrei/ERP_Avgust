@@ -2,15 +2,14 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import { formatDate, formatAmount } from '../../lib/utils';
 import { CONSTANTS } from '../../constants';
-import { useCatalogCategories, useCatalogCategoryTree } from '../../hooks';
+import { useCatalogCategoryTree } from '../../hooks';
 import { Product } from '../../types/catalog';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { CategoryTreeSelect } from './CategoryTreeSelect';
 import { Button } from '../ui/button';
-import { Search, Eye, Plus, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { ProductFormDialog } from './ProductFormDialog';
 import { DeleteProductDialog } from './DeleteProductDialog';
@@ -26,7 +25,6 @@ export function CatalogProducts() {
   });
   const [page, setPage] = useState(1);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -71,17 +69,6 @@ export function CatalogProducts() {
     },
     onError: () => {
       toast.error('Ошибка при создании товара');
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => api.updateProduct(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Товар успешно обновлён');
-    },
-    onError: () => {
-      toast.error('Ошибка при обновлении товара');
     },
   });
 
@@ -186,8 +173,16 @@ export function CatalogProducts() {
                 {productsData.results.map((product: Product) => (
                   <tr
                     key={product.id}
+                    role="link"
+                    tabIndex={0}
+                    aria-label={`Просмотр товара ${product.name}`}
                     className="border-b hover:bg-gray-50 cursor-pointer"
                     onClick={() => navigate(`/catalog/products/${product.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        navigate(`/catalog/products/${product.id}`);
+                      }
+                    }}
                   >
                     <td className="py-3 px-4">{product.name}</td>
                     <td className="py-3 px-4 text-gray-600">
@@ -215,27 +210,7 @@ export function CatalogProducts() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/catalog/products/${product.id}`);
-                        }}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedProduct(product);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                        aria-label={`Удалить товар ${product.name}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedProduct(product);
@@ -293,21 +268,6 @@ export function CatalogProducts() {
         product={null}
         categories={categoryTree || []}
         mode="create"
-      />
-
-      {/* Edit Product Dialog */}
-      <ProductFormDialog
-        isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        onSave={async (data) => {
-          if (selectedProduct) {
-            await updateMutation.mutateAsync({ id: selectedProduct.id, data });
-            setIsEditDialogOpen(false);
-          }
-        }}
-        product={selectedProduct}
-        categories={categoryTree || []}
-        mode="edit"
       />
 
       {/* Delete Product Dialog */}

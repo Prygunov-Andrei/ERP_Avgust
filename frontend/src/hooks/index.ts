@@ -3,3 +3,4 @@
  */
 
 export * from './useReferenceData';
+export * from './usePermissions';

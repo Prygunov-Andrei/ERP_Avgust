@@ -6,6 +6,10 @@ import { formatDate, formatCurrency } from '../../lib/utils';
 import { CONSTANTS } from '../../constants';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Checkbox } from '../ui/checkbox';
@@ -26,7 +30,7 @@ export function PriceListDetail() {
   const [isEditPriceListDialogOpen, setEditPriceListDialogOpen] = useState(false);
   const [isAgreementDialogOpen, setAgreementDialogOpen] = useState(false);
   const [isCreateVersionDialogOpen, setCreateVersionDialogOpen] = useState(false);
-  const [deletingAgreementId, setDeletingAgreementId] = useState<number | null>(null);
+  const [deleteAgreementTarget, setDeleteAgreementTarget] = useState<number | null>(null);
 
   const [itemFormData, setItemFormData] = useState<UpdatePriceListItemData>({
     hours_override: null,
@@ -607,11 +611,7 @@ export function PriceListDetail() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            if (window.confirm('Вы уверены, что хотите удалить это согласование?')) {
-                              deleteAgreementMutation.mutate(agreement.id);
-                            }
-                          }}
+                          onClick={() => setDeleteAgreementTarget(agreement.id)}
                           disabled={deleteAgreementMutation.isPending}
                         >
                           <Trash2 className="w-4 h-4 text-red-600" />
@@ -1102,6 +1102,29 @@ export function PriceListDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteAgreementTarget !== null} onOpenChange={(open) => { if (!open) setDeleteAgreementTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить согласование?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить это согласование? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteAgreementTarget !== null) deleteAgreementMutation.mutate(deleteAgreementTarget);
+                setDeleteAgreementTarget(null);
+              }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

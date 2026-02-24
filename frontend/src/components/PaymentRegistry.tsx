@@ -8,6 +8,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import { toast } from 'sonner';
 import { useExpenseCategories, useAccounts } from '../hooks';
 import { CONSTANTS } from '../constants';
@@ -19,6 +29,7 @@ export function PaymentRegistry() {
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
   const [selectedAccountForPay, setSelectedAccountForPay] = useState<number | null>(null);
   const [selectedContractId, setSelectedContractId] = useState<number | null>(null);
+  const [isPayConfirmOpen, setIsPayConfirmOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   
@@ -190,9 +201,7 @@ export function PaymentRegistry() {
 
   const handlePayConfirm = () => {
     if (selectedPaymentId) {
-      if (confirm('Вы уверены, что хотите провести оплату?')) {
-        payMutation.mutate(selectedPaymentId);
-      }
+      setIsPayConfirmOpen(true);
     }
   };
 
@@ -578,6 +587,29 @@ export function PaymentRegistry() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isPayConfirmOpen} onOpenChange={setIsPayConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Провести оплату</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите провести оплату? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (selectedPaymentId) {
+                  payMutation.mutate(selectedPaymentId);
+                }
+              }}
+            >
+              Оплатить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Pay Dialog */}
       <Dialog open={isPayDialogOpen} onOpenChange={setIsPayDialogOpen}>

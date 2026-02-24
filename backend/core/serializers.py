@@ -9,20 +9,40 @@ class UserSerializer(serializers.ModelSerializer):
     
     photo = serializers.ImageField(source='profile.photo', read_only=True)
     photo_url = serializers.SerializerMethodField()
+    erp_permissions = serializers.SerializerMethodField()
+    employee_id = serializers.SerializerMethodField()
+    is_superuser = serializers.BooleanField(read_only=True)
+    is_staff = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'photo', 'photo_url']
-        read_only_fields = ['id', 'date_joined', 'photo', 'photo_url']
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'date_joined', 'photo', 'photo_url',
+            'is_superuser', 'is_staff', 'erp_permissions', 'employee_id',
+        ]
+        read_only_fields = [
+            'id', 'date_joined', 'photo', 'photo_url',
+            'is_superuser', 'is_staff',
+        ]
     
     def get_photo_url(self, obj):
-        """Возвращает полный URL фотографии"""
         if obj.profile and obj.profile.photo:
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.profile.photo.url)
             return obj.profile.photo.url
         return None
+
+    def get_erp_permissions(self, obj):
+        employee = getattr(obj, 'employee', None)
+        if employee:
+            return employee.erp_permissions
+        return {}
+
+    def get_employee_id(self, obj):
+        employee = getattr(obj, 'employee', None)
+        return employee.id if employee else None
 
 
 class RegisterSerializer(serializers.ModelSerializer):

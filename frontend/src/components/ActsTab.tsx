@@ -12,6 +12,16 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 import { toast } from 'sonner';
 
 interface ActsTabProps {
@@ -21,6 +31,8 @@ interface ActsTabProps {
 export function ActsTab({ contractId }: ActsTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAct, setEditingAct] = useState<Act | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Act | null>(null);
+  const [signTarget, setSignTarget] = useState<Act | null>(null);
   const queryClient = useQueryClient();
 
   const { data: actsData, isLoading } = useQuery({
@@ -83,15 +95,11 @@ export function ActsTab({ contractId }: ActsTabProps) {
   });
 
   const handleDelete = (act: Act) => {
-    if (confirm(`Удалить акт "${act.number}"?`)) {
-      deleteMutation.mutate(act.id);
-    }
+    setDeleteTarget(act);
   };
 
   const handleSign = (act: Act) => {
-    if (confirm(`Подписать акт "${act.number}"?`)) {
-      signMutation.mutate(act.id);
-    }
+    setSignTarget(act);
   };
 
   const handleEdit = (act: Act) => {
@@ -290,6 +298,49 @@ export function ActsTab({ contractId }: ActsTabProps) {
           </div>
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить акт</AlertDialogTitle>
+            <AlertDialogDescription>
+              Удалить акт &ldquo;{deleteTarget?.number}&rdquo;? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+              }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!signTarget} onOpenChange={(open) => !open && setSignTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Подписать акт</AlertDialogTitle>
+            <AlertDialogDescription>
+              Подписать акт &ldquo;{signTarget?.number}&rdquo;? После подписания статус акта будет изменён.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (signTarget) signMutation.mutate(signTarget.id);
+              }}
+            >
+              Подписать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

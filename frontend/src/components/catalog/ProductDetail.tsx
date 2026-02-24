@@ -11,6 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from '../ui/label';
 import { ArrowLeft, CheckCircle, Archive, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { PriceHistoryTable } from './PriceHistoryTable';
 
 export function ProductDetail() {
@@ -20,6 +24,7 @@ export function ProductDetail() {
   const [activeTab, setActiveTab] = useState<'info' | 'aliases' | 'prices'>('info');
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
 
   // Загрузка товара
   const { data: product, isLoading } = useQuery({
@@ -172,15 +177,7 @@ export function ProductDetail() {
 
             {product.status !== 'archived' && (
               <Button
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      'Вы уверены, что хотите архивировать этот товар?'
-                    )
-                  ) {
-                    archiveMutation.mutate();
-                  }
-                }}
+                onClick={() => setIsArchiveDialogOpen(true)}
                 disabled={archiveMutation.isPending}
                 variant="outline"
                 className="text-red-600 hover:bg-red-50"
@@ -394,6 +391,28 @@ export function ProductDetail() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Архивировать товар?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите архивировать этот товар? Архивированный товар не будет отображаться в каталоге.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                archiveMutation.mutate();
+                setIsArchiveDialogOpen(false);
+              }}
+            >
+              Архивировать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

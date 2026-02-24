@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Employee, PositionRecord, SalaryHistory, ERP_SECTIONS, PERMISSION_LEVELS
+from .models import Employee, PositionRecord, SalaryHistory, PERMISSION_LEVELS, get_all_permission_keys
 
 
 class PositionRecordSerializer(serializers.ModelSerializer):
@@ -52,7 +52,7 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             'id', 'full_name', 'date_of_birth', 'gender',
             'current_position', 'hire_date',
             'salary_full', 'salary_official',
-            'is_active', 'current_legal_entities',
+            'is_active', 'user', 'current_legal_entities',
             'supervisors_brief',
             'created_at', 'updated_at',
         ]
@@ -119,12 +119,12 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate_erp_permissions(self, value):
-        """Валидация структуры erp_permissions."""
+        """Валидация структуры erp_permissions (поддержка точечной нотации)."""
         if not isinstance(value, dict):
             raise serializers.ValidationError('erp_permissions должен быть словарём.')
-        valid_sections = {code for code, _ in ERP_SECTIONS}
+        valid_keys = set(get_all_permission_keys())
         for key, level in value.items():
-            if key not in valid_sections:
+            if key not in valid_keys:
                 raise serializers.ValidationError(f'Неизвестный раздел: {key}')
             if level not in PERMISSION_LEVELS:
                 raise serializers.ValidationError(

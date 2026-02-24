@@ -16,6 +16,7 @@
 6. [Прогресс разработки](#6-прогресс-разработки)
 7. [Ограничения системы](#7-ограничения-системы)
 8. [История изменений](#8-история-изменений)
+9. [Система разграничения доступа](#9-система-разграничения-доступа-erp-permissions)
 
 ---
 
@@ -423,6 +424,7 @@ unique: (cipher, date)
 ```
 - number: автогенерация {порядковый}_{ДД.ММ.ГГ}
 - outgoing_number, name, date
+- due_date: DateField, null/blank — крайний срок выдачи ТКП Заказчику
 - object: FK → Object
 - object_area
 - legal_entity: FK → LegalEntity
@@ -502,7 +504,7 @@ unique: (tkp, front_item)
 
 **Методы:**
 - `copy_from_mounting_estimate()`
-- `create_from_tkp(tkp, created_by)` → MountingProposal
+- `create_from_tkp(tkp, created_by, **extra)` → MountingProposal — принимает counterparty, total_amount, man_hours, notes, mounting_estimates_ids, conditions_ids
 - `create_new_version()` → MountingProposal
 
 ---
@@ -1318,7 +1320,39 @@ Bitrix24 CRM (Канбан) → Webhook → SupplyRequest → Invoice (recogniti
 
 ## 8. История изменений
 
-### Версия 3.2 (23.02.2026) — Текущая
+### Версия 3.3 (24.02.2026) — Текущая
+
+**Добавлено:**
+- Поле `due_date` (DateField, null/blank) в модели `TechnicalProposal` — крайний срок выдачи ТКП Заказчику
+  - Миграция `0004_add_due_date_to_technical_proposal`
+  - Добавлено в `TechnicalProposalListSerializer` и `TechnicalProposalDetailSerializer`
+  - Фронтенд: колонка «Дата выдачи» в таблице ТКП с подсветкой (красный — просрочено, оранжевый — <=3 дня)
+  - Поле ввода в диалоге создания/редактирования ТКП
+  - Отображение в детальной странице ТКП
+- Колонка «Создано» (`created_at`) в таблице списка ТКП
+- Отображение «Потенциальный Заказчик» (`erp_counterparty_name`) в карточках канбана КП
+  - Сохраняется в `card.meta` при создании/обновлении карточки
+  - Отображается третьей строкой в `KanbanCardCompact`
+- Проп `hideClose` в компоненте `DialogContent` (`ui/dialog.tsx`) для скрытия крестика
+
+**Исправлено:**
+- Краш страницы детали ТКП: добавлены недостающие импорты иконок (Building2, Calendar, Clock, DollarSign, TrendingUp, User, FileCheck, X)
+- Фильтры «Объект» и «Компания» в списке ТКП и диалоге создания: API уже возвращает массив, а код обращался к `.results`
+- Фиксированная высота диалога канбана КП (85vh) — не меняется при переключении табов
+- Убран дублирующий крестик (X) из диалога карточки канбана КП
+
+**Рефакторинг:**
+- Убраны inline-действия из таблиц: ТКП, МП, Контрагенты, Каталог товаров. Строки сделаны кликабельными
+
+**UI конвенция:** таблицы сущностей с detail-страницей не содержат inline-кнопок «Открыть/Удалить» — строка целиком кликабельна и ведёт на детальную страницу. Таблицы справочников без detail-страницы сохраняют inline-действия.
+
+**Тесты:**
+- Backend: `TKPDueDateTests` (8 тестов) — создание, сериализация, PATCH, очистка, прошедшая дата
+- Frontend: `tkp-due-date.test.tsx` (9 тестов) — подсветка дедлайнов, counterparty в карточке канбана
+
+---
+
+### Версия 3.2 (23.02.2026)
 
 **Добавлено:**
 - Компонент `DataTable` (`frontend/src/components/ui/data-table.tsx`) — переиспользуемая таблица на TanStack Table + react-virtual:
@@ -1407,6 +1441,101 @@ Bitrix24 CRM (Канбан) → Webhook → SupplyRequest → Invoice (recogniti
 - Оптимизация N+1 запросов
 - Сервисный слой (core/services.py)
 - Централизация констант и генерации номеров
+
+---
+
+## 9. Система разграничения доступа (ERP Permissions)
+
+### Архитектура
+
+Доступ к разделам и подразделам системы определяется полем `Employee.erp_permissions` (JSONField). Используется плоский словарь с **точечной нотацией** для подразделов (вдохновлено IAM-системами):
+
+```json
+{
+  "dashboard": "read",
+  "commercial": "edit",
+  "commercial.kanban": "edit",
+  "commercial.tkp": "read",
+  "settings": "read",
+  "settings.personnel": "none",
+  "settings.goods": "edit"
+}
+```
+
+| Уровень | Поведение |
+|---------|-----------|
+| `none`  | Раздел/подраздел скрыт из меню, API возвращает 403 |
+| `read`  | Видим, доступ только на чтение (GET) |
+| `edit`  | Полный доступ (CRUD) |
+
+### ERP_PERMISSION_TREE — реестр разделов
+
+Файл: `backend/personnel/models.py`
+
+Реестр `ERP_PERMISSION_TREE` определяет иерархию разделов и подразделов. Функция `get_all_permission_keys()` возвращает плоский список всех допустимых ключей.
+
+| Раздел | Подразделы |
+|--------|------------|
+| `dashboard` | — |
+| `commercial` | kanban, tkp, mp, estimates, pricelists |
+| `objects` | — |
+| `finance` | dashboard, payments, statements, recurring, debtors, accounting, budget, indicators |
+| `contracts` | framework, object_contracts, estimates, mounting_estimates, acts, household |
+| `supply` | kanban, invoices, drivers, moderation, warehouse |
+| `pto` | projects, production, executive, samples, knowledge |
+| `marketing` | kanban, potential_customers, executors |
+| `communications` | — |
+| `settings` | goods, work_conditions, personnel, counterparties, config |
+| `help` | — |
+| `finance_approve` | — (спец-разрешение) |
+| `supply_approve` | — (спец-разрешение) |
+| `kanban_admin` | — (спец-разрешение) |
+
+### Разрешение уровня доступа (fallback)
+
+Функция `resolve_permission_level(perms, key)` (`backend/personnel/models.py`):
+
+1. Ищет ключ `key` напрямую (например `settings.personnel`)
+2. Если не найден и ключ содержит `.` — fallback на родительский раздел (`settings`)
+3. Если родитель не найден — возвращает `'none'`
+
+Это позволяет задавать доступ на уровне раздела целиком, а затем точечно переопределять отдельные подразделы.
+
+### Бэкенд: ERPSectionPermission
+
+Файл: `backend/personnel/permissions.py`
+
+`SECTION_MAP` маппит URL-prefix на ключи с точечной нотацией (например `/api/v1/personnel/` → `settings.personnel`, `/api/v1/catalog/` → `settings.goods`). Использует `resolve_permission_level()` для проверки с fallback.
+
+### Фронтенд: usePermissions
+
+Файл: `frontend/src/hooks/usePermissions.ts`
+
+- `resolveLevel(permissions, section)` — зеркало бекенд-логики fallback
+- `hasAccess(section, minLevel)` — проверка доступа с поддержкой точечной нотации
+- `canEdit(section)` — сокращение для `hasAccess(section, 'edit')`
+
+### Фронтенд: useBreadcrumb
+
+Файл: `frontend/src/hooks/useBreadcrumb.tsx`
+
+- `BreadcrumbProvider` — контекст, оборачивающий роутер в App.tsx
+- `useBreadcrumb()` — хук, возвращающий `{ detailLabel, setDetailLabel }`
+- Детальные страницы вызывают `setDetailLabel(label)` при загрузке данных и `setDetailLabel(null)` при unmount
+- `Layout.tsx` использует `detailLabel` вместо ID из URL при формировании хлебных крошек
+- Пример: `TechnicalProposalDetail.tsx` передаёт `ТКП ${tkp.number}` → крошки показывают «ТКП 221_23.02.26» вместо «№88»
+
+### Фронтенд: фильтрация меню и защита маршрутов
+
+- **Layout.tsx**: каждый `MenuItem` и каждый дочерний пункт имеют `section` (например `'settings.personnel'`). Пункты с `hasAccess(section) === false` скрываются.
+- **App.tsx**: ВСЕ маршруты защищены `<ProtectedRoute requiredSection="...">`. Редирект при отсутствии доступа — на первый доступный раздел.
+- **PersonnelTab.tsx**: иерархический UI — разделы с раскрывающимися подразделами, каскадное обновление при изменении родителя.
+
+### Привязка User ↔ Employee
+
+- Модель: `Employee.user` — `OneToOneField` к `auth.User`
+- Форма: `PersonnelTab.tsx` → поле «Учётная запись (User)»
+- API: `UserSerializer` возвращает `erp_permissions`, `employee_id`, `is_superuser`
 
 ---
 
