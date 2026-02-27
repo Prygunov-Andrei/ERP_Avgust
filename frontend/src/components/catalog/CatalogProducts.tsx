@@ -89,7 +89,7 @@ export function CatalogProducts() {
       <div className="p-6 border-b bg-white">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl">Товары и услуги</h1>
+            <h1 className="text-2xl">Номенклатура</h1>
             <p className="text-gray-500 mt-1">Справочник товаров каталога</p>
           </div>
           <Button onClick={() => setIsCreateDialogOpen(true)}>

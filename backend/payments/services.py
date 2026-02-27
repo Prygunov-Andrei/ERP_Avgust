@@ -237,12 +237,12 @@ class InvoiceService:
 
     @staticmethod
     @transaction.atomic
-    def recognize(invoice_id: int):
+    def recognize(invoice_id: int, auto_counterparty: bool = True):
         """
-        LLM-распознавание: RECOGNITION → REVIEW.
+        Единый pipeline LLM-распознавания: RECOGNITION → REVIEW.
 
-        Вызывает DocumentParser, заполняет поля Invoice,
-        создаёт InvoiceItem через ProductMatcher.
+        Поддерживает PDF, изображения (PNG/JPG) и Excel (XLSX/XLS).
+        Используется для single-upload, batch-upload и management command.
         """
         invoice = Invoice.objects.select_for_update().get(id=invoice_id)
 
@@ -253,68 +253,71 @@ class InvoiceService:
             return
 
         try:
-            from llm_services.services.document_parser import DocumentParserService
-
             if not invoice.invoice_file:
                 raise ValueError('Нет файла для распознавания')
 
-            # Распознать PDF через LLM
-            parsed_doc = DocumentParserService.parse_invoice(
-                file=invoice.invoice_file,
+            # 1. Парсинг файла → ParsedInvoice
+            parsed_invoice, processing_time = InvoiceService._parse_invoice_file(invoice)
+
+            # 2. Сохранить ParsedDocument
+            parsed_doc = InvoiceService._save_parsed_document(
+                invoice, parsed_invoice, processing_time,
+            )
+            invoice.parsed_document = parsed_doc
+            invoice.recognition_confidence = parsed_invoice.confidence
+
+            # 3. Заполнить поля Invoice
+            InvoiceService._populate_invoice_fields(invoice, parsed_invoice)
+
+            # 4. Найти/создать контрагента
+            InvoiceService._match_or_create_counterparty(
+                invoice, parsed_invoice, auto_create=auto_counterparty,
             )
 
-            # Заполнить поля из распознанного документа
-            if parsed_doc:
-                invoice.parsed_document = parsed_doc
-                invoice.recognition_confidence = getattr(parsed_doc, 'confidence', None)
-
-                # Данные из распознанного документа
-                doc_data = parsed_doc.parsed_data or {}
-
-                invoice.invoice_number = doc_data.get('invoice_number', '') or invoice.invoice_number
-                if doc_data.get('invoice_date'):
-                    try:
-                        invoice.invoice_date = doc_data['invoice_date']
-                    except (ValueError, TypeError):
-                        pass
-                if doc_data.get('due_date'):
-                    try:
-                        invoice.due_date = doc_data['due_date']
-                    except (ValueError, TypeError):
-                        pass
-
-                invoice.amount_gross = (
-                    Decimal(str(doc_data['total_amount']))
-                    if doc_data.get('total_amount')
-                    else invoice.amount_gross
+            # 5. Бизнес-дедупликация (номер + сумма + ИНН)
+            duplicate = InvoiceService._check_business_duplicate(
+                invoice, parsed_invoice,
+            )
+            if duplicate:
+                invoice.status = Invoice.Status.REVIEW
+                invoice.save()
+                InvoiceEvent.objects.create(
+                    invoice=invoice,
+                    event_type=InvoiceEvent.EventType.RECOGNIZED,
+                    comment=(
+                        f'Возможный дубликат счёта #{duplicate.id} '
+                        f'({duplicate.invoice_number}). Позиции не созданы.'
+                    ),
                 )
-                invoice.amount_net = (
-                    Decimal(str(doc_data['net_amount']))
-                    if doc_data.get('net_amount')
-                    else invoice.amount_net
-                )
-                invoice.vat_amount = (
-                    Decimal(str(doc_data['vat_amount']))
-                    if doc_data.get('vat_amount')
-                    else invoice.vat_amount
-                )
+                if invoice.bulk_session:
+                    InvoiceService._update_bulk_session(
+                        invoice.bulk_session, success=True,
+                    )
+                return
 
-                # Создать позиции
-                items = doc_data.get('items', [])
-                InvoiceService._create_invoice_items(invoice, items)
+            # 6. Создать InvoiceItem (без Product — товары в каталог при verify)
+            InvoiceService._create_invoice_items(
+                invoice, parsed_invoice,
+            )
 
-                # Найти контрагента по ИНН
-                if doc_data.get('vendor_inn') and not invoice.counterparty:
-                    InvoiceService._match_counterparty(invoice, doc_data)
-
+            # 7. Перевести в REVIEW
             invoice.status = Invoice.Status.REVIEW
             invoice.save()
 
             InvoiceEvent.objects.create(
                 invoice=invoice,
                 event_type=InvoiceEvent.EventType.RECOGNIZED,
-                comment=f'LLM распознавание завершено (confidence: {invoice.recognition_confidence})',
+                comment=(
+                    f'LLM распознавание завершено '
+                    f'(confidence: {invoice.recognition_confidence})'
+                ),
             )
+
+            # Обновить BulkImportSession если есть
+            if invoice.bulk_session:
+                InvoiceService._update_bulk_session(
+                    invoice.bulk_session, success=True,
+                )
 
         except Exception as exc:
             logger.exception('Error recognizing invoice #%d', invoice_id)
@@ -327,27 +330,72 @@ class InvoiceService:
             invoice.status = Invoice.Status.REVIEW
             invoice.save(update_fields=['status'])
 
+            if invoice.bulk_session:
+                InvoiceService._update_bulk_session(
+                    invoice.bulk_session, success=False, error=str(exc),
+                )
+
     @staticmethod
     @transaction.atomic
-    def submit_to_registry(invoice_id: int, user):
-        """Оператор подтвердил: REVIEW → IN_REGISTRY."""
+    def verify(invoice_id: int, user):
+        """Оператор подтвердил данные: REVIEW → VERIFIED.
+
+        Создаёт Product-записи в каталоге из InvoiceItem.
+        """
         invoice = Invoice.objects.select_for_update().get(id=invoice_id)
 
         if invoice.status != Invoice.Status.REVIEW:
             raise ValueError(
-                f'Нельзя отправить в реестр: текущий статус "{invoice.get_status_display()}"'
+                f'Нельзя подтвердить: текущий статус '
+                f'"{invoice.get_status_display()}"'
             )
 
-        invoice.status = Invoice.Status.IN_REGISTRY
+        # Валидация обязательных полей
+        errors = []
+        if not invoice.counterparty_id:
+            errors.append('Не указан контрагент')
+        if not invoice.amount_gross:
+            errors.append('Не указана сумма')
+        if errors:
+            raise ValueError(
+                'Нельзя подтвердить: ' + '; '.join(errors)
+            )
+
+        # Создать товары в каталоге из позиций
+        InvoiceService._create_products_from_items(invoice)
+
+        invoice.status = Invoice.Status.VERIFIED
         invoice.reviewed_by = user
         invoice.reviewed_at = timezone.now()
         invoice.save()
 
         InvoiceEvent.objects.create(
             invoice=invoice,
+            event_type=InvoiceEvent.EventType.REVIEWED,
+            user=user,
+            comment='Оператор подтвердил данные счёта',
+        )
+
+    @staticmethod
+    @transaction.atomic
+    def submit_to_registry(invoice_id: int, user):
+        """Оператор отправил в реестр: VERIFIED → IN_REGISTRY."""
+        invoice = Invoice.objects.select_for_update().get(id=invoice_id)
+
+        if invoice.status != Invoice.Status.VERIFIED:
+            raise ValueError(
+                f'Нельзя отправить в реестр: текущий статус '
+                f'"{invoice.get_status_display()}"'
+            )
+
+        invoice.status = Invoice.Status.IN_REGISTRY
+        invoice.save()
+
+        InvoiceEvent.objects.create(
+            invoice=invoice,
             event_type=InvoiceEvent.EventType.SENT_TO_REGISTRY,
             user=user,
-            comment='Оператор подтвердил распознавание и отправил в реестр',
+            comment='Оператор отправил счёт в реестр оплат',
         )
 
     @staticmethod
@@ -459,6 +507,30 @@ class InvoiceService:
 
     @staticmethod
     @transaction.atomic
+    def mark_cash_paid(invoice_id: int, user=None):
+        """Наличная/ручная оплата: APPROVED → PAID (минуя банковское ПП)."""
+        invoice = Invoice.objects.select_for_update().get(id=invoice_id)
+
+        if invoice.status != Invoice.Status.APPROVED:
+            raise ValueError(
+                f'Нельзя отметить оплату: текущий статус "{invoice.get_status_display()}"'
+            )
+        if invoice.bank_payment_order_id:
+            raise ValueError('Этот счёт привязан к платёжному поручению, используйте банковскую оплату')
+
+        invoice.status = Invoice.Status.PAID
+        invoice.paid_at = timezone.now()
+        invoice.save(update_fields=['status', 'paid_at', 'updated_at'])
+
+        InvoiceEvent.objects.create(
+            invoice=invoice,
+            event_type=InvoiceEvent.EventType.PAID,
+            user=user,
+            comment='Оплата наличными подтверждена',
+        )
+
+    @staticmethod
+    @transaction.atomic
     def mark_sending(invoice_id: int):
         """Платёжное поручение отправлено: APPROVED → SENDING."""
         invoice = Invoice.objects.select_for_update().get(id=invoice_id)
@@ -517,71 +589,273 @@ class InvoiceService:
     # Вспомогательные методы
     # =========================================================================
 
-    @staticmethod
-    def _create_invoice_items(invoice: Invoice, items_data: List[Dict]):
-        """Создать позиции счёта из распознанных данных."""
-        matcher = ProductMatcher()
+    # =========================================================================
+    # Приватные методы pipeline recognize()
+    # =========================================================================
 
-        for item_data in items_data:
-            raw_name = item_data.get('name', '')
+    @staticmethod
+    def _parse_invoice_file(invoice: Invoice):
+        """
+        Парсит файл счёта в зависимости от расширения.
+
+        Returns:
+            (ParsedInvoice, processing_time_ms)
+        """
+        from pathlib import Path
+        from llm_services.schemas import ParsedInvoice
+
+        filename = invoice.invoice_file.name
+        ext = Path(filename).suffix.lower()
+
+        file_content = invoice.invoice_file.read()
+        invoice.invoice_file.seek(0)
+
+        if ext in ('.pdf', '.png', '.jpg', '.jpeg'):
+            from llm_services.services.document_parser import DocumentParser
+            from llm_services.models import LLMProvider
+
+            parser = DocumentParser(provider=LLMProvider.get_default())
+            result = parser.parse_invoice(file_content, filename)
+
+            if not result['success']:
+                raise ValueError(
+                    result.get('error', f'Неизвестная ошибка парсинга {ext}')
+                )
+
+            data = result['data']
+            parsed_invoice = ParsedInvoice(**data)
+            time_ms = (
+                result['parsed_document'].processing_time_ms
+                if result.get('parsed_document')
+                else 0
+            )
+            # Удаляем ParsedDocument, созданный DocumentParser —
+            # мы создадим свой в _save_parsed_document
+            if result.get('parsed_document'):
+                result['parsed_document'].delete()
+            return parsed_invoice, time_ms or 0
+
+        elif ext in ('.xlsx', '.xls'):
+            from llm_services.services.excel_parser import ExcelInvoiceParser
+            from llm_services.models import LLMProvider
+
+            parser = ExcelInvoiceParser(provider_model=LLMProvider.get_default())
+            return parser.parse(file_content, filename)
+
+        else:
+            raise ValueError(f'Неподдерживаемый формат файла: {ext}')
+
+    @staticmethod
+    def _save_parsed_document(invoice: Invoice, parsed_invoice, processing_time: int):
+        """Создаёт ParsedDocument с file_hash, parsed_data, confidence."""
+        import hashlib
+        from llm_services.models import LLMProvider, ParsedDocument
+
+        file_content = invoice.invoice_file.read()
+        invoice.invoice_file.seek(0)
+        file_hash = hashlib.sha256(file_content).hexdigest()
+
+        parsed_doc = ParsedDocument.objects.create(
+            file_hash=file_hash,
+            original_filename=invoice.invoice_file.name,
+            provider=LLMProvider.get_default(),
+            parsed_data=parsed_invoice.model_dump(mode='json'),
+            confidence_score=parsed_invoice.confidence,
+            processing_time_ms=processing_time,
+            status=ParsedDocument.Status.SUCCESS,
+        )
+        return parsed_doc
+
+    @staticmethod
+    def _populate_invoice_fields(invoice: Invoice, parsed_invoice):
+        """Заполняет поля Invoice из ParsedInvoice."""
+        inv = parsed_invoice.invoice
+        totals = parsed_invoice.totals
+
+        if inv.number:
+            invoice.invoice_number = inv.number
+        if inv.date:
+            invoice.invoice_date = inv.date
+
+        if totals.amount_gross:
+            invoice.amount_gross = totals.amount_gross
+        if totals.vat_amount is not None:
+            invoice.vat_amount = totals.vat_amount
+            if totals.amount_gross and totals.vat_amount:
+                invoice.amount_net = totals.amount_gross - totals.vat_amount
+
+    @staticmethod
+    def _match_or_create_counterparty(invoice: Invoice, parsed_invoice, auto_create: bool = False):
+        """
+        Ищет контрагента по ИНН из распознанных данных.
+        Если auto_create=True и контрагент не найден — создаёт нового.
+        """
+        from accounting.models import Counterparty
+
+        vendor_inn = parsed_invoice.vendor.inn
+        if not vendor_inn or invoice.counterparty:
+            return
+
+        # Ищем существующего
+        try:
+            counterparty = Counterparty.objects.get(inn=vendor_inn)
+            invoice.counterparty = counterparty
+            return
+        except Counterparty.DoesNotExist:
+            pass
+        except Counterparty.MultipleObjectsReturned:
+            counterparty = Counterparty.objects.filter(inn=vendor_inn).first()
+            invoice.counterparty = counterparty
+            return
+
+        if not auto_create:
+            logger.info('Контрагент с ИНН %s не найден (auto_create=False)', vendor_inn)
+            return
+
+        # Автосоздание контрагента
+        legal_form = 'ip' if len(vendor_inn) == 12 else 'ooo'
+        counterparty = Counterparty.objects.create(
+            name=parsed_invoice.vendor.name,
+            type=Counterparty.Type.VENDOR,
+            vendor_subtype=Counterparty.VendorSubtype.SUPPLIER,
+            legal_form=legal_form,
+            inn=vendor_inn,
+            kpp=parsed_invoice.vendor.kpp or '',
+        )
+        invoice.counterparty = counterparty
+        logger.info('Создан контрагент: %s (ИНН: %s)', counterparty.name, vendor_inn)
+
+    @staticmethod
+    def _check_business_duplicate(invoice: Invoice, parsed_invoice) -> Optional[Invoice]:
+        """
+        Проверяет бизнес-дубликат по номеру + сумме + ИНН поставщика.
+
+        Returns:
+            Invoice-дубликат или None.
+        """
+        if not invoice.invoice_number:
+            return None
+
+        qs = Invoice.objects.filter(
+            invoice_number=invoice.invoice_number,
+            amount_gross=invoice.amount_gross,
+        ).exclude(
+            id=invoice.id,
+        ).exclude(
+            status=Invoice.Status.CANCELLED,
+        )
+
+        # Уточняем по ИНН контрагента
+        vendor_inn = parsed_invoice.vendor.inn
+        if vendor_inn:
+            qs = qs.filter(counterparty__inn=vendor_inn)
+
+        return qs.first()
+
+    @staticmethod
+    def _create_invoice_items(invoice: Invoice, parsed_invoice) -> List:
+        """
+        Создать InvoiceItem из ParsedInvoice (без Product).
+
+        Товары в каталог добавляются позже, при verify().
+        Returns: пустой список (для обратной совместимости).
+        """
+        for item in parsed_invoice.items:
+            raw_name = item.name
             if not raw_name:
                 continue
 
-            quantity = Decimal(str(item_data.get('quantity', 1)))
-            price = Decimal(str(item_data.get('price', 0)))
-            unit = item_data.get('unit', 'шт')
-            vat = (
-                Decimal(str(item_data['vat_amount']))
-                if item_data.get('vat_amount')
-                else None
-            )
-
-            # Найти или создать товар
-            product, created = matcher.find_or_create_product(
-                name=raw_name,
-                unit=unit,
-            )
+            quantity = item.quantity
+            price = item.price_per_unit
+            unit = item.unit or 'шт'
 
             InvoiceItem.objects.create(
                 invoice=invoice,
-                product=product,
+                product=None,
                 raw_name=raw_name,
                 quantity=quantity,
                 unit=unit,
                 price_per_unit=price,
                 amount=quantity * price,
-                vat_amount=vat,
             )
 
+        return []
+
+    @staticmethod
+    def _create_products_from_items(invoice: Invoice):
+        """
+        Создать Product из InvoiceItem при verify().
+
+        Для каждой позиции без product: найти/создать товар,
+        записать историю цен, категоризировать новые товары.
+        """
+        matcher = ProductMatcher()
+        new_products = []
+
+        for item in invoice.items.filter(product__isnull=True):
+            if not item.raw_name:
+                continue
+
+            product, created = matcher.find_or_create_product(
+                name=item.raw_name,
+                unit=item.unit or 'шт',
+            )
+
+            if created:
+                new_products.append(product)
+
+            item.product = product
+            item.save(update_fields=['product'])
+
             # История цен
-            if invoice.counterparty:
+            if invoice.counterparty and item.price_per_unit:
                 ProductPriceHistory.objects.update_or_create(
                     product=product,
                     counterparty=invoice.counterparty,
                     invoice_date=invoice.invoice_date or date.today(),
-                    unit=unit,
+                    unit=item.unit or 'шт',
                     defaults={
-                        'price': price,
+                        'price': item.price_per_unit,
                         'invoice_number': invoice.invoice_number or '',
+                        'invoice': invoice,
                     }
                 )
 
+        # Категоризировать новые товары
+        if new_products:
+            InvoiceService._categorize_products(new_products)
+
     @staticmethod
-    def _match_counterparty(invoice: Invoice, doc_data: Dict):
-        """Попытаться найти контрагента по ИНН из распознанных данных."""
-        from accounting.models import Counterparty
-
-        vendor_inn = doc_data.get('vendor_inn', '')
-        if not vendor_inn:
-            return
-
+    def _categorize_products(products: List):
+        """Batch-категоризация новых товаров через LLM."""
         try:
-            counterparty = Counterparty.objects.get(inn=vendor_inn)
-            invoice.counterparty = counterparty
-        except Counterparty.DoesNotExist:
-            logger.info('Counterparty with INN %s not found', vendor_inn)
-        except Counterparty.MultipleObjectsReturned:
-            logger.warning('Multiple counterparties with INN %s', vendor_inn)
+            from catalog.categorizer import ProductCategorizer
+            categorizer = ProductCategorizer()
+            count = categorizer.categorize_products(products)
+            logger.info('Категоризировано %d новых товаров', count)
+        except Exception as exc:
+            logger.warning('Категоризация не удалась: %s', exc)
+
+    @staticmethod
+    def _update_bulk_session(session, success: bool, error: str = ''):
+        """Атомарно обновляет счётчики BulkImportSession."""
+        from django.db.models import F
+        from .models import BulkImportSession
+
+        updates = {'processed_files': F('processed_files') + 1}
+        if success:
+            updates['successful'] = F('successful') + 1
+        else:
+            updates['failed'] = F('failed') + 1
+
+        BulkImportSession.objects.filter(id=session.id).update(**updates)
+
+        if error:
+            session.refresh_from_db()
+            errors = session.errors or []
+            errors.append(error)
+            session.errors = errors
+            session.save(update_fields=['errors'])
 
     @staticmethod
     def _create_bank_payment_order(invoice: Invoice, user):

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
-import { Plus, AlertTriangle, FileText } from 'lucide-react';
+import { Plus, AlertTriangle, FileText, Upload } from 'lucide-react';
 import { api } from '../../lib/api';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -9,6 +9,7 @@ import { Card, CardContent } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Skeleton } from '../ui/skeleton';
 import { InvoiceCreateDialog } from './InvoiceCreateDialog';
+import { BulkInvoiceUpload } from './BulkInvoiceUpload';
 
 const INVOICE_TYPE_LABELS: Record<string, string> = {
   supplier: 'От Поставщика',
@@ -21,6 +22,7 @@ const INVOICE_TYPE_LABELS: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   recognition: 'Распознаётся',
   review: 'На проверке',
+  verified: 'Проверен',
   in_registry: 'В реестре',
   approved: 'Одобрен',
   sending: 'Отправляется',
@@ -31,6 +33,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   recognition: 'bg-purple-100 text-purple-800',
   review: 'bg-blue-100 text-blue-800',
+  verified: 'bg-teal-100 text-teal-800',
   in_registry: 'bg-yellow-100 text-yellow-800',
   approved: 'bg-green-100 text-green-800',
   sending: 'bg-orange-100 text-orange-800',
@@ -64,6 +67,7 @@ export const InvoicesTab = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -116,10 +120,14 @@ export const InvoicesTab = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 flex items-center justify-center">
+          <CardContent className="pt-4 flex items-center justify-center gap-2">
             <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
               Создать счёт
+            </Button>
+            <Button variant="outline" onClick={() => setBulkUploadOpen(true)} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Массовый импорт
             </Button>
           </CardContent>
         </Card>
@@ -201,10 +209,10 @@ export const InvoicesTab = () => {
                       {INVOICE_TYPE_LABELS[invoice.invoice_type] || invoice.invoice_type || '—'}
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
-                      {invoice.number || `#${invoice.id}`}
+                      {invoice.invoice_number || invoice.number || `#${invoice.id}`}
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {formatDate(invoice.created_at || invoice.date)}
+                      {formatDate(invoice.invoice_date || invoice.created_at)}
                     </td>
                     <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">
                       {invoice.counterparty_name || '—'}
@@ -240,6 +248,10 @@ export const InvoicesTab = () => {
       <InvoiceCreateDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
+      />
+      <BulkInvoiceUpload
+        open={bulkUploadOpen}
+        onOpenChange={setBulkUploadOpen}
       />
     </div>
   );

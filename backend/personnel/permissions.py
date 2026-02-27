@@ -25,7 +25,7 @@ class ERPSectionPermission(BasePermission):
         '/api/v1/estimates/': 'commercial.estimates',
         '/api/v1/proposals/': 'commercial.tkp',
         '/api/v1/mounting-proposals/': 'commercial.mp',
-        '/api/v1/price-lists/': 'commercial.pricelists',
+        '/api/v1/price-lists/': 'goods.pricelists',
         # Финансы
         '/api/v1/payments/': 'finance.payments',
         '/api/v1/expense-categories/': 'finance.payments',
@@ -45,7 +45,10 @@ class ERPSectionPermission(BasePermission):
         # Переписка
         '/api/v1/communications/': 'communications',
         # Справочники и настройки
-        '/api/v1/catalog/': 'settings.goods',
+        '/api/v1/catalog/': 'goods.catalog',
+        '/api/v1/work-items/': 'goods.works',
+        '/api/v1/work-sections/': 'goods.works',
+        '/api/v1/worker-grades/': 'goods.grades',
         '/api/v1/tax-systems/': 'settings.config',
         '/api/v1/legal-entities/': 'settings.config',
         '/api/v1/accounts/': 'settings.config',

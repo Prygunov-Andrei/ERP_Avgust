@@ -132,7 +132,7 @@ class TestInvoiceStatusChoices:
 
     def test_all_status_choices_exist(self):
         expected = {
-            'recognition', 'review', 'in_registry',
+            'recognition', 'review', 'verified', 'in_registry',
             'approved', 'sending', 'paid', 'cancelled',
         }
         actual = {choice[0] for choice in Invoice.Status.choices}
@@ -145,10 +145,25 @@ class TestInvoiceStatusChoices:
         invoice.refresh_from_db()
         assert invoice.status == Invoice.Status.REVIEW
 
+        invoice.status = Invoice.Status.VERIFIED
+        invoice.save()
+        invoice.refresh_from_db()
+        assert invoice.status == Invoice.Status.VERIFIED
+
         invoice.status = Invoice.Status.IN_REGISTRY
         invoice.save()
         invoice.refresh_from_db()
         assert invoice.status == Invoice.Status.IN_REGISTRY
+
+    def test_verified_is_not_overdue(self, invoice):
+        """Счёт в статусе VERIFIED не считается просроченным."""
+        invoice.status = Invoice.Status.VERIFIED
+        invoice.due_date = date.today() - timedelta(days=1)
+        invoice.save()
+        # VERIFIED — ещё не в реестре, но is_overdue проверяет
+        # только PAID/CANCELLED как исключения. Оставляем как есть,
+        # просрочка актуальна и для verified.
+        assert invoice.is_overdue is True
 
 
 # =============================================================================

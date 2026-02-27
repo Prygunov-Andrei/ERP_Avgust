@@ -223,7 +223,7 @@ export function CatalogCategories() {
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b bg-white">
         <div>
-          <h1 className="text-2xl">Категории товаров</h1>
+          <h1 className="text-2xl">Категории</h1>
           <p className="text-gray-500 mt-1">Иерархия категорий каталога</p>
         </div>
       </div>

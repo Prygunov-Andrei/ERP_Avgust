@@ -227,6 +227,14 @@ class ProductPriceHistory(TimestampedModel):
         related_name='product_prices',
         verbose_name='Платёж-источник'
     )
+    invoice = models.ForeignKey(
+        'payments.Invoice',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='product_prices',
+        verbose_name='Счёт-источник'
+    )
 
     class Meta:
         verbose_name = 'История цены товара'

@@ -31,20 +31,66 @@ def process_bitrix_deal(self, deal_id: int, integration_id: int):
         raise self.retry(exc=exc)
 
 
-@shared_task
-def recognize_invoice(invoice_id: int):
+@shared_task(bind=True, max_retries=2, default_retry_delay=30)
+def recognize_invoice(
+    self, invoice_id: int, auto_counterparty: bool = True,
+):
     """
     Celery-задача LLM-распознавания конкретного счёта.
 
+    Единый pipeline для single и batch upload.
     Вызывает InvoiceService.recognize() для перевода
     Invoice из RECOGNITION в REVIEW.
     """
     from payments.services import InvoiceService
+    from llm_services.services.exceptions import RateLimitError
 
     try:
-        InvoiceService.recognize(invoice_id)
+        InvoiceService.recognize(
+            invoice_id,
+            auto_counterparty=auto_counterparty,
+        )
+    except RateLimitError as exc:
+        raise self.retry(exc=exc, countdown=60)
     except Exception:
-        logger.exception('recognize_invoice: error for invoice %s', invoice_id)
+        logger.exception(
+            'recognize_invoice: error for invoice %s', invoice_id,
+        )
+
+
+@shared_task
+def finalize_bulk_import(session_id: int):
+    """
+    Проверяет, все ли файлы в сессии обработаны.
+    Если да — ставит статус COMPLETED/COMPLETED_WITH_ERRORS.
+    """
+    from payments.models import BulkImportSession, Invoice
+
+    try:
+        session = BulkImportSession.objects.get(id=session_id)
+    except BulkImportSession.DoesNotExist:
+        logger.error(
+            'finalize_bulk_import: session %s not found', session_id,
+        )
+        return
+
+    pending = session.invoices.filter(
+        status=Invoice.Status.RECOGNITION,
+    ).count()
+    if pending > 0:
+        return  # Ещё не все обработаны
+
+    if session.failed > 0:
+        new_status = BulkImportSession.Status.COMPLETED_WITH_ERRORS
+    else:
+        new_status = BulkImportSession.Status.COMPLETED
+
+    session.status = new_status
+    session.save(update_fields=['status', 'updated_at'])
+    logger.info(
+        'finalize_bulk_import: session %s → %s',
+        session_id, new_status,
+    )
 
 
 @shared_task

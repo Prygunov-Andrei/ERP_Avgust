@@ -42,7 +42,7 @@ export function ContractAmendmentsTab({ contractId }: ContractAmendmentsTabProps
   const amendmentsList = Array.isArray(amendments) ? amendments : (amendments as any)?.results || [];
 
   const createMutation = useMutation({
-    mutationFn: (data: FormData) => api.createContractAmendment(contractId, data),
+    mutationFn: (data: CreateContractAmendmentData) => api.createContractAmendment(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contract-amendments', contractId] });
       queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
@@ -222,7 +222,7 @@ export function ContractAmendmentsTab({ contractId }: ContractAmendmentsTabProps
 
 interface AmendmentFormProps {
   contractId: number;
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: CreateContractAmendmentData) => void;
   isLoading: boolean;
 }
 
@@ -245,25 +245,18 @@ function AmendmentForm({ contractId, onSubmit, isLoading }: AmendmentFormProps) 
       return;
     }
 
-    const formDataToSubmit = new FormData();
-    formDataToSubmit.append('number', formData.number);
-    formDataToSubmit.append('date', formData.date);
-    formDataToSubmit.append('reason', formData.reason);
-    
-    if (formData.new_start_date) {
-      formDataToSubmit.append('new_start_date', formData.new_start_date);
-    }
-    if (formData.new_end_date) {
-      formDataToSubmit.append('new_end_date', formData.new_end_date);
-    }
-    if (formData.new_total_amount) {
-      formDataToSubmit.append('new_total_amount', formData.new_total_amount);
-    }
-    if (file) {
-      formDataToSubmit.append('file', file);
-    }
+    const dataToSubmit: CreateContractAmendmentData = {
+      contract: contractId,
+      number: formData.number,
+      date: formData.date,
+      reason: formData.reason,
+      new_start_date: formData.new_start_date || undefined,
+      new_end_date: formData.new_end_date || undefined,
+      new_total_amount: formData.new_total_amount || undefined,
+      file: file || undefined,
+    };
 
-    onSubmit(formDataToSubmit);
+    onSubmit(dataToSubmit);
   };
 
   return (

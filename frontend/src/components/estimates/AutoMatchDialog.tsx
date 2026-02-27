@@ -1,12 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { type ColumnDef } from '@tanstack/react-table';
-import { api, type AutoMatchResult, type PriceListList } from '../../lib/api';
+import { api, type AutoMatchResult } from '../../lib/api';
 import { DataTable } from '../ui/data-table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Label } from '../ui/label';
 import { Loader2, Wand2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -30,23 +29,21 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
   estimateId,
 }) => {
   const queryClient = useQueryClient();
-  const [selectedPriceList, setSelectedPriceList] = useState<number | undefined>();
   const [results, setResults] = useState<MatchRow[]>([]);
   const [step, setStep] = useState<'config' | 'results'>('config');
 
-  const { data: priceLists = [] } = useQuery({
-    queryKey: ['price-lists'],
-    queryFn: () => api.getPriceLists(),
-    staleTime: 60000,
-    enabled: open,
-  });
-
   const matchMutation = useMutation({
-    mutationFn: () => api.autoMatchEstimateItems(estimateId, selectedPriceList),
+    mutationFn: () => api.autoMatchEstimateItems(estimateId),
     onSuccess: (data) => {
-      const rows = (data || []).map((r) => ({ ...r, accepted: r.product_confidence >= 0.8 || r.work_confidence >= 0.8 }));
+      const rows = (data || []).map((r) => ({
+        ...r,
+        accepted: r.product_confidence >= 0.8,
+      }));
       setResults(rows);
       setStep('results');
+      if (rows.length === 0) {
+        toast.info('Совпадений не найдено. Убедитесь, что счета поставщиков проверены.');
+      }
     },
     onError: (error) => {
       toast.error(`Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
@@ -66,9 +63,8 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
         product: r.matched_product.id,
         material_unit_price: r.matched_product.price,
       } : {}),
-      ...(r.matched_work ? {
-        work_item: r.matched_work.id,
-        work_unit_price: r.matched_work.cost,
+      ...(r.source_price_history_id ? {
+        source_price_history: r.source_price_history_id,
       } : {}),
     }));
 
@@ -89,7 +85,7 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
   const handleAcceptAll = useCallback(() => {
     setResults((prev) => prev.map((r) => ({
       ...r,
-      accepted: r.product_confidence >= 0.8 || r.work_confidence >= 0.8,
+      accepted: r.product_confidence >= 0.8,
     })));
   }, []);
 
@@ -114,38 +110,44 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
     {
       id: 'product',
       header: 'Товар из каталога',
-      size: 200,
+      size: 180,
       cell: ({ row }) => row.original.matched_product?.name || '—',
     },
     {
       id: 'product_price',
-      header: 'Цена мат.',
+      header: 'Цена',
       size: 100,
-      cell: ({ row }) => row.original.matched_product?.price || '—',
+      cell: ({ row }) => {
+        const price = row.original.matched_product?.price;
+        if (!price || price === '0') return '—';
+        return Number(price).toLocaleString('ru-RU', { maximumFractionDigits: 2 }) + ' ₽';
+      },
     },
     {
-      id: 'product_conf',
+      id: 'source',
+      header: 'Источник цены',
+      size: 220,
+      cell: ({ row }) => {
+        const info = row.original.invoice_info;
+        if (!info) return <span className="text-muted-foreground">Нет данных</span>;
+        return (
+          <div className="text-xs leading-tight">
+            <div className="font-medium">{info.counterparty_name || 'Неизвестный'}</div>
+            <div className="text-muted-foreground">
+              Счёт {info.invoice_number || '—'} от{' '}
+              {info.invoice_date
+                ? new Date(info.invoice_date).toLocaleDateString('ru-RU')
+                : '—'}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'confidence',
       header: 'Увер.',
       size: 70,
       cell: ({ row }) => confidenceBadge(row.original.product_confidence),
-    },
-    {
-      id: 'work',
-      header: 'Работа',
-      size: 200,
-      cell: ({ row }) => row.original.matched_work?.name || '—',
-    },
-    {
-      id: 'work_price',
-      header: 'Цена раб.',
-      size: 100,
-      cell: ({ row }) => row.original.matched_work?.cost || '—',
-    },
-    {
-      id: 'work_conf',
-      header: 'Увер.',
-      size: 70,
-      cell: ({ row }) => confidenceBadge(row.original.work_confidence),
     },
   ];
 
@@ -161,29 +163,14 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
         <DialogHeader>
           <DialogTitle>
             <Wand2 className="inline h-5 w-5 mr-2" />
-            Автоподбор цен и работ
+            Подобрать цены из счетов
           </DialogTitle>
         </DialogHeader>
 
         {step === 'config' && (
           <div className="space-y-4">
-            <div>
-              <Label>Прайс-лист (опционально)</Label>
-              <select
-                className="w-full border rounded-md px-3 py-2 text-sm bg-background mt-1"
-                value={selectedPriceList || ''}
-                onChange={(e) => setSelectedPriceList(e.target.value ? Number(e.target.value) : undefined)}
-              >
-                <option value="">Без привязки к прайс-листу</option>
-                {priceLists.map((pl: PriceListList) => (
-                  <option key={pl.id} value={pl.id}>
-                    {pl.number} — {pl.name}
-                  </option>
-                ))}
-              </select>
-            </div>
             <p className="text-sm text-muted-foreground">
-              Система подберёт товары из каталога и работы из прайс-листа для каждой строки сметы.
+              Система найдёт совпадения между строками сметы и позициями из загруженных счетов поставщиков.
               Вы сможете принять или отклонить каждое совпадение перед применением.
             </p>
           </div>
@@ -205,7 +192,7 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
               data={results}
               enableSorting
               enableVirtualization={results.length > 100}
-              emptyMessage="Совпадения не найдены"
+              emptyMessage="Совпадения не найдены. Убедитесь, что счета поставщиков загружены и проверены."
             />
           </div>
         )}

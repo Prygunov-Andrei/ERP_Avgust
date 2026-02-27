@@ -24,6 +24,10 @@ const STATUS_LABELS: Record<string, string> = {
   approved: 'Согласовано',
   sending: 'Отправляется',
   paid: 'Оплачен',
+  review: 'На проверке',
+  verified: 'Проверен',
+  recognition: 'Распознаётся',
+  cancelled: 'Отменён',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -152,8 +156,21 @@ export const PaymentRegistryTab = () => {
     onError: () => toast.error('Ошибка переноса'),
   });
 
+  const markCashPaidMutation = useMutation({
+    mutationFn: (id: number) => (api as any).markCashPaid(id),
+    onSuccess: () => {
+      toast.success('Оплата наличными подтверждена');
+      queryClient.invalidateQueries({ queryKey: ['invoices-registry'] });
+    },
+    onError: () => toast.error('Ошибка подтверждения оплаты'),
+  });
+
   const handleApprove = (id: number) => {
     approveMutation.mutate(id);
+  };
+
+  const handleMarkCashPaid = (id: number) => {
+    markCashPaidMutation.mutate(id);
   };
 
   const handleRejectSubmit = () => {
@@ -351,15 +368,20 @@ export const PaymentRegistryTab = () => {
                             <Clock className="h-3.5 w-3.5" />
                           </Button>
                         )}
-                        {invoice.status === 'approved' && invoice.payment_method === 'cash' && (
+                        {invoice.status === 'approved' && !invoice.bank_payment_order && (
                           <Button
                             size="sm"
                             variant="outline"
                             className="h-7 px-2 text-emerald-700 border-emerald-300 hover:bg-emerald-50"
-                            onClick={() => handleApprove(invoice.id)}
+                            onClick={() => handleMarkCashPaid(invoice.id)}
+                            disabled={markCashPaidMutation.isPending}
                             aria-label="Отметить оплату"
                           >
-                            Оплачен
+                            {markCashPaidMutation.isPending ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              'Оплачен'
+                            )}
                           </Button>
                         )}
                       </div>

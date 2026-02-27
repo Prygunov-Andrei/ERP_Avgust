@@ -252,8 +252,8 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
 
         from .services.estimate_auto_matcher import EstimateAutoMatcher
         matcher = EstimateAutoMatcher()
-        result = matcher.auto_fill(estimate, price_list_id=price_list_id)
-        return Response(result)
+        results = matcher.preview_matches(estimate)
+        return Response(results)
 
     @action(detail=False, methods=['post'], url_path='import',
             parser_classes=[MultiPartParser])

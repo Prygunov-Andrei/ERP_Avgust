@@ -86,7 +86,7 @@ def invoice_data(counterparty, obj, account, legal_entity, category):
 
 @pytest.fixture
 def invoice_in_review(counterparty, obj, account, legal_entity, category):
-    """Invoice в статусе REVIEW (готов к submit_to_registry)."""
+    """Invoice в статусе REVIEW (готов к verify)."""
     return Invoice.objects.create(
         source=Invoice.Source.MANUAL,
         status=Invoice.Status.REVIEW,
@@ -99,6 +99,26 @@ def invoice_in_review(counterparty, obj, account, legal_entity, category):
         legal_entity=legal_entity,
         category=category,
         amount_gross=Decimal('25000.00'),
+    )
+
+
+@pytest.fixture
+def invoice_verified(
+    counterparty, obj, account, legal_entity, category,
+):
+    """Invoice в статусе VERIFIED (готов к submit_to_registry)."""
+    return Invoice.objects.create(
+        source=Invoice.Source.MANUAL,
+        status=Invoice.Status.VERIFIED,
+        invoice_number='VER-001',
+        invoice_date=date.today(),
+        due_date=date.today() + timedelta(days=14),
+        counterparty=counterparty,
+        object=obj,
+        account=account,
+        legal_entity=legal_entity,
+        category=category,
+        amount_gross=Decimal('30000.00'),
     )
 
 
@@ -220,21 +240,99 @@ class TestInvoiceRetrieve:
 # =============================================================================
 
 @pytest.mark.django_db
-class TestSubmitToRegistry:
+class TestVerify:
 
-    def test_submit_review_to_registry(self, authenticated_client, invoice_in_review):
-        url = f'{BASE_URL}{invoice_in_review.pk}/submit_to_registry/'
-        response = authenticated_client.post(url)
-        assert response.status_code == 200
+    def test_verify_review_to_verified(
+        self, authenticated_client, invoice_in_review,
+    ):
+        url = f'{BASE_URL}{invoice_in_review.pk}/verify/'
+        resp = authenticated_client.post(url)
+        assert resp.status_code == 200
         invoice_in_review.refresh_from_db()
-        assert invoice_in_review.status == Invoice.Status.IN_REGISTRY
+        assert invoice_in_review.status == Invoice.Status.VERIFIED
         assert invoice_in_review.reviewed_by is not None
         assert invoice_in_review.reviewed_at is not None
 
-    def test_submit_wrong_status_returns_400(self, authenticated_client, invoice_in_registry):
-        url = f'{BASE_URL}{invoice_in_registry.pk}/submit_to_registry/'
-        response = authenticated_client.post(url)
-        assert response.status_code == 400
+    def test_verify_without_counterparty_400(
+        self, authenticated_client, category,
+    ):
+        inv = Invoice.objects.create(
+            status=Invoice.Status.REVIEW,
+            amount_gross=Decimal('1000'),
+            category=category,
+        )
+        url = f'{BASE_URL}{inv.pk}/verify/'
+        resp = authenticated_client.post(url)
+        assert resp.status_code == 400
+
+    def test_verify_without_amount_400(
+        self, authenticated_client, counterparty,
+    ):
+        inv = Invoice.objects.create(
+            status=Invoice.Status.REVIEW,
+            counterparty=counterparty,
+        )
+        url = f'{BASE_URL}{inv.pk}/verify/'
+        resp = authenticated_client.post(url)
+        assert resp.status_code == 400
+
+    def test_verify_wrong_status_400(
+        self, authenticated_client, invoice_in_registry,
+    ):
+        url = (
+            f'{BASE_URL}{invoice_in_registry.pk}/verify/'
+        )
+        resp = authenticated_client.post(url)
+        assert resp.status_code == 400
+
+    def test_verify_creates_event(
+        self, authenticated_client, invoice_in_review,
+    ):
+        url = f'{BASE_URL}{invoice_in_review.pk}/verify/'
+        authenticated_client.post(url)
+        assert invoice_in_review.events.filter(
+            event_type=InvoiceEvent.EventType.REVIEWED,
+        ).exists()
+
+
+@pytest.mark.django_db
+class TestSubmitToRegistry:
+
+    def test_submit_verified_to_registry(
+        self, authenticated_client, invoice_verified,
+    ):
+        url = (
+            f'{BASE_URL}'
+            f'{invoice_verified.pk}/submit_to_registry/'
+        )
+        resp = authenticated_client.post(url)
+        assert resp.status_code == 200
+        invoice_verified.refresh_from_db()
+        assert (
+            invoice_verified.status
+            == Invoice.Status.IN_REGISTRY
+        )
+
+    def test_submit_review_returns_400(
+        self, authenticated_client, invoice_in_review,
+    ):
+        """REVIEW can't go directly to registry."""
+        url = (
+            f'{BASE_URL}'
+            f'{invoice_in_review.pk}/submit_to_registry/'
+        )
+        resp = authenticated_client.post(url)
+        assert resp.status_code == 400
+
+    def test_submit_wrong_status_400(
+        self, authenticated_client, invoice_in_registry,
+    ):
+        url = (
+            f'{BASE_URL}'
+            f'{invoice_in_registry.pk}/submit_to_registry/'
+        )
+        resp = authenticated_client.post(url)
+        assert resp.status_code == 400
 
 
 # =============================================================================
@@ -328,6 +426,50 @@ class TestReschedule:
             format='json',
         )
         assert response.status_code == 400
+
+
+# =============================================================================
+# status__in filter
+# =============================================================================
+
+@pytest.mark.django_db
+class TestStatusInFilter:
+
+    def test_filter_single_status(
+        self, authenticated_client,
+        invoice_in_review, invoice_in_registry,
+    ):
+        resp = authenticated_client.get(
+            f'{BASE_URL}?status__in=review',
+        )
+        assert resp.status_code == 200
+        ids = [r['id'] for r in resp.data['results']]
+        assert invoice_in_review.pk in ids
+        assert invoice_in_registry.pk not in ids
+
+    def test_filter_multiple_statuses(
+        self, authenticated_client,
+        invoice_in_registry, invoice_verified,
+    ):
+        resp = authenticated_client.get(
+            f'{BASE_URL}?status__in=in_registry,verified',
+        )
+        assert resp.status_code == 200
+        ids = [r['id'] for r in resp.data['results']]
+        assert invoice_in_registry.pk in ids
+        assert invoice_verified.pk in ids
+
+    def test_filter_excludes_other(
+        self, authenticated_client,
+        invoice_in_review, invoice_in_registry,
+    ):
+        resp = authenticated_client.get(
+            f'{BASE_URL}?status__in=paid',
+        )
+        assert resp.status_code == 200
+        ids = [r['id'] for r in resp.data['results']]
+        assert invoice_in_review.pk not in ids
+        assert invoice_in_registry.pk not in ids
 
 
 # =============================================================================

@@ -464,28 +464,28 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/catalog/categories" element={
-            <ProtectedRoute requiredSection="settings.goods">
+            <ProtectedRoute requiredSection="goods.categories">
               <Layout onLogout={handleLogout} user={user}>
                 <CatalogCategories />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/catalog/products" element={
-            <ProtectedRoute requiredSection="settings.goods">
+            <ProtectedRoute requiredSection="goods.catalog">
               <Layout onLogout={handleLogout} user={user}>
                 <CatalogProducts />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/catalog/products/:id" element={
-            <ProtectedRoute requiredSection="settings.goods">
+            <ProtectedRoute requiredSection="goods.catalog">
               <Layout onLogout={handleLogout} user={user}>
                 <ProductDetail />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/catalog/moderation" element={
-            <ProtectedRoute requiredSection="settings.goods">
+            <ProtectedRoute requiredSection="goods.moderation">
               <Layout onLogout={handleLogout} user={user}>
                 <CatalogModeration />
               </Layout>
@@ -512,56 +512,56 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/price-lists" element={
-            <ProtectedRoute requiredSection="commercial.pricelists">
+            <ProtectedRoute requiredSection="goods.pricelists">
               <Layout onLogout={handleLogout} user={user}>
                 <PriceLists />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/price-lists/create" element={
-            <ProtectedRoute requiredSection="commercial.pricelists">
+            <ProtectedRoute requiredSection="goods.pricelists">
               <Layout onLogout={handleLogout} user={user}>
                 <CreatePriceList />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/price-lists/:id" element={
-            <ProtectedRoute requiredSection="commercial.pricelists">
+            <ProtectedRoute requiredSection="goods.pricelists">
               <Layout onLogout={handleLogout} user={user}>
                 <PriceListDetail />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/work-items" element={
-            <ProtectedRoute requiredSection="settings.goods">
+            <ProtectedRoute requiredSection="goods.works">
               <Layout onLogout={handleLogout} user={user}>
                 <WorkItems />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/work-items/:id" element={
-            <ProtectedRoute requiredSection="settings.goods">
+            <ProtectedRoute requiredSection="goods.works">
               <Layout onLogout={handleLogout} user={user}>
                 <WorkItemDetail />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/work-sections" element={
-            <ProtectedRoute requiredSection="settings.goods">
+            <ProtectedRoute requiredSection="goods.works">
               <Layout onLogout={handleLogout} user={user}>
                 <WorkSections />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/worker-grades" element={
-            <ProtectedRoute requiredSection="settings.goods">
+            <ProtectedRoute requiredSection="goods.grades">
               <Layout onLogout={handleLogout} user={user}>
                 <WorkerGrades />
               </Layout>
             </ProtectedRoute>
           } />
           <Route path="/worker-grade-skills" element={
-            <ProtectedRoute requiredSection="settings.goods">
+            <ProtectedRoute requiredSection="goods.grades">
               <Layout onLogout={handleLogout} user={user}>
                 <WorkerGradeSkillsComponent />
               </Layout>
@@ -824,11 +824,7 @@ export default function App() {
 
           {/* Справочники и Настройки */}
           <Route path="/references/goods" element={
-            <ProtectedRoute requiredSection="settings.goods">
-              <Layout onLogout={handleLogout} user={user}>
-                <StubPage title="Товары и услуги" description="Каталог, структура, разряды, навыки, модерация" parentSection="Справочники и Настройки" />
-              </Layout>
-            </ProtectedRoute>
+            <Navigate to="/catalog/products" replace />
           } />
           <Route path="/references/work-conditions" element={
             <ProtectedRoute requiredSection="settings.work_conditions">

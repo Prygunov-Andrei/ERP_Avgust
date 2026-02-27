@@ -20,9 +20,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { ArrowLeft, Loader2, FileText, Plus, Edit2, Trash2, Info, DollarSign, History, FileSpreadsheet, Table2 } from 'lucide-react';
+import { ArrowLeft, Loader2, FileText, Plus, Edit2, Trash2, Info, DollarSign, History, FileSpreadsheet, Table2, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { EstimateItemsEditor } from './EstimateItemsEditor';
+import { EstimateSupplierInvoices } from './EstimateSupplierInvoices';
 
 const STATUS_MAP = {
   draft: 'Черновик',
@@ -474,6 +475,10 @@ export function EstimateDetail() {
             <DollarSign className="w-4 h-4 mr-2" />
             Итоги
           </TabsTrigger>
+          <TabsTrigger value="supplier-invoices">
+            <Receipt className="w-4 h-4 mr-2" />
+            Счета поставщиков
+          </TabsTrigger>
         </TabsList>
 
         {/* Info Tab */}
@@ -824,6 +829,13 @@ export function EstimateDetail() {
                 </>
               )}
             </div>
+          </div>
+        </TabsContent>
+
+        {/* Supplier Invoices Tab */}
+        <TabsContent value="supplier-invoices" className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <EstimateSupplierInvoices estimateId={Number(id)} />
           </div>
         </TabsContent>
       </Tabs>

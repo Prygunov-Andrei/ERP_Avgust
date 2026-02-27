@@ -96,7 +96,7 @@ export function ContractsList() {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
-              placeholder="Поис по номеру, названию, контрагенту, объекту..."
+              placeholder="Поиск по номеру, названию, контрагенту, объекту..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"

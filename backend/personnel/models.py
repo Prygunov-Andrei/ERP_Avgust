@@ -20,7 +20,6 @@ ERP_PERMISSION_TREE = OrderedDict([
             ('tkp', 'ТКП'),
             ('mp', 'МП'),
             ('estimates', 'Сметы'),
-            ('pricelists', 'Прайс-листы'),
         ]),
     }),
     ('objects', {
@@ -61,6 +60,17 @@ ERP_PERMISSION_TREE = OrderedDict([
             ('warehouse', 'Склад'),
         ]),
     }),
+    ('goods', {
+        'label': 'Товары и услуги',
+        'children': OrderedDict([
+            ('categories', 'Категории'),
+            ('catalog', 'Номенклатура'),
+            ('moderation', 'Модерация'),
+            ('works', 'Каталог работ'),
+            ('pricelists', 'Прайс-листы'),
+            ('grades', 'Разряды монтажников'),
+        ]),
+    }),
     ('pto', {
         'label': 'ПТО',
         'children': OrderedDict([
@@ -86,7 +96,6 @@ ERP_PERMISSION_TREE = OrderedDict([
     ('settings', {
         'label': 'Справочники и настройки',
         'children': OrderedDict([
-            ('goods', 'Товары и услуги'),
             ('work_conditions', 'Фронт работ и монтажные условия'),
             ('personnel', 'Персонал'),
             ('counterparties', 'Контрагенты'),

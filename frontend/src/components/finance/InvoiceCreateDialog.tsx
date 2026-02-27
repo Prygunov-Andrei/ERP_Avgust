@@ -247,7 +247,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
       );
       if (result && !result.sufficient) {
         setBalanceWarning(
-          `Недостаточно средств на объекте. Доступно: ${formatCurrency(result.available)}, требуется: ${formatCurrency(amountGross)}`
+          `Недостаточно средств на объекте. Доступно: ${formatCurrency(result.balance)}, требуется: ${formatCurrency(amountGross)}`
         );
       } else {
         setBalanceWarning(null);

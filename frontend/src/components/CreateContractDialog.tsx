@@ -53,6 +53,12 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => api.getUsers(),
+    staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
+  });
+
   // Form state
   const [formData, setFormData] = useState({
     object_id: '',
@@ -470,7 +476,44 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
         </div>
       )}
 
-      {/* Секция 5: Сроки */}
+      {/* Секция 5: Ответственные */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold border-b pb-2">Ответственные</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="responsible_manager">Начальник участка</Label>
+            <Select value={formData.responsible_manager} onValueChange={(value) => setFormData({ ...formData, responsible_manager: value })}>
+              <SelectTrigger id="responsible_manager" className="mt-1.5">
+                <SelectValue placeholder="Выберите начальника участка" />
+              </SelectTrigger>
+              <SelectContent>
+                {users?.results?.map((u: any) => (
+                  <SelectItem key={u.id} value={u.id.toString()}>
+                    {u.full_name || u.username}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="responsible_engineer">Ответственный инженер</Label>
+            <Select value={formData.responsible_engineer} onValueChange={(value) => setFormData({ ...formData, responsible_engineer: value })}>
+              <SelectTrigger id="responsible_engineer" className="mt-1.5">
+                <SelectValue placeholder="Выберите инженера" />
+              </SelectTrigger>
+              <SelectContent>
+                {users?.results?.map((u: any) => (
+                  <SelectItem key={u.id} value={u.id.toString()}>
+                    {u.full_name || u.username}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Секция 6: Сроки */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold border-b pb-2">Сроки</h3>
         

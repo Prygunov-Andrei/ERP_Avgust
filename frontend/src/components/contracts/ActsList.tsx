@@ -64,7 +64,7 @@ export function ActsList() {
     );
   }
 
-  const acts = actsData?.results || [];
+  const acts = Array.isArray(actsData) ? actsData : actsData?.results || [];
 
   return (
     <div className="space-y-6">

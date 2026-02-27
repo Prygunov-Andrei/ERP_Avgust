@@ -185,7 +185,7 @@ export const IncomingPaymentsTab = () => {
       amount,
       is_cash: isCash,
     };
-    if (incomeDate) data.date = incomeDate;
+    if (incomeDate) data.payment_date = incomeDate;
     if (description) data.description = description;
     if (accountId) data.account = Number(accountId);
     if (legalEntityId) data.legal_entity = Number(legalEntityId);
@@ -267,7 +267,7 @@ export const IncomingPaymentsTab = () => {
                             {INCOME_TYPE_LABELS[record.income_type] || record.income_type}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{formatDate(record.date)}</td>
+                        <td className="px-4 py-3 text-gray-600">{formatDate(record.payment_date)}</td>
                         <td className="px-4 py-3 text-gray-700 max-w-[180px] truncate">
                           {record.counterparty_name || '—'}
                         </td>
@@ -332,7 +332,7 @@ export const IncomingPaymentsTab = () => {
               <tbody className="divide-y">
                 {cashRecords.map((record: any) => (
                   <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-600">{formatDate(record.date)}</td>
+                    <td className="px-4 py-3 text-gray-600">{formatDate(record.payment_date)}</td>
                     <td className="px-4 py-3">
                       <Badge variant="outline">
                         {INCOME_TYPE_LABELS[record.income_type] || record.income_type}

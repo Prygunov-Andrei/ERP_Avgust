@@ -1,3 +1,4 @@
+from decimal import Decimal
 from rest_framework import viewsets, filters, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -150,6 +151,26 @@ class ContractViewSet(CashFlowMixin, viewsets.ModelViewSet):
         contract = self.get_object()
         balance = contract.get_balance()
         return Response({'balance': balance, 'currency': contract.currency})
+
+    @extend_schema(summary='Маржа договора', tags=['Договоры'])
+    @action(detail=True, methods=['get'])
+    def margin(self, request, pk=None):
+        """Возвращает маржу для доходного договора."""
+        contract = self.get_object()
+        if contract.contract_type != 'income':
+            return Response(
+                {'error': 'Маржа доступна только для доходных договоров'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        margin = contract.get_margin()
+        total = contract.total_amount or Decimal('0')
+        margin_percent = (
+            (margin / total * 100) if total else Decimal('0')
+        )
+        return Response({
+            'margin': str(margin),
+            'margin_percent': str(margin_percent),
+        })
 
     @extend_schema(summary='Скачать график работ (PDF)')
     @action(detail=True, methods=['get'], url_path='schedule/export_pdf')

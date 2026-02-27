@@ -77,6 +77,7 @@ export function InvoicesPage() {
     if (searchQuery) params.set('search', searchQuery);
     if (filters.status !== 'all') params.set('status', filters.status);
     if (filters.source !== 'all') params.set('source', filters.source);
+    params.set('estimate__isnull', 'True');
     return params.toString();
   };
 

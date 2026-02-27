@@ -569,10 +569,13 @@ class ApiClient {
   }
 
   // Contracts
-  async getContracts(params?: { 
-    object?: number; 
+  async getContracts(params?: {
+    object?: number;
     status?: string;
     contract_type?: string;
+    currency?: string;
+    counterparty?: number;
+    legal_entity?: number;
     search?: string;
     ordering?: string;
     page_size?: number;
@@ -582,6 +585,9 @@ class ApiClient {
     if (params?.object) queryParams.append('object', params.object.toString());
     if (params?.status) queryParams.append('status', params.status);
     if (params?.contract_type) queryParams.append('contract_type', params.contract_type);
+    if (params?.currency) queryParams.append('currency', params.currency);
+    if (params?.counterparty) queryParams.append('counterparty', params.counterparty.toString());
+    if (params?.legal_entity) queryParams.append('legal_entity', params.legal_entity.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.ordering) queryParams.append('ordering', params.ordering);
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
@@ -1278,8 +1284,9 @@ class ApiClient {
   }
 
   // Expense Categories
-  async getExpenseCategories(tree: boolean = false) {
-    const url = tree ? '/expense-categories/?tree=true' : '/expense-categories/';
+  async getExpenseCategories(tree: boolean = false, accountType?: string) {
+    let url = tree ? '/expense-categories/?tree=true' : '/expense-categories/';
+    if (accountType) url += (url.includes('?') ? '&' : '?') + `account_type=${accountType}`;
     const response = await this.request<PaginatedResponse<ExpenseCategory> | ExpenseCategory[]>(url);
     if (response && typeof response === 'object' && 'results' in response) {
       return response.results;
@@ -3108,6 +3115,8 @@ export interface ContractDetail {
   legal_entity_name: string;
   counterparty_name: string;
   commercial_proposal_number?: string;
+  technical_proposal_number?: string;
+  mounting_proposal_number?: string;
   framework_contract_details?: FrameworkContractListItem;
   responsible_manager_name?: string;
   responsible_engineer_name?: string;
@@ -3118,13 +3127,13 @@ export interface ContractDetail {
   contract_date: string;
   start_date?: string;
   end_date?: string;
-  
+
   total_amount: string;
   currency: 'RUB' | 'USD' | 'EUR' | 'CNY';
   vat_rate: '0' | '10' | '20' | 'no_vat';
   vat_included: boolean;
-  
-  status: 'planned' | 'active' | 'completed' | 'terminated';
+
+  status: 'planned' | 'active' | 'completed' | 'suspended' | 'terminated';
   file?: string;
   notes?: string;
 }
@@ -3344,6 +3353,13 @@ export interface AutoMatchResult {
   matched_work: { id: number; name: string; cost: string } | null;
   product_confidence: number;
   work_confidence: number;
+  invoice_info: {
+    invoice_number: string;
+    invoice_date: string;
+    counterparty_name: string | null;
+    invoice_id: number | null;
+  } | null;
+  source_price_history_id: number | null;
 }
 
 export interface EstimateImportPreview {
@@ -5008,6 +5024,9 @@ ApiClient.prototype.createInvoice = async function (this: ApiClient, formData: F
 ApiClient.prototype.updateInvoice = async function (this: ApiClient, id: number, data: any) {
   return this.request<any>(`/invoices/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
 };
+ApiClient.prototype.verifyInvoice = async function (this: ApiClient, id: number) {
+  return this.request<any>(`/invoices/${id}/verify/`, { method: 'POST' });
+};
 ApiClient.prototype.submitInvoiceToRegistry = async function (this: ApiClient, id: number) {
   return this.request<any>(`/invoices/${id}/submit_to_registry/`, { method: 'POST' });
 };
@@ -5029,8 +5048,35 @@ ApiClient.prototype.rescheduleInvoice = async function (this: ApiClient, id: num
     body: JSON.stringify({ new_date: newDate, comment }),
   });
 };
+ApiClient.prototype.markCashPaid = async function (this: ApiClient, id: number) {
+  return this.request<any>(`/invoices/${id}/mark-cash-paid/`, { method: 'POST' });
+};
 ApiClient.prototype.getInvoiceDashboard = async function (this: ApiClient) {
   return this.request<any>('/invoices/dashboard/');
+};
+ApiClient.prototype.bulkUploadInvoices = async function (this: ApiClient, formData: FormData) {
+  return this.request<any>('/invoices/bulk-upload/', {
+    method: 'POST',
+    body: formData,
+    headers: {},  // Let browser set Content-Type for FormData
+  });
+};
+ApiClient.prototype.getBulkSessionStatus = async function (this: ApiClient, sessionId: number) {
+  return this.request<any>(`/invoices/bulk-sessions/${sessionId}/`);
+};
+
+// --- InvoiceItem CRUD ---
+ApiClient.prototype.createInvoiceItem = async function (this: ApiClient, data: { invoice: number; raw_name: string; quantity: string; unit: string; price_per_unit: string; amount: string }) {
+  return this.request<any>('/invoice-items/', { method: 'POST', body: JSON.stringify(data) });
+};
+ApiClient.prototype.updateInvoiceItem = async function (this: ApiClient, id: number, data: Record<string, any>) {
+  return this.request<any>(`/invoice-items/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+};
+ApiClient.prototype.deleteInvoiceItem = async function (this: ApiClient, id: number) {
+  return this.request<void>(`/invoice-items/${id}/`, { method: 'DELETE' });
+};
+ApiClient.prototype.deleteInvoice = async function (this: ApiClient, id: number) {
+  return this.request<void>(`/invoices/${id}/`, { method: 'DELETE' });
 };
 
 // --- Recurring Payments ---

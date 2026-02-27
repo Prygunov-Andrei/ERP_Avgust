@@ -417,6 +417,47 @@ class PaymentItem(TimestampedModel):
 
 
 # =============================================================================
+# BulkImportSession — сессия массового импорта
+# =============================================================================
+
+class BulkImportSession(TimestampedModel):
+    """Сессия массового импорта счетов."""
+
+    class Status(models.TextChoices):
+        PROCESSING = 'processing', 'Обработка'
+        COMPLETED = 'completed', 'Завершено'
+        COMPLETED_WITH_ERRORS = 'completed_with_errors', 'Завершено с ошибками'
+
+    status = models.CharField(
+        max_length=30,
+        choices=Status.choices,
+        default=Status.PROCESSING,
+        verbose_name='Статус',
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='bulk_import_sessions',
+        verbose_name='Создал',
+    )
+    total_files = models.PositiveIntegerField(default=0, verbose_name='Всего файлов')
+    processed_files = models.PositiveIntegerField(default=0, verbose_name='Обработано')
+    successful = models.PositiveIntegerField(default=0, verbose_name='Успешно')
+    failed = models.PositiveIntegerField(default=0, verbose_name='С ошибками')
+    skipped_duplicate = models.PositiveIntegerField(default=0, verbose_name='Пропущено (дубликаты)')
+    errors = models.JSONField(default=list, blank=True, verbose_name='Ошибки')
+
+    class Meta:
+        verbose_name = 'Сессия массового импорта'
+        verbose_name_plural = 'Сессии массового импорта'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Импорт #{self.pk} ({self.get_status_display()}) — {self.processed_files}/{self.total_files}'
+
+
+# =============================================================================
 # Invoice — единый счёт на оплату (НОВОЕ — центральная сущность для расходов)
 # =============================================================================
 
@@ -432,10 +473,12 @@ class Invoice(TimestampedModel):
         BITRIX = 'bitrix', 'Из Битрикс24'
         MANUAL = 'manual', 'Ручной ввод'
         RECURRING = 'recurring', 'Периодический'
+        BULK_IMPORT = 'bulk_import', 'Массовый импорт'
 
     class Status(models.TextChoices):
         RECOGNITION = 'recognition', 'Распознаётся'
         REVIEW = 'review', 'На проверке'
+        VERIFIED = 'verified', 'Проверен'
         IN_REGISTRY = 'in_registry', 'В реестре'
         APPROVED = 'approved', 'Одобрен'
         SENDING = 'sending', 'Отправляется в банк'
@@ -477,6 +520,13 @@ class Invoice(TimestampedModel):
         null=True, blank=True,
         related_name='invoices',
         verbose_name='Периодический платёж',
+    )
+    bulk_session = models.ForeignKey(
+        'BulkImportSession',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='invoices',
+        verbose_name='Сессия массового импорта',
     )
 
     # --- Файл счёта ---
@@ -530,6 +580,14 @@ class Invoice(TimestampedModel):
         related_name='invoices',
         verbose_name='Акт выполненных работ',
         help_text='Для типа ACT_BASED',
+    )
+    estimate = models.ForeignKey(
+        'estimates.Estimate',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='research_invoices',
+        verbose_name='Смета (ценовое исследование)',
+        help_text='Если заполнено — счёт для подбора цен сметчиком',
     )
     category = models.ForeignKey(
         ExpenseCategory,
@@ -677,6 +735,7 @@ class Invoice(TimestampedModel):
             models.Index(fields=['counterparty', 'status']),
             models.Index(fields=['invoice_type']),
             models.Index(fields=['is_debt']),
+            models.Index(fields=['estimate', 'status']),
         ]
 
     def __str__(self) -> str:

@@ -318,7 +318,7 @@ class DealProcessor:
 
                 # Запустить LLM-распознавание
                 from supply.tasks import recognize_invoice
-                recognize_invoice.delay(invoice.id)
+                recognize_invoice.delay(invoice.id, auto_counterparty=True)
 
     @staticmethod
     def _parse_amount(value) -> Optional[float]:

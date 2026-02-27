@@ -1,7 +1,7 @@
 # Проект Finans Assistant — Полная документация
 
-**Версия:** 3.2  
-**Дата:** 23.02.2026  
+**Версия:** 3.3
+**Дата:** 27.02.2026
 **Статус:** Бекенд полностью реализован ✅
 
 ---
@@ -681,7 +681,7 @@ unique: (tkp, front_item)
 #### Invoice (Счёт на оплату) — НОВАЯ ОСНОВНАЯ СУЩНОСТЬ
 ```
 - source: bitrix / manual / recurring
-- status: recognition / review / in_registry / approved / sending / paid / cancelled
+- status: recognition / review / verified / in_registry / approved / sending / paid / cancelled
 - invoice_file: PDF скан счёта
 - invoice_number, invoice_date, due_date
 - counterparty: FK → Counterparty
@@ -694,10 +694,17 @@ unique: (tkp, front_item)
 - supply_request: FK → SupplyRequest
 - recurring_payment: FK → RecurringPayment
 - bank_payment_order: OneToOne → BankPaymentOrder
+- estimate: FK → Estimate (nullable) — привязка к смете для «исследовательских» счетов сметчика
 - description, comment
 - recognition_confidence: float
 - created_by, reviewed_by, reviewed_at, approved_by, approved_at, paid_at
 ```
+
+**Гибридная архитектура Invoice-Estimate:**
+- Если `estimate` заполнен — счёт является «исследовательским» (ценовое исследование сметчика). Такие счета НЕ видны снабженцу в разделе «Счета на оплату» (фильтр `estimate__isnull=True`).
+- Если `estimate = NULL` — обычный счёт для снабженца/финансиста.
+- Индекс: `(estimate, status)` для быстрой фильтрации.
+- Related name: `estimate.research_invoices` — все исследовательские счета сметы.
 
 #### InvoiceItem (Позиция счёта)
 ```
@@ -1100,7 +1107,8 @@ unique: (product, work_item)
 |----------|--------|----------|
 | `/api/v1/invoices/` | GET, POST | Счета на оплату |
 | `/api/v1/invoices/{id}/` | GET, PATCH | Детали и редактирование счёта |
-| `/api/v1/invoices/{id}/submit_to_registry/` | POST | Отправить в реестр |
+| `/api/v1/invoices/{id}/verify/` | POST | Подтвердить данные (REVIEW → VERIFIED) |
+| `/api/v1/invoices/{id}/submit_to_registry/` | POST | Отправить в реестр (VERIFIED → IN_REGISTRY) |
 | `/api/v1/invoices/{id}/approve/` | POST | Одобрить к оплате |
 | `/api/v1/invoices/{id}/reject/` | POST | Отклонить |
 | `/api/v1/invoices/{id}/reschedule/` | POST | Перенести дату оплаты |
@@ -1209,21 +1217,23 @@ unique: (product, work_item)
 ### 5.7. Workflow снабжения (Bitrix24 → ERP → Банк)
 
 ```
-Bitrix24 CRM (Канбан) → Webhook → SupplyRequest → Invoice (recognition) → 
-→ Оператор-Снабженец (review) → Реестр (in_registry) → 
-→ Директор-контролёр (approve/reject/reschedule) → 
+Bitrix24 CRM (Канбан) → Webhook → SupplyRequest → Invoice (recognition) →
+→ Оператор (review) → Проверен (verified) → [опционально] Реестр (in_registry) →
+→ Директор-контролёр (approve/reject/reschedule) →
 → BankPaymentOrder (sending) → Банк → Оплачено (paid)
 ```
 
 1. Карточка в Bitrix24 перемещается в столбец "Передан в Оплату"
 2. Webhook отправляет данные в ERP → создаётся SupplyRequest
 3. Celery-задача скачивает файлы, парсит заголовок, определяет Объект и Договор
-4. LLM распознаёт PDF счёта → создаётся Invoice со статусом review
-5. Оператор-Снабженец проверяет распознавание, сопоставление товаров
-6. После проверки Invoice отправляется в реестр (in_registry)
+4. LLM распознаёт PDF счёта → создаётся Invoice со статусом `review` (товары НЕ создаются в каталоге)
+5. Оператор проверяет распознавание, исправляет данные, нажимает «Подтвердить» → статус `verified`, товары создаются в каталоге
+6. Оператор решает отправить счёт в реестр → статус `in_registry` (не все счета идут на оплату)
 7. Директор-контролёр видит дашборд, одобряет/отклоняет/переносит
 8. Одобренный Invoice → создаётся BankPaymentOrder → отправляется в банк
-9. После исполнения банком → Invoice получает статус paid
+9. После исполнения банком → Invoice получает статус `paid`
+
+> **Примечание:** Сметчик может запрашивать счета для сравнения цен при подготовке ТКП. Такие счета остаются в статусе `verified` и НЕ попадают в реестр оплат.
 
 ### 5.8. Периодические платежи
 
@@ -1236,6 +1246,8 @@ Bitrix24 CRM (Канбан) → Webhook → SupplyRequest → Invoice (recogniti
 1. Fuzzy matching (fuzzywuzzy) — быстрый поиск по названию и алиасам
 2. LLM matching — семантическое сравнение для неоднозначных случаев
 3. Результат: автоматическое сопоставление позиций счёта с каталогом
+
+**Важно:** Сопоставление и создание товаров происходит только на этапе `verify` (не при распознавании). Это гарантирует, что ошибки OCR не попадают в каталог.
 
 ### 5.10. AccumulativeEstimateService — Накопительная ведомость
 
@@ -1264,6 +1276,18 @@ Bitrix24 CRM (Канбан) → Webhook → SupplyRequest → Invoice (recogniti
 - Fuzzy-matching по названию с каталогом Product
 - Сопоставление с WorkItem через ProductWorkMapping
 - Учёт алиасов (ProductAlias) и истории цен (ProductPriceHistory)
+
+**Ключевые методы:**
+
+| Метод | Описание |
+|-------|----------|
+| `preview_matches(estimate)` | Preview-подбор цен из счетов **без сохранения** в БД. Возвращает `List[Dict]` с per-item результатами: `item_id`, `name`, `matched_product`, `product_confidence`, `invoice_info` (поставщик, номер счёта, дата), `source_price_history_id`. Используется для диалога «Подобрать цены из счетов» |
+| `match_prices(estimate)` | Подбор и **сохранение** Product + цены из ProductPriceHistory для строк без product |
+| `match_works(estimate, price_list_id)` | Подбор WorkItem: история (ProductWorkMapping) → правила по Category → LLM fallback |
+| `auto_fill(estimate, price_list_id)` | Комбинация match_prices + match_works |
+| `record_manual_correction(product, work_item)` | Обновление ProductWorkMapping при ручной правке сметчиком |
+
+**API endpoint:** `POST /api/v1/estimates/{id}/auto_match/` — вызывает `preview_matches()`, возвращает массив `AutoMatchResult[]`. Фронтенд показывает таблицу с чекбоксами, пользователь принимает/отклоняет, затем отправляет `bulkUpdateEstimateItems()`.
 
 ---
 
@@ -1320,7 +1344,19 @@ Bitrix24 CRM (Канбан) → Webhook → SupplyRequest → Invoice (recogniti
 
 ## 8. История изменений
 
-### Версия 3.3 (24.02.2026) — Текущая
+### Версия 3.4 (24.02.2026) — Текущая
+
+**МП (Монтажные предложения):**
+- Фикс фильтров по Объекту и Контрагенту в `MountingProposalsList.tsx`: `objects?.results?.map` → `Array.isArray(objects) ? objects : objects?.results ?? []`
+- `MountingProposalDetail.tsx` полностью переработан: inline-редактирование (isEditing state, editFormData, Input/Select вместо текста, кнопки Сохранить/Отмена в хедере)
+- Исправлены пути навигации: `/mounting-proposals` → `/proposals/mounting-proposals`
+- При редактировании поля: имя, дата, контрагент (select из useCounterparties), статус, примечания, сумма, трудозатраты
+
+**UI конвенция:** inline-редактирование реализовано для ТКП и МП — паттерн: `isEditing` state + `editFormData` + `handleStartEditing/handleCancelEditing/handleSaveEditing`.
+
+---
+
+### Версия 3.3 (24.02.2026)
 
 **Добавлено:**
 - Поле `due_date` (DateField, null/blank) в модели `TechnicalProposal` — крайний срок выдачи ТКП Заказчику
@@ -1351,6 +1387,21 @@ Bitrix24 CRM (Канбан) → Webhook → SupplyRequest → Invoice (recogniti
 - Frontend: `tkp-due-date.test.tsx` (9 тестов) — подсветка дедлайнов, counterparty в карточке канбана
 
 ---
+
+### Версия 3.3 (27.02.2026)
+
+**Добавлено:**
+- **Гибридная архитектура Invoice-Estimate:** FK `estimate` в Invoice — разделение «исследовательских» счетов сметчика и обычных счетов снабженца. Счета привязанные к смете не видны в списке снабженца (фильтр `estimate__isnull=True`)
+- Метод `EstimateAutoMatcher.preview_matches()` — предварительный подбор цен из счетов без сохранения в БД, с информацией об источнике (поставщик, номер счёта, дата)
+- Endpoint `auto_match` переключён с `auto_fill()` на `preview_matches()` — теперь возвращает `AutoMatchResult[]` вместо агрегированных stats
+- Компонент `EstimateSupplierInvoices` (`frontend/src/components/estimates/EstimateSupplierInvoices.tsx`) — вкладка «Счета поставщиков» в редакторе сметы: загрузка, статусы, навигация к проверке
+- Вкладка «Счета поставщиков» в `EstimateDetail.tsx`
+- `BulkInvoiceUpload` — опциональный prop `estimateId` для привязки загруженных счетов к смете
+- `InvoiceDetailPage` — условная обратная навигация: если счёт привязан к смете, кнопка «Назад» ведёт обратно в смету
+- `InvoiceFilter` — фильтры `estimate__isnull` и `estimate` для разделения счетов по контексту
+- `InvoiceListSerializer` — поля `estimate_number`, `items_count`
+- `AutoMatchDialog` — колонка «Источник цены» (поставщик + счёт), заголовок «Подобрать цены из счетов»
+- `AutoMatchResult` — поля `invoice_info`, `source_price_history_id`
 
 ### Версия 3.2 (23.02.2026)
 

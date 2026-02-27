@@ -228,6 +228,82 @@ class EstimateAutoMatcher:
                 mapping.confidence = confidence
             mapping.save(update_fields=['usage_count', 'confidence'])
 
+    def preview_matches(self, estimate) -> List[Dict]:
+        """Preview-подбор цен из счетов БЕЗ сохранения в БД.
+
+        Для каждой строки сметы ищет Product через ProductMatcher,
+        находит последнюю цену из ProductPriceHistory и возвращает
+        per-item результаты с информацией об источнике (счёт, поставщик).
+        """
+        from estimates.models import EstimateItem
+
+        items = EstimateItem.objects.filter(
+            estimate=estimate,
+        ).exclude(name='')
+
+        results = []
+        for item in items:
+            if item.product and item.material_unit_price > 0:
+                continue
+
+            try:
+                product, _created = self.product_matcher.find_or_create_product(
+                    name=item.name,
+                    unit=item.unit,
+                    use_llm=True,
+                )
+            except Exception as exc:
+                logger.warning('preview_matches: product match failed for "%s": %s', item.name, exc)
+                product = None
+
+            matched_product = None
+            product_confidence = 0.0
+            invoice_info = None
+            source_price_history_id = None
+
+            if product:
+                latest_price = ProductPriceHistory.objects.filter(
+                    product=product,
+                ).select_related('counterparty').order_by('-invoice_date').first()
+
+                if latest_price:
+                    matched_product = {
+                        'id': product.id,
+                        'name': product.name,
+                        'price': str(latest_price.price),
+                    }
+                    product_confidence = 0.85
+                    source_price_history_id = latest_price.id
+                    invoice_info = {
+                        'invoice_number': latest_price.invoice_number or '',
+                        'invoice_date': str(latest_price.invoice_date) if latest_price.invoice_date else '',
+                        'counterparty_name': (
+                            latest_price.counterparty.short_name or latest_price.counterparty.name
+                        ) if latest_price.counterparty else None,
+                        'invoice_id': latest_price.invoice_id,
+                    }
+                else:
+                    matched_product = {
+                        'id': product.id,
+                        'name': product.name,
+                        'price': '0',
+                    }
+                    product_confidence = 0.5
+
+            if matched_product:
+                results.append({
+                    'item_id': item.id,
+                    'name': item.name,
+                    'matched_product': matched_product,
+                    'matched_work': None,
+                    'product_confidence': product_confidence,
+                    'work_confidence': 0,
+                    'invoice_info': invoice_info,
+                    'source_price_history_id': source_price_history_id,
+                })
+
+        return results
+
     def auto_fill(
         self, estimate, price_list_id: Optional[int] = None
     ) -> Dict:

@@ -50,6 +50,7 @@ export type InvoiceSource = 'bitrix' | 'manual' | 'recurring';
 export type InvoiceStatus =
   | 'recognition'
   | 'review'
+  | 'verified'
   | 'in_registry'
   | 'approved'
   | 'sending'
@@ -107,6 +108,9 @@ export interface Invoice {
   supply_request: number | null;
   recurring_payment: number | null;
   bank_payment_order: number | null;
+  estimate: number | null;
+  estimate_number: string | null;
+  items_count?: number;
   description: string;
   comment: string;
   recognition_confidence: number | null;

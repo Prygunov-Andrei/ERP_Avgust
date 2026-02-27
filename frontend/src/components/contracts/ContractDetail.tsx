@@ -1,3 +1,21 @@
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Pencil, Trash2, FileText, Loader2, TrendingUp } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  Line,
+  Bar,
+} from 'recharts';
+import { api, ContractDetail as ContractDetailType } from '../../lib/api';
+import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import {
   AlertDialog,
@@ -9,9 +27,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { toast } from 'sonner';
 import { CreateContractDialog } from '../CreateContractDialog';
 import { ContractAmendmentsTab } from '../ContractAmendmentsTab';
+import { WorkScheduleTab } from '../WorkScheduleTab';
+import { ActsTab } from '../ActsTab';
 import { ContractTextEditor } from './ContractTextEditor';
 import { formatDate, formatAmount, formatCurrency } from '../../lib/utils';
 import { CONSTANTS, COLORS } from '../../constants';
@@ -277,11 +298,21 @@ export function ContractDetail() {
       {activeTab === 'text' && <ContractTextEditorTab contractId={contract.id} />}
 
       {/* Диалог редактирования */}
-      <CreateContractDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        contract={contract}
-      />
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редактирование договора</DialogTitle>
+            <DialogDescription>Измените данные договора.</DialogDescription>
+          </DialogHeader>
+          <CreateContractDialog
+            contractId={contract.id}
+            onSuccess={() => {
+              setIsEditDialogOpen(false);
+              queryClient.invalidateQueries({ queryKey: ['contract', id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -316,6 +347,7 @@ function ContractTextEditorTab({ contractId }: { contractId: number }) {
 }
 
 function InfoTab({ contract }: { contract: ContractDetailType }) {
+  const navigate = useNavigate();
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 className="text-gray-900 mb-4">Основная информация</h2>
@@ -342,7 +374,12 @@ function InfoTab({ contract }: { contract: ContractDetailType }) {
         </div>
         <div>
           <div className="text-gray-600">Объект</div>
-          <div className="text-gray-900 mt-1">{contract.object_name}</div>
+          <div
+            onClick={() => contract.object_id && navigate(`/objects/${contract.object_id}`)}
+            className={contract.object_id ? 'text-blue-600 cursor-pointer hover:underline mt-1' : 'text-gray-900 mt-1'}
+          >
+            {contract.object_name}
+          </div>
         </div>
         {contract.technical_proposal_number && (
           <div>
@@ -412,7 +449,7 @@ function CashFlowTab({ contractId }: { contractId: number }) {
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
-  const cashFlowData = Array.isArray(cashFlow) ? cashFlow : [];
+  const cashFlowData = cashFlow?.periods || (Array.isArray(cashFlow) ? cashFlow : []);
 
   if (isLoading) {
     return (

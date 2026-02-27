@@ -110,6 +110,7 @@ export function ActsTab({ contractId }: ActsTabProps) {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'draft': return 'Черновик';
+      case 'agreed': return 'Согласован';
       case 'signed': return 'Подписан';
       case 'cancelled': return 'Отменен';
       default: return status;
@@ -119,6 +120,7 @@ export function ActsTab({ contractId }: ActsTabProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft': return 'bg-gray-100 text-gray-700';
+      case 'agreed': return 'bg-blue-100 text-blue-700';
       case 'signed': return 'bg-green-100 text-green-700';
       case 'cancelled': return 'bg-red-100 text-red-700';
       default: return 'bg-gray-100 text-gray-700';

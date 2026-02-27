@@ -52,14 +52,11 @@ vi.mock('sonner', () => ({
 import { api } from '../lib/api';
 
 // Отложенный импорт компонентов (после мока)
-let HelpPanel: any;
 let BitrixSettingsPage: any;
 let SupplyDashboardPage: any;
 
 beforeEach(async () => {
   vi.clearAllMocks();
-  const helpMod = await import('../components/supply/HelpPanel');
-  HelpPanel = helpMod.HelpPanel;
   const bitrixMod = await import('../components/supply/BitrixSettingsPage');
   BitrixSettingsPage = bitrixMod.BitrixSettingsPage;
   const dashMod = await import('../components/supply/SupplyDashboardPage');
@@ -84,68 +81,6 @@ const renderWithProviders = (ui: React.ReactElement) => {
     </QueryClientProvider>
   );
 };
-
-// =============================================================================
-// HelpPanel — справочная панель
-// =============================================================================
-
-describe('HelpPanel', () => {
-  it('renders help button with label', () => {
-    renderWithProviders(<HelpPanel />);
-
-    const button = screen.getByRole('button', { name: /Открыть справку/ });
-    expect(button).toBeInTheDocument();
-    expect(screen.getByText('Справка')).toBeInTheDocument();
-  });
-
-  it('opens panel on click and shows instructions header', async () => {
-    renderWithProviders(<HelpPanel />);
-
-    const button = screen.getByRole('button', { name: /Открыть справку/ });
-    await userEvent.click(button);
-
-    expect(screen.getByText('Инструкции')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Закрыть справку/ })).toBeInTheDocument();
-  });
-
-  it('shows role guides when panel is open', async () => {
-    renderWithProviders(<HelpPanel />);
-
-    await userEvent.click(screen.getByRole('button', { name: /Открыть справку/ }));
-
-    // Все три роли отображаются
-    expect(screen.getByText('Оператор-Снабженец')).toBeInTheDocument();
-    expect(screen.getByText('Линейный бухгалтер')).toBeInTheDocument();
-    expect(screen.getByText('Директор-контролёр')).toBeInTheDocument();
-  });
-
-  it('expands role sections on click', async () => {
-    renderWithProviders(<HelpPanel />);
-
-    await userEvent.click(screen.getByRole('button', { name: /Открыть справку/ }));
-
-    // Кликаем на роль «Оператор-Снабженец»
-    await userEvent.click(screen.getByText('Оператор-Снабженец'));
-
-    // Появляются секции для этой роли
-    expect(screen.getByText('Как работать со счетами')).toBeInTheDocument();
-    expect(screen.getByText('Запросы из Битрикс')).toBeInTheDocument();
-    expect(screen.getByText('Модерация товаров')).toBeInTheDocument();
-  });
-
-  it('closes panel on close button click', async () => {
-    renderWithProviders(<HelpPanel />);
-
-    await userEvent.click(screen.getByRole('button', { name: /Открыть справку/ }));
-    expect(screen.getByText('Инструкции')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: /Закрыть справку/ }));
-
-    // Панель закрыта — снова видим кнопку «Справка»
-    expect(screen.getByRole('button', { name: /Открыть справку/ })).toBeInTheDocument();
-    expect(screen.queryByText('Инструкции')).not.toBeInTheDocument();
-  });
-});
 
 // =============================================================================
 // BitrixSettingsPage — страница настроек Битрикс

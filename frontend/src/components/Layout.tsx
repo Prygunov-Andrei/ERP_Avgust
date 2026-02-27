@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { ReactNode, useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { 
   Home, Users, Building2, FileText, DollarSign, Settings, 
@@ -41,6 +41,7 @@ interface MenuItem {
   isSeparator?: boolean;
   section?: string;
   shortcutSection?: string;
+  subGroupLabel?: string;
 }
 
 const menuItems: MenuItem[] = [
@@ -59,7 +60,7 @@ const menuItems: MenuItem[] = [
       { id: 'technical-proposals', label: 'ТКП', icon: <FileText className="w-4 h-4" />, path: '/proposals/technical-proposals', section: 'commercial.tkp' },
       { id: 'mounting-proposals', label: 'МП', icon: <Wrench className="w-4 h-4" />, path: '/proposals/mounting-proposals', section: 'commercial.mp' },
       { id: 'commercial-estimates', label: 'Сметы', icon: <FileText className="w-4 h-4" />, path: '/estimates/estimates', section: 'commercial.estimates' },
-      { id: 'price-lists', label: 'Прайс-листы', icon: <List className="w-4 h-4" />, path: '/price-lists', section: 'commercial.pricelists' },
+      { id: 'commercial-price-lists', label: 'Прайс-листы', icon: <List className="w-4 h-4" />, path: '/price-lists', section: 'commercial.estimates', isShortcut: true, shortcutSection: 'goods.pricelists' },
       { id: 'commercial-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/commercial/instructions' },
     ],
   },
@@ -115,13 +116,34 @@ const menuItems: MenuItem[] = [
       { id: 'kanban-supply', label: 'Канбан Снабжения', icon: <ShoppingCart className="w-4 h-4" />, path: '/kanban/supply', section: 'supply.kanban' },
       { id: 'supply-invoices', label: 'Счета на оплату', icon: <Receipt className="w-4 h-4" />, path: '/finance/payments?tab=invoices', section: 'supply.invoices', isShortcut: true, shortcutSection: 'finance' },
       { id: 'supply-drivers', label: 'Календарь водителей', icon: <Calendar className="w-4 h-4" />, path: '/supply/drivers', section: 'supply.drivers' },
-      { id: 'supply-moderation', label: 'Модерация товаров', icon: <CheckSquare className="w-4 h-4" />, path: '/catalog/moderation', section: 'supply.moderation', isShortcut: true, shortcutSection: 'settings.goods' },
+      { id: 'supply-moderation', label: 'Модерация товаров', icon: <CheckSquare className="w-4 h-4" />, path: '/catalog/moderation', section: 'supply.moderation', isShortcut: true, shortcutSection: 'goods.moderation' },
       { id: 'warehouse', label: 'Склад: Остатки', icon: <Package className="w-4 h-4" />, path: '/warehouse', section: 'supply.warehouse' },
       { id: 'supply-counterparties', label: 'Поставщики', icon: <Users className="w-4 h-4" />, path: '/counterparties', section: 'settings.counterparties', isShortcut: true, shortcutSection: 'settings.counterparties' },
     ],
   },
 
-  // 7. ПТО
+  // 7. ТОВАРЫ И УСЛУГИ
+  {
+    id: 'goods',
+    label: 'Товары и услуги',
+    icon: <Package className="w-5 h-5" />,
+    path: '/goods',
+    section: 'goods',
+    children: [
+      // --- Каталог закупок ---
+      { id: 'goods-categories', label: 'Категории', icon: <FolderOpen className="w-4 h-4" />, path: '/catalog/categories', section: 'goods.categories', subGroupLabel: 'Каталог закупок' },
+      { id: 'goods-products', label: 'Номенклатура', icon: <Package className="w-4 h-4" />, path: '/catalog/products', section: 'goods.catalog' },
+      { id: 'goods-moderation', label: 'Модерация', icon: <CheckSquare className="w-4 h-4" />, path: '/catalog/moderation', section: 'goods.moderation' },
+      // --- Работы и расценки ---
+      { id: 'goods-work-items', label: 'Каталог работ', icon: <Wrench className="w-4 h-4" />, path: '/work-items', section: 'goods.works', subGroupLabel: 'Работы и расценки' },
+      { id: 'goods-work-sections', label: 'Разделы работ', icon: <FolderOpen className="w-4 h-4" />, path: '/work-sections', section: 'goods.works' },
+      { id: 'goods-price-lists', label: 'Прайс-листы', icon: <List className="w-4 h-4" />, path: '/price-lists', section: 'goods.pricelists' },
+      { id: 'goods-worker-grades', label: 'Разряды монтажников', icon: <Users className="w-4 h-4" />, path: '/worker-grades', section: 'goods.grades' },
+      { id: 'goods-worker-grade-skills', label: 'Навыки разрядов', icon: <FileText className="w-4 h-4" />, path: '/worker-grade-skills', section: 'goods.grades' },
+    ],
+  },
+
+  // 8. ПТО
   {
     id: 'pto',
     label: 'ПТО',
@@ -163,7 +185,6 @@ const menuItems: MenuItem[] = [
     path: '/references',
     section: 'settings',
     children: [
-      { id: 'ref-goods', label: 'Товары и услуги', icon: <Package className="w-4 h-4" />, path: '/references/goods', section: 'settings.goods' },
       { id: 'ref-work-conditions', label: 'Фронт работ и монтажные условия', icon: <ClipboardList className="w-4 h-4" />, path: '/references/work-conditions', section: 'settings.work_conditions' },
       { id: 'ref-personnel', label: 'Персонал', icon: <Users className="w-4 h-4" />, path: '/personnel', section: 'settings.personnel' },
       { id: 'ref-counterparties', label: 'Контрагенты', icon: <Users className="w-4 h-4" />, path: '/counterparties', section: 'settings.counterparties' },
@@ -189,12 +210,6 @@ const menuItems: MenuItem[] = [
       { id: 'legacy-bitrix-requests', label: 'Запросы из Битрикс', icon: <ShoppingCart className="w-4 h-4" />, path: '/supply/requests' },
       { id: 'legacy-bitrix-settings', label: 'Настройки Битрикс24', icon: <Link2 className="w-4 h-4" />, path: '/settings/bitrix' },
       { id: 'legacy-supply-dashboard', label: 'Дашборд снабжения', icon: <BarChart3 className="w-4 h-4" />, path: '/supply/dashboard' },
-      { id: 'legacy-work-items', label: 'Работы', icon: <Briefcase className="w-4 h-4" />, path: '/work-items' },
-      { id: 'legacy-work-sections', label: 'Разделы работ', icon: <FileText className="w-4 h-4" />, path: '/work-sections' },
-      { id: 'legacy-worker-grades', label: 'Разряды', icon: <FileText className="w-4 h-4" />, path: '/worker-grades' },
-      { id: 'legacy-worker-grade-skills', label: 'Навыки разрядов', icon: <FileText className="w-4 h-4" />, path: '/worker-grade-skills' },
-      { id: 'legacy-catalog-categories', label: 'Категории товаров', icon: <Package className="w-4 h-4" />, path: '/catalog/categories' },
-      { id: 'legacy-catalog-products', label: 'Товары и услуги', icon: <Package className="w-4 h-4" />, path: '/catalog/products' },
     ],
   },
 ];
@@ -213,6 +228,7 @@ const pageTitles: Record<string, string> = {
   // 3. Объекты
   objects: 'Объекты',
   // 4. Финансы
+  'finance/payments': 'Платежи',
   'finance/dashboard': 'Дашборд Финансы',
   'supply/invoices': 'Счета на оплату',
   'supply/income': 'Входящие платежи',
@@ -249,8 +265,14 @@ const pageTitles: Record<string, string> = {
   'marketing/executors': 'Поиск Исполнителей',
   // 9. Переписка
   communications: 'Переписка',
-  // 10. Справочники и Настройки
-  'references/goods': 'Товары и услуги',
+  // 7. Товары и услуги
+  'catalog/categories': 'Категории',
+  'catalog/products': 'Номенклатура',
+  'work-items': 'Каталог работ',
+  'work-sections': 'Разделы работ',
+  'worker-grades': 'Разряды монтажников',
+  'worker-grade-skills': 'Навыки разрядов',
+  // 11. Справочники и Настройки
   'references/work-conditions': 'Фронт работ и монтажные условия',
   personnel: 'Персонал',
   settings: 'Настройки',
@@ -265,13 +287,25 @@ const pageTitles: Record<string, string> = {
   'settings/bitrix': 'Интеграция с Битрикс24',
   'supply/dashboard': 'Дашборд снабжения',
   // Detail pages (kept for breadcrumbs)
-  'work-items': 'Работы',
-  'worker-grades': 'Разряды',
-  'work-sections': 'Разделы работ',
-  'worker-grade-skills': 'Навыки разрядов',
-  'catalog/categories': 'Категории товаров',
-  'catalog/products': 'Товары и услуги',
+  'catalog/moderation': 'Модерация',
 };
+
+// Build path-to-parent mapping for hierarchical breadcrumbs
+const pathToParent: Record<string, { label: string; path: string }> = {};
+for (const item of menuItems) {
+  if (item.children) {
+    for (const child of item.children) {
+      const cleanPath = child.path.split('?')[0].slice(1);
+      if (cleanPath && !pathToParent[cleanPath]) {
+        pathToParent[cleanPath] = { label: item.label, path: item.path };
+      }
+    }
+  }
+}
+// Manual parents for pages that aren't direct menu children
+pathToParent['supply/invoices'] = { label: 'Финансы', path: '/finance/payments' };
+pathToParent['supply/income'] = { label: 'Финансы', path: '/finance/payments' };
+pathToParent['payment-registry'] = { label: 'Финансы', path: '/finance/payments' };
 
 export function Layout({ children, onLogout, user }: LayoutProps) {
   const { hasAccess } = usePermissions();
@@ -305,7 +339,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
   }, [filteredMenuItems]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['commercial', 'finance', 'contracts', 'supply', 'pto', 'references']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['commercial', 'finance', 'contracts', 'supply', 'goods', 'pto', 'references']);
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem('sidebarWidth');
     return saved ? parseInt(saved) : 256;
@@ -467,10 +501,15 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                   <div className="pl-8">
                     {(item.children || []).map(child => {
                       const isChildActive = location.pathname === child.path;
-                      
+
                       return (
+                        <div key={child.id}>
+                        {child.subGroupLabel && (
+                          <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                            {child.subGroupLabel}
+                          </div>
+                        )}
                         <button
-                          key={child.id}
                           onClick={() => navigate(child.path)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                             isChildActive
@@ -492,6 +531,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                             </span>
                           )}
                         </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -587,8 +627,20 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                 const fullPath = location.pathname.slice(1);
                 const exactTitle = pageTitles[fullPath];
                 if (exactTitle) {
+                  const parent = pathToParent[fullPath];
                   return (
                     <>
+                      {parent && (
+                        <span className="flex items-center">
+                          <ChevronRight className="w-4 h-4 mx-2" />
+                          <button
+                            onClick={() => navigate(parent.path)}
+                            className="hover:text-gray-700 transition-colors"
+                          >
+                            {parent.label}
+                          </button>
+                        </span>
+                      )}
                       <ChevronRight className="w-4 h-4 mx-2" />
                       <span className="text-gray-900 font-medium">{exactTitle}</span>
                     </>
@@ -600,6 +652,11 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                   const parentPath = segments.slice(0, i).join('/');
                   const parentTitle = pageTitles[parentPath];
                   if (parentTitle) {
+                    // Add grandparent from menu hierarchy
+                    const grandParent = pathToParent[parentPath];
+                    if (grandParent) {
+                      crumbs.push({ label: grandParent.label, path: grandParent.path });
+                    }
                     crumbs.push({ label: parentTitle, path: '/' + parentPath });
                     const lastSegment = segments[segments.length - 1];
                     const crumbLabel = detailLabel || (/^\d+$/.test(lastSegment) ? `№${lastSegment}` : lastSegment);
@@ -643,17 +700,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
           {children}
         </div>
 
-        {/* Help Panel — показывается на страницах Снабжения */}
-        {location.pathname.startsWith('/supply') && (
-          <Suspense fallback={null}>
-            <HelpPanelLazy />
-          </Suspense>
-        )}
       </main>
     </div>
   );
 }
-
-const HelpPanelLazy = lazy(() =>
-  import('./supply/HelpPanel').then((mod) => ({ default: mod.HelpPanel }))
-);

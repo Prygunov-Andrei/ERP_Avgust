@@ -425,6 +425,25 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'product_name']
 
 
+class InvoiceItemWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания/редактирования позиций счёта."""
+
+    class Meta:
+        model = InvoiceItem
+        fields = [
+            'id', 'invoice', 'raw_name', 'quantity', 'unit',
+            'price_per_unit', 'amount', 'vat_amount',
+        ]
+        read_only_fields = ['id']
+
+    def validate_invoice(self, value):
+        if value.status != Invoice.Status.REVIEW:
+            raise serializers.ValidationError(
+                'Позиции можно редактировать только в статусе «На проверке»'
+            )
+        return value
+
+
 class InvoiceEventSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.get_full_name', read_only=True, default=None)
 
@@ -443,10 +462,13 @@ class InvoiceListSerializer(serializers.ModelSerializer):
     object_name = serializers.CharField(source='object.name', read_only=True, default=None)
     category_name = serializers.CharField(source='category.name', read_only=True, default=None)
     account_name = serializers.CharField(source='account.name', read_only=True, default=None)
+    approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True, default=None)
     source_display = serializers.CharField(source='get_source_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     invoice_type_display = serializers.CharField(source='get_invoice_type_display', read_only=True)
     is_overdue = serializers.BooleanField(read_only=True)
+    estimate_number = serializers.CharField(source='estimate.number', read_only=True, default=None)
+    items_count = serializers.IntegerField(source='items.count', read_only=True)
 
     class Meta:
         model = Invoice
@@ -459,6 +481,9 @@ class InvoiceListSerializer(serializers.ModelSerializer):
             'category_name', 'account_name',
             'amount_gross', 'amount_net', 'vat_amount',
             'is_overdue', 'is_debt', 'skip_recognition',
+            'approved_by_name', 'approved_at',
+            'bank_payment_order',
+            'estimate', 'estimate_number', 'items_count',
             'created_at',
         ]
 
@@ -484,6 +509,7 @@ class InvoiceDetailSerializer(serializers.ModelSerializer):
     is_overdue = serializers.BooleanField(read_only=True)
     items = InvoiceItemSerializer(many=True, read_only=True)
     events = InvoiceEventSerializer(many=True, read_only=True)
+    estimate_number = serializers.CharField(source='estimate.number', read_only=True, default=None)
 
     class Meta:
         model = Invoice
@@ -495,6 +521,7 @@ class InvoiceDetailSerializer(serializers.ModelSerializer):
             'object', 'object_name',
             'contract', 'contract_number',
             'act', 'act_number',
+            'estimate', 'estimate_number',
             'category', 'category_name',
             'target_internal_account', 'target_internal_account_name',
             'account', 'account_name',
@@ -535,7 +562,7 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
             'id',
             'invoice_type',
             'invoice_file', 'invoice_number', 'invoice_date', 'due_date',
-            'counterparty', 'object', 'contract', 'act',
+            'counterparty', 'object', 'contract', 'act', 'estimate',
             'category', 'target_internal_account',
             'account', 'legal_entity',
             'amount_gross', 'amount_net', 'vat_amount',

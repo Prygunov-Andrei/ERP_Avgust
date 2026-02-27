@@ -103,7 +103,7 @@ export function WorkerGrades() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Разряды рабочих</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Разряды монтажников</h1>
           <p className="text-sm text-gray-500 mt-1">
             Справочник разрядов с базовыми ставками
           </p>

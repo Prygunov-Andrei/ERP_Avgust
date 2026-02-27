@@ -181,7 +181,7 @@ export function MountingProposalsList() {
               onChange={(e) => setObjectFilter(e.target.value)}
             >
               <option value="">Все объекты</option>
-              {objects?.results?.map((obj) => (
+              {(Array.isArray(objects) ? objects : (objects as any)?.results ?? []).map((obj: any) => (
                 <option key={obj.id} value={obj.id}>{obj.name}</option>
               ))}
             </select>
@@ -195,7 +195,7 @@ export function MountingProposalsList() {
               onChange={(e) => setCounterpartyFilter(e.target.value)}
             >
               <option value="">Все контрагенты</option>
-              {counterparties?.results?.map((cp) => (
+              {(Array.isArray(counterparties) ? counterparties : (counterparties as any)?.results ?? []).map((cp: any) => (
                 <option key={cp.id} value={cp.id}>{cp.name}</option>
               ))}
             </select>
@@ -329,7 +329,7 @@ export function MountingProposalsList() {
                         )}
                         <span className="text-gray-600">v{mp.version_number}</span>
                         {mp.telegram_published && (
-                          <Send className="w-3 h-3 text-green-600 ml-1" title="Опубликовано в Telegram" />
+                          <Send className="w-3 h-3 text-green-600 ml-1" aria-label="Опубликовано в Telegram" />
                         )}
                       </div>
                     </td>

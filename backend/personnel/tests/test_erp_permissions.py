@@ -28,6 +28,12 @@ class TestGetAllPermissionKeys:
         assert 'commercial.kanban' in keys
         assert 'finance.payments' in keys
         assert 'supply.warehouse' in keys
+        assert 'goods.catalog' in keys
+        assert 'goods.works' in keys
+        assert 'goods.pricelists' in keys
+        assert 'goods.grades' in keys
+        assert 'goods.categories' in keys
+        assert 'goods.moderation' in keys
 
     def test_no_duplicates(self):
         keys = get_all_permission_keys()
@@ -177,17 +183,72 @@ class TestERPSectionPermission:
         request.user = user
         assert perm.has_permission(request, None) is True
 
-    def test_catalog_maps_to_settings_goods(self, factory, perm, user_with_perms):
-        user = user_with_perms({'settings.goods': 'read'})
-        request = factory.get('/api/v1/catalog/products/')
-        request.user = user
-        assert perm.has_permission(request, None) is True
+    def test_catalog_maps_to_goods_catalog(
+        self, factory, perm, user_with_perms,
+    ):
+        user = user_with_perms({'goods.catalog': 'read'})
+        req = factory.get('/api/v1/catalog/products/')
+        req.user = user
+        assert perm.has_permission(req, None) is True
 
-    def test_catalog_denied_when_goods_none(self, factory, perm, user_with_perms):
-        user = user_with_perms({'settings': 'edit', 'settings.goods': 'none'})
-        request = factory.get('/api/v1/catalog/products/')
-        request.user = user
-        assert perm.has_permission(request, None) is False
+    def test_catalog_denied_when_goods_catalog_none(
+        self, factory, perm, user_with_perms,
+    ):
+        user = user_with_perms({
+            'goods': 'edit', 'goods.catalog': 'none',
+        })
+        req = factory.get('/api/v1/catalog/products/')
+        req.user = user
+        assert perm.has_permission(req, None) is False
+
+    def test_pricelists_maps_to_goods(
+        self, factory, perm, user_with_perms,
+    ):
+        user = user_with_perms({'goods.pricelists': 'read'})
+        req = factory.get('/api/v1/price-lists/')
+        req.user = user
+        assert perm.has_permission(req, None) is True
+
+    def test_work_items_maps_to_goods_works(
+        self, factory, perm, user_with_perms,
+    ):
+        user = user_with_perms({'goods.works': 'edit'})
+        req = factory.post('/api/v1/work-items/')
+        req.user = user
+        assert perm.has_permission(req, None) is True
+
+    def test_worker_grades_maps_to_goods(
+        self, factory, perm, user_with_perms,
+    ):
+        user = user_with_perms({'goods.grades': 'read'})
+        req = factory.get('/api/v1/worker-grades/')
+        req.user = user
+        assert perm.has_permission(req, None) is True
+
+    def test_goods_fallback_to_parent(self, factory, perm):
+        """Absent goods.catalog falls back to goods."""
+        user = User.objects.create_user(
+            username='goods_fallback', password='pass',
+        )
+        Employee.objects.create(
+            full_name='GoodsFallback',
+            user=user,
+            erp_permissions={'goods': 'read'},
+        )
+        req = factory.get('/api/v1/catalog/products/')
+        req.user = user
+        assert perm.has_permission(req, None) is True
+
+    def test_goods_subsection_override(
+        self, factory, perm, user_with_perms,
+    ):
+        """goods.works=none overrides goods=edit."""
+        user = user_with_perms({
+            'goods': 'edit', 'goods.works': 'none',
+        })
+        req = factory.get('/api/v1/work-items/')
+        req.user = user
+        assert perm.has_permission(req, None) is False
 
 
 # ---------- Serializer validation ----------

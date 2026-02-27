@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db.models import Count, Sum, Q
+import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
@@ -27,6 +28,8 @@ from .serializers import (
     InvoiceDetailSerializer,
     InvoiceCreateSerializer,
     InvoiceActionSerializer,
+    InvoiceItemSerializer,
+    InvoiceItemWriteSerializer,
     RecurringPaymentSerializer,
     IncomeRecordSerializer,
     JournalEntrySerializer,
@@ -308,6 +311,24 @@ class ExpenseCategoryViewSet(viewsets.ModelViewSet):
 # Invoice — новые ViewSets
 # =============================================================================
 
+class InvoiceFilter(django_filters.FilterSet):
+    status__in = django_filters.BaseInFilter(
+        field_name='status', lookup_expr='in',
+    )
+    estimate__isnull = django_filters.BooleanFilter(
+        field_name='estimate', lookup_expr='isnull',
+    )
+    estimate = django_filters.NumberFilter(field_name='estimate')
+
+    class Meta:
+        model = Invoice
+        fields = [
+            'status', 'source', 'invoice_type', 'is_debt',
+            'object', 'counterparty', 'category', 'account',
+            'estimate',
+        ]
+
+
 class InvoiceViewSet(viewsets.ModelViewSet):
     """
     CRUD для счетов на оплату (Invoice).
@@ -322,10 +343,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = [
-        'status', 'source', 'invoice_type', 'is_debt',
-        'object', 'counterparty', 'category', 'account',
-    ]
+    filterset_class = InvoiceFilter
     search_fields = ['invoice_number', 'counterparty__name', 'description']
     ordering_fields = ['created_at', 'due_date', 'amount_gross', 'invoice_date']
     ordering = ['-created_at']
@@ -335,6 +353,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             Invoice.objects
             .select_related(
                 'counterparty', 'object', 'contract', 'act',
+                'estimate',
                 'category', 'target_internal_account',
                 'account', 'legal_entity', 'supply_request',
                 'recurring_payment', 'bank_payment_order',
@@ -360,8 +379,19 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         )
         if invoice.invoice_file and not invoice.skip_recognition:
             from supply.tasks import recognize_invoice
-            recognize_invoice.delay(invoice.id)
+            recognize_invoice.delay(invoice.id, auto_counterparty=True)
         serializer.instance = invoice
+
+    def perform_destroy(self, instance):
+        """Удаление только в начальных/отменённых статусах."""
+        deletable = {Invoice.Status.RECOGNITION, Invoice.Status.REVIEW, Invoice.Status.CANCELLED}
+        if instance.status not in deletable:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied(
+                f'Нельзя удалить счёт в статусе «{instance.get_status_display()}». '
+                'Удаление возможно только для статусов: Распознавание, На проверке, Отменён.'
+            )
+        instance.delete()
 
     @extend_schema(summary='Проверка сальдо объекта', tags=['Счета на оплату'])
     @action(detail=False, methods=['get'])
@@ -388,8 +418,21 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         return Response(result)
 
     @action(detail=True, methods=['post'])
+    def verify(self, request, pk=None):
+        """Оператор подтвердил данные: REVIEW → VERIFIED."""
+        try:
+            InvoiceService.verify(int(pk), request.user)
+            invoice = self.get_object()
+            return Response(InvoiceDetailSerializer(invoice).data)
+        except ValueError as exc:
+            return Response(
+                {'error': str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=True, methods=['post'])
     def submit_to_registry(self, request, pk=None):
-        """Оператор подтвердил: REVIEW → IN_REGISTRY."""
+        """Оператор отправил в реестр: VERIFIED → IN_REGISTRY."""
         try:
             InvoiceService.submit_to_registry(int(pk), request.user)
             invoice = self.get_object()
@@ -453,6 +496,151 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             return Response(InvoiceDetailSerializer(invoice).data)
         except ValueError as exc:
             return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(summary='Оплата наличными', tags=['Счета'])
+    @action(detail=True, methods=['post'], url_path='mark-cash-paid')
+    def mark_cash_paid(self, request, pk=None):
+        """Наличная оплата: APPROVED → PAID (для cash-счетов)."""
+        try:
+            InvoiceService.mark_cash_paid(int(pk), request.user)
+            invoice = self.get_object()
+            return Response(InvoiceDetailSerializer(invoice).data)
+        except ValueError as exc:
+            return Response(
+                {'error': str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    # =================================================================
+    # Массовый импорт
+    # =================================================================
+
+    SUPPORTED_EXTENSIONS = {
+        '.pdf', '.xlsx', '.xls', '.png', '.jpg', '.jpeg',
+    }
+
+    @extend_schema(
+        summary='Массовая загрузка счетов',
+        tags=['Счета на оплату'],
+    )
+    @action(detail=False, methods=['post'], url_path='bulk-upload')
+    def bulk_upload(self, request):
+        """
+        Массовая загрузка счетов.
+
+        Принимает множественные файлы, создаёт BulkImportSession,
+        для каждого файла создаёт Invoice(RECOGNITION) и ставит
+        Celery task.
+        """
+        from pathlib import Path
+        from .models import BulkImportSession
+        from supply.tasks import recognize_invoice, finalize_bulk_import
+
+        files = request.FILES.getlist('files')
+        if not files:
+            return Response(
+                {'error': 'Нет файлов'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Поддержка привязки к смете (для сметчика)
+        estimate_id = request.data.get('estimate_id')
+        estimate = None
+        if estimate_id:
+            from estimates.models import Estimate
+            try:
+                estimate = Estimate.objects.get(pk=estimate_id)
+            except Estimate.DoesNotExist:
+                return Response(
+                    {'error': 'Смета не найдена'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        session = BulkImportSession.objects.create(
+            created_by=request.user,
+            total_files=len(files),
+        )
+
+        accepted = 0
+        for f in files:
+            ext = Path(f.name).suffix.lower()
+            if ext not in self.SUPPORTED_EXTENSIONS:
+                continue
+
+            invoice = Invoice.objects.create(
+                source=Invoice.Source.BULK_IMPORT,
+                status=Invoice.Status.RECOGNITION,
+                invoice_type=Invoice.InvoiceType.SUPPLIER,
+                created_by=request.user,
+                bulk_session=session,
+                estimate=estimate,
+                description=f'Массовый импорт: {f.name}',
+            )
+            invoice.invoice_file.save(f.name, f, save=True)
+            recognize_invoice.delay(
+                invoice.id, auto_counterparty=True,
+            )
+            accepted += 1
+
+        # Обновить total_files на реальное количество принятых
+        session.total_files = accepted
+        session.save(update_fields=['total_files'])
+
+        # Финализация сессии с запасом по времени
+        finalize_bulk_import.apply_async(
+            args=[session.id],
+            countdown=accepted * 10 + 30,
+        )
+
+        return Response(
+            {
+                'session_id': session.id,
+                'total_files': accepted,
+                'status': session.status,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    @extend_schema(
+        summary='Статус сессии массового импорта',
+        tags=['Счета на оплату'],
+    )
+    @action(
+        detail=False, methods=['get'],
+        url_path=r'bulk-sessions/(?P<session_id>[0-9]+)',
+    )
+    def bulk_session_status(self, request, session_id=None):
+        """Статус сессии массового импорта (поллинг)."""
+        from .models import BulkImportSession
+
+        try:
+            session = BulkImportSession.objects.get(
+                id=session_id,
+            )
+        except BulkImportSession.DoesNotExist:
+            return Response(
+                {'error': 'Сессия не найдена'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        invoices = list(
+            session.invoices.values(
+                'id', 'status', 'invoice_number',
+                'amount_gross', 'description',
+            )
+        )
+
+        return Response({
+            'id': session.id,
+            'status': session.status,
+            'total_files': session.total_files,
+            'processed_files': session.processed_files,
+            'successful': session.successful,
+            'failed': session.failed,
+            'skipped_duplicate': session.skipped_duplicate,
+            'errors': session.errors,
+            'invoices': invoices,
+        })
 
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
@@ -639,3 +827,36 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
                 {'error': str(exc)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+# =============================================================================
+# InvoiceItem CRUD
+# =============================================================================
+
+class InvoiceItemViewSet(viewsets.ModelViewSet):
+    """CRUD для позиций счёта. Редактирование только в статусе REVIEW."""
+
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = InvoiceItem.objects.select_related('invoice', 'product').order_by('id')
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['invoice']
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return InvoiceItemSerializer
+        return InvoiceItemWriteSerializer
+
+    def _check_review_status(self, invoice):
+        from rest_framework.exceptions import PermissionDenied
+        if invoice.status != Invoice.Status.REVIEW:
+            raise PermissionDenied(
+                'Позиции можно редактировать только в статусе «На проверке»'
+            )
+
+    def perform_update(self, serializer):
+        self._check_review_status(serializer.instance.invoice)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._check_review_status(instance.invoice)
+        instance.delete()
