@@ -32,10 +32,10 @@ services:
       resources:
         limits:
           cpus: "0.4"
-          memory: 192M
+          memory: 160M
         reservations:
           cpus: "0.1"
-          memory: 96M
+          memory: 64M
 
   createbuckets:
     depends_on:
@@ -96,10 +96,10 @@ services:
       resources:
         limits:
           cpus: "0.2"
-          memory: 128M
+          memory: 192M
         reservations:
           cpus: "0.05"
-          memory: 64M
+          memory: 96M
 
   bot:
     deploy:
@@ -116,17 +116,17 @@ services:
       resources:
         limits:
           cpus: "0.25"
-          memory: 192M
+          memory: 64M
         reservations:
           cpus: "0.05"
-          memory: 96M
+          memory: 32M
 
   mini-app:
     deploy:
       resources:
         limits:
           cpus: "0.2"
-          memory: 128M
+          memory: 64M
         reservations:
           cpus: "0.05"
-          memory: 64M
+          memory: 32M
