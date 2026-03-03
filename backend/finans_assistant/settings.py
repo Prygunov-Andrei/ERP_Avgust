@@ -50,6 +50,10 @@ if PRODUCTION_IP:
     ALLOWED_HOSTS.append(PRODUCTION_IP)
 
 CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'http://localhost:8000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:8000',
     'https://finance.ngrok.app',
     'https://*.figmaiframepreview.figma.site',
     'https://*.figma.site',

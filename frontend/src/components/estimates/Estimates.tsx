@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { api, EstimateList } from '../../lib/api';
-import { formatDate } from '../../lib/utils';
 import { CONSTANTS } from '../../constants';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -41,11 +40,6 @@ export function Estimates() {
     with_vat: true,
     vat_rate: '20.00',
     projects: [] as number[],
-    price_list: undefined as number | undefined,
-    man_hours: '0.00',
-    usd_rate: '',
-    eur_rate: '',
-    cny_rate: '',
   });
 
   const { data: estimates, isLoading, refetch } = useQuery({
@@ -72,11 +66,18 @@ export function Estimates() {
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
-  const { data: priceLists } = useQuery({
-    queryKey: ['price-lists'],
-    queryFn: () => api.getPriceLists(),
-    staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
-  });
+  const handleLegalEntityChange = (entityId: number) => {
+    const entity = legalEntities?.find(le => le.id === entityId);
+    const taxDetails = entity?.tax_system_details;
+    setFormData(prev => ({
+      ...prev,
+      legal_entity: entityId,
+      ...(taxDetails ? {
+        with_vat: taxDetails.has_vat,
+        vat_rate: taxDetails.vat_rate || '20.00',
+      } : {}),
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,11 +94,6 @@ export function Estimates() {
       with_vat: formData.with_vat,
       vat_rate: formData.with_vat ? formData.vat_rate : undefined,
       projects: formData.projects.length > 0 ? formData.projects : undefined,
-      price_list: formData.price_list,
-      man_hours: formData.man_hours,
-      usd_rate: formData.usd_rate || undefined,
-      eur_rate: formData.eur_rate || undefined,
-      cny_rate: formData.cny_rate || undefined,
     };
 
     try {
@@ -120,11 +116,6 @@ export function Estimates() {
       with_vat: true,
       vat_rate: '20.00',
       projects: [],
-      price_list: undefined,
-      man_hours: '0.00',
-      usd_rate: '',
-      eur_rate: '',
-      cny_rate: '',
     });
   };
 
@@ -367,7 +358,7 @@ export function Estimates() {
                 <select
                   id="legal_entity"
                   value={formData.legal_entity}
-                  onChange={(e) => setFormData({ ...formData, legal_entity: Number(e.target.value) })}
+                  onChange={(e) => handleLegalEntityChange(Number(e.target.value))}
                   className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
@@ -437,60 +428,6 @@ export function Estimates() {
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-1">Удерживайте Ctrl для множественного выбора</p>
-            </div>
-
-            <div>
-              <Label htmlFor="price_list">Прайс-лист для расчёта (опционально)</Label>
-              <select
-                id="price_list"
-                value={formData.price_list || ''}
-                onChange={(e) => setFormData({ ...formData, price_list: e.target.value ? Number(e.target.value) : undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Не выбрано</option>
-                {priceLists?.map((pl) => (
-                  <option key={pl.id} value={pl.id}>{pl.number} - {pl.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <Label htmlFor="man_hours">Человеко-часы</Label>
-              <Input
-                id="man_hours"
-                type="number"
-                step="0.01"
-                value={formData.man_hours}
-                onChange={(e) => setFormData({ ...formData, man_hours: e.target.value })}
-                className="mt-1.5"
-              />
-            </div>
-
-            <div>
-              <Label>Курсы валют (опционально)</Label>
-              <div className="grid grid-cols-3 gap-3 mt-1.5">
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="USD"
-                  value={formData.usd_rate}
-                  onChange={(e) => setFormData({ ...formData, usd_rate: e.target.value })}
-                />
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="EUR"
-                  value={formData.eur_rate}
-                  onChange={(e) => setFormData({ ...formData, eur_rate: e.target.value })}
-                />
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="CNY"
-                  value={formData.cny_rate}
-                  onChange={(e) => setFormData({ ...formData, cny_rate: e.target.value })}
-                />
-              </div>
             </div>
 
             <DialogFooter>

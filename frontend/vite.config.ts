@@ -76,6 +76,10 @@
           target: 'http://localhost:8000',
           changeOrigin: true,
         },
+        '/files/': {
+          target: 'http://localhost:9000',
+          changeOrigin: true,
+        },
       },
     },
   });

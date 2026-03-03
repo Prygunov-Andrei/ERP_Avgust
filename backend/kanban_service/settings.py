@@ -246,7 +246,14 @@ KANBAN_FILE_MAX_SIZE_BYTES = int(os.environ.get('KANBAN_FILE_MAX_SIZE_BYTES', st
 KANBAN_FILE_ALLOWED_MIME = set(
     m.strip() for m in os.environ.get(
         'KANBAN_FILE_ALLOWED_MIME',
-        'application/pdf,image/jpeg,image/png,image/webp,text/plain,application/zip',
+        'application/pdf,image/jpeg,image/png,image/webp,text/plain,application/zip,'
+        'application/msword,'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document,'
+        'application/vnd.ms-excel,'
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,'
+        'application/vnd.ms-powerpoint,'
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation,'
+        'text/csv',
     ).split(',') if m.strip()
 )
 

@@ -322,12 +322,13 @@ interface EmployeeFormDialogProps {
   legalEntities: LegalEntity[];
 }
 
-const defaultErpPermissions = (): ERPPermissions => {
+const defaultErpPermissions = (existing?: ERPPermissions): ERPPermissions => {
   const perms: ERPPermissions = {};
   ERP_PERMISSION_TREE.forEach((section) => {
-    perms[section.code] = 'none';
+    perms[section.code] = existing?.[section.code] || 'none';
     section.children.forEach((child) => {
-      perms[`${section.code}.${child.code}`] = 'none';
+      const key = `${section.code}.${child.code}`;
+      perms[key] = existing?.[key] || 'none';
     });
   });
   return perms;
@@ -357,7 +358,7 @@ function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities }: Emp
     user: employee?.user || null,
     counterparty: employee?.counterparty || null,
     supervisor_ids: employee?.supervisors_brief?.map((s) => s.id) || [],
-    erp_permissions: employee?.erp_permissions || defaultErpPermissions(),
+    erp_permissions: defaultErpPermissions(employee?.erp_permissions),
     is_active: employee?.is_active ?? true,
   }));
 

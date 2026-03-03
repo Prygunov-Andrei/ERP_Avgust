@@ -528,7 +528,21 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Badge variant="outline" className="text-[10px] shrink-0">
-                      {att.file_mime_type?.split('/')[1]?.toUpperCase() || 'FILE'}
+                      {({
+                        'application/pdf': 'PDF',
+                        'application/msword': 'DOC',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+                        'application/vnd.ms-excel': 'XLS',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+                        'application/vnd.ms-powerpoint': 'PPT',
+                        'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PPTX',
+                        'image/jpeg': 'JPG',
+                        'image/png': 'PNG',
+                        'image/webp': 'WEBP',
+                        'text/plain': 'TXT',
+                        'text/csv': 'CSV',
+                        'application/zip': 'ZIP',
+                      } as Record<string, string>)[att.file_mime_type || ''] || att.file_mime_type?.split('/')[1]?.toUpperCase() || 'FILE'}
                     </Badge>
                     <span className="text-sm truncate">
                       {att.title || att.file_original_filename || 'Без имени'}

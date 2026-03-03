@@ -109,38 +109,27 @@ class Command(BaseCommand):
                     first_row = ws[1]
                     article = first_row[0].value if len(first_row) > 0 else None
                     name = first_row[1].value if len(first_row) > 1 else None
-                    
+
                     if name and (not article or (isinstance(article, str) and article.strip() == '')):
-                        # Проверяем, что остальные столбцы пустые
-                        has_work_data = False
-                        for col_idx in [2, 3, 4, 5, 6]:
-                            if col_idx < len(first_row) and first_row[col_idx].value:
-                                val = str(first_row[col_idx].value).strip()
-                                if val and val.lower() not in ['', '0', '0.0', '0.00']:
-                                    has_work_data = True
-                                    break
-                        
-                        if not has_work_data:
-                            # Создаём подраздел из первой строки
-                            subsection_name = str(name).strip()
-                            base_code = f"{section.code}-SUB1"[:50]
-                            subsection_code = base_code
-                            counter = 1
-                            while WorkSection.objects.filter(code=subsection_code).exists():
-                                subsection_code = f"{base_code}{counter}"[:50]
-                                counter += 1
-                            
-                            current_subsection, created = WorkSection.objects.get_or_create(
-                                code=subsection_code,
-                                defaults={
-                                    'name': subsection_name[:200],
-                                    'parent': section,
-                                    'sort_order': 1
-                                }
-                            )
-                            if created:
-                                stats['subsections_created'] += 1
-                                self.stdout.write(f'  ✓ Создан подраздел: {current_subsection.name}')
+                        subsection_name = str(name).strip()
+                        base_code = f"{section.code}-SUB1"[:50]
+                        subsection_code = base_code
+                        counter = 1
+                        while WorkSection.objects.filter(code=subsection_code).exists():
+                            subsection_code = f"{base_code}{counter}"[:50]
+                            counter += 1
+
+                        current_subsection, created = WorkSection.objects.get_or_create(
+                            code=subsection_code,
+                            defaults={
+                                'name': subsection_name[:200],
+                                'parent': section,
+                                'sort_order': 1
+                            }
+                        )
+                        if created:
+                            stats['subsections_created'] += 1
+                            self.stdout.write(f'  ✓ Создан подраздел: {current_subsection.name}')
                 
                 # Парсим строки
                 for row_idx, row in enumerate(ws.iter_rows(min_row=start_row, values_only=False), start=start_row):
@@ -149,36 +138,23 @@ class Command(BaseCommand):
                         continue
 
                     # Определяем подраздел по правилу:
-                    # Подраздел = столбец A (артикул) пустой ИЛИ содержит специальный маркер (SUB, РАЗДЕЛ, ПОДРАЗДЕЛ)
-                    # И столбец B (название) заполнен
-                    # И столбцы C, D, E, F, G (единица, состав, часы, разряд, комментарий) пустые или почти пустые
+                    # Подраздел = столбец A (артикул) пустой + столбец B (название) заполнен
+                    # Работа без артикула невалидна, поэтому такая строка — подраздел
                     article_value = row[0].value
                     name_value = row[1].value
-                    
-                    # Проверяем, является ли строка подразделом
+
                     is_subsection = False
                     subsection_name = None
-                    
-                    if name_value:  # Название должно быть заполнено
+
+                    if name_value:
                         name_str = str(name_value).strip()
-                        
-                        # Вариант 1: Артикул пустой или None
+
+                        # Артикул пустой или None — это подраздел
                         if not article_value or (isinstance(article_value, str) and article_value.strip() == ''):
-                            # Проверяем, что остальные столбцы (C, D, E, F, G) пустые или почти пустые
-                            # Это означает, что это подраздел, а не работа
-                            has_work_data = False
-                            for col_idx in [2, 3, 4, 5, 6]:  # C, D, E, F, G
-                                if col_idx < len(row) and row[col_idx].value:
-                                    cell_val = str(row[col_idx].value).strip()
-                                    if cell_val and cell_val.lower() not in ['', '0', '0.0', '0.00']:
-                                        has_work_data = True
-                                        break
-                            
-                            if not has_work_data:
-                                is_subsection = True
-                                subsection_name = name_str
-                        
-                        # Вариант 2: Артикул содержит специальный маркер
+                            is_subsection = True
+                            subsection_name = name_str
+
+                        # Артикул содержит специальный маркер
                         elif article_value:
                             article_str = str(article_value).strip().upper()
                             markers = ['SUB', 'РАЗДЕЛ', 'ПОДРАЗДЕЛ', 'SECTION', 'SUBSECTION']
@@ -212,10 +188,11 @@ class Command(BaseCommand):
                     # Обычная строка - работа
                     try:
                         work_item = self.parse_work_item_row(
-                            row, 
+                            row,
                             section if not current_subsection else current_subsection,
                             unit_mapping,
-                            stats
+                            stats,
+                            sort_order=row_idx
                         )
                         if work_item:
                             if not dry_run:
@@ -393,7 +370,7 @@ class Command(BaseCommand):
             'точка': 'точка',  # Отдельная единица
         }
 
-    def parse_work_item_row(self, row, section, unit_mapping, stats):
+    def parse_work_item_row(self, row, section, unit_mapping, stats, sort_order=0):
         """
         Парсит строку работы из Excel
         Столбцы: A - артикул, B - наименование, C - единица, D - состав, E - время, F - разрядность, G - комментарий
@@ -481,7 +458,8 @@ class Command(BaseCommand):
             new_version.required_grade = required_grade
             new_version.composition = composition
             new_version.comment = comment
-            new_version.coefficient = Decimal('1.00')  # По умолчанию
+            new_version.coefficient = Decimal('1.00')
+            new_version.sort_order = sort_order
             return new_version
         else:
             # Создаём новую работу
@@ -497,5 +475,6 @@ class Command(BaseCommand):
                 comment=comment,
                 coefficient=Decimal('1.00'),
                 is_current=True,
-                version_number=1
+                version_number=1,
+                sort_order=sort_order
             )

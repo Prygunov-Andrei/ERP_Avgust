@@ -85,6 +85,24 @@ export function EstimateDetail() {
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
+  const { data: priceLists } = useQuery({
+    queryKey: ['price-lists'],
+    queryFn: () => api.getPriceLists(),
+    staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
+  });
+
+  // Inline-edit mutation for estimate fields
+  const updateFieldMutation = useMutation({
+    mutationFn: (data: Record<string, any>) => api.updateEstimate(Number(id), data as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['estimate', id] });
+      toast.success('Сохранено');
+    },
+    onError: (error) => {
+      toast.error(`Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+    },
+  });
+
   // Section mutations
   const createSectionMutation = useMutation({
     mutationFn: (data: { estimate: number; name: string; sort_order?: number }) =>
@@ -523,10 +541,6 @@ export function EstimateDetail() {
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Человеко-часы</div>
-                <div className="font-medium text-gray-900">{estimate.man_hours}</div>
-              </div>
-              <div>
                 <div className="text-sm text-gray-500">Создал</div>
                 <div className="font-medium text-gray-900">{estimate.created_by_username}</div>
               </div>
@@ -549,13 +563,113 @@ export function EstimateDetail() {
                 </div>
               </div>
             )}
+          </div>
 
-            {estimate.price_list_name && (
-              <div className="mt-4 pt-4 border-t">
-                <div className="text-sm text-gray-500">Прайс-лист</div>
-                <div className="font-medium text-gray-900">{estimate.price_list_name}</div>
+          {/* Editable parameters */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6" key={estimate.updated_at}>
+            <h3 className="font-semibold text-gray-900 mb-4">Параметры сметы</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="detail-man-hours" className="text-sm text-gray-500">Человеко-часы</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    id="detail-man-hours"
+                    type="number"
+                    step="0.01"
+                    defaultValue={estimate.man_hours}
+                    onBlur={(e) => {
+                      if (e.target.value !== estimate.man_hours) {
+                        updateFieldMutation.mutate({ man_hours: e.target.value });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    }}
+                    className="max-w-[200px]"
+                  />
+                </div>
               </div>
-            )}
+              <div>
+                <Label htmlFor="detail-price-list" className="text-sm text-gray-500">Прайс-лист для расчёта</Label>
+                <select
+                  id="detail-price-list"
+                  defaultValue={estimate.price_list || ''}
+                  onChange={(e) => {
+                    const value = e.target.value ? Number(e.target.value) : null;
+                    updateFieldMutation.mutate({ price_list: value });
+                  }}
+                  className="mt-1 w-full max-w-[300px] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <option value="">Не выбрано</option>
+                  {priceLists?.map((pl) => (
+                    <option key={pl.id} value={pl.id}>{pl.number} - {pl.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t">
+              <Label className="text-sm text-gray-500">Курсы валют</Label>
+              <div className="grid grid-cols-3 gap-3 mt-1 max-w-[500px]">
+                <div>
+                  <Label htmlFor="detail-usd" className="text-xs text-gray-400">USD</Label>
+                  <Input
+                    id="detail-usd"
+                    type="number"
+                    step="0.01"
+                    placeholder="—"
+                    defaultValue={estimate.usd_rate || ''}
+                    onBlur={(e) => {
+                      const newVal = e.target.value || undefined;
+                      if (newVal !== (estimate.usd_rate || undefined)) {
+                        updateFieldMutation.mutate({ usd_rate: newVal || null });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="detail-eur" className="text-xs text-gray-400">EUR</Label>
+                  <Input
+                    id="detail-eur"
+                    type="number"
+                    step="0.01"
+                    placeholder="—"
+                    defaultValue={estimate.eur_rate || ''}
+                    onBlur={(e) => {
+                      const newVal = e.target.value || undefined;
+                      if (newVal !== (estimate.eur_rate || undefined)) {
+                        updateFieldMutation.mutate({ eur_rate: newVal || null });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="detail-cny" className="text-xs text-gray-400">CNY</Label>
+                  <Input
+                    id="detail-cny"
+                    type="number"
+                    step="0.01"
+                    placeholder="—"
+                    defaultValue={estimate.cny_rate || ''}
+                    onBlur={(e) => {
+                      const newVal = e.target.value || undefined;
+                      if (newVal !== (estimate.cny_rate || undefined)) {
+                        updateFieldMutation.mutate({ cny_rate: newVal || null });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </TabsContent>
 

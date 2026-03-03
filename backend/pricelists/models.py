@@ -228,11 +228,20 @@ class WorkItem(TimestampedModel):
         default=True,
         verbose_name='Актуальная версия'
     )
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок сортировки',
+        help_text='Порядок из Excel файла для правильной последовательности'
+    )
 
     class Meta:
-        ordering = ['section', 'article']
+        ordering = ['section', 'sort_order', 'article']
         verbose_name = 'Работа'
         verbose_name_plural = 'Работы'
+        indexes = [
+            models.Index(fields=['is_current', 'section'], name='workitem_current_section_idx'),
+            models.Index(fields=['article'], name='workitem_article_idx'),
+        ]
 
     def __str__(self):
         return f"{self.article} - {self.name}"

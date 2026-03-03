@@ -63,7 +63,9 @@ services:
 
   minio:
     image: minio/minio:latest
-    # PRODUCTION: Убран проброс портов наружу (доступ через nginx)
+    # PRODUCTION: Порт проброшен на localhost для доступа через nginx
+    ports:
+      - "127.0.0.1:9000:9000"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -235,6 +237,7 @@ services:
       - KANBAN_S3_ACCESS_KEY=${MINIO_ROOT_USER}
       - KANBAN_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
       - KANBAN_S3_BUCKET_NAME=files
+      - KANBAN_S3_PUBLIC_URL=${PUBLIC_BACKEND_URL}
       - ERP_API_BASE_URL=http://backend:8000/api/v1
       - ERP_SERVICE_TOKEN=${ERP_SERVICE_TOKEN:-}
       - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY:-}
@@ -286,6 +289,7 @@ services:
       - KANBAN_S3_ACCESS_KEY=${MINIO_ROOT_USER}
       - KANBAN_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
       - KANBAN_S3_BUCKET_NAME=files
+      - KANBAN_S3_PUBLIC_URL=${PUBLIC_BACKEND_URL}
       - ERP_API_BASE_URL=http://backend:8000/api/v1
       - ERP_SERVICE_TOKEN=${ERP_SERVICE_TOKEN:-}
     depends_on:
@@ -319,6 +323,7 @@ services:
       - KANBAN_S3_ACCESS_KEY=${MINIO_ROOT_USER}
       - KANBAN_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
       - KANBAN_S3_BUCKET_NAME=files
+      - KANBAN_S3_PUBLIC_URL=${PUBLIC_BACKEND_URL}
       - ERP_API_BASE_URL=http://backend:8000/api/v1
       - ERP_SERVICE_TOKEN=${ERP_SERVICE_TOKEN:-}
     depends_on:

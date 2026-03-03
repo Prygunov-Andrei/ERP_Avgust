@@ -105,10 +105,6 @@ class FileDownloadURLView(APIView):
         except FileObject.DoesNotExist:
             return Response({'error': 'file not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not getattr(request.user, 'is_service', False):
-            if file_obj.created_by_user_id is not None and getattr(request.user, 'user_id', None) != file_obj.created_by_user_id:
-                return Response({'error': 'forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
         url = s3.presign_get(bucket=file_obj.bucket, key=file_obj.object_key)
         return Response({'download_url': url})
 

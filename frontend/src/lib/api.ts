@@ -1416,39 +1416,7 @@ class ApiClient {
 
   // Work Items
   async getWorkItems() {
-    let allItems: WorkItemList[] = [];
-    let nextUrl: string | null = '/work-items/';
-    
-    while (nextUrl) {
-      const response = await this.request<PaginatedResponse<WorkItemList> | WorkItemList[]>(nextUrl);
-      
-      if (response && typeof response === 'object' && 'results' in response) {
-        allItems = [...allItems, ...response.results];
-        
-        // Если next - полный URL, извлекаем только путь (начиная с /api/v1/)
-        if (response.next) {
-          try {
-            const url = new URL(response.next);
-            // Убираем /api/v1 из начала pathname, чтобы избежать дублирования
-            let path = url.pathname + url.search;
-            if (path.startsWith('/api/v1')) {
-              path = path.substring(7); // Убираем '/api/v1'
-            }
-            nextUrl = path;
-          } catch {
-            // Если next уже является относительным путем
-            nextUrl = response.next;
-          }
-        } else {
-          nextUrl = null;
-        }
-      } else {
-        // Если ответ - массив (не пагинированный)
-        return response as WorkItemList[];
-      }
-    }
-    
-    return allItems;
+    return this.request<WorkItemList[]>('/work-items/');
   }
 
   async getWorkItemDetail(id: number) {
@@ -2895,6 +2863,7 @@ export interface LegalEntity {
   inn: string;
   tax_system: string | number | TaxSystem; // Может быть строкой, числом (ID) или объектом
   tax_system_id?: number;
+  tax_system_details?: TaxSystem; // Детали системы налогообложения (has_vat, vat_rate)
   short_name?: string;
   kpp?: string;
   ogrn?: string;
@@ -4641,7 +4610,6 @@ export const ERP_PERMISSION_TREE: ERPPermissionSection[] = [
     { code: 'tkp', label: 'ТКП' },
     { code: 'mp', label: 'МП' },
     { code: 'estimates', label: 'Сметы' },
-    { code: 'pricelists', label: 'Прайс-листы' },
   ]},
   { code: 'objects', label: 'Объекты', children: [] },
   { code: 'finance', label: 'Финансы', children: [
@@ -4669,6 +4637,14 @@ export const ERP_PERMISSION_TREE: ERPPermissionSection[] = [
     { code: 'moderation', label: 'Модерация товаров' },
     { code: 'warehouse', label: 'Склад' },
   ]},
+  { code: 'goods', label: 'Товары и услуги', children: [
+    { code: 'categories', label: 'Категории' },
+    { code: 'catalog', label: 'Номенклатура' },
+    { code: 'moderation', label: 'Модерация' },
+    { code: 'works', label: 'Каталог работ' },
+    { code: 'pricelists', label: 'Прайс-листы' },
+    { code: 'grades', label: 'Разряды монтажников' },
+  ]},
   { code: 'pto', label: 'ПТО', children: [
     { code: 'projects', label: 'Проекты' },
     { code: 'production', label: 'Производственная документация' },
@@ -4683,7 +4659,6 @@ export const ERP_PERMISSION_TREE: ERPPermissionSection[] = [
   ]},
   { code: 'communications', label: 'Переписка', children: [] },
   { code: 'settings', label: 'Справочники и настройки', children: [
-    { code: 'goods', label: 'Товары и услуги' },
     { code: 'work_conditions', label: 'Фронт работ и монтажные условия' },
     { code: 'personnel', label: 'Персонал' },
     { code: 'counterparties', label: 'Контрагенты' },
