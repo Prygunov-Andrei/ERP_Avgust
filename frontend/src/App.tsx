@@ -857,7 +857,7 @@ export default function App() {
 
           {/* Справка */}
           <Route path="/help" element={
-            <ProtectedRoute requiredSection="help">
+            <ProtectedRoute>
               <Layout onLogout={handleLogout} user={user}>
                 <HelpIndexPage />
               </Layout>
