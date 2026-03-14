@@ -231,14 +231,19 @@ class EstimateAutoMatcher:
                 mapping.confidence = confidence
             mapping.save(update_fields=['usage_count', 'confidence'])
 
-    def preview_matches(self, estimate) -> List[Dict]:
-        """Preview-подбор цен из счетов БЕЗ сохранения в БД.
+    def preview_matches(
+        self,
+        estimate,
+        supplier_ids: Optional[List[int]] = None,
+        price_strategy: str = 'cheapest',
+    ) -> List[Dict]:
+        """Preview-подбор цен из каталога поставщиков и счетов БЕЗ сохранения в БД.
 
-        Для каждой строки сметы ищет Product через ProductMatcher,
-        находит последнюю цену из ProductPriceHistory и возвращает
-        per-item результаты с информацией об источнике (счёт, поставщик).
+        supplier_ids — ID Counterparty для фильтрации (None = все).
+        price_strategy — 'cheapest' | 'latest'.
         """
         from estimates.models import EstimateItem
+        from supplier_integrations.models import SupplierProduct
 
         items = EstimateItem.objects.filter(
             estimate=estimate,
@@ -259,51 +264,80 @@ class EstimateAutoMatcher:
                 logger.warning('preview_matches: product match failed for "%s": %s', item.name, exc)
                 product = None
 
-            matched_product = None
-            product_confidence = 0.0
-            invoice_info = None
-            source_price_history_id = None
+            if not product:
+                continue
 
-            if product:
-                latest_price = ProductPriceHistory.objects.filter(
-                    product=product,
-                ).select_related('counterparty').order_by('-invoice_date').first()
+            # Собираем все предложения
+            all_offers = []
 
-                if latest_price:
-                    matched_product = {
-                        'id': product.id,
-                        'name': product.name,
-                        'price': str(latest_price.price),
-                    }
-                    product_confidence = 0.85
-                    source_price_history_id = latest_price.id
-                    invoice_info = {
-                        'invoice_number': latest_price.invoice_number or '',
-                        'invoice_date': str(latest_price.invoice_date) if latest_price.invoice_date else '',
+            # 1. Цены из каталога поставщика (SupplierProduct.base_price)
+            sp_qs = SupplierProduct.objects.filter(
+                product=product, base_price__isnull=False, is_active=True,
+            ).select_related('integration__counterparty')
+            if supplier_ids:
+                sp_qs = sp_qs.filter(integration__counterparty_id__in=supplier_ids)
+            for sp in sp_qs:
+                if sp.base_price and sp.base_price > 0:
+                    counterparty = sp.integration.counterparty if sp.integration else None
+                    all_offers.append({
+                        'price': str(sp.base_price),
+                        'source_type': 'supplier_catalog',
+                        'counterparty_name': counterparty.name if counterparty else sp.integration.name,
+                        'counterparty_id': counterparty.id if counterparty else None,
+                        'supplier_product_id': sp.id,
+                        'price_date': str(sp.price_updated_at) if sp.price_updated_at else None,
+                    })
+
+            # 2. Цены из счетов (ProductPriceHistory)
+            ph_qs = ProductPriceHistory.objects.filter(
+                product=product,
+            ).select_related('counterparty')
+            if supplier_ids:
+                ph_qs = ph_qs.filter(counterparty_id__in=supplier_ids)
+            for ph in ph_qs.order_by('-invoice_date')[:5]:
+                if ph.price and ph.price > 0:
+                    all_offers.append({
+                        'price': str(ph.price),
+                        'source_type': 'invoice',
                         'counterparty_name': (
-                            latest_price.counterparty.short_name or latest_price.counterparty.name
-                        ) if latest_price.counterparty else None,
-                        'invoice_id': latest_price.invoice_id,
-                    }
-                else:
-                    matched_product = {
-                        'id': product.id,
-                        'name': product.name,
-                        'price': '0',
-                    }
-                    product_confidence = 0.5
+                            ph.counterparty.short_name or ph.counterparty.name
+                        ) if ph.counterparty else None,
+                        'counterparty_id': ph.counterparty_id,
+                        'source_price_history_id': ph.id,
+                        'invoice_number': ph.invoice_number or '',
+                        'invoice_date': str(ph.invoice_date) if ph.invoice_date else '',
+                        'price_date': str(ph.invoice_date) if ph.invoice_date else None,
+                    })
 
-            if matched_product:
-                results.append({
-                    'item_id': item.id,
-                    'name': item.name,
-                    'matched_product': matched_product,
-                    'matched_work': None,
-                    'product_confidence': product_confidence,
-                    'work_confidence': 0,
-                    'invoice_info': invoice_info,
-                    'source_price_history_id': source_price_history_id,
-                })
+            # 3. Выбор лучшего предложения
+            best_offer = None
+            if all_offers:
+                if price_strategy == 'cheapest':
+                    best_offer = min(all_offers, key=lambda o: Decimal(o['price']))
+                else:  # latest
+                    best_offer = all_offers[0]
+
+            product_confidence = 0.85 if best_offer else 0.5
+
+            results.append({
+                'item_id': item.id,
+                'name': item.name,
+                'matched_product': {
+                    'id': product.id,
+                    'name': product.name,
+                    'price': best_offer['price'] if best_offer else '0',
+                },
+                'best_offer': best_offer,
+                'all_offers': all_offers,
+                'matched_work': None,
+                'product_confidence': product_confidence,
+                'work_confidence': 0,
+                'invoice_info': None,
+                'source_price_history_id': (
+                    best_offer.get('source_price_history_id')
+                    if best_offer else None
+                ),
+            })
 
         return results
 

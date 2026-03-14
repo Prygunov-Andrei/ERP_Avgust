@@ -132,9 +132,28 @@ class BaseLLMProvider(ABC):
 3. Цены и суммы — десятичные числа
 4. Единицы измерения: шт, м, м², м³, кг, т, л, компл, ч, усл, ед
 5. Дата в формате YYYY-MM-DD
+6. price_per_unit — это ЦЕНА ЗА ЕДИНИЦУ товара (руб.), а НЕ площадь, вес или другие физические характеристики. Если в таблице несколько числовых столбцов, ищи столбец с заголовком "Цена", "Стоимость за ед.", "Цена с НДС" и т.п.
+7. Для каждой позиции: amount = quantity × price_per_unit. Если вычисленная сумма позиции не совпадает со столбцом "Сумма" — значит неверно определён столбец цены, пересмотри.
+8. Сумма всех позиций должна примерно совпадать с totals.amount_gross. Если расхождение большое — скорее всего неверно определён столбец цены.
 
 Верни ТОЛЬКО валидный JSON без markdown-форматирования."""
-    
+
+    def parse_with_prompt(self, file_content: bytes, file_type: str, system_prompt: str, user_prompt: str = "Распарси этот документ:") -> dict:
+        """
+        Отправляет файл (PDF/изображение) в LLM с произвольным промптом
+        и возвращает JSON-ответ как dict.
+
+        Args:
+            file_content: Содержимое файла в байтах
+            file_type: Тип файла ('pdf', 'png', 'jpg', 'jpeg')
+            system_prompt: Системный промпт
+            user_prompt: Пользовательский промпт
+
+        Returns:
+            dict с ответом LLM
+        """
+        raise NotImplementedError("Subclasses must implement parse_with_prompt")
+
     @staticmethod
     def calculate_file_hash(content: bytes) -> str:
         """Вычисляет SHA256 хэш файла"""

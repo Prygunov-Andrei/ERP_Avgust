@@ -78,3 +78,49 @@ class GeminiProvider(BaseLLMProvider):
         data = json.loads(text)
         parsed = ParsedInvoice(**data)
         return parsed, processing_time
+
+    def parse_with_prompt(self, file_content: bytes, file_type: str, system_prompt: str, user_prompt: str = "Распарси этот документ:") -> dict:
+        if file_type.lower() == 'pdf':
+            images_b64 = self.pdf_to_images_base64(file_content)
+        else:
+            images_b64 = self.image_to_base64(file_content)
+
+        parts = [
+            {"text": system_prompt + "\n\n" + user_prompt}
+        ]
+        for img_b64 in images_b64:
+            parts.append({
+                "inline_data": {
+                    "mime_type": "image/png",
+                    "data": img_b64,
+                }
+            })
+
+        payload = {
+            "contents": [{"parts": parts}],
+            "generationConfig": {
+                "temperature": 0.1,
+                "responseMimeType": "application/json",
+            },
+        }
+
+        url = f"{self.BASE_URL}/models/{self.model_name}:generateContent?key={self.api_key}"
+
+        try:
+            with httpx.Client(timeout=self.REQUEST_TIMEOUT) as client:
+                response = client.post(url, json=payload)
+                response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:
+                raise RateLimitError(str(e))
+            raise
+        except httpx.ReadTimeout as e:
+            raise RateLimitError(f"Gemini timeout: {e}")
+
+        resp_data = response.json()
+        candidates = resp_data.get("candidates", [])
+        if not candidates:
+            raise ValueError(f"Пустой ответ от Gemini API: {resp_data}")
+
+        text = candidates[0]["content"]["parts"][0]["text"]
+        return json.loads(text)

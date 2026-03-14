@@ -510,6 +510,13 @@ class InvoiceDetailSerializer(serializers.ModelSerializer):
     items = InvoiceItemSerializer(many=True, read_only=True)
     events = InvoiceEventSerializer(many=True, read_only=True)
     estimate_number = serializers.CharField(source='estimate.number', read_only=True, default=None)
+    parsed_vendor = serializers.SerializerMethodField()
+
+    def get_parsed_vendor(self, obj):
+        """Данные контрагента из LLM-распознавания."""
+        if obj.parsed_document and obj.parsed_document.parsed_data:
+            return obj.parsed_document.parsed_data.get('vendor')
+        return None
 
     class Meta:
         model = Invoice
@@ -536,6 +543,7 @@ class InvoiceDetailSerializer(serializers.ModelSerializer):
             'reviewed_by', 'reviewed_by_name', 'reviewed_at',
             'approved_by', 'approved_by_name', 'approved_at',
             'paid_at',
+            'parsed_vendor',
             'is_overdue',
             'items', 'events',
             'created_at', 'updated_at',

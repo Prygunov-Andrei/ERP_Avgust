@@ -210,8 +210,8 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
     uploadMutation.mutate(files);
   };
 
-  const progressPercent = sessionData
-    ? Math.round((sessionData.processed_files / Math.max(sessionData.total_files, 1)) * 100)
+  const progressPercent = sessionData && sessionData.total_files > 0
+    ? Math.round((sessionData.processed_files / sessionData.total_files) * 100)
     : 0;
 
   return (
@@ -329,58 +329,70 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
         )}
 
         {/* Step 2: Processing */}
-        {step === 'processing' && sessionData && (
+        {step === 'processing' && (
           <div className="space-y-4 pt-2">
+            {/* Phase indicator */}
+            <div className="flex items-center gap-2 text-sm">
+              {!sessionId ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-500 flex-shrink-0" />
+                  <span className="text-gray-600">
+                    Загрузка {files.length} {files.length === 1 ? 'файла' : 'файлов'} на сервер...
+                  </span>
+                </>
+              ) : !sessionData || sessionData.processed_files === 0 ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-purple-500 flex-shrink-0" />
+                  <span className="text-gray-600">
+                    Файлы получены — ожидание ИИ-распознавания...
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-500 flex-shrink-0" />
+                  <span className="text-gray-600">
+                    Распознавание: {sessionData.processed_files} / {sessionData.total_files} файлов
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Progress bar */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">
-                  Обработано: {sessionData.processed_files} / {sessionData.total_files}
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-gray-500">
+                  {!sessionId
+                    ? 'Загрузка...'
+                    : !sessionData || sessionData.processed_files === 0
+                    ? 'В очереди'
+                    : `Обработано ${sessionData.processed_files} из ${sessionData.total_files}`}
                 </span>
-                <span className="text-sm font-medium text-gray-700">
-                  {progressPercent}%
-                </span>
+                <span className="text-xs font-medium text-gray-700">{progressPercent}%</span>
               </div>
-              <Progress value={progressPercent} />
+              <Progress value={sessionId ? progressPercent : undefined} className={!sessionId ? 'animate-pulse' : ''} />
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-3 bg-green-50 rounded-lg">
-                <p className="text-lg font-bold text-green-700">{sessionData.successful}</p>
-                <p className="text-xs text-green-600">Успешно</p>
+            {/* Stats (show only when we have data) */}
+            {sessionData && (
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-lg font-bold text-green-700">{sessionData.successful}</p>
+                  <p className="text-xs text-green-600">Распознано</p>
+                </div>
+                <div className="p-3 bg-red-50 rounded-lg">
+                  <p className="text-lg font-bold text-red-700">{sessionData.failed}</p>
+                  <p className="text-xs text-red-600">Ошибки</p>
+                </div>
+                <div className="p-3 bg-yellow-50 rounded-lg">
+                  <p className="text-lg font-bold text-yellow-700">{sessionData.skipped_duplicate}</p>
+                  <p className="text-xs text-yellow-600">Дубликаты</p>
+                </div>
               </div>
-              <div className="p-3 bg-red-50 rounded-lg">
-                <p className="text-lg font-bold text-red-700">{sessionData.failed}</p>
-                <p className="text-xs text-red-600">Ошибки</p>
-              </div>
-              <div className="p-3 bg-yellow-50 rounded-lg">
-                <p className="text-lg font-bold text-yellow-700">{sessionData.skipped_duplicate}</p>
-                <p className="text-xs text-yellow-600">Дубликаты</p>
-              </div>
-            </div>
+            )}
 
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-              <span className="ml-2 text-sm text-gray-500">Ожидание завершения...</span>
-            </div>
-          </div>
-        )}
-
-        {step === 'processing' && !sessionData && (
-          <div className="space-y-4 pt-2">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">
-                  Загрузка и распознавание файлов...
-                </span>
-              </div>
-              <Progress className="animate-pulse" />
-            </div>
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-              <span className="ml-2 text-sm text-gray-500">
-                Обработка {files.length} {files.length === 1 ? 'файла' : 'файлов'}...
-              </span>
-            </div>
+            <p className="text-xs text-gray-400 text-center">
+              ИИ-распознавание каждого файла занимает 10–30 секунд
+            </p>
           </div>
         )}
 

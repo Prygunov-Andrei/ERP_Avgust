@@ -81,6 +81,14 @@ class CounterpartyViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'short_name', 'inn']
     filterset_fields = ['type', 'legal_form', 'is_active']
 
+    def get_permissions(self):
+        # Чтение контрагентов доступно любому авторизованному пользователю
+        # (нужно при заполнении счётов, смет и т.д.)
+        # Запись требует отдельного права settings.counterparties (через ERPSectionPermission)
+        if self.request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
+
 class AnalyticsViewSet(viewsets.ViewSet):
     """Аналитические отчеты"""
     permission_classes = [permissions.IsAuthenticated]

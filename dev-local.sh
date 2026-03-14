@@ -102,6 +102,9 @@ cd "$ROOT_DIR/backend"
 echo "  ERP (finans_assistant)..."
 $PYTHON manage.py migrate --no-input
 
+echo "  Настройка LLM-провайдеров..."
+$PYTHON manage.py setup_providers
+
 echo "  Kanban..."
 DJANGO_SETTINGS_MODULE=kanban_service.settings $PYTHON manage.py migrate --no-input
 
@@ -137,6 +140,16 @@ echo "  Celery ERP worker  → PID $! (pool=$CELERY_POOL)"
 $CELERY -A kanban_service worker --pool=$CELERY_POOL --concurrency=1 -l info &
 echo $! >> "$PIDFILE"
 echo "  Celery Kanban worker → PID $! (pool=$CELERY_POOL)"
+
+# Celery ERP beat (периодические задачи)
+$CELERY -A finans_assistant beat -l info --schedule=/tmp/celerybeat-erp &
+echo $! >> "$PIDFILE"
+echo "  Celery ERP beat    → PID $!"
+
+# Celery Kanban beat (периодические задачи)
+$CELERY -A kanban_service beat -l info --schedule=/tmp/celerybeat-kanban &
+echo $! >> "$PIDFILE"
+echo "  Celery Kanban beat → PID $!"
 
 # Vite dev server (порт 3000)
 cd "$ROOT_DIR/frontend"

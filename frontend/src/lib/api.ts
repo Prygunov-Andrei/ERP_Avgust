@@ -807,7 +807,7 @@ class ApiClient {
   // EstimateItem CRUD
   async getEstimateItems(estimateId: number) {
     const response = await this.request<PaginatedResponse<EstimateItem> | EstimateItem[]>(
-      `/estimate-items/?estimate=${estimateId}&ordering=sort_order,item_number`
+      `/estimate-items/?estimate=${estimateId}&ordering=sort_order,item_number&page_size=all`
     );
     if (response && typeof response === 'object' && 'results' in response) {
       return (response as PaginatedResponse<EstimateItem>).results;
@@ -849,9 +849,21 @@ class ApiClient {
     });
   }
 
-  async autoMatchEstimateItems(estimateId: number, priceListId?: number) {
-    const body: Record<string, number> = { estimate_id: estimateId };
-    if (priceListId) body.price_list_id = priceListId;
+  async bulkMoveEstimateItems(itemIds: number[], targetPosition: number) {
+    return this.request<{ moved: number }>('/estimate-items/bulk-move/', {
+      method: 'POST',
+      body: JSON.stringify({ item_ids: itemIds, target_position: targetPosition }),
+    });
+  }
+
+  async autoMatchEstimateItems(
+    estimateId: number,
+    options?: { priceListId?: number; supplierIds?: number[]; priceStrategy?: string },
+  ) {
+    const body: Record<string, any> = { estimate_id: estimateId };
+    if (options?.priceListId) body.price_list_id = options.priceListId;
+    if (options?.supplierIds && options.supplierIds.length > 0) body.supplier_ids = options.supplierIds;
+    if (options?.priceStrategy) body.price_strategy = options.priceStrategy;
     return this.request<AutoMatchResult[]>('/estimate-items/auto-match/', {
       method: 'POST',
       body: JSON.stringify(body),
@@ -895,6 +907,28 @@ class ApiClient {
     });
   }
 
+  // ── Постраничный импорт PDF ──────────────────────────────────
+
+  async startEstimatePdfImport(estimateId: number, file: File): Promise<EstimatePdfImportSession> {
+    const formData = new FormData();
+    formData.append('estimate_id', estimateId.toString());
+    formData.append('file', file);
+    return this.request<EstimatePdfImportSession>('/estimate-items/import-pdf/', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  async getEstimateImportProgress(sessionId: string): Promise<EstimateImportProgress> {
+    return this.request<EstimateImportProgress>(`/estimate-items/import-progress/${sessionId}/`);
+  }
+
+  async cancelEstimateImport(sessionId: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(`/estimate-items/import-cancel/${sessionId}/`, {
+      method: 'POST',
+    });
+  }
+
   async promoteItemToSection(itemId: number) {
     return this.request<{ section_id: number }>(
       `/estimate-items/${itemId}/promote-to-section/`,
@@ -906,6 +940,16 @@ class ApiClient {
     return this.request<{ item_id: number }>(
       `/estimate-sections/${sectionId}/demote-to-item/`,
       { method: 'POST' },
+    );
+  }
+
+  async moveEstimateItem(
+    itemId: number,
+    data: { direction: 'up' | 'down' } | { target_section_id: number },
+  ) {
+    return this.request<{ moved: boolean }>(
+      `/estimate-items/${itemId}/move/`,
+      { method: 'POST', body: JSON.stringify(data) },
     );
   }
 
@@ -1754,6 +1798,10 @@ class ApiClient {
     });
   }
 
+  async deleteEstimate(id: number) {
+    return this.request<void>(`/estimates/${id}/`, { method: 'DELETE' });
+  }
+
   // Estimate Sections
   async getEstimateSections(estimateId: number) {
     const response = await this.request<PaginatedResponse<EstimateSection> | EstimateSection[]>(`/estimate-sections/?estimate=${estimateId}`);
@@ -1861,6 +1909,51 @@ class ApiClient {
     return this.request<void>(`/estimate-characteristics/${id}/`, {
       method: 'DELETE',
     });
+  }
+
+  // ==================== COLUMN CONFIG TEMPLATES ====================
+
+  async getColumnConfigTemplates() {
+    const response = await this.request<PaginatedResponse<ColumnConfigTemplate> | ColumnConfigTemplate[]>(
+      '/column-config-templates/'
+    );
+    if (response && typeof response === 'object' && 'results' in response) {
+      return (response as PaginatedResponse<ColumnConfigTemplate>).results;
+    }
+    return response as ColumnConfigTemplate[];
+  }
+
+  async createColumnConfigTemplate(data: { name: string; description?: string; column_config: ColumnDef[]; is_default?: boolean }) {
+    return this.request<ColumnConfigTemplate>('/column-config-templates/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteColumnConfigTemplate(id: number) {
+    return this.request<void>(`/column-config-templates/${id}/`, {
+      method: 'DELETE',
+    });
+  }
+
+  async applyColumnConfigTemplate(templateId: number, estimateId: number) {
+    return this.request<{ status: string; estimate_id: number }>(
+      `/column-config-templates/${templateId}/apply/`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ estimate_id: estimateId }),
+      }
+    );
+  }
+
+  async exportEstimate(id: number): Promise<Blob> {
+    const url = `${this.baseUrl}/estimates/${id}/export/`;
+    const token = localStorage.getItem('access_token');
+    const res = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error(`Ошибка экспорта: ${res.status}`);
+    return res.blob();
   }
 
   // ==================== MOUNTING ESTIMATES ====================
@@ -2273,8 +2366,8 @@ class ApiClient {
     return response as any[];
   }
 
-  async getCategoryTree() {
-    return this.request<any[]>('/catalog/categories/tree/');
+  async getCategoryTree(): Promise<{ tree: any[]; uncategorized_count: number }> {
+    return this.request<{ tree: any[]; uncategorized_count: number }>('/catalog/categories/tree/');
   }
 
   async getCategoryById(id: number) {
@@ -2308,6 +2401,8 @@ class ApiClient {
     is_service?: boolean;
     search?: string;
     page?: number;
+    supplier?: number;
+    in_stock?: boolean;
   }) {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
@@ -2315,6 +2410,8 @@ class ApiClient {
     if (filters?.is_service !== undefined) params.append('is_service', filters.is_service.toString());
     if (filters?.search) params.append('search', filters.search);
     if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.supplier) params.append('supplier', filters.supplier.toString());
+    if (filters?.in_stock !== undefined) params.append('in_stock', filters.in_stock.toString());
     
     const queryString = params.toString();
     const endpoint = `/catalog/products/${queryString ? `?${queryString}` : ''}`;
@@ -2374,6 +2471,66 @@ class ApiClient {
     return this.request<any>('/catalog/products/merge/', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  // Supplier Catalogs (PDF parsing)
+  async getSupplierCatalogs() {
+    const response = await this.request<any>('/catalog/supplier-catalogs/');
+    if (response && typeof response === 'object' && 'results' in response) {
+      return response.results;
+    }
+    return response;
+  }
+
+  async getSupplierCatalog(id: number) {
+    return this.request<any>(`/catalog/supplier-catalogs/${id}/`);
+  }
+
+  async uploadSupplierCatalog(formData: FormData) {
+    return this.request<any>('/catalog/supplier-catalogs/', {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    });
+  }
+
+  async deleteSupplierCatalog(id: number) {
+    return this.request<void>(`/catalog/supplier-catalogs/${id}/`, {
+      method: 'DELETE',
+    });
+  }
+
+  async detectCatalogToc(id: number, tocPages: number = 6) {
+    return this.request<any>(`/catalog/supplier-catalogs/${id}/detect-toc/`, {
+      method: 'POST',
+      body: JSON.stringify({ toc_pages: tocPages }),
+    });
+  }
+
+  async updateCatalogSections(id: number, sections: any[]) {
+    return this.request<any>(`/catalog/supplier-catalogs/${id}/update-sections/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ sections }),
+    });
+  }
+
+  async parseCatalog(id: number) {
+    return this.request<any>(`/catalog/supplier-catalogs/${id}/parse/`, {
+      method: 'POST',
+    });
+  }
+
+  async importCatalogToDb(id: number, reset: boolean = false) {
+    return this.request<any>(`/catalog/supplier-catalogs/${id}/import-to-db/`, {
+      method: 'POST',
+      body: JSON.stringify({ reset }),
+    });
+  }
+
+  async cancelCatalogTask(id: number) {
+    return this.request<any>(`/catalog/supplier-catalogs/${id}/cancel/`, {
+      method: 'POST',
     });
   }
 
@@ -3337,6 +3494,8 @@ export interface EstimateItem {
   analog_reason: string;
   original_name: string;
   source_price_history: number | null;
+  custom_data?: Record<string, string>;
+  computed_values?: Record<string, string | null>;
   created_at: string;
   updated_at: string;
 }
@@ -3360,11 +3519,25 @@ export interface CreateEstimateItemData {
   original_name?: string;
 }
 
+export interface AutoMatchOffer {
+  price: string;
+  source_type: 'supplier_catalog' | 'invoice';
+  counterparty_name: string | null;
+  counterparty_id: number | null;
+  supplier_product_id?: number;
+  source_price_history_id?: number;
+  invoice_number?: string;
+  invoice_date?: string;
+  price_date?: string | null;
+}
+
 export interface AutoMatchResult {
   item_id: number;
   name: string;
   matched_product: { id: number; name: string; price: string } | null;
   matched_work: { id: number; name: string; cost: string } | null;
+  best_offer: AutoMatchOffer | null;
+  all_offers: AutoMatchOffer[];
   product_confidence: number;
   work_confidence: number;
   invoice_info: {
@@ -3407,6 +3580,21 @@ export interface EstimateImportPreview {
   sections: string[];
   total_rows: number;
   confidence?: number;
+}
+
+export interface EstimatePdfImportSession {
+  session_id: string;
+  total_pages: number;
+}
+
+export interface EstimateImportProgress {
+  session_id: string;
+  status: 'processing' | 'completed' | 'error' | 'cancelled';
+  total_pages: number;
+  current_page: number;
+  rows: EstimateImportPreview['rows'];
+  sections: string[];
+  errors: Array<{ page: number; error: string }>;
 }
 
 export interface EstimateDeviationRow {
@@ -3827,6 +4015,54 @@ export interface ProjectCreateRequest {
 }
 
 // Estimates
+export type ColumnType =
+  | 'builtin'
+  | 'custom_number'
+  | 'custom_text'
+  | 'custom_date'
+  | 'custom_select'
+  | 'custom_checkbox'
+  | 'formula';
+
+export interface ColumnDef {
+  key: string;
+  label: string;
+  type: ColumnType;
+  builtin_field?: string | null;
+  width: number;
+  editable: boolean;
+  visible: boolean;
+  formula?: string | null;
+  decimal_places?: number | null;
+  aggregatable: boolean;
+  options?: string[] | null;
+}
+
+export interface ColumnConfigTemplate {
+  id: number;
+  name: string;
+  description: string;
+  column_config: ColumnDef[];
+  is_default: boolean;
+  created_by: number;
+  created_by_username: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const DEFAULT_COLUMN_CONFIG: ColumnDef[] = [
+  { key: 'item_number', label: '№', type: 'builtin', builtin_field: 'item_number', width: 50, editable: false, visible: true, formula: null, decimal_places: null, aggregatable: false, options: null },
+  { key: 'name', label: 'Наименование', type: 'builtin', builtin_field: 'name', width: 250, editable: true, visible: true, formula: null, decimal_places: null, aggregatable: false, options: null },
+  { key: 'model_name', label: 'Модель', type: 'builtin', builtin_field: 'model_name', width: 150, editable: true, visible: true, formula: null, decimal_places: null, aggregatable: false, options: null },
+  { key: 'unit', label: 'Ед.', type: 'builtin', builtin_field: 'unit', width: 60, editable: true, visible: true, formula: null, decimal_places: null, aggregatable: false, options: null },
+  { key: 'quantity', label: 'Кол-во', type: 'builtin', builtin_field: 'quantity', width: 80, editable: true, visible: true, formula: null, decimal_places: 3, aggregatable: false, options: null },
+  { key: 'material_unit_price', label: 'Цена мат.', type: 'builtin', builtin_field: 'material_unit_price', width: 100, editable: true, visible: true, formula: null, decimal_places: 2, aggregatable: false, options: null },
+  { key: 'work_unit_price', label: 'Цена раб.', type: 'builtin', builtin_field: 'work_unit_price', width: 100, editable: true, visible: true, formula: null, decimal_places: 2, aggregatable: false, options: null },
+  { key: 'material_total', label: 'Итого мат.', type: 'builtin', builtin_field: 'material_total', width: 110, editable: false, visible: true, formula: null, decimal_places: 2, aggregatable: true, options: null },
+  { key: 'work_total', label: 'Итого раб.', type: 'builtin', builtin_field: 'work_total', width: 110, editable: false, visible: true, formula: null, decimal_places: 2, aggregatable: true, options: null },
+  { key: 'line_total', label: 'Итого', type: 'builtin', builtin_field: 'line_total', width: 120, editable: false, visible: true, formula: null, decimal_places: 2, aggregatable: true, options: null },
+];
+
 export interface EstimateList {
   id: number;
   number: string;
@@ -3866,6 +4102,7 @@ export interface EstimateDetail extends EstimateList {
   approved_by?: number;
   approved_by_username?: string;
   parent_version?: number;
+  column_config?: ColumnDef[];
   sections: EstimateSection[];
   characteristics: EstimateCharacteristic[];
   total_materials_sale: string;
@@ -5146,6 +5383,61 @@ ApiClient.prototype.updateIncomeRecord = async function (this: ApiClient, id: nu
 };
 ApiClient.prototype.deleteIncomeRecord = async function (this: ApiClient, id: number) {
   return this.request<void>(`/income-records/${id}/`, { method: 'DELETE' });
+};
+
+// --- Supplier Integrations ---
+ApiClient.prototype.getSupplierIntegrations = async function (this: ApiClient) {
+  return this.request<PaginatedResponse<any>>('/supplier-integrations/');
+};
+ApiClient.prototype.getSupplierIntegration = async function (this: ApiClient, id: number) {
+  return this.request<any>(`/supplier-integrations/${id}/`);
+};
+ApiClient.prototype.createSupplierIntegration = async function (this: ApiClient, data: any) {
+  return this.request<any>('/supplier-integrations/', { method: 'POST', body: JSON.stringify(data) });
+};
+ApiClient.prototype.updateSupplierIntegration = async function (this: ApiClient, id: number, data: any) {
+  return this.request<any>(`/supplier-integrations/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+};
+ApiClient.prototype.deleteSupplierIntegration = async function (this: ApiClient, id: number) {
+  return this.request<void>(`/supplier-integrations/${id}/`, { method: 'DELETE' });
+};
+ApiClient.prototype.syncSupplierCatalog = async function (this: ApiClient, id: number) {
+  return this.request<any>(`/supplier-integrations/${id}/sync-catalog/`, { method: 'POST' });
+};
+ApiClient.prototype.syncSupplierStock = async function (this: ApiClient, id: number) {
+  return this.request<any>(`/supplier-integrations/${id}/sync-stock/`, { method: 'POST' });
+};
+ApiClient.prototype.getSupplierSyncStatus = async function (this: ApiClient, id: number) {
+  return this.request<any>(`/supplier-integrations/${id}/status/`);
+};
+
+// --- Supplier Products ---
+ApiClient.prototype.getSupplierProducts = async function (this: ApiClient, params?: string) {
+  return this.request<PaginatedResponse<any>>(`/supplier-products/${params ? '?' + params : ''}`);
+};
+ApiClient.prototype.getSupplierProduct = async function (this: ApiClient, id: number) {
+  return this.request<any>(`/supplier-products/${id}/`);
+};
+ApiClient.prototype.linkSupplierProduct = async function (this: ApiClient, id: number, productId: number) {
+  return this.request<any>(`/supplier-products/${id}/link/`, { method: 'POST', body: JSON.stringify({ product_id: productId }) });
+};
+
+// --- Supplier Categories ---
+ApiClient.prototype.getSupplierCategories = async function (this: ApiClient, params?: string) {
+  return this.request<PaginatedResponse<any>>(`/supplier-categories/${params ? '?' + params : ''}`);
+};
+ApiClient.prototype.updateSupplierCategoryMapping = async function (this: ApiClient, id: number, ourCategoryId: number | null) {
+  return this.request<any>(`/supplier-categories/${id}/`, { method: 'PATCH', body: JSON.stringify({ our_category: ourCategoryId }) });
+};
+
+// --- Supplier Brands ---
+ApiClient.prototype.getSupplierBrands = async function (this: ApiClient, params?: string) {
+  return this.request<PaginatedResponse<any>>(`/supplier-brands/${params ? '?' + params : ''}`);
+};
+
+// --- Supplier Sync Logs ---
+ApiClient.prototype.getSupplierSyncLogs = async function (this: ApiClient, params?: string) {
+  return this.request<PaginatedResponse<any>>(`/supplier-sync-logs/${params ? '?' + params : ''}`);
 };
 
 export const api = new ApiClient();

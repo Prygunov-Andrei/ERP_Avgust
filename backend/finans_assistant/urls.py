@@ -134,6 +134,7 @@ urlpatterns = [
     path('api/v1/', include('personnel.urls')),
     path('api/v1/', include('banking.urls')),
     path('api/v1/', include('supply.urls')),
+    path('api/v1/', include('supplier_integrations.urls')),
     path('api/v1/', api_root, name='api-root'),
 ]
 

@@ -95,6 +95,17 @@ docker compose -f docker-compose.prod.yml exec -T backend python manage.py colle
 
 echo ""
 echo "=========================================="
+echo "STEP 6.1: Seed Initial Data"
+echo "=========================================="
+echo "Loading employees and legal entities..."
+docker compose -f docker-compose.prod.yml exec -T backend python manage.py load_real_employees
+echo "Настройка LLM-провайдеров..."
+docker compose -f docker-compose.prod.yml exec -T backend python manage.py setup_providers
+echo "Initializing kanban boards..."
+docker compose -f docker-compose.prod.yml exec -T kanban-api python manage_kanban.py init_commercial_board
+
+echo ""
+echo "=========================================="
 echo "STEP 7: Create Django Superuser"
 echo "=========================================="
 echo "Please create an admin user for Django:"

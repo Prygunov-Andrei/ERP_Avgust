@@ -384,12 +384,15 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         """Удаление только в начальных/отменённых статусах."""
-        deletable = {Invoice.Status.RECOGNITION, Invoice.Status.REVIEW, Invoice.Status.CANCELLED}
+        deletable = {
+            Invoice.Status.RECOGNITION, Invoice.Status.REVIEW,
+            Invoice.Status.VERIFIED, Invoice.Status.CANCELLED,
+        }
         if instance.status not in deletable:
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied(
                 f'Нельзя удалить счёт в статусе «{instance.get_status_display()}». '
-                'Удаление возможно только для статусов: Распознавание, На проверке, Отменён.'
+                'Удаление возможно только для статусов: Распознавание, На проверке, Проверен, Отменён.'
             )
         instance.delete()
 

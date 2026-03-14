@@ -3,9 +3,13 @@ import sys
 from pathlib import Path
 
 from datetime import timedelta
+from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Загрузка переменных из .env файла (если существует)
+load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.environ.get('KANBAN_SECRET_KEY', os.environ.get('SECRET_KEY', 'unsafe-kanban-secret'))
 DEBUG = os.environ.get('KANBAN_DEBUG', os.environ.get('DEBUG', 'False')).lower() == 'true'

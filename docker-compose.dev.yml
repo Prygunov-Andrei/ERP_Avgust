@@ -65,6 +65,8 @@ services:
       /usr/bin/mc mb myminio/worklog-media --ignore-existing;
       /usr/bin/mc anonymous set download myminio/worklog-media;
       /usr/bin/mc mb myminio/files --ignore-existing;
+      /usr/bin/mc mb myminio/product-media --ignore-existing;
+      /usr/bin/mc anonymous set download myminio/product-media;
       exit 0;
       "
 

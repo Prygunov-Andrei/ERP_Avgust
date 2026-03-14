@@ -43,8 +43,14 @@ sleep 30
 echo -e "${GREEN}[6/10] Running database migrations...${NC}"
 docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
 
+echo -e "${GREEN}[6.05/10] Настройка LLM-провайдеров...${NC}"
+docker compose -f docker-compose.prod.yml exec -T backend python manage.py setup_providers
+
 echo -e "${GREEN}[6.1/10] Running kanban database migrations...${NC}"
 docker compose -f docker-compose.prod.yml exec -T kanban-api python manage_kanban.py migrate --noinput
+
+echo -e "${GREEN}[6.2/10] Seeding kanban boards (idempotent)...${NC}"
+docker compose -f docker-compose.prod.yml exec -T kanban-api python manage_kanban.py init_commercial_board
 
 echo -e "${GREEN}[7/10] Collecting static files...${NC}"
 docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput

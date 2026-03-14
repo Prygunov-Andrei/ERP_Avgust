@@ -63,6 +63,8 @@ services:
       /usr/bin/mc mb myminio/worklog-media --ignore-existing;
       /usr/bin/mc anonymous set download myminio/worklog-media;
       /usr/bin/mc mb myminio/files --ignore-existing;
+      /usr/bin/mc mb myminio/product-media --ignore-existing;
+      /usr/bin/mc anonymous set download myminio/product-media;
       exit 0;
       "
 
@@ -92,6 +94,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    command: ["gunicorn", "finans_assistant.wsgi:application",
+              "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "120",
+              "--reload",
+              "--access-logfile", "-", "--error-logfile", "-"]
     ports:
       - "8000:8000"
     environment:
@@ -124,7 +130,10 @@ services:
       - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY:-}
       - JWT_ISSUER=${JWT_ISSUER:-finans-assistant-erp}
       - JWT_AUDIENCE=${JWT_AUDIENCE:-kanban-service}
+      - BREEZ_API_BASE_URL=${BREEZ_API_BASE_URL:-https://api.breez.ru/v1}
+      - BREEZ_API_AUTH_HEADER=${BREEZ_API_AUTH_HEADER:-}
     volumes:
+      - ./backend:/app
       - backend_media:/app/media
       - backend_logs:/app/logs
       - backend_static:/app/staticfiles
@@ -260,7 +269,11 @@ services:
       - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY:-}
       - GROK_API_KEY=${GROK_API_KEY:-}
       - BANK_ENCRYPTION_KEY=${BANK_ENCRYPTION_KEY:-}
+      - BREEZ_API_BASE_URL=${BREEZ_API_BASE_URL:-https://api.breez.ru/v1}
+      - BREEZ_API_AUTH_HEADER=${BREEZ_API_AUTH_HEADER:-}
     volumes:
+      - ./backend:/app
+      - backend_media:/app/media
       - backend_logs:/app/logs
     depends_on:
       postgres:

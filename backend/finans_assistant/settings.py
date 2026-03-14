@@ -97,6 +97,8 @@ INSTALLED_APPS = [
     'personnel',
     'banking',
     'supply',
+    'supplier_integrations',
+    'api_public',
 ]
 
 MIDDLEWARE = [
@@ -370,6 +372,11 @@ WORKLOG_S3_BUCKET_NAME = os.environ.get('WORKLOG_S3_BUCKET_NAME', 'worklog-media
 WORKLOG_S3_REGION = 'us-east-1'
 
 # =============================================================================
+# MinIO / S3 Configuration (для медиа каталога товаров)
+# =============================================================================
+PRODUCT_MEDIA_S3_BUCKET = os.environ.get('PRODUCT_MEDIA_S3_BUCKET', 'product-media')
+
+# =============================================================================
 # Telegram Bot Configuration
 # =============================================================================
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
@@ -388,6 +395,12 @@ FNS_API_KEY = os.environ.get('FNS_API_KEY', '')
 # Banking Encryption Key (шифрование банковских секретов)
 # =============================================================================
 BANK_ENCRYPTION_KEY = os.environ.get('BANK_ENCRYPTION_KEY', '')
+
+# =============================================================================
+# Breez Supplier API (интеграция с поставщиком)
+# =============================================================================
+BREEZ_API_BASE_URL = os.environ.get('BREEZ_API_BASE_URL', 'https://api.breez.ru/v1')
+BREEZ_API_AUTH_HEADER = os.environ.get('BREEZ_API_AUTH_HEADER', '')
 
 # =============================================================================
 # Sentry Configuration (мониторинг ошибок)

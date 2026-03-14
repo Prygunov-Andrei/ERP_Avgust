@@ -20,6 +20,8 @@ export interface CategoryTreeNode {
   name: string;
   code: string;
   level: number;
+  product_count: number;
+  total_count: number;
   children: CategoryTreeNode[];
 }
 
@@ -40,7 +42,14 @@ export interface Product {
   merged_into: number | null;
   aliases: ProductAlias[];
   aliases_count: number;
-  source_payment?: number | null; // Платёж, из которого создан товар (для новых товаров)
+  images: string[];
+  booklet_url: string;
+  manual_url: string;
+  description: string;
+  brand: string;
+  series: string;
+  tech_specs: Record<string, string>;
+  source_payment?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -95,4 +104,52 @@ export interface ProductDuplicate {
 export interface MergeProductsPayload {
   source_ids: number[];
   target_id: number;
+}
+
+// Каталоги поставщиков
+export type SupplierCatalogStatus =
+  | 'uploaded'
+  | 'detecting_toc'
+  | 'toc_ready'
+  | 'parsing'
+  | 'parsed'
+  | 'importing'
+  | 'imported'
+  | 'error';
+
+export interface SupplierCatalogSection {
+  name: string;
+  pages: [number, number];
+  category_code: string;
+  is_new_category?: boolean;
+  new_category_name?: string;
+  new_category_code?: string;
+  parent_category_code?: string;
+}
+
+export interface SupplierCatalog {
+  id: number;
+  name: string;
+  supplier_name: string;
+  pdf_file: string;
+  pdf_url: string | null;
+  json_file: string;
+  json_url: string | null;
+  status: SupplierCatalogStatus;
+  status_display: string;
+  total_pages: number;
+  sections: SupplierCatalogSection[];
+  current_section: number;
+  total_sections: number;
+  current_batch: number;
+  total_batches: number;
+  products_count: number;
+  variants_count: number;
+  imported_count: number;
+  categories_created: number;
+  errors: string[];
+  error_message: string;
+  task_id: string;
+  created_at: string;
+  updated_at: string;
 }

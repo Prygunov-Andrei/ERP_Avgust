@@ -134,6 +134,7 @@ const menuItems: MenuItem[] = [
       { id: 'goods-categories', label: 'Категории', icon: <FolderOpen className="w-4 h-4" />, path: '/catalog/categories', section: 'goods.categories', subGroupLabel: 'Каталог закупок' },
       { id: 'goods-products', label: 'Номенклатура', icon: <Package className="w-4 h-4" />, path: '/catalog/products', section: 'goods.catalog' },
       { id: 'goods-moderation', label: 'Модерация', icon: <CheckSquare className="w-4 h-4" />, path: '/catalog/moderation', section: 'goods.moderation' },
+      { id: 'goods-supplier-catalogs', label: 'Каталоги поставщиков', icon: <FileText className="w-4 h-4" />, path: '/catalog/supplier-catalogs', section: 'goods.catalog' },
       // --- Работы и расценки ---
       { id: 'goods-work-items', label: 'Каталог работ', icon: <Wrench className="w-4 h-4" />, path: '/work-items', section: 'goods.works', subGroupLabel: 'Работы и расценки' },
       { id: 'goods-work-sections', label: 'Разделы работ', icon: <FolderOpen className="w-4 h-4" />, path: '/work-sections', section: 'goods.works' },
@@ -189,6 +190,7 @@ const menuItems: MenuItem[] = [
       { id: 'ref-personnel', label: 'Персонал', icon: <Users className="w-4 h-4" />, path: '/personnel', section: 'settings.personnel' },
       { id: 'ref-counterparties', label: 'Контрагенты', icon: <Users className="w-4 h-4" />, path: '/counterparties', section: 'settings.counterparties' },
       { id: 'ref-settings', label: 'Настройки', icon: <Settings className="w-4 h-4" />, path: '/settings', section: 'settings.config' },
+      { id: 'ref-supplier-integrations', label: 'Интеграции поставщиков', icon: <Link2 className="w-4 h-4" />, path: '/settings/integrations', section: 'supply.integrations' },
       { id: 'ref-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/settings/instructions' },
     ],
   },
@@ -252,7 +254,9 @@ const pageTitles: Record<string, string> = {
   'catalog/moderation': 'Модерация товаров',
   warehouse: 'Склад: Остатки',
   counterparties: 'Контрагенты',
+  'settings/integrations': 'Интеграции поставщиков',
   // 7. ПТО
+  'estimates/invoices': 'Счета поставщиков',
   'estimates/projects': 'Проекты',
   'pto/production-docs': 'Производственная документация',
   'pto/executive-docs': 'Исполнительная документация',
@@ -268,6 +272,7 @@ const pageTitles: Record<string, string> = {
   // 7. Товары и услуги
   'catalog/categories': 'Категории',
   'catalog/products': 'Номенклатура',
+  'catalog/supplier-catalogs': 'Каталоги поставщиков',
   'work-items': 'Каталог работ',
   'work-sections': 'Разделы работ',
   'worker-grades': 'Разряды монтажников',
@@ -286,9 +291,12 @@ const pageTitles: Record<string, string> = {
   'supply/requests': 'Запросы из Битрикс',
   'settings/bitrix': 'Интеграция с Битрикс24',
   'supply/dashboard': 'Дашборд снабжения',
-  // Detail pages (kept for breadcrumbs)
-  'catalog/moderation': 'Модерация',
 };
+
+// Menu group paths that have no direct route (only children) — clicking them in breadcrumbs should be non-navigable
+const menuGroupPaths = new Set(
+  menuItems.filter(item => item.children?.length).map(item => item.path)
+);
 
 // Build path-to-parent mapping for hierarchical breadcrumbs
 const pathToParent: Record<string, { label: string; path: string }> = {};
@@ -306,10 +314,11 @@ for (const item of menuItems) {
 pathToParent['supply/invoices'] = { label: 'Финансы', path: '/finance/payments' };
 pathToParent['supply/income'] = { label: 'Финансы', path: '/finance/payments' };
 pathToParent['payment-registry'] = { label: 'Финансы', path: '/finance/payments' };
+pathToParent['estimates/invoices'] = { label: 'Сметы', path: '/estimates/estimates' };
 
 export function Layout({ children, onLogout, user }: LayoutProps) {
   const { hasAccess } = usePermissions();
-  const { detailLabel } = useBreadcrumb();
+  const { detailLabel, parentCrumb } = useBreadcrumb();
 
   const filteredMenuItems = useMemo(() => {
     return menuItems
@@ -635,12 +644,16 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                       {parent && (
                         <span className="flex items-center">
                           <ChevronRight className="w-4 h-4 mx-2" />
-                          <button
-                            onClick={() => navigate(parent.path)}
-                            className="hover:text-gray-700 transition-colors"
-                          >
-                            {parent.label}
-                          </button>
+                          {menuGroupPaths.has(parent.path) ? (
+                            <span className="text-gray-600">{parent.label}</span>
+                          ) : (
+                            <button
+                              onClick={() => navigate(parent.path)}
+                              className="hover:text-gray-700 transition-colors"
+                            >
+                              {parent.label}
+                            </button>
+                          )}
                         </span>
                       )}
                       <ChevronRight className="w-4 h-4 mx-2" />
@@ -659,7 +672,12 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                     if (grandParent) {
                       crumbs.push({ label: grandParent.label, path: grandParent.path });
                     }
-                    crumbs.push({ label: parentTitle, path: '/' + parentPath });
+                    // Allow page to override the intermediate breadcrumb (e.g. invoice inside estimate)
+                    if (parentCrumb) {
+                      crumbs.push({ label: parentCrumb.label, path: parentCrumb.path });
+                    } else {
+                      crumbs.push({ label: parentTitle, path: '/' + parentPath });
+                    }
                     const lastSegment = segments[segments.length - 1];
                     const crumbLabel = detailLabel || (/^\d+$/.test(lastSegment) ? `№${lastSegment}` : lastSegment);
                     crumbs.push({ label: crumbLabel, path: '' });
@@ -677,7 +695,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                 return crumbs.map((crumb, idx) => (
                   <span key={idx} className="flex items-center">
                     <ChevronRight className="w-4 h-4 mx-2" />
-                    {crumb.path ? (
+                    {crumb.path && !menuGroupPaths.has(crumb.path) ? (
                       <button
                         onClick={() => navigate(crumb.path)}
                         className="hover:text-gray-700 transition-colors"
@@ -685,7 +703,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                         {crumb.label}
                       </button>
                     ) : (
-                      <span className="text-gray-900 font-medium">{crumb.label}</span>
+                      <span className={crumb.path ? 'text-gray-600' : 'text-gray-900 font-medium'}>{crumb.label}</span>
                     )}
                   </span>
                 ));

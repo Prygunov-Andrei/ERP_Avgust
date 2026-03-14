@@ -105,3 +105,63 @@ class GrokProvider(BaseLLMProvider):
         
         parsed = ParsedInvoice(**parsed_data)
         return parsed, processing_time
+
+    def parse_with_prompt(self, file_content: bytes, file_type: str, system_prompt: str, user_prompt: str = "Распарси этот документ:") -> dict:
+        if file_type.lower() == 'pdf':
+            images = self.pdf_to_images_base64(file_content)
+        else:
+            images = self.image_to_base64(file_content)
+
+        content = [
+            {"type": "text", "text": user_prompt}
+        ]
+        for img_b64 in images:
+            content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/png;base64,{img_b64}",
+                    "detail": "high"
+                }
+            })
+
+        payload = {
+            "model": self.model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": content}
+            ],
+            "temperature": 0.1,
+            "response_format": {"type": "json_object"}
+        }
+
+        try:
+            with httpx.Client(timeout=self.REQUEST_TIMEOUT) as client:
+                response = client.post(
+                    f"{self.BASE_URL}/chat/completions",
+                    headers=self.headers,
+                    json=payload
+                )
+                response.raise_for_status()
+        except HTTPStatusError as e:
+            if e.response.status_code == 429:
+                raise RateLimitError(str(e))
+            raise
+        except httpx.ReadTimeout as e:
+            raise RateLimitError(f"Grok timeout: {e}")
+
+        data = response.json()
+        if "choices" not in data or len(data["choices"]) == 0:
+            raise ValueError(f"Неожиданный формат ответа от Grok API: {data}")
+
+        response_content = data["choices"][0]["message"]["content"]
+        if not response_content or response_content.strip() == "":
+            raise ValueError("Пустой ответ от Grok API")
+
+        try:
+            return json.loads(response_content)
+        except json.JSONDecodeError:
+            import re as _re
+            json_match = _re.search(r'\{.*\}', response_content, _re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            raise ValueError(f"Не удалось распарсить JSON: {response_content[:200]}")

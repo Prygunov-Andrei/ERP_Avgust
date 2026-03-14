@@ -1,7 +1,10 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+from django.db.models import F, ExpressionWrapper, DecimalField, Sum
+from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
@@ -9,7 +12,7 @@ from core.version_mixin import VersioningMixin
 from .models import (
     Project, ProjectNote, Estimate, EstimateSection,
     EstimateSubsection, EstimateCharacteristic, EstimateItem,
-    MountingEstimate
+    MountingEstimate, ColumnConfigTemplate,
 )
 from .serializers import (
     ProjectSerializer, ProjectListSerializer, ProjectNoteSerializer,
@@ -17,7 +20,8 @@ from .serializers import (
     EstimateSectionSerializer, EstimateSubsectionSerializer,
     EstimateCharacteristicSerializer,
     EstimateItemSerializer, EstimateItemBulkCreateSerializer,
-    MountingEstimateSerializer, MountingEstimateCreateFromEstimateSerializer
+    MountingEstimateSerializer, MountingEstimateCreateFromEstimateSerializer,
+    ColumnConfigTemplateSerializer,
 )
 
 
@@ -98,9 +102,9 @@ class ProjectNoteViewSet(viewsets.ModelViewSet):
 
 class EstimateViewSet(VersioningMixin, viewsets.ModelViewSet):
     """ViewSet для смет (с поддержкой версионирования через VersioningMixin)"""
-    
+
     queryset = Estimate.objects.select_related(
-        'object', 'legal_entity', 'price_list', 'created_by', 
+        'object', 'legal_entity', 'price_list', 'created_by',
         'checked_by', 'approved_by', 'parent_version'
     ).prefetch_related(
         'projects',
@@ -113,11 +117,23 @@ class EstimateViewSet(VersioningMixin, viewsets.ModelViewSet):
         'object', 'legal_entity', 'status', 'approved_by_customer'
     ]
     search_fields = ['number', 'name']
-    
+
     def get_serializer_class(self):
         if self.action == 'create':
             return EstimateCreateSerializer
         return EstimateSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Аннотируем агрегаты для избежания N+1 в сериализаторе
+        if self.action in ('list', 'retrieve'):
+            queryset = queryset.annotate(
+                _total_materials_sale=Sum('sections__subsections__materials_sale'),
+                _total_works_sale=Sum('sections__subsections__works_sale'),
+                _total_materials_purchase=Sum('sections__subsections__materials_purchase'),
+                _total_works_purchase=Sum('sections__subsections__works_purchase'),
+            )
+        return queryset
     
     # Методы versions() и create_version() наследуются от VersioningMixin
     
@@ -129,6 +145,145 @@ class EstimateViewSet(VersioningMixin, viewsets.ModelViewSet):
         mounting_estimate = MountingEstimate.create_from_estimate(estimate, created_by)
         serializer = MountingEstimateSerializer(mounting_estimate)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'], url_path='export')
+    def export(self, request, pk=None):
+        """Экспорт сметы в Excel с учётом column_config."""
+        import openpyxl
+        from openpyxl.styles import Font, Alignment, Border, Side
+        from decimal import Decimal
+
+        from .column_defaults import DEFAULT_COLUMN_CONFIG
+        from .formula_engine import compute_all_formulas
+
+        estimate = self.get_object()
+        config = estimate.column_config or DEFAULT_COLUMN_CONFIG
+        visible_cols = [c for c in config if c.get('visible', True)]
+
+        items = EstimateItem.objects.filter(
+            estimate=estimate,
+        ).select_related('section').order_by('section__sort_order', 'sort_order', 'item_number')
+
+        sections = EstimateSection.objects.filter(estimate=estimate).order_by('sort_order')
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Смета'
+
+        bold = Font(bold=True)
+        header_font = Font(bold=True, size=14)
+        section_font = Font(bold=True, size=11, color='1F4E79')
+        center = Alignment(horizontal='center', vertical='center')
+        thin_border = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin'),
+        )
+        num_fmt = '#,##0.00'
+
+        # Title
+        num_cols = len(visible_cols)
+        last_col_letter = openpyxl.utils.get_column_letter(max(num_cols, 1))
+        ws.merge_cells(f'A1:{last_col_letter}1')
+        ws['A1'] = f'Смета №{estimate.number} — {estimate.name}'
+        ws['A1'].font = header_font
+        ws['A1'].alignment = center
+
+        # Column headers (row 3)
+        for col_idx, col_def in enumerate(visible_cols, 1):
+            cell = ws.cell(row=3, column=col_idx, value=col_def.get('label', col_def['key']))
+            cell.font = bold
+            cell.alignment = center
+            cell.border = thin_border
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col_idx)].width = max(col_def.get('width', 100) / 8, 8)
+
+        row_num = 4
+        agg_sums = {c['key']: Decimal('0') for c in visible_cols if c.get('aggregatable')}
+
+        for section in sections:
+            # Section header
+            ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=num_cols)
+            cell = ws.cell(row=row_num, column=1, value=section.name)
+            cell.font = section_font
+            row_num += 1
+
+            section_items = [i for i in items if i.section_id == section.id]
+            for item in section_items:
+                builtin_values = {
+                    'item_number': Decimal(str(item.item_number or 0)),
+                    'quantity': item.quantity or Decimal('0'),
+                    'material_unit_price': item.material_unit_price or Decimal('0'),
+                    'work_unit_price': item.work_unit_price or Decimal('0'),
+                    'material_total': item.material_total or Decimal('0'),
+                    'work_total': item.work_total or Decimal('0'),
+                    'line_total': item.line_total or Decimal('0'),
+                }
+                custom_data = item.custom_data or {}
+                computed = compute_all_formulas(config, builtin_values, custom_data)
+
+                for col_idx, col_def in enumerate(visible_cols, 1):
+                    key = col_def['key']
+                    col_type = col_def.get('type', 'builtin')
+                    value = None
+
+                    if col_type == 'builtin':
+                        field = col_def.get('builtin_field', key)
+                        value = getattr(item, field, None)
+                    elif col_type == 'formula':
+                        value = computed.get(key)
+                    elif col_type.startswith('custom_'):
+                        value = custom_data.get(key, '')
+
+                    cell = ws.cell(row=row_num, column=col_idx)
+                    cell.border = thin_border
+
+                    if isinstance(value, Decimal):
+                        cell.value = float(value)
+                        cell.number_format = num_fmt
+                    elif value is not None:
+                        try:
+                            cell.value = float(value)
+                            cell.number_format = num_fmt
+                        except (ValueError, TypeError):
+                            cell.value = str(value) if value else ''
+                    else:
+                        cell.value = ''
+
+                    # Accumulate aggregatables
+                    if key in agg_sums and value is not None:
+                        try:
+                            agg_sums[key] += Decimal(str(value))
+                        except Exception:
+                            pass
+
+                row_num += 1
+
+        # Footer totals
+        if agg_sums:
+            row_num += 1
+            for col_idx, col_def in enumerate(visible_cols, 1):
+                key = col_def['key']
+                cell = ws.cell(row=row_num, column=col_idx)
+                cell.font = bold
+                cell.border = thin_border
+                if key in agg_sums:
+                    cell.value = float(agg_sums[key])
+                    cell.number_format = num_fmt
+                elif col_idx == 1:
+                    cell.value = 'ИТОГО'
+
+        # Response
+        from io import BytesIO
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        filename = f'Смета_{estimate.number}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 
 class EstimateSectionViewSet(viewsets.ModelViewSet):
@@ -178,9 +333,21 @@ class EstimateCharacteristicViewSet(viewsets.ModelViewSet):
     filterset_fields = ['estimate']
 
 
+class EstimateItemPagination(PageNumberPagination):
+    """Пагинация строк сметы. page_size=all отключает пагинацию (обратная совместимость)."""
+    page_size = 200
+    page_size_query_param = 'page_size'
+    max_page_size = 2000
+
+    def paginate_queryset(self, queryset, request, view=None):
+        if request.query_params.get('page_size') == 'all':
+            return None
+        return super().paginate_queryset(queryset, request, view)
+
+
 class EstimateItemViewSet(viewsets.ModelViewSet):
     """ViewSet для строк сметы"""
-    pagination_class = None
+    pagination_class = EstimateItemPagination
 
     queryset = EstimateItem.objects.select_related(
         'estimate', 'section', 'subsection',
@@ -196,6 +363,33 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
     ordering_fields = ['sort_order', 'item_number', 'name', 'material_unit_price', 'work_unit_price']
     ordering = ['sort_order', 'item_number']
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        estimate_id = self.request.query_params.get('estimate')
+        if estimate_id:
+            try:
+                estimate = Estimate.objects.only('column_config').get(pk=estimate_id)
+                ctx['column_config'] = estimate.column_config or []
+            except Estimate.DoesNotExist:
+                pass
+        return ctx
+
+    def get_queryset(self):
+        return super().get_queryset().annotate(
+            _material_total=ExpressionWrapper(
+                F('quantity') * F('material_unit_price'),
+                output_field=DecimalField(max_digits=15, decimal_places=2),
+            ),
+            _work_total=ExpressionWrapper(
+                F('quantity') * F('work_unit_price'),
+                output_field=DecimalField(max_digits=15, decimal_places=2),
+            ),
+            _line_total=ExpressionWrapper(
+                F('quantity') * F('material_unit_price') + F('quantity') * F('work_unit_price'),
+                output_field=DecimalField(max_digits=15, decimal_places=2),
+            ),
+        )
+
     @action(detail=True, methods=['post'], url_path='promote-to-section')
     def promote_to_section(self, request, pk=None):
         """Превратить строку сметы в раздел (секцию)."""
@@ -208,6 +402,39 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
         result = EstimateImportService().promote_item_to_section(int(pk))
         return Response(result)
 
+    @action(detail=True, methods=['post'], url_path='move')
+    def move(self, request, pk=None):
+        """Переместить строку сметы вверх/вниз или в другой раздел."""
+        try:
+            EstimateItem.objects.get(pk=pk)
+        except EstimateItem.DoesNotExist:
+            return Response({'error': 'Строка не найдена'}, status=status.HTTP_404_NOT_FOUND)
+
+        from .services.estimate_import_service import EstimateImportService
+        service = EstimateImportService()
+
+        direction = request.data.get('direction')
+        target_section_id = request.data.get('target_section_id')
+
+        if direction in ('up', 'down'):
+            if direction == 'up':
+                result = service.move_item_up(int(pk))
+            else:
+                result = service.move_item_down(int(pk))
+        elif target_section_id is not None:
+            try:
+                EstimateSection.objects.get(pk=target_section_id)
+            except EstimateSection.DoesNotExist:
+                return Response({'error': 'Раздел не найден'}, status=status.HTTP_404_NOT_FOUND)
+            result = service.move_item_to_section(int(pk), int(target_section_id))
+        else:
+            return Response(
+                {'error': 'Укажите direction (up/down) или target_section_id'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(result)
+
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create(self, request):
         """Создать множество строк сметы за одну операцию"""
@@ -218,6 +445,27 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
             EstimateItemSerializer(items, many=True).data,
             status=status.HTTP_201_CREATED,
         )
+
+    @action(detail=False, methods=['post'], url_path='bulk-move')
+    def bulk_move(self, request):
+        """Переместить группу строк на указанную позицию."""
+        item_ids = request.data.get('item_ids', [])
+        target_position = request.data.get('target_position')
+
+        if not item_ids or not isinstance(item_ids, list):
+            return Response(
+                {'error': 'Необходим непустой массив item_ids'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if target_position is None or not isinstance(target_position, int) or target_position < 1:
+            return Response(
+                {'error': 'target_position должен быть целым числом >= 1'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from .services.estimate_import_service import EstimateImportService
+        result = EstimateImportService().bulk_move_items(item_ids, target_position)
+        return Response(result)
 
     @action(detail=False, methods=['post'], url_path='bulk-update')
     def bulk_update_items(self, request):
@@ -275,9 +523,16 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        supplier_ids = request.data.get('supplier_ids', [])
+        price_strategy = request.data.get('price_strategy', 'cheapest')
+
         from .services.estimate_auto_matcher import EstimateAutoMatcher
         matcher = EstimateAutoMatcher()
-        results = matcher.preview_matches(estimate)
+        results = matcher.preview_matches(
+            estimate,
+            supplier_ids=supplier_ids or None,
+            price_strategy=price_strategy,
+        )
         return Response(results)
 
     @action(detail=False, methods=['post'], url_path='auto-match-works')
@@ -429,6 +684,68 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    # ── Постраничный импорт PDF ──────────────────────────────────
+
+    @action(detail=False, methods=['post'], url_path='import-pdf',
+            parser_classes=[MultiPartParser])
+    def import_pdf(self, request):
+        """Запуск постраничного импорта PDF. Возвращает session_id сразу."""
+        estimate_id = request.data.get('estimate_id')
+        file = request.FILES.get('file')
+
+        if not estimate_id or not file:
+            return Response(
+                {'error': 'Необходимы estimate_id и file'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            Estimate.objects.get(pk=estimate_id)
+        except Estimate.DoesNotExist:
+            return Response(
+                {'error': 'Смета не найдена'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not file.name.lower().endswith('.pdf'):
+            return Response(
+                {'error': 'Только PDF файлы'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        file_content = file.read()
+
+        from .tasks import create_import_session, process_estimate_pdf_pages
+        session = create_import_session(file_content, int(estimate_id))
+        process_estimate_pdf_pages.delay(session['session_id'])
+
+        return Response(session, status=status.HTTP_202_ACCEPTED)
+
+    @action(detail=False, methods=['get'],
+            url_path=r'import-progress/(?P<session_id>[a-f0-9]+)')
+    def import_progress(self, request, session_id=None):
+        """Поллинг прогресса импорта PDF."""
+        from .tasks import get_session_data
+        data = get_session_data(session_id)
+        if not data:
+            return Response(
+                {'error': 'Сессия не найдена или истекла'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(data)
+
+    @action(detail=False, methods=['post'],
+            url_path=r'import-cancel/(?P<session_id>[a-f0-9]+)')
+    def import_cancel(self, request, session_id=None):
+        """Отмена импорта PDF."""
+        from .tasks import cancel_session
+        if cancel_session(session_id):
+            return Response({'status': 'cancelled'})
+        return Response(
+            {'error': 'Сессия не найдена'},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
 
 class MountingEstimateViewSet(viewsets.ModelViewSet):
     """ViewSet для монтажных смет"""
@@ -501,3 +818,36 @@ class MountingEstimateViewSet(viewsets.ModelViewSet):
                 {'error': 'Контрагент не найден'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class ColumnConfigTemplateViewSet(viewsets.ModelViewSet):
+    """ViewSet для шаблонов конфигурации столбцов."""
+
+    queryset = ColumnConfigTemplate.objects.select_related('created_by')
+    serializer_class = ColumnConfigTemplateSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'description']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=['post'], url_path='apply')
+    def apply_to_estimate(self, request, pk=None):
+        """Применить шаблон к смете (копирует column_config)."""
+        template = self.get_object()
+        estimate_id = request.data.get('estimate_id')
+        if not estimate_id:
+            return Response(
+                {'error': 'Не указан estimate_id'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            estimate = Estimate.objects.get(pk=estimate_id)
+        except Estimate.DoesNotExist:
+            return Response(
+                {'error': 'Смета не найдена'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        estimate.column_config = template.column_config
+        estimate.save(update_fields=['column_config'])
+        return Response({'status': 'ok', 'estimate_id': estimate.id})

@@ -1,3 +1,4 @@
+from django.conf import settings as django_settings
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from personnel.models import resolve_permission_level
@@ -12,6 +13,10 @@ class ERPTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
+
+        # Claims, обязательные для kanban-service (ERPJWTAuthentication)
+        token['iss'] = django_settings.JWT_ISSUER
+        token['aud'] = django_settings.JWT_AUDIENCE
 
         employee = getattr(user, 'employee', None)
         erp_permissions = (employee.erp_permissions if employee else None) or {}

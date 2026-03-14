@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Product, ProductAlias, ProductPriceHistory
+from .models import Category, Product, ProductAlias, ProductPriceHistory, SupplierCatalog
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -89,6 +89,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'normalized_name', 'category', 'category_name', 'category_path',
             'default_unit', 'is_service', 'status', 'status_display',
             'merged_into', 'aliases', 'aliases_count',
+            'images', 'booklet_url', 'manual_url',
+            'description', 'brand', 'series', 'tech_specs',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'normalized_name', 'status_display', 'aliases', 'created_at', 'updated_at']
@@ -116,7 +118,8 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'category_name', 'default_unit', 'is_service',
-            'status', 'status_display', 'aliases_count'
+            'status', 'status_display', 'aliases_count',
+            'brand', 'images',
         ]
     
     def get_aliases_count(self, obj):
@@ -142,3 +145,62 @@ class ProductMergeSerializer(serializers.Serializer):
         if data['target_id'] in data['source_ids']:
             raise serializers.ValidationError('Целевой товар не может быть в списке источников')
         return data
+
+
+# ── Каталоги поставщиков ────────────────────────────────────
+
+
+class SupplierCatalogSerializer(serializers.ModelSerializer):
+    """Сериализатор каталога поставщика"""
+
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    pdf_url = serializers.SerializerMethodField()
+    json_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SupplierCatalog
+        fields = [
+            'id', 'name', 'supplier_name',
+            'pdf_file', 'pdf_url', 'json_file', 'json_url',
+            'status', 'status_display', 'total_pages',
+            'sections',
+            'current_section', 'total_sections',
+            'current_batch', 'total_batches',
+            'products_count', 'variants_count',
+            'imported_count', 'categories_created',
+            'errors', 'error_message', 'task_id',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = [
+            'id', 'status_display', 'pdf_url', 'json_url',
+            'total_pages', 'current_section', 'total_sections',
+            'current_batch', 'total_batches',
+            'products_count', 'variants_count',
+            'imported_count', 'categories_created',
+            'errors', 'error_message', 'task_id',
+            'created_at', 'updated_at',
+        ]
+
+    def get_pdf_url(self, obj):
+        if obj.pdf_file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.pdf_file.url)
+            return obj.pdf_file.url
+        return None
+
+    def get_json_url(self, obj):
+        if obj.json_file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.json_file.url)
+            return obj.json_file.url
+        return None
+
+
+class SupplierCatalogUploadSerializer(serializers.Serializer):
+    """Сериализатор для загрузки каталога"""
+
+    name = serializers.CharField(max_length=255, help_text='Название каталога')
+    supplier_name = serializers.CharField(max_length=100, help_text='Код поставщика (латиницей)')
+    pdf_file = serializers.FileField(help_text='PDF-файл каталога')

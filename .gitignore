@@ -51,6 +51,9 @@ htmlcov/
 *.bak
 *.tmp
 
+# Каталоги поставщиков (PDF большие, JSON коммитим)
+backend/catalog/data/suppliers/**/*.pdf
+
 # Конфиденциальные документы
 реквизиты*
 docs/private/

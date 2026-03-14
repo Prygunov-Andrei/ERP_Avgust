@@ -385,6 +385,12 @@ class Estimate(CachedPropertyMixin, TimestampedModel):
         default=1,
         verbose_name='Номер версии'
     )
+    column_config = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name='Конфигурация столбцов',
+        help_text='Список определений столбцов. Пустой список = дефолтные столбцы.'
+    )
 
     class Meta:
         ordering = ['-created_at']
@@ -488,9 +494,10 @@ class Estimate(CachedPropertyMixin, TimestampedModel):
             checked_by=None,
             approved_by=None,
             parent_version=self,
-            version_number=self.version_number + 1
+            version_number=self.version_number + 1,
+            column_config=self.column_config,
         )
-        
+
         # Копируем проекты-основания
         new_estimate.projects.set(self.projects.all())
         
@@ -804,6 +811,14 @@ class EstimateItem(TimestampedModel):
         verbose_name='Оригинальное наименование из спецификации'
     )
     
+    supplier_product = models.ForeignKey(
+        'supplier_integrations.SupplierProduct',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='estimate_items',
+        verbose_name='Предложение поставщика'
+    )
     source_price_history = models.ForeignKey(
         'catalog.ProductPriceHistory',
         on_delete=models.SET_NULL,
@@ -811,6 +826,12 @@ class EstimateItem(TimestampedModel):
         blank=True,
         related_name='estimate_items',
         verbose_name='Источник цены (из истории)'
+    )
+    custom_data = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='Данные пользовательских столбцов',
+        help_text='Ключ = key столбца из column_config, значение = строковое представление.'
     )
 
     class Meta:
@@ -822,6 +843,9 @@ class EstimateItem(TimestampedModel):
             models.Index(fields=['product']),
             models.Index(fields=['work_item']),
             models.Index(fields=['is_analog']),
+            models.Index(fields=['section', 'sort_order']),
+            models.Index(fields=['estimate', 'sort_order']),
+            models.Index(fields=['subsection']),
         ]
 
     def __str__(self):
@@ -1079,3 +1103,46 @@ class MountingEstimate(TimestampedModel):
             version_number=self.version_number + 1
         )
         return new_version
+
+
+class ColumnConfigTemplate(TimestampedModel):
+    """Шаблон конфигурации столбцов сметы.
+    Позволяет сохранять и переиспользовать наборы столбцов."""
+
+    name = models.CharField(
+        max_length=255,
+        verbose_name='Название шаблона'
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name='Описание'
+    )
+    column_config = models.JSONField(
+        default=list,
+        verbose_name='Конфигурация столбцов'
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='column_config_templates',
+        verbose_name='Автор'
+    )
+    is_default = models.BooleanField(
+        default=False,
+        verbose_name='Шаблон по умолчанию'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Шаблон столбцов'
+        verbose_name_plural = 'Шаблоны столбцов'
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            ColumnConfigTemplate.objects.filter(
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)

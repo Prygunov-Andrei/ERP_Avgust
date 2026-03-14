@@ -124,6 +124,33 @@ class Product(TimestampedModel):
         verbose_name='Создан из платежа'
     )
 
+    # --- Обогащённые поля (из каталогов поставщиков) ---
+    images = models.JSONField(
+        default=list, blank=True,
+        verbose_name='Изображения',
+        help_text='Список URL-ов изображений товара'
+    )
+    booklet_url = models.URLField(
+        blank=True, verbose_name='Буклет (PDF)'
+    )
+    manual_url = models.URLField(
+        blank=True, verbose_name='Инструкция (PDF)'
+    )
+    description = models.TextField(
+        blank=True, verbose_name='Описание'
+    )
+    brand = models.CharField(
+        max_length=255, blank=True, verbose_name='Бренд'
+    )
+    series = models.CharField(
+        max_length=255, blank=True, verbose_name='Серия'
+    )
+    tech_specs = models.JSONField(
+        default=dict, blank=True,
+        verbose_name='Технические характеристики',
+        help_text='Словарь ТХ: {"Мощность": "2.5 кВт", ...}'
+    )
+
     class Meta:
         verbose_name = 'Товар/Услуга'
         verbose_name_plural = 'Товары/Услуги'
@@ -298,3 +325,80 @@ class ProductWorkMapping(TimestampedModel):
 
     def __str__(self):
         return f"{self.product.name} → {self.work_item.name} ({self.usage_count}x)"
+
+
+class SupplierCatalog(TimestampedModel):
+    """PDF-каталог поставщика, загруженный для парсинга через LLM."""
+
+    class Status(models.TextChoices):
+        UPLOADED = 'uploaded', 'Загружен'
+        DETECTING_TOC = 'detecting_toc', 'Анализ оглавления'
+        TOC_READY = 'toc_ready', 'Оглавление готово'
+        PARSING = 'parsing', 'Парсинг'
+        PARSED = 'parsed', 'Разобран'
+        IMPORTING = 'importing', 'Импорт в БД'
+        IMPORTED = 'imported', 'Импортирован'
+        ERROR = 'error', 'Ошибка'
+
+    name = models.CharField(
+        max_length=255,
+        verbose_name='Название каталога',
+        help_text='Например: Каталог WHEIL v23.1'
+    )
+    supplier_name = models.CharField(
+        max_length=100,
+        db_index=True,
+        verbose_name='Код поставщика',
+        help_text='Латинское имя: galvent, wheil, и т.д.'
+    )
+    pdf_file = models.FileField(
+        upload_to='catalogs/suppliers/',
+        verbose_name='PDF-файл каталога'
+    )
+    json_file = models.FileField(
+        upload_to='catalogs/suppliers/',
+        blank=True,
+        verbose_name='JSON результат парсинга'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.UPLOADED,
+        verbose_name='Статус'
+    )
+    total_pages = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Всего страниц'
+    )
+
+    # Секции (оглавление) — определяются LLM или вручную
+    sections = models.JSONField(
+        default=list, blank=True,
+        verbose_name='Секции каталога',
+        help_text='[{name, pages: [start, end], category_code, is_new_category, ...}]'
+    )
+
+    # Прогресс парсинга
+    current_section = models.PositiveIntegerField(default=0, verbose_name='Текущая секция')
+    total_sections = models.PositiveIntegerField(default=0, verbose_name='Всего секций')
+    current_batch = models.PositiveIntegerField(default=0, verbose_name='Текущий батч')
+    total_batches = models.PositiveIntegerField(default=0, verbose_name='Всего батчей')
+
+    # Результаты
+    products_count = models.PositiveIntegerField(default=0, verbose_name='Товаров найдено')
+    variants_count = models.PositiveIntegerField(default=0, verbose_name='Вариантов найдено')
+    imported_count = models.PositiveIntegerField(default=0, verbose_name='Импортировано в БД')
+    categories_created = models.PositiveIntegerField(default=0, verbose_name='Создано категорий')
+
+    # Ошибки и Celery
+    errors = models.JSONField(default=list, blank=True, verbose_name='Ошибки парсинга')
+    error_message = models.TextField(blank=True, verbose_name='Сообщение об ошибке')
+    task_id = models.CharField(max_length=255, blank=True, verbose_name='ID задачи Celery')
+
+    class Meta:
+        verbose_name = 'Каталог поставщика'
+        verbose_name_plural = 'Каталоги поставщиков'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.get_status_display()})"

@@ -5,7 +5,7 @@ from .views import (
     EstimateViewSet, EstimateSectionViewSet,
     EstimateSubsectionViewSet, EstimateCharacteristicViewSet,
     EstimateItemViewSet,
-    MountingEstimateViewSet
+    MountingEstimateViewSet, ColumnConfigTemplateViewSet,
 )
 
 router = DefaultRouter()
@@ -17,6 +17,7 @@ router.register(r'estimate-subsections', EstimateSubsectionViewSet, basename='es
 router.register(r'estimate-characteristics', EstimateCharacteristicViewSet, basename='estimate-characteristic')
 router.register(r'estimate-items', EstimateItemViewSet, basename='estimate-item')
 router.register(r'mounting-estimates', MountingEstimateViewSet, basename='mounting-estimate')
+router.register(r'column-config-templates', ColumnConfigTemplateViewSet, basename='column-config-template')
 
 urlpatterns = [
     path('', include(router.urls)),

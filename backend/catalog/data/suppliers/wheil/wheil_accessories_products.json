@@ -1,0 +1,5490 @@
+{
+  "supplier": "wheil",
+  "source_file": "wheil_accessories.pdf",
+  "total_products": 117,
+  "total_variants": 584,
+  "products": [
+    {
+      "name": "Шина монтажная",
+      "description": "Шина монтажная производится методом прокатки из тонколистовой оцинкованной или нержавеющей стали и используется при изготовлении фланцев для сборки прямоугольных воздуховодов.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "№ 20 оцинкованная сталь",
+          "params": {
+            "size": 3
+          }
+        },
+        {
+          "name_suffix": "№ 30 оцинкованная сталь",
+          "params": {
+            "size": 3
+          }
+        },
+        {
+          "name_suffix": "№ 20 нержавеющая сталь",
+          "params": {
+            "size": 3
+          }
+        },
+        {
+          "name_suffix": "№ 30 нержавеющая сталь",
+          "params": {
+            "size": 3
+          }
+        }
+      ],
+      "catalog_section": "Комплектующие для производства воздуховодов",
+      "category_code": "komplektuyushchie_dlya_vozduhovodov",
+      "source_pages": "10-11",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Рулон оцинкованный",
+      "description": "Компания имеет возможность поставки не только металлоизделий, но и самого оцинкованного металла под нужды клиента.",
+      "default_unit": "т",
+      "variants": [
+        {
+          "name_suffix": "в ассортименте",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Комплектующие для производства воздуховодов",
+      "category_code": "komplektuyushchie_dlya_vozduhovodov",
+      "source_pages": "10-11",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Штрипс оцинкованный",
+      "description": "Компания имеет возможность поставки не только металлоизделий, но и самого оцинкованного металла под нужды клиента.",
+      "default_unit": "т",
+      "variants": [
+        {
+          "name_suffix": "в ассортименте",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Комплектующие для производства воздуховодов",
+      "category_code": "komplektuyushchie_dlya_vozduhovodov",
+      "source_pages": "10-11",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Лист оцинкованный",
+      "description": "Компания имеет возможность поставки не только металлоизделий, но и самого оцинкованного металла под нужды клиента.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "в ассортименте",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Комплектующие для производства воздуховодов",
+      "category_code": "komplektuyushchie_dlya_vozduhovodov",
+      "source_pages": "10-11",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Уголок",
+      "description": "Уголок производится методом штамповки из оцинкованной или нержавеющей стали и используется при изготовлении фланцев для сборки прямоугольных воздуховодов.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "из оцинкованной стали УГО-0",
+          "params": {
+            "size_mm": "65*18*2/3"
+          }
+        },
+        {
+          "name_suffix": "из оцинкованной стали УГО-0 Б",
+          "params": {
+            "size_mm": "65*18*2,5"
+          }
+        },
+        {
+          "name_suffix": "из оцинкованной стали УГО-0 СТ",
+          "params": {
+            "size_mm": "65*18*3"
+          }
+        },
+        {
+          "name_suffix": "из нержавеющей стали УГО-0 СТ",
+          "params": {
+            "size_mm": "65*18*3"
+          }
+        },
+        {
+          "name_suffix": "из оцинкованной стали УГО-0 ГОСТ",
+          "params": {
+            "size_mm": "65*18*3"
+          }
+        },
+        {
+          "name_suffix": "из нержавеющей стали УГО-0 ГОСТ",
+          "params": {
+            "size_mm": "65*18*3"
+          }
+        },
+        {
+          "name_suffix": "из оцинкованной стали УГО-1",
+          "params": {
+            "size_mm": "95*18*2/3"
+          }
+        },
+        {
+          "name_suffix": "из оцинкованной стали УГО-1 СТ",
+          "params": {
+            "size_mm": "95*18*2,5"
+          }
+        },
+        {
+          "name_suffix": "из нержавеющей стали УГО-1 СТ",
+          "params": {
+            "size_mm": "95*18*2,5"
+          }
+        },
+        {
+          "name_suffix": "из оцинкованной стали УГО-1 ГОСТ",
+          "params": {
+            "size_mm": "95*18*3"
+          }
+        },
+        {
+          "name_suffix": "из нержавеющей стали УГО-1 ГОСТ",
+          "params": {
+            "size_mm": "95*18*3"
+          }
+        },
+        {
+          "name_suffix": "из оцинкованной стали УГО-2 СТ",
+          "params": {
+            "size_mm": "105*27*2,5"
+          }
+        },
+        {
+          "name_suffix": "из нержавеющей стали УГО-2 СТ",
+          "params": {
+            "size_mm": "105*27*2,5"
+          }
+        },
+        {
+          "name_suffix": "из оцинкованной стали УГО-2 ГОСТ",
+          "params": {
+            "size_mm": "105*27*3"
+          }
+        },
+        {
+          "name_suffix": "из нержавеющей стали УГО-2 ГОСТ",
+          "params": {
+            "size_mm": "105*27*3"
+          }
+        },
+        {
+          "name_suffix": "из оцинкованной стали УГМ-4 К ГОСТ",
+          "params": {
+            "size_mm": "105*27*3/4"
+          }
+        }
+      ],
+      "catalog_section": "Комплектующие для производства воздуховодов",
+      "category_code": "komplektuyushchie_dlya_vozduhovodov",
+      "source_pages": "10-11",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Скоба для стяжки фланцев ССВ-24",
+      "description": "Скоба для стяжки фланцев производится методом штамповки из оцинкованной или нержавеющей стали.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Профиль L-образный",
+      "description": "Профили L-образные производятся путем пробивки отверстий на координатных прессах.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "30*30*2,0",
+          "params": {
+            "Размер": 3
+          }
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Профиль U-образный",
+      "description": "Профили U-образные производятся путем пробивки отверстий на координатных прессах.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "30*30*2,0",
+          "params": {
+            "Размер": 3
+          }
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Лента перфорированная",
+      "description": "Лента перфорированная используется при монтаже воздуховодов как круглых, так и прямоугольных.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "12*0,55",
+          "params": {
+            "Размер": 25
+          }
+        },
+        {
+          "name_suffix": "17*0,55",
+          "params": {
+            "Размер": 25
+          }
+        },
+        {
+          "name_suffix": "20*0,70",
+          "params": {
+            "Размер": 25
+          }
+        },
+        {
+          "name_suffix": "20*1,0",
+          "params": {
+            "Размер": 25
+          }
+        },
+        {
+          "name_suffix": "30*1,50",
+          "params": {
+            "Размер": 25
+          }
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Пластина с гайкой",
+      "description": "Пластина с гайкой используется для крепления трубопроводов и других инженерных систем.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M8/M10",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Струбцина монтажная",
+      "description": "Струбцина монтажная изготавливается из чугуна методом литья.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M8",
+          "params": {}
+        },
+        {
+          "name_suffix": "M10",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Траверса монтажная",
+      "description": "Траверса монтажная используется при монтаже воздуховодов в качестве несущих конструкций.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "15*21*1,0",
+          "params": {
+            "Размер": 3
+          }
+        },
+        {
+          "name_suffix": "20*30*1,5",
+          "params": {
+            "Размер": 3
+          }
+        },
+        {
+          "name_suffix": "30*30*1,5",
+          "params": {
+            "Размер": 3
+          }
+        },
+        {
+          "name_suffix": "30*30*2,0",
+          "params": {
+            "Размер": 3
+          }
+        },
+        {
+          "name_suffix": "38*40*2,0",
+          "params": {
+            "Размер": 3
+          }
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Ось квадратная для заслонок (оцинкованная)",
+      "description": "Ось квадратная изготавливается из стального квадратного профиля с последующей оцинковкой.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "10*10*100",
+          "params": {}
+        },
+        {
+          "name_suffix": "12*12*190",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Лента межфланцевая уплотнительная",
+      "description": "Лента межфланцевая уплотнительная изготавливается из этиленвинилацетата.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "5*10",
+          "params": {}
+        },
+        {
+          "name_suffix": "5*15",
+          "params": {}
+        },
+        {
+          "name_suffix": "5*20",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Гибкая вставка",
+      "description": "Лента для гибких вставок представляет собой полосу длиной 25 м.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "45*75*45",
+          "params": {}
+        },
+        {
+          "name_suffix": "70*100*70",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Клипса рассекателя",
+      "description": "Клипса рассекателя изготавливается из цинкового сплава.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Виброизолятор малый/большой",
+      "description": "Виброизоляторы представляют собой резинотехнические изделия с металлическими элементами.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "малый",
+          "params": {}
+        },
+        {
+          "name_suffix": "большой",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Люк инспекционный",
+      "description": "Инспекционные лючки изготавливаются из оцинкованной стали и служат для проверки состояния системы вентиляции.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "180*80",
+          "params": {}
+        },
+        {
+          "name_suffix": "200*100",
+          "params": {}
+        },
+        {
+          "name_suffix": "200*150",
+          "params": {}
+        },
+        {
+          "name_suffix": "300*150",
+          "params": {}
+        },
+        {
+          "name_suffix": "300*200",
+          "params": {}
+        },
+        {
+          "name_suffix": "400*200",
+          "params": {}
+        },
+        {
+          "name_suffix": "400*300",
+          "params": {}
+        },
+        {
+          "name_suffix": "500*300",
+          "params": {}
+        },
+        {
+          "name_suffix": "500*400",
+          "params": {}
+        },
+        {
+          "name_suffix": "600*400",
+          "params": {}
+        },
+        {
+          "name_suffix": "600*500",
+          "params": {}
+        },
+        {
+          "name_suffix": "700*500",
+          "params": {}
+        },
+        {
+          "name_suffix": "700*600",
+          "params": {}
+        },
+        {
+          "name_suffix": "800*600",
+          "params": {}
+        },
+        {
+          "name_suffix": "800*700",
+          "params": {}
+        },
+        {
+          "name_suffix": "900*700",
+          "params": {}
+        },
+        {
+          "name_suffix": "900*800",
+          "params": {}
+        },
+        {
+          "name_suffix": "1000*800",
+          "params": {}
+        },
+        {
+          "name_suffix": "1000*900",
+          "params": {}
+        },
+        {
+          "name_suffix": "1200*1000",
+          "params": {}
+        },
+        {
+          "name_suffix": "100*100 D125",
+          "params": {}
+        },
+        {
+          "name_suffix": "150*150 D180",
+          "params": {}
+        },
+        {
+          "name_suffix": "180*180 D180",
+          "params": {}
+        },
+        {
+          "name_suffix": "200*200 D200",
+          "params": {}
+        },
+        {
+          "name_suffix": "200*200 D250",
+          "params": {}
+        },
+        {
+          "name_suffix": "200*200 D280",
+          "params": {}
+        },
+        {
+          "name_suffix": "300*300 D315",
+          "params": {}
+        },
+        {
+          "name_suffix": "300*300 D355",
+          "params": {}
+        },
+        {
+          "name_suffix": "300*300 D400",
+          "params": {}
+        },
+        {
+          "name_suffix": "300*300 D450",
+          "params": {}
+        },
+        {
+          "name_suffix": "300*300 D500",
+          "params": {}
+        },
+        {
+          "name_suffix": "400*400 D500",
+          "params": {}
+        },
+        {
+          "name_suffix": "400*400 D560",
+          "params": {}
+        },
+        {
+          "name_suffix": "400*400 D630",
+          "params": {}
+        },
+        {
+          "name_suffix": "500*500 D630",
+          "params": {}
+        },
+        {
+          "name_suffix": "500*500 D710",
+          "params": {}
+        },
+        {
+          "name_suffix": "500*500 D800",
+          "params": {}
+        },
+        {
+          "name_suffix": "500*500 D900",
+          "params": {}
+        },
+        {
+          "name_suffix": "500*500 D1000",
+          "params": {}
+        },
+        {
+          "name_suffix": "500*500 D1120",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "L/Z-образный кронштейн с виброизолятором для воздуховодов",
+      "description": "L-, Z- и V-образные кронштейны изготавливаются из оцинкованной стали и укомплектованы резиновым виброизолятором.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "V-образный кронштейн с виброизолятором для воздуховодов",
+      "description": "V-образные кронштейны изготавливаются из оцинкованной стали и служат для монтажа воздуховодов.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "V-образный кронштейн для профнастила M8/M10",
+      "description": "V-образный кронштейн для профнастила изготавливается из оцинкованной стали.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M8",
+          "params": {}
+        },
+        {
+          "name_suffix": "M10",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Труба медная",
+      "description": "Трубка медная предназначена для монтажа межблочных соединений в промышленных и бытовых сплит-системах.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1/4",
+          "params": {}
+        },
+        {
+          "name_suffix": "3/8",
+          "params": {}
+        },
+        {
+          "name_suffix": "1/2",
+          "params": {}
+        },
+        {
+          "name_suffix": "5/8",
+          "params": {}
+        },
+        {
+          "name_suffix": "3/4",
+          "params": {}
+        },
+        {
+          "name_suffix": "7/8",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Кронштейн для кондиционера",
+      "description": "Кронштейн для кондиционеров изготавливается из металла и окрашен белой порошковой краской.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "450",
+          "params": {}
+        },
+        {
+          "name_suffix": "500",
+          "params": {}
+        },
+        {
+          "name_suffix": "600",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Т-образный консольный кронштейн с опорой",
+      "description": "Кронштейн Т-образные консольные с опорой изготавливаются из оцинкованной стали.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "300",
+          "params": {}
+        },
+        {
+          "name_suffix": "500",
+          "params": {}
+        },
+        {
+          "name_suffix": "600",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Трубка дренажная",
+      "description": "Трубка дренажная предназначена для отвода конденсата из систем кондиционирования.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "D 16",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Элементы крепления инженерных систем",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "12-15",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Винт-шуруп оцинкованный",
+      "description": "Винт-шуруп изготавливается из оцинкованной стали и используется в сантехнических работах при креплении хомутов.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M8*80",
+          "params": {
+            "size_mm": "M8*80"
+          }
+        },
+        {
+          "name_suffix": "M8*90",
+          "params": {
+            "size_mm": "M8*90"
+          }
+        },
+        {
+          "name_suffix": "M8*100",
+          "params": {
+            "size_mm": "M8*100"
+          }
+        },
+        {
+          "name_suffix": "M10*100",
+          "params": {
+            "size_mm": "M10*100"
+          }
+        },
+        {
+          "name_suffix": "M10*120",
+          "params": {
+            "size_mm": "M10*120"
+          }
+        },
+        {
+          "name_suffix": "M10*140",
+          "params": {
+            "size_mm": "M10*140"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Болт оцинкованный DIN 933",
+      "description": "Болт изготавливается из оцинкованной стали и используется вместе с гайками и шайбами при сборке металлоконструкций в строительстве и промышленности.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M6*25",
+          "params": {
+            "size_mm": "M6*25"
+          }
+        },
+        {
+          "name_suffix": "M6*30",
+          "params": {
+            "size_mm": "M6*30"
+          }
+        },
+        {
+          "name_suffix": "M8*25",
+          "params": {
+            "size_mm": "M8*25"
+          }
+        },
+        {
+          "name_suffix": "M8*30",
+          "params": {
+            "size_mm": "M8*30"
+          }
+        },
+        {
+          "name_suffix": "M8*35",
+          "params": {
+            "size_mm": "M8*35"
+          }
+        },
+        {
+          "name_suffix": "M10*30",
+          "params": {
+            "size_mm": "M10*30"
+          }
+        },
+        {
+          "name_suffix": "M10*35",
+          "params": {
+            "size_mm": "M10*35"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Гайка оцинкованная DIN 934",
+      "description": "Гайка изготавливается из оцинкованной стали и используется вместе с болтами и шайбами при сборке металлоконструкций в строительстве и промышленности.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M6",
+          "params": {
+            "size_mm": "M6"
+          }
+        },
+        {
+          "name_suffix": "M8",
+          "params": {
+            "size_mm": "M8"
+          }
+        },
+        {
+          "name_suffix": "M10",
+          "params": {
+            "size_mm": "M10"
+          }
+        },
+        {
+          "name_suffix": "M12",
+          "params": {
+            "size_mm": "M12"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Шпилька резьбовая оцинкованная DIN 975",
+      "description": "Шпилька резьбовая изготавливается из оцинкованной стали и используется как для наращивания крепежных конструкций, так и при монтаже инженерных систем.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M6*1000",
+          "params": {
+            "size_mm": "M6*1000"
+          }
+        },
+        {
+          "name_suffix": "M6*2000",
+          "params": {
+            "size_mm": "M6*2000"
+          }
+        },
+        {
+          "name_suffix": "M8*1000",
+          "params": {
+            "size_mm": "M8*1000"
+          }
+        },
+        {
+          "name_suffix": "M8*2000",
+          "params": {
+            "size_mm": "M8*2000"
+          }
+        },
+        {
+          "name_suffix": "M10*1000",
+          "params": {
+            "size_mm": "M10*1000"
+          }
+        },
+        {
+          "name_suffix": "M10*2000",
+          "params": {
+            "size_mm": "M10*2000"
+          }
+        },
+        {
+          "name_suffix": "M12*1000",
+          "params": {
+            "size_mm": "M12*1000"
+          }
+        },
+        {
+          "name_suffix": "M12*2000",
+          "params": {
+            "size_mm": "M12*2000"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Гайка соединительная DIN 6334",
+      "description": "Гайка соединительная изготавливается из оцинкованной стали и используется для наращивания крепежных конструкций.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M6",
+          "params": {
+            "size_mm": "M6"
+          }
+        },
+        {
+          "name_suffix": "M8",
+          "params": {
+            "size_mm": "M8"
+          }
+        },
+        {
+          "name_suffix": "M10",
+          "params": {
+            "size_mm": "M10"
+          }
+        },
+        {
+          "name_suffix": "M12",
+          "params": {
+            "size_mm": "M12"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Шайба оцинкованная DIN 125",
+      "description": "Шайба изготавливается из оцинкованной стали и используется вместе с болтами и гайками при сборке металлоконструкций в строительстве и промышленности.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M6",
+          "params": {
+            "size_mm": "M6"
+          }
+        },
+        {
+          "name_suffix": "M8",
+          "params": {
+            "size_mm": "M8"
+          }
+        },
+        {
+          "name_suffix": "M10",
+          "params": {
+            "size_mm": "M10"
+          }
+        },
+        {
+          "name_suffix": "M12",
+          "params": {
+            "size_mm": "M12"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Саморез с пресс-шайбой оцинкованный острый",
+      "description": "Саморез с пресс-шайбой острый изготавливается из оцинкованной стали и применяется для крепления листового металла к металлическим профилям толщиной до 0,9 мм.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "4,2*13",
+          "params": {
+            "size_mm": "4,2*13"
+          }
+        },
+        {
+          "name_suffix": "4,2*16",
+          "params": {
+            "size_mm": "4,2*16"
+          }
+        },
+        {
+          "name_suffix": "4,2*19",
+          "params": {
+            "size_mm": "4,2*19"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Шайба увеличенная оцинкованная DIN 9021",
+      "description": "Шайба увеличенная изготавливается из оцинкованной стали и используется вместе с болтами и гайками при сборке металлоконструкций в строительстве и промышленности.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M6",
+          "params": {
+            "size_mm": "M6"
+          }
+        },
+        {
+          "name_suffix": "M8",
+          "params": {
+            "size_mm": "M8"
+          }
+        },
+        {
+          "name_suffix": "M10",
+          "params": {
+            "size_mm": "M10"
+          }
+        },
+        {
+          "name_suffix": "M12",
+          "params": {
+            "size_mm": "M12"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Саморез с пресс-шайбой оцинкованный сверло",
+      "description": "Саморез с пресс-шайбой (сверло) изготавливается из оцинкованной стали и применяется для крепления листового металла к металлическим профилям толщиной до 2,0 мм.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "4,2*13",
+          "params": {
+            "size_mm": "4,2*13"
+          }
+        },
+        {
+          "name_suffix": "4,2*16",
+          "params": {
+            "size_mm": "4,2*16"
+          }
+        },
+        {
+          "name_suffix": "4,2*19",
+          "params": {
+            "size_mm": "4,2*19"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Заклепка вытяжная комбинированная",
+      "description": "Заклепка вытяжная комбинированная состоит из металлического оцинкованного стержня и алюминиевого тела заклепки.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "3,2*6",
+          "params": {
+            "size_mm": "3,2*6"
+          }
+        },
+        {
+          "name_suffix": "3,2*12",
+          "params": {
+            "size_mm": "3,2*12"
+          }
+        },
+        {
+          "name_suffix": "4,0*6",
+          "params": {
+            "size_mm": "4,0*6"
+          }
+        },
+        {
+          "name_suffix": "4,0*8",
+          "params": {
+            "size_mm": "4,0*8"
+          }
+        },
+        {
+          "name_suffix": "4,0*10",
+          "params": {
+            "size_mm": "4,0*10"
+          }
+        },
+        {
+          "name_suffix": "4,0*12",
+          "params": {
+            "size_mm": "4,0*12"
+          }
+        },
+        {
+          "name_suffix": "4,8*8",
+          "params": {
+            "size_mm": "4,8*8"
+          }
+        },
+        {
+          "name_suffix": "4,8*10",
+          "params": {
+            "size_mm": "4,8*10"
+          }
+        },
+        {
+          "name_suffix": "4,8*16",
+          "params": {
+            "size_mm": "4,8*16"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Анкер-клин",
+      "description": "Анкер-клин изготавливается из стали. Имеет желтый оттенок за счет специальной обработки: пассивирования.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "6*40",
+          "params": {
+            "size_mm": "6*40"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Анкер забивной металлический",
+      "description": "Анкер забивной изготавливается из стали. Имеет желтый оттенок за счет специальной обработки: пассивирования.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M6/8*25",
+          "params": {
+            "size_mm": "M6/8*25"
+          }
+        },
+        {
+          "name_suffix": "M8/10*30",
+          "params": {
+            "size_mm": "M8/10*30"
+          }
+        },
+        {
+          "name_suffix": "M10/12*40",
+          "params": {
+            "size_mm": "M10/12*40"
+          }
+        },
+        {
+          "name_suffix": "M12/15*50",
+          "params": {
+            "size_mm": "M12/15*50"
+          }
+        },
+        {
+          "name_suffix": "M16/20*65",
+          "params": {
+            "size_mm": "M16/20*65"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Анкер латунный",
+      "description": "Анкер латунный изготавливается из латуни. Используется для крепления различных материалов и оборудования.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M6/8*25",
+          "params": {
+            "size_mm": "M6/8*25"
+          }
+        },
+        {
+          "name_suffix": "M8/10*30",
+          "params": {
+            "size_mm": "M8/10*30"
+          }
+        },
+        {
+          "name_suffix": "M10/12*40",
+          "params": {
+            "size_mm": "M10/12*40"
+          }
+        },
+        {
+          "name_suffix": "M12/15*50",
+          "params": {
+            "size_mm": "M12/15*50"
+          }
+        },
+        {
+          "name_suffix": "M16/20*65",
+          "params": {
+            "size_mm": "M16/20*65"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Болт траверсный",
+      "description": "Болт траверсный изготавливается из оцинкованной стали и применяется для подвешивания инженерных систем к траверсам монтажным.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M8*40",
+          "params": {
+            "size_mm": "M8*40"
+          }
+        },
+        {
+          "name_suffix": "M8*60",
+          "params": {
+            "size_mm": "M8*60"
+          }
+        },
+        {
+          "name_suffix": "M10*30",
+          "params": {
+            "size_mm": "M10*30"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Гайка траверсная/ходовая",
+      "description": "Гайка траверсная/ходовая изготавливается из оцинкованной стали и применяется для подвешивания инженерных систем к траверсам монтажным.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "M10",
+          "params": {
+            "size_mm": "M10"
+          }
+        }
+      ],
+      "catalog_section": "Крепежные материалы",
+      "category_code": "montazhnye_sistemy",
+      "source_pages": "16-18",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Диск отрезной",
+      "description": "Диски отрезные используются для универсальной резки деталей и конструкций из различных марок стали.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1151×2.22",
+          "params": {
+            "size_mm": "1151×2.22"
+          }
+        },
+        {
+          "name_suffix": "1251×0.22",
+          "params": {
+            "size_mm": "1251×0.22"
+          }
+        },
+        {
+          "name_suffix": "1251×0.62",
+          "params": {
+            "size_mm": "1251×0.62"
+          }
+        },
+        {
+          "name_suffix": "1252×0.22",
+          "params": {
+            "size_mm": "1252×0.22"
+          }
+        },
+        {
+          "name_suffix": "1252×0.62",
+          "params": {
+            "size_mm": "1252×0.62"
+          }
+        },
+        {
+          "name_suffix": "1502×0.22",
+          "params": {
+            "size_mm": "1502×0.22"
+          }
+        },
+        {
+          "name_suffix": "1802.5×2.22",
+          "params": {
+            "size_mm": "1802.5×2.22"
+          }
+        },
+        {
+          "name_suffix": "2302.5×2.22",
+          "params": {
+            "size_mm": "2302.5×2.22"
+          }
+        },
+        {
+          "name_suffix": "3003.0×3.2",
+          "params": {
+            "size_mm": "3003.0×3.2"
+          }
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Герметик нейтральный",
+      "description": "Герметик силиконовый нейтральный используется для уплотнения зазоров между элементами из металла, бетона и природного камня.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "белый",
+          "params": {}
+        },
+        {
+          "name_suffix": "серый",
+          "params": {}
+        },
+        {
+          "name_suffix": "прозрачный",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Герметик для каминов и печей",
+      "description": "Герметик для каминов и печей используется для герметизации швов и стыков в местах, подверженных действию высоких температур до 1250 °C.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Герметик универсальный",
+      "description": "Герметик силиконовый универсальный используется для заполнения и герметизации щелей между строительными материалами и элементами отделки.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "белый",
+          "params": {}
+        },
+        {
+          "name_suffix": "серый",
+          "params": {}
+        },
+        {
+          "name_suffix": "прозрачный",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Пистолет для выдавливания герметика",
+      "description": "Пистолет для выдавливания служит инструментом для нанесения герметика.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Пена монтажная",
+      "description": "Пена монтажная используется для заполнения и герметизации больших пустот, ниш, щелей в строительстве и при монтаже инженерных систем.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "бытовая",
+          "params": {}
+        },
+        {
+          "name_suffix": "бытовая морозостойкая",
+          "params": {}
+        },
+        {
+          "name_suffix": "профессиональная",
+          "params": {}
+        },
+        {
+          "name_suffix": "профессиональная морозостойкая",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Лента ТПЛ",
+      "description": "Лента ТПЛ изготовлена из поливинилхлоридной (ПВХ) ленты, армированной стекловолокном с клеящим составом.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "50×50",
+          "params": {
+            "size_mm_m": "50×50"
+          }
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Скотч алюминиевый",
+      "description": "Скотч алюминиевый используется при проведении ремонтных, монтажных и теплоизоляционных работ.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "50×50",
+          "params": {
+            "size_mm_m": "50×50"
+          }
+        },
+        {
+          "name_suffix": "75×50",
+          "params": {
+            "size_mm_m": "75×50"
+          }
+        },
+        {
+          "name_suffix": "100×50",
+          "params": {
+            "size_mm_m": "100×50"
+          }
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Скотч алюминиевый армированный",
+      "description": "Скотч алюминиевый армированный предназначен для герметизации систем вентиляции.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "50×50",
+          "params": {
+            "size_mm_m": "50×50"
+          }
+        },
+        {
+          "name_suffix": "75×50",
+          "params": {
+            "size_mm_m": "75×50"
+          }
+        },
+        {
+          "name_suffix": "100×50",
+          "params": {
+            "size_mm_m": "100×50"
+          }
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Перчатки х/б",
+      "description": "Перчатки хлопчатобумажные с нанесением точек полизифра. Служат для защиты рук от загрязнений и повреждений.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "х/б",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Нейлоновый колпачок",
+      "description": "Колпачок одевается на острую часть штифта для сварки и служит в качестве защиты от травм.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Шип самоклеющийся",
+      "description": "Шипы самоклеющиеся предназначены для крепления изоляции и огнезащиты на гладких поверхностях.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "32",
+          "params": {
+            "size_mm": 32
+          }
+        },
+        {
+          "name_suffix": "41",
+          "params": {
+            "size_mm": 41
+          }
+        },
+        {
+          "name_suffix": "51",
+          "params": {
+            "size_mm": 51
+          }
+        },
+        {
+          "name_suffix": "63",
+          "params": {
+            "size_mm": 63
+          }
+        },
+        {
+          "name_suffix": "89",
+          "params": {
+            "size_mm": 89
+          }
+        },
+        {
+          "name_suffix": "114",
+          "params": {
+            "size_mm": 114
+          }
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Пистолет для сварки",
+      "description": "Пистолет для сварки используется для приваривания штифтов к металлу.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Штифт для сварки",
+      "description": "Штифт для сварки изготовлен из омедненной стали и приваривается к металлу.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "32",
+          "params": {
+            "size_mm": 32
+          }
+        },
+        {
+          "name_suffix": "51",
+          "params": {
+            "size_mm": 51
+          }
+        },
+        {
+          "name_suffix": "63",
+          "params": {
+            "size_mm": 63
+          }
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Шайба для сварочного штифта",
+      "description": "Данная шайба используется для фиксации изоляции на штифте.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Клещи для пробивки отверстий",
+      "description": "Клещи служат для пробивки отверстий в профнастиле.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "Раскрытие 100",
+          "params": {
+            "size_mm": 100
+          }
+        },
+        {
+          "name_suffix": "Раскрытие 78",
+          "params": {
+            "size_mm": 78
+          }
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Электроинструмент",
+      "description": "Ручной пресс служит для соединения нескольких стальных листов.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "Ручной пресс TF-350",
+          "params": {}
+        },
+        {
+          "name_suffix": "Фальцеосадочная машина F-300/301",
+          "params": {}
+        }
+      ],
+      "catalog_section": "Вспомогательные элементы",
+      "category_code": "vspomogatelnye_elementy",
+      "source_pages": "19-21",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Хомут для горизонтального крепления воздуховодов с резиновым профилем",
+      "description": "Оцинкованные хомуты с резиновым профилем имеют специальную резиновую подкладку и этим отличаются от обычных хомутов.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "100",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "125",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "160",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "200",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "250",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "315",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "355",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "400",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        }
+      ],
+      "catalog_section": "Хомуты для крепления воздуховодов",
+      "category_code": "homuty",
+      "source_pages": "22-24",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Хомут для горизонтального крепления воздуховодов без резинового профиля",
+      "description": "Легко монтируемые хомуты без резинового профиля применяются при монтаже вентиляционных систем.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "100",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "125",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "160",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "200",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "250",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "315",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "355",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        },
+        {
+          "name_suffix": "400",
+          "params": {
+            "thread_size": "M8",
+            "max_load_kN": 0.6,
+            "recommended_load_kN": 0.2
+          }
+        }
+      ],
+      "catalog_section": "Хомуты для крепления воздуховодов",
+      "category_code": "homuty",
+      "source_pages": "22-24",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Хомут вентиляционный для горизонтального и вертикального крепления воздуховодов",
+      "description": "При монтаже данного вида хомутов используют две шпильки резьбовые со стороны бокового крепления.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "450",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "500",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "560",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "630",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "710",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "800",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "900",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "1000",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "1120",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "1250",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "1400",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        },
+        {
+          "name_suffix": "1600",
+          "params": {
+            "side_hole_size_mm": 10.5,
+            "max_load_kN": 5
+          }
+        }
+      ],
+      "catalog_section": "Хомуты для крепления воздуховодов",
+      "category_code": "homuty",
+      "source_pages": "22-24",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Хомуты спринклерные для противопожарных систем",
+      "description": "Спринклерный хомут изготовлен из оцинкованной стали. Защитный слой покрытия 8–10 мкм.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "3/4",
+          "params": {
+            "max_outer_diameter_mm": 28,
+            "L_mm": 54.5,
+            "H_mm": 24,
+            "N_mm": 15,
+            "plate_section_mm": "1.5*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 4.5,
+            "recommended_load_kN": 1.5
+          }
+        },
+        {
+          "name_suffix": "1",
+          "params": {
+            "max_outer_diameter_mm": 36,
+            "L_mm": 63,
+            "H_mm": 30,
+            "N_mm": 20,
+            "plate_section_mm": "1.5*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 11.7,
+            "recommended_load_kN": 3.5
+          }
+        },
+        {
+          "name_suffix": "1 1/4",
+          "params": {
+            "max_outer_diameter_mm": 48,
+            "L_mm": 76,
+            "H_mm": 40,
+            "N_mm": 25,
+            "plate_section_mm": "1.5*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 11.7,
+            "recommended_load_kN": 3.5
+          }
+        },
+        {
+          "name_suffix": "1 1/2",
+          "params": {
+            "max_outer_diameter_mm": 60,
+            "L_mm": 89,
+            "H_mm": 50,
+            "N_mm": 30,
+            "plate_section_mm": "1.5*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 11.7,
+            "recommended_load_kN": 3.5
+          }
+        },
+        {
+          "name_suffix": "2",
+          "params": {
+            "max_outer_diameter_mm": 76,
+            "L_mm": 105,
+            "H_mm": 60,
+            "N_mm": 40,
+            "plate_section_mm": "2.0*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 11.7,
+            "recommended_load_kN": 3.5
+          }
+        },
+        {
+          "name_suffix": "2 1/2",
+          "params": {
+            "max_outer_diameter_mm": 89,
+            "L_mm": 122,
+            "H_mm": 70,
+            "N_mm": 50,
+            "plate_section_mm": "2.0*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 11.7,
+            "recommended_load_kN": 3.5
+          }
+        },
+        {
+          "name_suffix": "3",
+          "params": {
+            "max_outer_diameter_mm": 114,
+            "L_mm": 146,
+            "H_mm": 90,
+            "N_mm": 65,
+            "plate_section_mm": "2.0*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 11.7,
+            "recommended_load_kN": 3.5
+          }
+        },
+        {
+          "name_suffix": "4",
+          "params": {
+            "max_outer_diameter_mm": 140,
+            "L_mm": 176,
+            "H_mm": 110,
+            "N_mm": 80,
+            "plate_section_mm": "2.0*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 11.7,
+            "recommended_load_kN": 3.5
+          }
+        },
+        {
+          "name_suffix": "5",
+          "params": {
+            "max_outer_diameter_mm": 168,
+            "L_mm": 206,
+            "H_mm": 130,
+            "N_mm": 95,
+            "plate_section_mm": "2.0*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 11.7,
+            "recommended_load_kN": 3.5
+          }
+        },
+        {
+          "name_suffix": "6",
+          "params": {
+            "max_outer_diameter_mm": 219,
+            "L_mm": 280,
+            "H_mm": 170,
+            "N_mm": 130,
+            "plate_section_mm": "2.0*25",
+            "hole_diameter_mm": 10.5,
+            "max_load_kN": 11.7,
+            "recommended_load_kN": 3.5
+          }
+        }
+      ],
+      "catalog_section": "Хомуты для крепления воздуховодов",
+      "category_code": "homuty",
+      "source_pages": "22-24",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Хомуты сантехнические",
+      "description": "Металлический хомут изготовлен из оцинкованной стали. Защитный слой покрытия (толщина 8-10 мкм).",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1/4",
+          "params": {
+            "clamp_range_mm": "11-15",
+            "L_mm": 54.5,
+            "H_mm": 24,
+            "N_mm": 15,
+            "plate_section_mm": "1.5*20",
+            "screw": "M5",
+            "nut": "M8",
+            "max_load_kN": 3.9,
+            "recommended_load_kN": 1.3
+          }
+        },
+        {
+          "name_suffix": "3/8",
+          "params": {
+            "clamp_range_mm": "16-20",
+            "L_mm": 62.5,
+            "H_mm": 28,
+            "N_mm": 20,
+            "plate_section_mm": "1.5*20",
+            "screw": "M5",
+            "nut": "M8",
+            "max_load_kN": 3.9,
+            "recommended_load_kN": 1.3
+          }
+        },
+        {
+          "name_suffix": "1/2",
+          "params": {
+            "clamp_range_mm": "20-24",
+            "L_mm": 68.5,
+            "H_mm": 31,
+            "N_mm": 25,
+            "plate_section_mm": "1.5*20",
+            "screw": "M5",
+            "nut": "M8",
+            "max_load_kN": 3.9,
+            "recommended_load_kN": 1.3
+          }
+        },
+        {
+          "name_suffix": "3/4",
+          "params": {
+            "clamp_range_mm": "25-30",
+            "L_mm": 82.5,
+            "H_mm": 34.5,
+            "N_mm": 30,
+            "plate_section_mm": "1.5*20",
+            "screw": "M6",
+            "nut": "M8",
+            "max_load_kN": 4.8,
+            "recommended_load_kN": 1.6
+          }
+        },
+        {
+          "name_suffix": "1",
+          "params": {
+            "clamp_range_mm": "33-38",
+            "L_mm": 91.5,
+            "H_mm": 39,
+            "N_mm": 35,
+            "plate_section_mm": "1.5*20",
+            "screw": "M6",
+            "nut": "M8",
+            "max_load_kN": 4.8,
+            "recommended_load_kN": 1.6
+          }
+        },
+        {
+          "name_suffix": "1 1/4",
+          "params": {
+            "clamp_range_mm": "39-46",
+            "L_mm": 105,
+            "H_mm": 45.5,
+            "N_mm": 40,
+            "plate_section_mm": "1.5*20",
+            "screw": "M6",
+            "nut": "M8",
+            "max_load_kN": 4.8,
+            "recommended_load_kN": 1.6
+          }
+        },
+        {
+          "name_suffix": "1 1/2",
+          "params": {
+            "clamp_range_mm": "48-53",
+            "L_mm": 112,
+            "H_mm": 49,
+            "N_mm": 45,
+            "plate_section_mm": "1.5*20",
+            "screw": "M6",
+            "nut": "M8",
+            "max_load_kN": 4.8,
+            "recommended_load_kN": 1.6
+          }
+        },
+        {
+          "name_suffix": "2",
+          "params": {
+            "clamp_range_mm": "54-58",
+            "L_mm": 134,
+            "H_mm": 58,
+            "N_mm": 50,
+            "plate_section_mm": "2.0*20",
+            "screw": "M6",
+            "nut": "M10",
+            "max_load_kN": 6.9,
+            "recommended_load_kN": 2.3
+          }
+        },
+        {
+          "name_suffix": "2 1/2",
+          "params": {
+            "clamp_range_mm": "74-86",
+            "L_mm": 146,
+            "H_mm": 63.5,
+            "N_mm": 60,
+            "plate_section_mm": "2.0*20",
+            "screw": "M6",
+            "nut": "M10",
+            "max_load_kN": 6.9,
+            "recommended_load_kN": 2.3
+          }
+        },
+        {
+          "name_suffix": "3",
+          "params": {
+            "clamp_range_mm": "87-94",
+            "L_mm": 159.5,
+            "H_mm": 71.5,
+            "N_mm": 75,
+            "plate_section_mm": "2.0*20",
+            "screw": "M6",
+            "nut": "M10",
+            "max_load_kN": 7.8,
+            "recommended_load_kN": 2.6
+          }
+        },
+        {
+          "name_suffix": "4",
+          "params": {
+            "clamp_range_mm": "110-116",
+            "L_mm": 173,
+            "H_mm": 77,
+            "N_mm": 90,
+            "plate_section_mm": "2.0*25",
+            "screw": "M6",
+            "nut": "M10",
+            "max_load_kN": 7.8,
+            "recommended_load_kN": 2.6
+          }
+        },
+        {
+          "name_suffix": "5",
+          "params": {
+            "clamp_range_mm": "135-143",
+            "L_mm": 199,
+            "H_mm": 90,
+            "N_mm": 105,
+            "plate_section_mm": "2.0*25",
+            "screw": "M6",
+            "nut": "M10",
+            "max_load_kN": 7.8,
+            "recommended_load_kN": 2.6
+          }
+        },
+        {
+          "name_suffix": "6",
+          "params": {
+            "clamp_range_mm": "162-170",
+            "L_mm": 227,
+            "H_mm": 102.5,
+            "N_mm": 130,
+            "plate_section_mm": "2.0*25",
+            "screw": "M6",
+            "nut": "M10",
+            "max_load_kN": 7.8,
+            "recommended_load_kN": 2.6
+          }
+        },
+        {
+          "name_suffix": "8",
+          "params": {
+            "clamp_range_mm": "207-219",
+            "L_mm": 280.7,
+            "H_mm": 130,
+            "N_mm": 170,
+            "plate_section_mm": "2.0*25",
+            "screw": "M6",
+            "nut": "M10",
+            "max_load_kN": 7.8,
+            "recommended_load_kN": 2.6
+          }
+        }
+      ],
+      "catalog_section": "Хомуты для крепления воздуховодов",
+      "category_code": "homuty",
+      "source_pages": "22-24",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Диффузор квадратный с четырехсторонним распределением воздушного потока",
+      "description": "Диффузоры используются для распределения и регулирования воздушных масс. Расположение в системе: на потолке (до 4 м), редко – на стене.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "300x300",
+          "params": {
+            "A_mm": 300,
+            "B_mm": 300
+          }
+        },
+        {
+          "name_suffix": "450x450",
+          "params": {
+            "A_mm": 450,
+            "B_mm": 450
+          }
+        },
+        {
+          "name_suffix": "600x600",
+          "params": {
+            "A_mm": 600,
+            "B_mm": 600
+          }
+        }
+      ],
+      "catalog_section": "Диффузоры",
+      "category_code": "diffuzory",
+      "source_pages": "25-25",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Диффузор квадратный с четырехсторонним распределением воздушного потока и клапаном расхода воздуха",
+      "description": "Назначение клапана расхода воздуха – регулировка объема подаваемого воздуха.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "300x300",
+          "params": {
+            "A_mm": 300,
+            "B_mm": 300
+          }
+        },
+        {
+          "name_suffix": "450x450",
+          "params": {
+            "A_mm": 450,
+            "B_mm": 450
+          }
+        },
+        {
+          "name_suffix": "600x600",
+          "params": {
+            "A_mm": 600,
+            "B_mm": 600
+          }
+        }
+      ],
+      "catalog_section": "Диффузоры",
+      "category_code": "diffuzory",
+      "source_pages": "25-25",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Диффузор потолочный круглый (стальной), приточный, вытяжной",
+      "description": "Вытяжные диффузоры предназначены для отвода воздуха, приточные – для подачи. Регулировка объема и направления подачи воздуха осуществляется вращением диска.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "Ø100",
+          "params": {
+            "D_mm": 100
+          }
+        },
+        {
+          "name_suffix": "Ø125",
+          "params": {
+            "D_mm": 125
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø200",
+          "params": {
+            "D_mm": 200
+          }
+        }
+      ],
+      "catalog_section": "Диффузоры",
+      "category_code": "diffuzory",
+      "source_pages": "25-25",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Диффузор пластиковый универсальный",
+      "description": "Универсальные пластиковые диффузоры.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "Ø100",
+          "params": {
+            "D_mm": 100
+          }
+        },
+        {
+          "name_suffix": "Ø125",
+          "params": {
+            "D_mm": 125
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø200",
+          "params": {
+            "D_mm": 200
+          }
+        },
+        {
+          "name_suffix": "Ø250",
+          "params": {
+            "D_mm": 250
+          }
+        }
+      ],
+      "catalog_section": "Диффузоры",
+      "category_code": "diffuzory",
+      "source_pages": "25-25",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка однорадная",
+      "description": "Вентиляционные решетки из алюминиевого профиля для подачи и удаления воздуха.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "2000x1600",
+          "params": {
+            "L_max_mm": 2000,
+            "H_max_mm": 1600,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 5
+          }
+        },
+        {
+          "name_suffix": "1600x2000",
+          "params": {
+            "L_max_mm": 1600,
+            "H_max_mm": 2000,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 5
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка однорадная с клапаном",
+      "description": "Вентиляционные решетки с клапаном для регулирования потока воздуха.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "2000x600",
+          "params": {
+            "L_max_mm": 2000,
+            "H_max_mm": 600,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 25
+          }
+        },
+        {
+          "name_suffix": "600x2000",
+          "params": {
+            "L_max_mm": 600,
+            "H_max_mm": 2000,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 25
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка двухрядная",
+      "description": "Двухрядные вентиляционные решетки для более эффективного распределения воздуха.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "2000x600",
+          "params": {
+            "L_max_mm": 2000,
+            "H_max_mm": 600,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 5,
+            "non_standard_step_H_mm": 25
+          }
+        },
+        {
+          "name_suffix": "600x2000",
+          "params": {
+            "L_max_mm": 600,
+            "H_max_mm": 2000,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 5,
+            "non_standard_step_H_mm": 25
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка двухрядная с клапаном",
+      "description": "Двухрядные решетки с клапаном для точного регулирования воздушного потока.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1500x600",
+          "params": {
+            "L_max_mm": 1500,
+            "H_max_mm": 600,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 5,
+            "non_standard_step_H_mm": 25
+          }
+        },
+        {
+          "name_suffix": "600x1500",
+          "params": {
+            "L_max_mm": 600,
+            "H_max_mm": 1500,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 5,
+            "non_standard_step_H_mm": 25
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка наружная накладная",
+      "description": "Наружные накладные решетки для защиты от атмосферных осадков.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "2950x1600",
+          "params": {
+            "L_max_mm": 2950,
+            "H_max_mm": 1600,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 1
+          }
+        },
+        {
+          "name_suffix": "1600x2950",
+          "params": {
+            "L_max_mm": 1600,
+            "H_max_mm": 2950,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 1
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка наружная с клапаном",
+      "description": "Наружные решетки с клапаном для дополнительной защиты и регулирования.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "2950x1600",
+          "params": {
+            "L_max_mm": 2950,
+            "H_max_mm": 1600,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 1
+          }
+        },
+        {
+          "name_suffix": "1600x2950",
+          "params": {
+            "L_max_mm": 1600,
+            "H_max_mm": 2950,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 1
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка инерционная",
+      "description": "Инерционные решетки для вытяжных систем снаружи зданий.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1200x600",
+          "params": {
+            "L_max_mm": 1200,
+            "H_max_mm": 600,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 25
+          }
+        },
+        {
+          "name_suffix": "600x1200",
+          "params": {
+            "L_max_mm": 600,
+            "H_max_mm": 1200,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 25
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка неинерционная",
+      "description": "Неинерционные решетки для вытяжных систем снаружи зданий.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1200x600",
+          "params": {
+            "L_max_mm": 1200,
+            "H_max_mm": 600,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 25
+          }
+        },
+        {
+          "name_suffix": "600x1200",
+          "params": {
+            "L_max_mm": 600,
+            "H_max_mm": 1200,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 25
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка переточная",
+      "description": "Переточные решетки для обеспечения воздушного обмена в смежных помещениях.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "800x500",
+          "params": {
+            "L_max_mm": 800,
+            "H_max_mm": 500,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 25
+          }
+        },
+        {
+          "name_suffix": "500x800",
+          "params": {
+            "L_max_mm": 500,
+            "H_max_mm": 800,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 1,
+            "non_standard_step_H_mm": 25
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Клапан расхода воздуха",
+      "description": "Клапаны для точного контроля расхода воздуха в вентиляционных системах.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "600x600",
+          "params": {
+            "L_max_mm": 600,
+            "H_max_mm": 600,
+            "standard_step_mm": 25,
+            "non_standard_step_L_mm": 25,
+            "non_standard_step_H_mm": 25
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные",
+      "category_code": "ventilyatsionnye_reshetki",
+      "source_pages": "26-26",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Воздуховод неизолированный NV",
+      "description": "Гибкие неизолированные воздуховоды серии NV изготавливаются из многослойной металлизированной пленки, ламинированной полимерной лентой, со спиральным каркасом из стальной проволоки между слоями.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "Ø102",
+          "params": {
+            "D_mm": 102
+          }
+        },
+        {
+          "name_suffix": "Ø127",
+          "params": {
+            "D_mm": 127
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø203",
+          "params": {
+            "D_mm": 203
+          }
+        },
+        {
+          "name_suffix": "Ø254",
+          "params": {
+            "D_mm": 254
+          }
+        },
+        {
+          "name_suffix": "Ø315",
+          "params": {
+            "D_mm": 315
+          }
+        },
+        {
+          "name_suffix": "Ø356",
+          "params": {
+            "D_mm": 356
+          }
+        },
+        {
+          "name_suffix": "Ø406",
+          "params": {
+            "D_mm": 406
+          }
+        },
+        {
+          "name_suffix": "Ø456",
+          "params": {
+            "D_mm": 456
+          }
+        },
+        {
+          "name_suffix": "Ø508",
+          "params": {
+            "D_mm": 508
+          }
+        }
+      ],
+      "catalog_section": "Гибкие воздуховоды",
+      "category_code": "gibkie_vozduhovody",
+      "source_pages": "27-28",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Воздуховод звукоизолирующий SONONV",
+      "description": "Гибкие теплоизолированные, шумопоглощающие воздуховоды серии SONONV изготавливаются из внутреннего перфорированного воздуховода серии NVA, слоя теплоизоляции и наружного чехла.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "Ø102",
+          "params": {
+            "D_mm": 102
+          }
+        },
+        {
+          "name_suffix": "Ø127",
+          "params": {
+            "D_mm": 127
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø203",
+          "params": {
+            "D_mm": 203
+          }
+        },
+        {
+          "name_suffix": "Ø254",
+          "params": {
+            "D_mm": 254
+          }
+        },
+        {
+          "name_suffix": "Ø315",
+          "params": {
+            "D_mm": 315
+          }
+        },
+        {
+          "name_suffix": "Ø356",
+          "params": {
+            "D_mm": 356
+          }
+        },
+        {
+          "name_suffix": "Ø406",
+          "params": {
+            "D_mm": 406
+          }
+        },
+        {
+          "name_suffix": "Ø456",
+          "params": {
+            "D_mm": 456
+          }
+        },
+        {
+          "name_suffix": "Ø508",
+          "params": {
+            "D_mm": 508
+          }
+        }
+      ],
+      "catalog_section": "Гибкие воздуховоды",
+      "category_code": "gibkie_vozduhovody",
+      "source_pages": "27-28",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Воздуховод теплоизолированный ISONV",
+      "description": "Гибкие теплоизолированные воздуховоды серии ISONV изготавливаются из внутреннего воздуховода серии NV, слоя теплоизоляции и наружного чехла.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "Ø102",
+          "params": {
+            "D_mm": 102
+          }
+        },
+        {
+          "name_suffix": "Ø127",
+          "params": {
+            "D_mm": 127
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø203",
+          "params": {
+            "D_mm": 203
+          }
+        },
+        {
+          "name_suffix": "Ø254",
+          "params": {
+            "D_mm": 254
+          }
+        },
+        {
+          "name_suffix": "Ø315",
+          "params": {
+            "D_mm": 315
+          }
+        },
+        {
+          "name_suffix": "Ø356",
+          "params": {
+            "D_mm": 356
+          }
+        },
+        {
+          "name_suffix": "Ø406",
+          "params": {
+            "D_mm": 406
+          }
+        },
+        {
+          "name_suffix": "Ø456",
+          "params": {
+            "D_mm": 456
+          }
+        },
+        {
+          "name_suffix": "Ø508",
+          "params": {
+            "D_mm": 508
+          }
+        }
+      ],
+      "catalog_section": "Гибкие воздуховоды",
+      "category_code": "gibkie_vozduhovody",
+      "source_pages": "27-28",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Воздуховод неизолированный NVA",
+      "description": "Гибкие неизолированные воздуховоды серии NVA изготавливаются из алюминиевой фольги, ламинированной полимерной лентой, со спиральным каркасом из стальной проволоки между слоями.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "Ø102",
+          "params": {
+            "D_mm": 102
+          }
+        },
+        {
+          "name_suffix": "Ø127",
+          "params": {
+            "D_mm": 127
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø203",
+          "params": {
+            "D_mm": 203
+          }
+        },
+        {
+          "name_suffix": "Ø254",
+          "params": {
+            "D_mm": 254
+          }
+        },
+        {
+          "name_suffix": "Ø315",
+          "params": {
+            "D_mm": 315
+          }
+        },
+        {
+          "name_suffix": "Ø356",
+          "params": {
+            "D_mm": 356
+          }
+        },
+        {
+          "name_suffix": "Ø406",
+          "params": {
+            "D_mm": 406
+          }
+        },
+        {
+          "name_suffix": "Ø456",
+          "params": {
+            "D_mm": 456
+          }
+        },
+        {
+          "name_suffix": "Ø508",
+          "params": {
+            "D_mm": 508
+          }
+        }
+      ],
+      "catalog_section": "Гибкие воздуховоды",
+      "category_code": "gibkie_vozduhovody",
+      "source_pages": "27-28",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Воздуховод теплоизолированный ISONVA",
+      "description": "Гибкие теплоизолированные воздуховоды серии IsoNVA изготавливаются из внутреннего воздуховода серии NVA, слоя теплоизоляции и наружного чехла.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "Ø102",
+          "params": {
+            "D_mm": 102
+          }
+        },
+        {
+          "name_suffix": "Ø127",
+          "params": {
+            "D_mm": 127
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø203",
+          "params": {
+            "D_mm": 203
+          }
+        },
+        {
+          "name_suffix": "Ø254",
+          "params": {
+            "D_mm": 254
+          }
+        },
+        {
+          "name_suffix": "Ø315",
+          "params": {
+            "D_mm": 315
+          }
+        },
+        {
+          "name_suffix": "Ø356",
+          "params": {
+            "D_mm": 356
+          }
+        },
+        {
+          "name_suffix": "Ø406",
+          "params": {
+            "D_mm": 406
+          }
+        },
+        {
+          "name_suffix": "Ø456",
+          "params": {
+            "D_mm": 456
+          }
+        },
+        {
+          "name_suffix": "Ø508",
+          "params": {
+            "D_mm": 508
+          }
+        }
+      ],
+      "catalog_section": "Гибкие воздуховоды",
+      "category_code": "gibkie_vozduhovody",
+      "source_pages": "27-28",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Воздуховод звукоизолирующий SONONVA",
+      "description": "Гибкие теплоизолированные, шумопоглощающие воздуховоды серии SonoNVA изготавливаются из внутреннего перфорированного воздуховода серии NVA, слоя теплоизоляции и наружного чехла.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "Ø102",
+          "params": {
+            "D_mm": 102
+          }
+        },
+        {
+          "name_suffix": "Ø127",
+          "params": {
+            "D_mm": 127
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø203",
+          "params": {
+            "D_mm": 203
+          }
+        },
+        {
+          "name_suffix": "Ø254",
+          "params": {
+            "D_mm": 254
+          }
+        },
+        {
+          "name_suffix": "Ø315",
+          "params": {
+            "D_mm": 315
+          }
+        },
+        {
+          "name_suffix": "Ø356",
+          "params": {
+            "D_mm": 356
+          }
+        },
+        {
+          "name_suffix": "Ø406",
+          "params": {
+            "D_mm": 406
+          }
+        },
+        {
+          "name_suffix": "Ø456",
+          "params": {
+            "D_mm": 456
+          }
+        },
+        {
+          "name_suffix": "Ø508",
+          "params": {
+            "D_mm": 508
+          }
+        }
+      ],
+      "catalog_section": "Гибкие воздуховоды",
+      "category_code": "gibkie_vozduhovody",
+      "source_pages": "27-28",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Рулоны Заслон Супер/Стандарт",
+      "description": "Заслон Стандарт — это специализированный самоклеящийся материал для тепло- и звукоизоляции воздуховодов систем вентиляции и кондиционирования.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "Стандарт 5",
+          "params": {
+            "thickness_mm": 5,
+            "width_m": 1,
+            "length_m": 25,
+            "area_m2": 25
+          }
+        },
+        {
+          "name_suffix": "Стандарт 8",
+          "params": {
+            "thickness_mm": 8,
+            "width_m": 1,
+            "length_m": 25,
+            "area_m2": 25
+          }
+        },
+        {
+          "name_suffix": "Стандарт 10",
+          "params": {
+            "thickness_mm": 10,
+            "width_m": 1,
+            "length_m": 25,
+            "area_m2": 25
+          }
+        },
+        {
+          "name_suffix": "Супер 5",
+          "params": {
+            "thickness_mm": 5,
+            "width_m": 1,
+            "length_m": 25,
+            "area_m2": 25
+          }
+        },
+        {
+          "name_suffix": "Супер 8",
+          "params": {
+            "thickness_mm": 8,
+            "width_m": 1,
+            "length_m": 25,
+            "area_m2": 25
+          }
+        },
+        {
+          "name_suffix": "Супер 10",
+          "params": {
+            "thickness_mm": 10,
+            "width_m": 1,
+            "length_m": 25,
+            "area_m2": 25
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "29-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Рулоны Магнофлекс тип С",
+      "description": "Полотно из вспененного полиэтилена НПЭ, дублированное с одной стороны алюминиевой фольгой.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "4 мм",
+          "params": {
+            "thickness_mm": 4,
+            "width_m": 1.2,
+            "length_m": 30,
+            "area_m2": 36
+          }
+        },
+        {
+          "name_suffix": "5 мм",
+          "params": {
+            "thickness_mm": 5,
+            "width_m": 1.2,
+            "length_m": 25,
+            "area_m2": 30
+          }
+        },
+        {
+          "name_suffix": "8 мм",
+          "params": {
+            "thickness_mm": 8,
+            "width_m": 1.2,
+            "length_m": 15,
+            "area_m2": 18
+          }
+        },
+        {
+          "name_suffix": "10 мм",
+          "params": {
+            "thickness_mm": 10,
+            "width_m": 1.2,
+            "length_m": 12,
+            "area_m2": 15
+          }
+        },
+        {
+          "name_suffix": "15 мм",
+          "params": {
+            "thickness_mm": 15,
+            "width_m": 1.2,
+            "length_m": 10,
+            "area_m2": 12
+          }
+        },
+        {
+          "name_suffix": "20 мм",
+          "params": {
+            "thickness_mm": 20,
+            "width_m": 1.2,
+            "length_m": 5,
+            "area_m2": 6
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "29-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Пенофол 2000 тип С",
+      "description": "Материал на основе вспененного полиэтилена с закрытыми порами, дублированный алюминиевой фольгой.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "C 3",
+          "params": {
+            "thickness_mm": 3,
+            "weight_net_kg": 3.8,
+            "weight_gross_kg": 4.0,
+            "diameter_mm": 420,
+            "height_mm": 600,
+            "length_m": 30,
+            "area_m2": 18,
+            "volume_m3": 0.106
+          }
+        },
+        {
+          "name_suffix": "C 4",
+          "params": {
+            "thickness_mm": 4,
+            "weight_net_kg": 4.3,
+            "weight_gross_kg": 4.5,
+            "diameter_mm": 450,
+            "height_mm": 600,
+            "length_m": 30,
+            "area_m2": 18,
+            "volume_m3": 0.14
+          }
+        },
+        {
+          "name_suffix": "C 5",
+          "params": {
+            "thickness_mm": 5,
+            "weight_net_kg": 4.8,
+            "weight_gross_kg": 5.0,
+            "diameter_mm": 480,
+            "height_mm": 600,
+            "length_m": 30,
+            "area_m2": 18,
+            "volume_m3": 0.169
+          }
+        },
+        {
+          "name_suffix": "C 8",
+          "params": {
+            "thickness_mm": 8,
+            "weight_net_kg": 5.3,
+            "weight_gross_kg": 5.5,
+            "diameter_mm": 510,
+            "height_mm": 600,
+            "length_m": 15,
+            "area_m2": 9,
+            "volume_m3": 0.138
+          }
+        },
+        {
+          "name_suffix": "C 10",
+          "params": {
+            "thickness_mm": 10,
+            "weight_net_kg": 5.8,
+            "weight_gross_kg": 6.0,
+            "diameter_mm": 540,
+            "height_mm": 600,
+            "length_m": 15,
+            "area_m2": 9,
+            "volume_m3": 0.169
+          }
+        },
+        {
+          "name_suffix": "C 15",
+          "params": {
+            "thickness_mm": 15,
+            "weight_net_kg": 6.3,
+            "weight_gross_kg": 6.5,
+            "diameter_mm": 570,
+            "height_mm": 600,
+            "length_m": 10,
+            "area_m2": 6,
+            "volume_m3": 0.223
+          }
+        },
+        {
+          "name_suffix": "C 20",
+          "params": {
+            "thickness_mm": 20,
+            "weight_net_kg": 6.8,
+            "weight_gross_kg": 7.0,
+            "diameter_mm": 610,
+            "height_mm": 600,
+            "length_m": 10,
+            "area_m2": 6,
+            "volume_m3": 0.223
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "29-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Рулоны EnergoFlex Black Star",
+      "description": "EnergoFlex Black Star Duct — это специализированный самоклеящийся материал для тепло- и звукоизоляции воздуховодов.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "Black Star Duct 3/1,0-30",
+          "params": {
+            "thickness_mm": 3,
+            "width_m": 1,
+            "length_m": 30,
+            "area_m2": 30
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct 5/1,0-20",
+          "params": {
+            "thickness_mm": 5,
+            "width_m": 1,
+            "length_m": 20,
+            "area_m2": 20
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct 8/1,0-12",
+          "params": {
+            "thickness_mm": 8,
+            "width_m": 1,
+            "length_m": 12,
+            "area_m2": 12
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct 10/1,0-10",
+          "params": {
+            "thickness_mm": 10,
+            "width_m": 1,
+            "length_m": 10,
+            "area_m2": 10
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct 15/1,0-7",
+          "params": {
+            "thickness_mm": 15,
+            "width_m": 1,
+            "length_m": 7,
+            "area_m2": 7
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct 20/1,0-5",
+          "params": {
+            "thickness_mm": 20,
+            "width_m": 1,
+            "length_m": 5,
+            "area_m2": 5
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct AL 3/1,0-30",
+          "params": {
+            "thickness_mm": 3,
+            "width_m": 1,
+            "length_m": 30,
+            "area_m2": 30
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct AL 5/1,0-20",
+          "params": {
+            "thickness_mm": 5,
+            "width_m": 1,
+            "length_m": 20,
+            "area_m2": 20
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct AL 8/1,0-12",
+          "params": {
+            "thickness_mm": 8,
+            "width_m": 1,
+            "length_m": 12,
+            "area_m2": 12
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct AL 10/1,0-10",
+          "params": {
+            "thickness_mm": 10,
+            "width_m": 1,
+            "length_m": 10,
+            "area_m2": 10
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct AL 15/1,0-7",
+          "params": {
+            "thickness_mm": 15,
+            "width_m": 1,
+            "length_m": 7,
+            "area_m2": 7
+          }
+        },
+        {
+          "name_suffix": "Black Star Duct AL 20/1,0-5",
+          "params": {
+            "thickness_mm": 20,
+            "width_m": 1,
+            "length_m": 5,
+            "area_m2": 5
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "29-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Рулоны EnergoFlex Super",
+      "description": "Листовой теплоизоляционный материал с закрытой ячеистой структурой EnergoFlex Super.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "Super 10/1,0-10",
+          "params": {
+            "thickness_mm": 10,
+            "width_m": 1,
+            "length_m": 10,
+            "area_m2": 10
+          }
+        },
+        {
+          "name_suffix": "Super 13/1,0-7",
+          "params": {
+            "thickness_mm": 13,
+            "width_m": 1,
+            "length_m": 7,
+            "area_m2": 7
+          }
+        },
+        {
+          "name_suffix": "Super 20/1,0-5",
+          "params": {
+            "thickness_mm": 20,
+            "width_m": 1,
+            "length_m": 5,
+            "area_m2": 5
+          }
+        },
+        {
+          "name_suffix": "Super AL 3/1,0-30",
+          "params": {
+            "thickness_mm": 3,
+            "width_m": 1,
+            "length_m": 30,
+            "area_m2": 30
+          }
+        },
+        {
+          "name_suffix": "Super AL 5/1,0-20",
+          "params": {
+            "thickness_mm": 5,
+            "width_m": 1,
+            "length_m": 20,
+            "area_m2": 20
+          }
+        },
+        {
+          "name_suffix": "Super AL 10/1,0-10",
+          "params": {
+            "thickness_mm": 10,
+            "width_m": 1,
+            "length_m": 10,
+            "area_m2": 10
+          }
+        },
+        {
+          "name_suffix": "Super AL 15/1,0-7",
+          "params": {
+            "thickness_mm": 15,
+            "width_m": 1,
+            "length_m": 7,
+            "area_m2": 7
+          }
+        },
+        {
+          "name_suffix": "Super AL 20/1,0-5",
+          "params": {
+            "thickness_mm": 20,
+            "width_m": 1,
+            "length_m": 5,
+            "area_m2": 5
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "29-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Трубки EnergoFlex Black Star",
+      "description": "Гибкие теплоизоляционные трубки из полиэтиленовой пены специально разработаны для теплоизоляции медных трубопроводов.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "Black Star 6/6-2",
+          "params": {
+            "inner_diameter_mm": 6,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Black Star 8/6-2",
+          "params": {
+            "inner_diameter_mm": 8,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Black Star 10/6-2",
+          "params": {
+            "inner_diameter_mm": 10,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Black Star 12/6-2",
+          "params": {
+            "inner_diameter_mm": 12,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Black Star 15/6-2",
+          "params": {
+            "inner_diameter_mm": 15,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Black Star 18/6-2",
+          "params": {
+            "inner_diameter_mm": 18,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Black Star 22/6-2",
+          "params": {
+            "inner_diameter_mm": 22,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Black Star 28/6-2",
+          "params": {
+            "inner_diameter_mm": 28,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Black Star 35/6-2",
+          "params": {
+            "inner_diameter_mm": 35,
+            "insulation_thickness_mm": 6
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "29-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Трубки EnergoFlex Super",
+      "description": "Трубки из полиэтиленовой пены с закрытой ячеистой структурой EnergoFlex Super идеально подходят для тепло- и шумоизоляции.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "Super 15/6-2",
+          "params": {
+            "inner_diameter_mm": 15,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 18/6-2",
+          "params": {
+            "inner_diameter_mm": 18,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 22/6-2",
+          "params": {
+            "inner_diameter_mm": 22,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 28/6-2",
+          "params": {
+            "inner_diameter_mm": 28,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 35/6-2",
+          "params": {
+            "inner_diameter_mm": 35,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 42/6-2",
+          "params": {
+            "inner_diameter_mm": 42,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 48/6-2",
+          "params": {
+            "inner_diameter_mm": 48,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 54/6-2",
+          "params": {
+            "inner_diameter_mm": 54,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 60/6-2",
+          "params": {
+            "inner_diameter_mm": 60,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 64/6-2",
+          "params": {
+            "inner_diameter_mm": 64,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 70/6-2",
+          "params": {
+            "inner_diameter_mm": 70,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 76/6-2",
+          "params": {
+            "inner_diameter_mm": 76,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 89/6-2",
+          "params": {
+            "inner_diameter_mm": 89,
+            "insulation_thickness_mm": 6
+          }
+        },
+        {
+          "name_suffix": "Super 110/9-2",
+          "params": {
+            "inner_diameter_mm": 110,
+            "insulation_thickness_mm": 9
+          }
+        },
+        {
+          "name_suffix": "Super 114/9-2",
+          "params": {
+            "inner_diameter_mm": 114,
+            "insulation_thickness_mm": 9
+          }
+        },
+        {
+          "name_suffix": "Super 133/9-2",
+          "params": {
+            "inner_diameter_mm": 133,
+            "insulation_thickness_mm": 9
+          }
+        },
+        {
+          "name_suffix": "Super 140/9-2",
+          "params": {
+            "inner_diameter_mm": 140,
+            "insulation_thickness_mm": 9
+          }
+        },
+        {
+          "name_suffix": "Super 160/9-2",
+          "params": {
+            "inner_diameter_mm": 160,
+            "insulation_thickness_mm": 9
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "29-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "K-FLEX ST",
+      "description": "Универсальная теплоизоляция для всех областей применения.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "03",
+          "params": {
+            "thickness_mm": 3,
+            "area_per_box_m2": 60
+          }
+        },
+        {
+          "name_suffix": "06",
+          "params": {
+            "thickness_mm": 6,
+            "area_per_box_m2": 30
+          }
+        },
+        {
+          "name_suffix": "10",
+          "params": {
+            "thickness_mm": 10,
+            "area_per_box_m2": 20
+          }
+        },
+        {
+          "name_suffix": "13",
+          "params": {
+            "thickness_mm": 13,
+            "area_per_box_m2": 14
+          }
+        },
+        {
+          "name_suffix": "16",
+          "params": {
+            "thickness_mm": 16,
+            "area_per_box_m2": 12
+          }
+        },
+        {
+          "name_suffix": "19",
+          "params": {
+            "thickness_mm": 19,
+            "area_per_box_m2": 10
+          }
+        },
+        {
+          "name_suffix": "25",
+          "params": {
+            "thickness_mm": 25,
+            "area_per_box_m2": 8
+          }
+        },
+        {
+          "name_suffix": "32",
+          "params": {
+            "thickness_mm": 32,
+            "area_per_box_m2": 6
+          }
+        },
+        {
+          "name_suffix": "40",
+          "params": {
+            "thickness_mm": 40,
+            "area_per_box_m2": 4
+          }
+        },
+        {
+          "name_suffix": "50",
+          "params": {
+            "thickness_mm": 50,
+            "area_per_box_m2": 4
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "29-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "K-FLEX AIR",
+      "description": "Теплоизоляция и звукоизоляция для воздуховодов.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "6",
+          "params": {
+            "thickness_mm": 6,
+            "length_m": 30,
+            "area_m2": 30
+          }
+        },
+        {
+          "name_suffix": "10",
+          "params": {
+            "thickness_mm": 10,
+            "length_m": 20,
+            "area_m2": 20
+          }
+        },
+        {
+          "name_suffix": "13",
+          "params": {
+            "thickness_mm": 13,
+            "length_m": 14,
+            "area_m2": 14
+          }
+        },
+        {
+          "name_suffix": "19",
+          "params": {
+            "thickness_mm": 19,
+            "length_m": 10,
+            "area_m2": 10
+          }
+        },
+        {
+          "name_suffix": "25",
+          "params": {
+            "thickness_mm": 25,
+            "length_m": 8,
+            "area_m2": 8
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "29-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "K-FLEX ST – ТРУБКИ ДЛИНОЙ 2 М",
+      "description": "Теплоизоляционные трубки для различных типов трубопроводов.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "Ø6 L=2",
+          "params": {
+            "D_mm": 6,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 496
+          }
+        },
+        {
+          "name_suffix": "Ø6 L=2",
+          "params": {
+            "D_mm": 6,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 352
+          }
+        },
+        {
+          "name_suffix": "Ø6 L=2",
+          "params": {
+            "D_mm": 6,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 232
+          }
+        },
+        {
+          "name_suffix": "Ø10 L=2",
+          "params": {
+            "D_mm": 10,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 364
+          }
+        },
+        {
+          "name_suffix": "Ø10 L=2",
+          "params": {
+            "D_mm": 10,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 266
+          }
+        },
+        {
+          "name_suffix": "Ø10 L=2",
+          "params": {
+            "D_mm": 10,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 172
+          }
+        },
+        {
+          "name_suffix": "Ø12 L=2",
+          "params": {
+            "D_mm": 12,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 316
+          }
+        },
+        {
+          "name_suffix": "Ø12 L=2",
+          "params": {
+            "D_mm": 12,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 234
+          }
+        },
+        {
+          "name_suffix": "Ø12 L=2",
+          "params": {
+            "D_mm": 12,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 162
+          }
+        },
+        {
+          "name_suffix": "Ø15 L=2",
+          "params": {
+            "D_mm": 15,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 266
+          }
+        },
+        {
+          "name_suffix": "Ø15 L=2",
+          "params": {
+            "D_mm": 15,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 192
+          }
+        },
+        {
+          "name_suffix": "Ø15 L=2",
+          "params": {
+            "D_mm": 15,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 136
+          }
+        },
+        {
+          "name_suffix": "Ø18 L=2",
+          "params": {
+            "D_mm": 18,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 220
+          }
+        },
+        {
+          "name_suffix": "Ø18 L=2",
+          "params": {
+            "D_mm": 18,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 166
+          }
+        },
+        {
+          "name_suffix": "Ø18 L=2",
+          "params": {
+            "D_mm": 18,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 118
+          }
+        },
+        {
+          "name_suffix": "Ø20 L=2",
+          "params": {
+            "D_mm": 20,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 180
+          }
+        },
+        {
+          "name_suffix": "Ø20 L=2",
+          "params": {
+            "D_mm": 20,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 136
+          }
+        },
+        {
+          "name_suffix": "Ø20 L=2",
+          "params": {
+            "D_mm": 20,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 96
+          }
+        },
+        {
+          "name_suffix": "Ø25 L=2",
+          "params": {
+            "D_mm": 25,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 152
+          }
+        },
+        {
+          "name_suffix": "Ø25 L=2",
+          "params": {
+            "D_mm": 25,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 108
+          }
+        },
+        {
+          "name_suffix": "Ø25 L=2",
+          "params": {
+            "D_mm": 25,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 80
+          }
+        },
+        {
+          "name_suffix": "Ø28 L=2",
+          "params": {
+            "D_mm": 28,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 130
+          }
+        },
+        {
+          "name_suffix": "Ø28 L=2",
+          "params": {
+            "D_mm": 28,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 92
+          }
+        },
+        {
+          "name_suffix": "Ø28 L=2",
+          "params": {
+            "D_mm": 28,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 68
+          }
+        },
+        {
+          "name_suffix": "Ø35 L=2",
+          "params": {
+            "D_mm": 35,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 102
+          }
+        },
+        {
+          "name_suffix": "Ø35 L=2",
+          "params": {
+            "D_mm": 35,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 72
+          }
+        },
+        {
+          "name_suffix": "Ø35 L=2",
+          "params": {
+            "D_mm": 35,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 54
+          }
+        },
+        {
+          "name_suffix": "Ø42 L=2",
+          "params": {
+            "D_mm": 42,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 90
+          }
+        },
+        {
+          "name_suffix": "Ø42 L=2",
+          "params": {
+            "D_mm": 42,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 64
+          }
+        },
+        {
+          "name_suffix": "Ø42 L=2",
+          "params": {
+            "D_mm": 42,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 48
+          }
+        },
+        {
+          "name_suffix": "Ø48 L=2",
+          "params": {
+            "D_mm": 48,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 80
+          }
+        },
+        {
+          "name_suffix": "Ø48 L=2",
+          "params": {
+            "D_mm": 48,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 58
+          }
+        },
+        {
+          "name_suffix": "Ø48 L=2",
+          "params": {
+            "D_mm": 48,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 44
+          }
+        },
+        {
+          "name_suffix": "Ø54 L=2",
+          "params": {
+            "D_mm": 54,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 70
+          }
+        },
+        {
+          "name_suffix": "Ø54 L=2",
+          "params": {
+            "D_mm": 54,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 50
+          }
+        },
+        {
+          "name_suffix": "Ø54 L=2",
+          "params": {
+            "D_mm": 54,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 38
+          }
+        },
+        {
+          "name_suffix": "Ø64 L=2",
+          "params": {
+            "D_mm": 64,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 60
+          }
+        },
+        {
+          "name_suffix": "Ø64 L=2",
+          "params": {
+            "D_mm": 64,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 46
+          }
+        },
+        {
+          "name_suffix": "Ø64 L=2",
+          "params": {
+            "D_mm": 64,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 34
+          }
+        },
+        {
+          "name_suffix": "Ø70 L=2",
+          "params": {
+            "D_mm": 70,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 54
+          }
+        },
+        {
+          "name_suffix": "Ø70 L=2",
+          "params": {
+            "D_mm": 70,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 42
+          }
+        },
+        {
+          "name_suffix": "Ø70 L=2",
+          "params": {
+            "D_mm": 70,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 32
+          }
+        },
+        {
+          "name_suffix": "Ø76 L=2",
+          "params": {
+            "D_mm": 76,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 48
+          }
+        },
+        {
+          "name_suffix": "Ø76 L=2",
+          "params": {
+            "D_mm": 76,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 36
+          }
+        },
+        {
+          "name_suffix": "Ø76 L=2",
+          "params": {
+            "D_mm": 76,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 28
+          }
+        },
+        {
+          "name_suffix": "Ø80 L=2",
+          "params": {
+            "D_mm": 80,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 44
+          }
+        },
+        {
+          "name_suffix": "Ø80 L=2",
+          "params": {
+            "D_mm": 80,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 32
+          }
+        },
+        {
+          "name_suffix": "Ø80 L=2",
+          "params": {
+            "D_mm": 80,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 24
+          }
+        },
+        {
+          "name_suffix": "Ø89 L=2",
+          "params": {
+            "D_mm": 89,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 36
+          }
+        },
+        {
+          "name_suffix": "Ø89 L=2",
+          "params": {
+            "D_mm": 89,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 26
+          }
+        },
+        {
+          "name_suffix": "Ø89 L=2",
+          "params": {
+            "D_mm": 89,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 20
+          }
+        },
+        {
+          "name_suffix": "Ø102 L=2",
+          "params": {
+            "D_mm": 102,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 30
+          }
+        },
+        {
+          "name_suffix": "Ø102 L=2",
+          "params": {
+            "D_mm": 102,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 22
+          }
+        },
+        {
+          "name_suffix": "Ø102 L=2",
+          "params": {
+            "D_mm": 102,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 16
+          }
+        },
+        {
+          "name_suffix": "Ø108 L=2",
+          "params": {
+            "D_mm": 108,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 28
+          }
+        },
+        {
+          "name_suffix": "Ø108 L=2",
+          "params": {
+            "D_mm": 108,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 20
+          }
+        },
+        {
+          "name_suffix": "Ø108 L=2",
+          "params": {
+            "D_mm": 108,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 14
+          }
+        },
+        {
+          "name_suffix": "Ø114 L=2",
+          "params": {
+            "D_mm": 114,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 26
+          }
+        },
+        {
+          "name_suffix": "Ø114 L=2",
+          "params": {
+            "D_mm": 114,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 18
+          }
+        },
+        {
+          "name_suffix": "Ø114 L=2",
+          "params": {
+            "D_mm": 114,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 12
+          }
+        },
+        {
+          "name_suffix": "Ø125 L=2",
+          "params": {
+            "D_mm": 125,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 22
+          }
+        },
+        {
+          "name_suffix": "Ø125 L=2",
+          "params": {
+            "D_mm": 125,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 16
+          }
+        },
+        {
+          "name_suffix": "Ø125 L=2",
+          "params": {
+            "D_mm": 125,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 10
+          }
+        },
+        {
+          "name_suffix": "Ø133 L=2",
+          "params": {
+            "D_mm": 133,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 20
+          }
+        },
+        {
+          "name_suffix": "Ø133 L=2",
+          "params": {
+            "D_mm": 133,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 14
+          }
+        },
+        {
+          "name_suffix": "Ø133 L=2",
+          "params": {
+            "D_mm": 133,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 8
+          }
+        },
+        {
+          "name_suffix": "Ø140 L=2",
+          "params": {
+            "D_mm": 140,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 18
+          }
+        },
+        {
+          "name_suffix": "Ø140 L=2",
+          "params": {
+            "D_mm": 140,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 12
+          }
+        },
+        {
+          "name_suffix": "Ø140 L=2",
+          "params": {
+            "D_mm": 140,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 8
+          }
+        },
+        {
+          "name_suffix": "Ø160 L=2",
+          "params": {
+            "D_mm": 160,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 14
+          }
+        },
+        {
+          "name_suffix": "Ø160 L=2",
+          "params": {
+            "D_mm": 160,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 10
+          }
+        },
+        {
+          "name_suffix": "Ø160 L=2",
+          "params": {
+            "D_mm": 160,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 6
+          }
+        },
+        {
+          "name_suffix": "Ø170 L=2",
+          "params": {
+            "D_mm": 170,
+            "thickness_mm": 6,
+            "length_m": 2,
+            "quantity_m": 12
+          }
+        },
+        {
+          "name_suffix": "Ø170 L=2",
+          "params": {
+            "D_mm": 170,
+            "thickness_mm": 9,
+            "length_m": 2,
+            "quantity_m": 8
+          }
+        },
+        {
+          "name_suffix": "Ø170 L=2",
+          "params": {
+            "D_mm": 170,
+            "thickness_mm": 13,
+            "length_m": 2,
+            "quantity_m": 4
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "37-39",
+      "supplier": "wheil"
+    },
+    {
+      "name": "ISOVER КАРКАС-M40-AL – УТЕПЛИТЕЛЬ С ПОКРЫТИЕМ ИЗ АЛЮМИНИЕВОЙ ФОЛЬГИ",
+      "description": "Утеплитель из стекловолокна с алюминиевым покрытием для удержания тепла.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "50 мм",
+          "params": {
+            "thickness_mm": 50,
+            "width_mm": 1200,
+            "length_mm": 14000,
+            "quantity_m2": 16.8
+          }
+        },
+        {
+          "name_suffix": "100 мм",
+          "params": {
+            "thickness_mm": 100,
+            "width_mm": 1200,
+            "length_mm": 7000,
+            "quantity_m2": 8.4
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "37-39",
+      "supplier": "wheil"
+    },
+    {
+      "name": "ТЕПЛОИЗОЛЯЦИЯ URSA M-11Ф",
+      "description": "Теплоизоляция с алюминиевым фольгированным покрытием для различных применений.",
+      "default_unit": "Рулон",
+      "variants": [
+        {
+          "name_suffix": "50 мм",
+          "params": {
+            "thickness_mm": 50
+          }
+        },
+        {
+          "name_suffix": "100 мм",
+          "params": {
+            "thickness_mm": 100
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "37-39",
+      "supplier": "wheil"
+    },
+    {
+      "name": "ТЕПЛОИЗОЛЯЦИЯ ISOTEC KIM-AL",
+      "description": "Жесткие теплоизоляционные маты из стекловолокна с алюминиевым покрытием.",
+      "default_unit": "Рулон",
+      "variants": [
+        {
+          "name_suffix": "30 мм",
+          "params": {
+            "thickness_mm": 30
+          }
+        },
+        {
+          "name_suffix": "40 мм",
+          "params": {
+            "thickness_mm": 40
+          }
+        },
+        {
+          "name_suffix": "50 мм",
+          "params": {
+            "thickness_mm": 50
+          }
+        },
+        {
+          "name_suffix": "60 мм",
+          "params": {
+            "thickness_mm": 60
+          }
+        },
+        {
+          "name_suffix": "100 мм",
+          "params": {
+            "thickness_mm": 100
+          }
+        }
+      ],
+      "catalog_section": "Теплоизоляционные материалы",
+      "category_code": "teploizolyatsionnye_materialy",
+      "source_pages": "37-39",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Заслон FS EI 30: огнезащитный состав для воздуховодов",
+      "description": "Заслон FS EI 30 представляет собой смесь органического пленкообразующего, антипиренов и специальных добавок.",
+      "default_unit": "кг",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {
+            "fire_resistance_min": 30,
+            "layer_thickness_mm": 1.7,
+            "consumption_kg_per_m2": 2.3,
+            "min_supply_kg": 35
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "40-47",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Заслон WS/GS EI 60: огнезащитный состав для воздуховодов",
+      "description": "Заслон WS/GS EI 60 представляет собой смесь минеральных наполнителей полимерсиликатного вяжущего и специальных добавок.",
+      "default_unit": "кг",
+      "variants": [
+        {
+          "name_suffix": "белый",
+          "params": {
+            "fire_resistance_min": 60,
+            "layer_thickness_mm": 3.0,
+            "consumption_kg_per_m2": 4.5,
+            "min_supply_kg": 36.7
+          }
+        },
+        {
+          "name_suffix": "серый",
+          "params": {
+            "fire_resistance_min": 60,
+            "layer_thickness_mm": 3.0,
+            "consumption_kg_per_m2": 4.5,
+            "min_supply_kg": 36.7
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "40-47",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Заслон HB EI 30, 60, 90, 150, 180: комбинированное огнезащитное покрытие для воздуховодов",
+      "description": "Заслон HB EI 30, 60, 90, 150, 180 представляет собой комбинированное огнезащитное покрытие на основе базальтового рулонного материала Заслон БОР или Заслон Базальт НВ.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI 30",
+          "params": {
+            "fire_resistance_min": 30,
+            "layer_thickness_mm": 5.5,
+            "consumption_m2": 1.0,
+            "min_supply": "3 рулона Заслон БОР-50 (по 20 м²) + 1 ведро Заслон WS/GS (по 36.7 кг)"
+          }
+        },
+        {
+          "name_suffix": "EI 60",
+          "params": {
+            "fire_resistance_min": 60,
+            "layer_thickness_mm": 5.5,
+            "consumption_m2": 1.0,
+            "min_supply": "1 рулон Заслон БОР-50 (по 20 м²) + 1 ведро Заслон WS/GS (по 36.7 кг)"
+          }
+        },
+        {
+          "name_suffix": "EI 90",
+          "params": {
+            "fire_resistance_min": 90,
+            "layer_thickness_mm": 5.5,
+            "consumption_m2": 1.0,
+            "min_supply": "2 рулона Заслон БОР-50 (по 20 м²) + 2 ведра Заслон WS/GS (по 36.7 кг)"
+          }
+        },
+        {
+          "name_suffix": "EI 150",
+          "params": {
+            "fire_resistance_min": 150,
+            "layer_thickness_mm": 5.5,
+            "consumption_m2": 1.0,
+            "min_supply": "4 рулона Заслон БОР-160 (по 12 м²) + 3 ведра Заслон WS/GS (по 36.7 кг)"
+          }
+        },
+        {
+          "name_suffix": "EI 180",
+          "params": {
+            "fire_resistance_min": 180,
+            "layer_thickness_mm": 5.5,
+            "consumption_m2": 1.0,
+            "min_supply": "2 рулона Заслон-Базальт НВ-500 (по 6 м²) + 1 ведро Заслон WS/GS (по 36.7 кг)"
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "40-47",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Заслон-Базальт НВ EI 60, 120, 150, 180: теплоогнезащитное покрытие для воздуховодов",
+      "description": "Заслон-Базальт НВ EI 60, 120, 150, 180 представляет собой теплоогнезащитный мат на основе базальтового супертонкого штапельного волокна.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI 60",
+          "params": {
+            "fire_resistance_min": 60,
+            "layer_thickness_mm": 20,
+            "min_supply_m2": 6
+          }
+        },
+        {
+          "name_suffix": "EI 120",
+          "params": {
+            "fire_resistance_min": 120,
+            "layer_thickness_mm": 40,
+            "min_supply_m2": 6
+          }
+        },
+        {
+          "name_suffix": "EI 150",
+          "params": {
+            "fire_resistance_min": 150,
+            "layer_thickness_mm": 50,
+            "min_supply_m2": 6
+          }
+        },
+        {
+          "name_suffix": "EI 180",
+          "params": {
+            "fire_resistance_min": 180,
+            "layer_thickness_mm": 70,
+            "min_supply_m2": 6
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "40-47",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Заслон БОР: базальтовый рулонный фольгированный материал",
+      "description": "Заслон БОР представляет собой мат из супертонких базальтовых волокон без связующего, прошитый базальтово-прошивным способом.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "НГ",
+          "params": {
+            "fire_resistance_min": "НГ",
+            "layer_thickness_mm": 5,
+            "min_supply_m2": 20
+          }
+        },
+        {
+          "name_suffix": "НГ",
+          "params": {
+            "fire_resistance_min": "НГ",
+            "layer_thickness_mm": 8,
+            "min_supply_m2": 20
+          }
+        },
+        {
+          "name_suffix": "НГ",
+          "params": {
+            "fire_resistance_min": "НГ",
+            "layer_thickness_mm": 10,
+            "min_supply_m2": 20
+          }
+        },
+        {
+          "name_suffix": "НГ",
+          "params": {
+            "fire_resistance_min": "НГ",
+            "layer_thickness_mm": 13,
+            "min_supply_m2": 12
+          }
+        },
+        {
+          "name_suffix": "НГ",
+          "params": {
+            "fire_resistance_min": "НГ",
+            "layer_thickness_mm": 16,
+            "min_supply_m2": 12
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "40-47",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Заслон-Металл НВ R 45, 90, 120, 150: комбинированное огнезащитное покрытие для металлоконструкций",
+      "description": "Заслон-Металл НВ R 45, 90, 120, 150 представляет собой комбинированное покрытие на основе базальтового рулонного материала.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "R 45 (ПТМ 3,5мм)",
+          "params": {
+            "fire_resistance_min": 45,
+            "layer_thickness_mm": 5,
+            "consumption_m2": 0.92,
+            "min_supply": "2 рулона Заслон БОР-50 (по 20 м²) + 1 ведро Заслон WS/GS (по 36.7 кг)"
+          }
+        },
+        {
+          "name_suffix": "R 90 (ПТМ 3,5мм)",
+          "params": {
+            "fire_resistance_min": 90,
+            "layer_thickness_mm": 5,
+            "consumption_m2": 3.4,
+            "min_supply": "1 рулон Заслон БОР-50 (по 20 м²) + 2 ведра Заслон WS/GS (по 36.7 кг)"
+          }
+        },
+        {
+          "name_suffix": "R 120 (ПТМ 3,5мм)",
+          "params": {
+            "fire_resistance_min": 120,
+            "layer_thickness_mm": 10,
+            "consumption_m2": 1.82,
+            "min_supply": "4 рулона Заслон БОР-160 (по 12 м²) + 3 ведра Заслон WS/GS (по 36.7 кг)"
+          }
+        },
+        {
+          "name_suffix": "R 150 (ПТМ 3,5мм)",
+          "params": {
+            "fire_resistance_min": 150,
+            "layer_thickness_mm": 10,
+            "consumption_m2": 3.6,
+            "min_supply": "1 рулон Заслон БОР-100 (по 20 м²) + 2 ведра Заслон WS/GS (по 36.7 кг)"
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "40-47",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Бизон: комбинированное теплоогнезащитное покрытие для воздуховодов",
+      "description": "Комбинированное покрытие на основе базальтового рулонного материала «БИЗОН», кашированного алюминиевой фольгой, и клеевого состава FSA.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI30",
+          "params": {
+            "layer_thickness_mm": 5,
+            "adhesive_layer_thickness_mm": 0.4,
+            "adhesive_consumption_kg_per_m2": 0.5
+          }
+        },
+        {
+          "name_suffix": "EI60",
+          "params": {
+            "layer_thickness_mm": 5,
+            "adhesive_layer_thickness_mm": 0.8,
+            "adhesive_consumption_kg_per_m2": 1.25
+          }
+        },
+        {
+          "name_suffix": "EI90",
+          "params": {
+            "layer_thickness_mm": 8,
+            "adhesive_layer_thickness_mm": 1.5,
+            "adhesive_consumption_kg_per_m2": 1.75
+          }
+        },
+        {
+          "name_suffix": "EI120",
+          "params": {
+            "layer_thickness_mm": 10,
+            "adhesive_layer_thickness_mm": 2,
+            "adhesive_consumption_kg_per_m2": 2.25
+          }
+        },
+        {
+          "name_suffix": "EI150",
+          "params": {
+            "layer_thickness_mm": 16,
+            "adhesive_layer_thickness_mm": 2,
+            "adhesive_consumption_kg_per_m2": 2.25
+          }
+        },
+        {
+          "name_suffix": "EI180",
+          "params": {
+            "layer_thickness_mm": 50,
+            "adhesive_layer_thickness_mm": 2,
+            "adhesive_consumption_kg_per_m2": 2.25
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "40-47",
+      "supplier": "wheil"
+    },
+    {
+      "name": "БИЗОН-1Ф: Теплоогнезащитное покрытие для воздуховодов",
+      "description": "Теплоогнезащитное покрытие для воздуховодов «БИЗОН-1Ф» представляет собой теплоизоляционные маты на основе базальтового супертонкого штапельного волокна (БСТВ) без связующего.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "6000-100",
+          "params": {
+            "length_mm": 6000,
+            "width_mm": 1000,
+            "density_kg_m3": 35,
+            "moisture_%": 2,
+            "thermal_conductivity_W_mK": 0.038
+          }
+        },
+        {
+          "name_suffix": "1000-20",
+          "params": {
+            "length_mm": 1000,
+            "width_mm": 20,
+            "density_kg_m3": 35,
+            "moisture_%": 2,
+            "thermal_conductivity_W_mK": 0.045
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "48-55",
+      "supplier": "wheil"
+    },
+    {
+      "name": "БИЗОН: Огнезащитный состав FSA",
+      "description": "Огнезащитный состав FSA представляет собой смесь минеральных наполнителей и силикатного вяжущего.",
+      "default_unit": "кг",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {
+            "thickness_mm": 3.4,
+            "density_kg_m3": 4.4
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "48-55",
+      "supplier": "wheil"
+    },
+    {
+      "name": "КРОЗ FIRESTILL 30-60: Огнезащитный самоклеящийся материал",
+      "description": "Огнезащитный самоклеящийся материал «КРОЗ FIRESTILL 30-60» представляет собой самоклеящийся рулонный огнезащитный материал.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "30",
+          "params": {
+            "length_m": 30,
+            "width_m": 1,
+            "thickness_mm": 2.5,
+            "strength_MPa": 0.1
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "48-55",
+      "supplier": "wheil"
+    },
+    {
+      "name": "КРОЗ ИЗОВЕНТ 30-90: Теплоогнезащитное комбинированное покрытие",
+      "description": "Теплоогнезащитное комбинированное покрытие «КРОЗ ИЗОВЕНТ 30-90» представляет собой комбинированное покрытие, состоящее из базальтового рулонного материала.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "20000+100",
+          "params": {
+            "length_mm": 20000,
+            "width_mm": 1000,
+            "thickness_mm": 5,
+            "thermal_conductivity_W_mK": 0.038,
+            "strength_MPa": 0.1
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "48-55",
+      "supplier": "wheil"
+    },
+    {
+      "name": "КРОЗ ИЗОВЕНТ-180: Теплоогнезащитное покрытие",
+      "description": "Теплоогнезащитное покрытие «КРОЗ ИЗОВЕНТ-180» представляет собой комбинированное покрытие, состоящее из базальтового рулонного материала.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "6000+100",
+          "params": {
+            "length_mm": 6000,
+            "width_mm": 1000,
+            "thickness_mm": 50,
+            "thermal_conductivity_W_mK": 0.038,
+            "strength_MPa": 0.1
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "48-55",
+      "supplier": "wheil"
+    },
+    {
+      "name": "ОГНЕВЕНТ-БАЗАЛЬТ: Теплоогнезащитное покрытие",
+      "description": "Теплоогнезащитное покрытие «ОГНЕВЕНТ-БАЗАЛЬТ» представляет собой теплоизоляционные маты на основе базальтового супертонкого штапельного волокна (БСТВ) без связующего.",
+      "default_unit": "м.п.",
+      "variants": [
+        {
+          "name_suffix": "6000+100",
+          "params": {
+            "length_mm": 6000,
+            "width_mm": 1000,
+            "thickness_mm": 50,
+            "density_kg_m3": 35,
+            "thermal_conductivity_W_mK": 0.038
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "48-55",
+      "supplier": "wheil"
+    },
+    {
+      "name": "ОГНЕВЕНТ: Состав огнезащитный",
+      "description": "Огнезащитный состав «ОГНЕВЕНТ» представляет собой смесь органического пленкообразователя, антипирена и специальных добавок.",
+      "default_unit": "кг",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {
+            "non_volatile_matter_%": 75.5,
+            "drying_time_h": 12,
+            "adhesion_score": 1
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "48-55",
+      "supplier": "wheil"
+    },
+    {
+      "name": "ПВК-2002: Состав огнезащитный",
+      "description": "Огнезащитный состав «ПВК-2002» представляет собой смесь минеральных наполнителей и полимеризующихся вяжущих и специальных добавок.",
+      "default_unit": "кг",
+      "variants": [
+        {
+          "name_suffix": "",
+          "params": {
+            "density_kg_m3": 1300,
+            "non_volatile_matter_%": 80.2,
+            "drying_time_h": 12,
+            "color": "серый, белый"
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "48-55",
+      "supplier": "wheil"
+    },
+    {
+      "name": "ОгнеВент - огнезащитный состав",
+      "description": "Системы конструктивной огнезащиты воздуховодов.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI 30",
+          "params": {
+            "thickness_mm": 1.7,
+            "consumption_kg_m2": 2.3,
+            "min_supply_kg": 35
+          }
+        },
+        {
+          "name_suffix": "EI 60",
+          "params": {
+            "thickness_mm": 3.5,
+            "consumption_kg_m2": 4.5,
+            "min_supply_kg": 36.7
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "56-60",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Firesitil - рулонный самоклеящийся фольгированный материал",
+      "description": "Рулонный самоклеящийся фольгированный материал для огнезащиты.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI 30",
+          "params": {
+            "thickness_mm": 2.5,
+            "consumption_m2": 1.2,
+            "min_supply_m2": 30
+          }
+        },
+        {
+          "name_suffix": "EI 60",
+          "params": {
+            "thickness_mm": 5.5,
+            "consumption_m2": 1.2,
+            "min_supply_m2": 30
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "56-60",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Изовент - базальтовый рулонный фольгированный материал + клеевой состав ПВК-2002",
+      "description": "Базальтовый рулонный фольгированный материал с клеевым составом.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI 30",
+          "params": {
+            "thickness_mm": 5,
+            "consumption_m2": 1.2,
+            "min_supply_m2": 3
+          }
+        },
+        {
+          "name_suffix": "EI 60",
+          "params": {
+            "thickness_mm": 5,
+            "consumption_m2": 1.65,
+            "min_supply_m2": 3
+          }
+        },
+        {
+          "name_suffix": "EI 90",
+          "params": {
+            "thickness_mm": 5,
+            "consumption_m2": 2.5,
+            "min_supply_m2": 2
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "56-60",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Изовент 180 - теплоогнезащитный базальтовый рулон/фольг.материал + клеевой состав ПВК-2002",
+      "description": "Теплоогнезащитный базальтовый рулонный материал с клеевым составом.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI 180",
+          "params": {
+            "thickness_mm": 5,
+            "consumption_m2": 3.5,
+            "min_supply_m2": 2
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "56-60",
+      "supplier": "wheil"
+    },
+    {
+      "name": "ОгнеВент-Базальт - базальтовый рулонный материал",
+      "description": "Базальтовый рулонный материал для огнезащиты.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI 60",
+          "params": {
+            "thickness_mm": 20,
+            "consumption_m2": 1.2
+          }
+        },
+        {
+          "name_suffix": "EI 120",
+          "params": {
+            "thickness_mm": 40,
+            "consumption_m2": 1.2
+          }
+        },
+        {
+          "name_suffix": "EI 150",
+          "params": {
+            "thickness_mm": 50,
+            "consumption_m2": 1.2
+          }
+        },
+        {
+          "name_suffix": "EI 180",
+          "params": {
+            "thickness_mm": 70,
+            "consumption_m2": 1.2
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "56-60",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Система конструктивной огнезащиты воздуховодов ОБМ-Вент",
+      "description": "Система для создания на поверхности воздуховодов теплоизолирующих экранов.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI 30",
+          "params": {
+            "thickness_mm": 5,
+            "load_kg": 1.2,
+            "OBM-5g": 1,
+            "OBM-8g": 1,
+            "OBM-13g": 1,
+            "Expert_kg": 0.6
+          }
+        },
+        {
+          "name_suffix": "EI 60",
+          "params": {
+            "thickness_mm": 5,
+            "load_kg": 1.5,
+            "OBM-5g": 1,
+            "OBM-8g": 1,
+            "OBM-13g": 1,
+            "Expert_kg": 0.8
+          }
+        },
+        {
+          "name_suffix": "EI 90",
+          "params": {
+            "thickness_mm": 8,
+            "load_kg": 2.5,
+            "OBM-5g": 1,
+            "OBM-8g": 1,
+            "OBM-13g": 1,
+            "Expert_kg": 1.6
+          }
+        },
+        {
+          "name_suffix": "EI 150",
+          "params": {
+            "thickness_mm": 13,
+            "load_kg": 3.3,
+            "OBM-5g": 1,
+            "OBM-8g": 1,
+            "OBM-13g": 1,
+            "Expert_kg": 2.3
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "56-60",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Система теплоогнезащиты воздуховодов ОБМ-Техвент",
+      "description": "Теплоогнезащитное покрытие для повышения предела огнестойкости.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "EI 60",
+          "params": {
+            "thickness_mm": 20,
+            "cover_type": "Фольга",
+            "load_kg": 0.6,
+            "material_consumption": 1
+          }
+        },
+        {
+          "name_suffix": "EI 120",
+          "params": {
+            "thickness_mm": 40,
+            "cover_type": "Сетка",
+            "load_kg": 1.2,
+            "material_consumption": 1
+          }
+        },
+        {
+          "name_suffix": "EI 180",
+          "params": {
+            "thickness_mm": 70,
+            "cover_type": "Фольга + сетка",
+            "load_kg": 2.1,
+            "material_consumption": 1
+          }
+        }
+      ],
+      "catalog_section": "Огнезащитные материалы",
+      "category_code": "ognezaschitnye_materialy",
+      "source_pages": "56-60",
+      "supplier": "wheil"
+    }
+  ]
+}

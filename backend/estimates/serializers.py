@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 from decimal import Decimal
 from django.contrib.auth.models import User
@@ -5,7 +6,13 @@ from django.contrib.auth.models import User
 from .models import (
     Project, ProjectNote, Estimate, EstimateSection,
     EstimateSubsection, EstimateCharacteristic, EstimateItem,
-    MountingEstimate
+    MountingEstimate, ColumnConfigTemplate,
+)
+from .column_defaults import (
+    DEFAULT_COLUMN_CONFIG, ALLOWED_BUILTIN_FIELDS, ALLOWED_COLUMN_TYPES,
+)
+from .formula_engine import (
+    validate_formula, topological_sort, compute_all_formulas, CycleError,
 )
 from accounting.serializers import CounterpartySerializer
 
@@ -181,23 +188,69 @@ class EstimateCharacteristicSerializer(serializers.ModelSerializer):
 
 class EstimateItemSerializer(serializers.ModelSerializer):
     """Сериализатор для строки сметы"""
-    
+
     product_name = serializers.CharField(
         source='product.name', read_only=True, allow_null=True
     )
     work_item_name = serializers.CharField(
         source='work_item.name', read_only=True, allow_null=True
     )
-    material_total = serializers.DecimalField(
-        max_digits=14, decimal_places=2, read_only=True
+    supplier_product_name = serializers.CharField(
+        source='supplier_product.title', read_only=True, allow_null=True
     )
-    work_total = serializers.DecimalField(
-        max_digits=14, decimal_places=2, read_only=True
-    )
-    line_total = serializers.DecimalField(
-        max_digits=14, decimal_places=2, read_only=True
-    )
-    
+    supplier_counterparty_name = serializers.SerializerMethodField()
+    material_total = serializers.SerializerMethodField()
+    work_total = serializers.SerializerMethodField()
+    line_total = serializers.SerializerMethodField()
+    computed_values = serializers.SerializerMethodField()
+
+    def get_material_total(self, obj):
+        val = getattr(obj, '_material_total', None)
+        if val is not None:
+            return val.quantize(Decimal('0.01'))
+        return obj.material_total
+
+    def get_work_total(self, obj):
+        val = getattr(obj, '_work_total', None)
+        if val is not None:
+            return val.quantize(Decimal('0.01'))
+        return obj.work_total
+
+    def get_line_total(self, obj):
+        val = getattr(obj, '_line_total', None)
+        if val is not None:
+            return val.quantize(Decimal('0.01'))
+        return obj.line_total
+
+    def get_supplier_counterparty_name(self, obj):
+        sp = obj.supplier_product
+        if sp and hasattr(sp, 'integration') and sp.integration and sp.integration.counterparty:
+            return sp.integration.counterparty.name
+        return None
+
+    def get_computed_values(self, obj):
+        """Вычислить formula-столбцы из column_config сметы."""
+        column_config = self.context.get('column_config')
+        if not column_config:
+            return {}
+
+        formula_cols = [c for c in column_config if c.get('type') == 'formula']
+        if not formula_cols:
+            return {}
+
+        builtin_values = {
+            'item_number': Decimal(str(obj.item_number or 0)),
+            'quantity': obj.quantity or Decimal('0'),
+            'material_unit_price': obj.material_unit_price or Decimal('0'),
+            'work_unit_price': obj.work_unit_price or Decimal('0'),
+            'material_total': self.get_material_total(obj) or Decimal('0'),
+            'work_total': self.get_work_total(obj) or Decimal('0'),
+            'line_total': self.get_line_total(obj) or Decimal('0'),
+        }
+        custom_data = obj.custom_data or {}
+        results = compute_all_formulas(column_config, builtin_values, custom_data)
+        return {k: str(v) if v is not None else None for k, v in results.items()}
+
     class Meta:
         model = EstimateItem
         fields = [
@@ -205,9 +258,12 @@ class EstimateItemSerializer(serializers.ModelSerializer):
             'item_number', 'name', 'model_name', 'unit', 'quantity',
             'material_unit_price', 'work_unit_price',
             'product', 'product_name', 'work_item', 'work_item_name',
+            'supplier_product', 'supplier_product_name',
+            'supplier_counterparty_name',
             'is_analog', 'analog_reason', 'original_name',
             'source_price_history',
             'material_total', 'work_total', 'line_total',
+            'custom_data', 'computed_values',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -272,57 +328,67 @@ class EstimateSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     
-    # Вычисляемые поля
-    total_materials_sale = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        read_only=True
-    )
-    total_works_sale = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        read_only=True
-    )
-    total_materials_purchase = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        read_only=True
-    )
-    total_works_purchase = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        read_only=True
-    )
-    total_sale = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        read_only=True
-    )
-    total_purchase = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        read_only=True
-    )
-    vat_amount = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        read_only=True
-    )
-    total_with_vat = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        read_only=True
-    )
-    profit_amount = serializers.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        read_only=True
-    )
-    profit_percent = serializers.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        read_only=True
-    )
+    # Вычисляемые поля — используют DB-аннотации с fallback на @cached_property
+    total_materials_sale = serializers.SerializerMethodField()
+    total_works_sale = serializers.SerializerMethodField()
+    total_materials_purchase = serializers.SerializerMethodField()
+    total_works_purchase = serializers.SerializerMethodField()
+    total_sale = serializers.SerializerMethodField()
+    total_purchase = serializers.SerializerMethodField()
+    vat_amount = serializers.SerializerMethodField()
+    total_with_vat = serializers.SerializerMethodField()
+    profit_amount = serializers.SerializerMethodField()
+    profit_percent = serializers.SerializerMethodField()
+
+    def _get_annotated_or_prop(self, obj, annotation_name, prop_name):
+        val = getattr(obj, annotation_name, None)
+        if val is not None:
+            return val
+        return getattr(obj, prop_name)
+
+    def get_total_materials_sale(self, obj):
+        return self._get_annotated_or_prop(obj, '_total_materials_sale', 'total_materials_sale')
+
+    def get_total_works_sale(self, obj):
+        return self._get_annotated_or_prop(obj, '_total_works_sale', 'total_works_sale')
+
+    def get_total_materials_purchase(self, obj):
+        return self._get_annotated_or_prop(obj, '_total_materials_purchase', 'total_materials_purchase')
+
+    def get_total_works_purchase(self, obj):
+        return self._get_annotated_or_prop(obj, '_total_works_purchase', 'total_works_purchase')
+
+    def get_total_sale(self, obj):
+        ms = self.get_total_materials_sale(obj) or Decimal('0')
+        ws = self.get_total_works_sale(obj) or Decimal('0')
+        return ms + ws
+
+    def get_total_purchase(self, obj):
+        mp = self.get_total_materials_purchase(obj) or Decimal('0')
+        wp = self.get_total_works_purchase(obj) or Decimal('0')
+        return mp + wp
+
+    def get_vat_amount(self, obj):
+        if not obj.with_vat:
+            return Decimal('0')
+        total_sale = self.get_total_sale(obj) or Decimal('0')
+        return (total_sale * obj.vat_rate / Decimal('100')).quantize(Decimal('0.01'))
+
+    def get_total_with_vat(self, obj):
+        total_sale = self.get_total_sale(obj) or Decimal('0')
+        return total_sale + self.get_vat_amount(obj)
+
+    def get_profit_amount(self, obj):
+        total_sale = self.get_total_sale(obj) or Decimal('0')
+        total_purchase = self.get_total_purchase(obj) or Decimal('0')
+        return total_sale - total_purchase
+
+    def get_profit_percent(self, obj):
+        total_sale = self.get_total_sale(obj) or Decimal('0')
+        if total_sale == 0:
+            return Decimal('0')
+        profit = self.get_profit_amount(obj)
+        return ((profit / total_sale) * 100).quantize(Decimal('0.01'))
     
     class Meta:
         model = Estimate
@@ -334,7 +400,8 @@ class EstimateSerializer(serializers.ModelSerializer):
             'status_display', 'approved_by_customer', 'approved_date',
             'created_by', 'created_by_username', 'checked_by',
             'checked_by_username', 'approved_by', 'approved_by_username',
-            'parent_version', 'version_number', 'sections', 'characteristics',
+            'parent_version', 'version_number', 'column_config',
+            'sections', 'characteristics',
             'total_materials_sale', 'total_works_sale',
             'total_materials_purchase', 'total_works_purchase',
             'total_sale', 'total_purchase', 'vat_amount', 'total_with_vat',
@@ -344,7 +411,68 @@ class EstimateSerializer(serializers.ModelSerializer):
             'id', 'number', 'version_number', 'parent_version',
             'created_at', 'updated_at'
         ]
-    
+
+    _KEY_RE = re.compile(r'^[a-z][a-z0-9_]{0,49}$')
+
+    def validate_column_config(self, value):
+        """Валидация конфигурации столбцов."""
+        if not value:
+            return value
+
+        if not isinstance(value, list):
+            raise serializers.ValidationError('column_config должен быть списком')
+
+        keys_seen = set()
+        errors = []
+        for i, col in enumerate(value):
+            if not isinstance(col, dict):
+                errors.append(f'Столбец #{i}: должен быть объектом')
+                continue
+
+            key = col.get('key', '')
+            col_type = col.get('type', '')
+
+            if not key or not self._KEY_RE.match(key):
+                errors.append(
+                    f'Столбец #{i}: key должен содержать только [a-z0-9_], '
+                    f'начинаться с буквы, длина 1-50'
+                )
+            if key in keys_seen:
+                errors.append(f'Столбец #{i}: дублирующийся key "{key}"')
+            keys_seen.add(key)
+
+            if col_type not in ALLOWED_COLUMN_TYPES:
+                errors.append(f'Столбец "{key}": недопустимый тип "{col_type}"')
+
+            if col_type == 'builtin':
+                bf = col.get('builtin_field')
+                if bf not in ALLOWED_BUILTIN_FIELDS:
+                    errors.append(f'Столбец "{key}": недопустимое builtin_field "{bf}"')
+
+            if col_type == 'custom_select':
+                opts = col.get('options')
+                if not opts or not isinstance(opts, list) or len(opts) == 0:
+                    errors.append(f'Столбец "{key}": custom_select требует непустой options')
+
+            if col_type == 'formula':
+                formula = col.get('formula', '')
+                if formula:
+                    formula_errors = validate_formula(formula, keys_seen | ALLOWED_BUILTIN_FIELDS)
+                    for fe in formula_errors:
+                        errors.append(f'Столбец "{key}": {fe}')
+
+        # Check for cycles
+        if not errors:
+            try:
+                topological_sort(value)
+            except CycleError as e:
+                errors.append(str(e))
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return value
+
     def get_projects(self, obj):
         """Возвращает краткую информацию о проектах"""
         request = self.context.get('request')
@@ -434,6 +562,28 @@ class MountingEstimateSerializer(serializers.ModelSerializer):
                 'name': obj.source_estimate.name
             }
         return None
+
+
+class ColumnConfigTemplateSerializer(serializers.ModelSerializer):
+    """Сериализатор для шаблонов конфигурации столбцов."""
+
+    created_by_username = serializers.CharField(
+        source='created_by.username', read_only=True
+    )
+
+    class Meta:
+        model = ColumnConfigTemplate
+        fields = [
+            'id', 'name', 'description', 'column_config',
+            'is_default', 'created_by', 'created_by_username',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
+
+    def validate_column_config(self, value):
+        """Переиспользуем валидацию из EstimateSerializer."""
+        dummy = EstimateSerializer()
+        return dummy.validate_column_config(value)
 
 
 class MountingEstimateCreateFromEstimateSerializer(serializers.Serializer):

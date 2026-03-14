@@ -300,17 +300,26 @@ class InvoiceService:
                 invoice, parsed_invoice,
             )
 
+            # 6.5. Валидация: сумма позиций vs amount_gross
+            items_total_warning = InvoiceService._validate_items_total(
+                invoice, parsed_invoice,
+            )
+
             # 7. Перевести в REVIEW
             invoice.status = Invoice.Status.REVIEW
             invoice.save()
 
+            comment = (
+                f'LLM распознавание завершено '
+                f'(confidence: {invoice.recognition_confidence})'
+            )
+            if items_total_warning:
+                comment += f'\n{items_total_warning}'
+
             InvoiceEvent.objects.create(
                 invoice=invoice,
                 event_type=InvoiceEvent.EventType.RECOGNIZED,
-                comment=(
-                    f'LLM распознавание завершено '
-                    f'(confidence: {invoice.recognition_confidence})'
-                ),
+                comment=comment,
             )
 
             # Обновить BulkImportSession если есть
@@ -655,15 +664,26 @@ class InvoiceService:
         invoice.invoice_file.seek(0)
         file_hash = hashlib.sha256(file_content).hexdigest()
 
-        parsed_doc = ParsedDocument.objects.create(
+        parsed_doc, created = ParsedDocument.objects.get_or_create(
             file_hash=file_hash,
-            original_filename=invoice.invoice_file.name,
-            provider=LLMProvider.get_default(),
-            parsed_data=parsed_invoice.model_dump(mode='json'),
-            confidence_score=parsed_invoice.confidence,
-            processing_time_ms=processing_time,
-            status=ParsedDocument.Status.SUCCESS,
+            defaults={
+                'original_filename': invoice.invoice_file.name,
+                'provider': LLMProvider.get_default(),
+                'parsed_data': parsed_invoice.model_dump(mode='json'),
+                'confidence_score': parsed_invoice.confidence,
+                'processing_time_ms': processing_time,
+                'status': ParsedDocument.Status.SUCCESS,
+            },
         )
+        if not created:
+            # Файл уже был распознан ранее — обновляем данные
+            parsed_doc.parsed_data = parsed_invoice.model_dump(mode='json')
+            parsed_doc.confidence_score = parsed_invoice.confidence
+            parsed_doc.processing_time_ms = processing_time
+            parsed_doc.status = ParsedDocument.Status.SUCCESS
+            parsed_doc.save(update_fields=[
+                'parsed_data', 'confidence_score', 'processing_time_ms', 'status',
+            ])
         return parsed_doc
 
     @staticmethod
@@ -683,6 +703,15 @@ class InvoiceService:
             invoice.vat_amount = totals.vat_amount
             if totals.amount_gross and totals.vat_amount:
                 invoice.amount_net = totals.amount_gross - totals.vat_amount
+
+        # Наследуем объект из сметы
+        if not invoice.object_id and invoice.estimate_id:
+            try:
+                estimate = invoice.estimate
+                if estimate and estimate.object_id:
+                    invoice.object_id = estimate.object_id
+            except Exception:
+                pass
 
     @staticmethod
     def _match_or_create_counterparty(invoice: Invoice, parsed_invoice, auto_create: bool = False):
@@ -780,6 +809,42 @@ class InvoiceService:
             )
 
         return []
+
+    @staticmethod
+    def _validate_items_total(invoice: Invoice, parsed_invoice) -> Optional[str]:
+        """
+        Сравнивает сумму позиций с amount_gross.
+        Если расхождение > 5% — снижает confidence и возвращает предупреждение.
+        """
+        from decimal import Decimal
+
+        if not invoice.amount_gross:
+            return None
+
+        items_total = Decimal('0')
+        for item in parsed_invoice.items:
+            if item.quantity and item.price_per_unit:
+                items_total += Decimal(str(item.quantity)) * Decimal(str(item.price_per_unit))
+
+        if items_total == 0:
+            return None
+
+        gross = Decimal(str(invoice.amount_gross))
+        if gross == 0:
+            return None
+
+        diff_pct = abs(items_total - gross) / gross * 100
+
+        if diff_pct > 5:
+            if invoice.recognition_confidence and invoice.recognition_confidence > 0.5:
+                invoice.recognition_confidence = round(
+                    invoice.recognition_confidence * 0.7, 2,
+                )
+            return (
+                f'⚠ Сумма позиций ({items_total:.2f}) расходится с итогом счёта '
+                f'({gross:.2f}) на {diff_pct:.1f}%. Возможно неверно распознаны цены.'
+            )
+        return None
 
     @staticmethod
     def _create_products_from_items(invoice: Invoice):

@@ -1,0 +1,605 @@
+{
+  "supplier": "wheil",
+  "source_file": "wheil_grilles_Thm05c1.pdf",
+  "total_products": 12,
+  "total_variants": 61,
+  "products": [
+    {
+      "name": "Инерционная решетка GR",
+      "description": "Инерционная решетка GR предназначена для удаления воздуха из помещений.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "100x100",
+          "params": {
+            "A_mm": 100,
+            "B_mm": 100,
+            "weight_kg": 0.17
+          }
+        },
+        {
+          "name_suffix": "150x150",
+          "params": {
+            "A_mm": 150,
+            "B_mm": 150,
+            "weight_kg": 0.3
+          }
+        },
+        {
+          "name_suffix": "200x200",
+          "params": {
+            "A_mm": 200,
+            "B_mm": 200,
+            "weight_kg": 0.47
+          }
+        },
+        {
+          "name_suffix": "250x250",
+          "params": {
+            "A_mm": 250,
+            "B_mm": 250,
+            "weight_kg": 0.7
+          }
+        },
+        {
+          "name_suffix": "300x300",
+          "params": {
+            "A_mm": 300,
+            "B_mm": 300,
+            "weight_kg": 0.98
+          }
+        },
+        {
+          "name_suffix": "350x350",
+          "params": {
+            "A_mm": 350,
+            "B_mm": 350,
+            "weight_kg": 1.34
+          }
+        },
+        {
+          "name_suffix": "400x400",
+          "params": {
+            "A_mm": 400,
+            "B_mm": 400,
+            "weight_kg": 1.77
+          }
+        },
+        {
+          "name_suffix": "450x450",
+          "params": {
+            "A_mm": 450,
+            "B_mm": 450,
+            "weight_kg": 2.26
+          }
+        },
+        {
+          "name_suffix": "500x500",
+          "params": {
+            "A_mm": 500,
+            "B_mm": 500,
+            "weight_kg": 2.81
+          }
+        },
+        {
+          "name_suffix": "550x550",
+          "params": {
+            "A_mm": 550,
+            "B_mm": 550,
+            "weight_kg": 3.42
+          }
+        },
+        {
+          "name_suffix": "600x600",
+          "params": {
+            "A_mm": 600,
+            "B_mm": 600,
+            "weight_kg": 4.09
+          }
+        },
+        {
+          "name_suffix": "650x650",
+          "params": {
+            "A_mm": 650,
+            "B_mm": 650,
+            "weight_kg": 4.82
+          }
+        },
+        {
+          "name_suffix": "700x700",
+          "params": {
+            "A_mm": 700,
+            "B_mm": 700,
+            "weight_kg": 5.61
+          }
+        },
+        {
+          "name_suffix": "750x750",
+          "params": {
+            "A_mm": 750,
+            "B_mm": 750,
+            "weight_kg": 6.46
+          }
+        },
+        {
+          "name_suffix": "800x800",
+          "params": {
+            "A_mm": 800,
+            "B_mm": 800,
+            "weight_kg": 7.37
+          }
+        },
+        {
+          "name_suffix": "850x850",
+          "params": {
+            "A_mm": 850,
+            "B_mm": 850,
+            "weight_kg": 8.34
+          }
+        },
+        {
+          "name_suffix": "900x900",
+          "params": {
+            "A_mm": 900,
+            "B_mm": 900,
+            "weight_kg": 9.37
+          }
+        },
+        {
+          "name_suffix": "950x950",
+          "params": {
+            "A_mm": 950,
+            "B_mm": 950,
+            "weight_kg": 10.46
+          }
+        },
+        {
+          "name_suffix": "1000x1000",
+          "params": {
+            "A_mm": 1000,
+            "B_mm": 1000,
+            "weight_kg": 11.61
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные из алюминия",
+      "category_code": "VENT_GRILLES",
+      "source_pages": "26-33",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Инерционная решетка ZN",
+      "description": "Инерционная решетка ZN представляет собой решетку с гравитационным жалюзи.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1200x600",
+          "params": {
+            "A_mm": 1200,
+            "B_mm": 600
+          }
+        },
+        {
+          "name_suffix": "600x1200",
+          "params": {
+            "A_mm": 600,
+            "B_mm": 1200
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные из алюминия",
+      "category_code": "VENT_GRILLES",
+      "source_pages": "26-33",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Переточная решетка GF",
+      "description": "Переточная решетка GF предназначена для перераспределения воздуха между помещениями.",
+      "default_unit": "м²",
+      "variants": [
+        {
+          "name_suffix": "200x200",
+          "params": {
+            "A_mm": 200,
+            "B_mm": 200,
+            "F_cc_m2": 0.007,
+            "weight_kg": 0.46
+          }
+        },
+        {
+          "name_suffix": "250x250",
+          "params": {
+            "A_mm": 250,
+            "B_mm": 250,
+            "F_cc_m2": 0.012,
+            "weight_kg": 0.64
+          }
+        },
+        {
+          "name_suffix": "300x300",
+          "params": {
+            "A_mm": 300,
+            "B_mm": 300,
+            "F_cc_m2": 0.018,
+            "weight_kg": 0.87
+          }
+        },
+        {
+          "name_suffix": "350x350",
+          "params": {
+            "A_mm": 350,
+            "B_mm": 350,
+            "F_cc_m2": 0.025,
+            "weight_kg": 1.15
+          }
+        },
+        {
+          "name_suffix": "400x400",
+          "params": {
+            "A_mm": 400,
+            "B_mm": 400,
+            "F_cc_m2": 0.033,
+            "weight_kg": 1.48
+          }
+        },
+        {
+          "name_suffix": "450x450",
+          "params": {
+            "A_mm": 450,
+            "B_mm": 450,
+            "F_cc_m2": 0.042,
+            "weight_kg": 1.85
+          }
+        },
+        {
+          "name_suffix": "500x500",
+          "params": {
+            "A_mm": 500,
+            "B_mm": 500,
+            "F_cc_m2": 0.052,
+            "weight_kg": 2.27
+          }
+        },
+        {
+          "name_suffix": "550x550",
+          "params": {
+            "A_mm": 550,
+            "B_mm": 550,
+            "F_cc_m2": 0.063,
+            "weight_kg": 2.74
+          }
+        },
+        {
+          "name_suffix": "600x600",
+          "params": {
+            "A_mm": 600,
+            "B_mm": 600,
+            "F_cc_m2": 0.075,
+            "weight_kg": 3.26
+          }
+        },
+        {
+          "name_suffix": "650x650",
+          "params": {
+            "A_mm": 650,
+            "B_mm": 650,
+            "F_cc_m2": 0.088,
+            "weight_kg": 3.83
+          }
+        },
+        {
+          "name_suffix": "700x700",
+          "params": {
+            "A_mm": 700,
+            "B_mm": 700,
+            "F_cc_m2": 0.102,
+            "weight_kg": 4.45
+          }
+        },
+        {
+          "name_suffix": "750x750",
+          "params": {
+            "A_mm": 750,
+            "B_mm": 750,
+            "F_cc_m2": 0.117,
+            "weight_kg": 5.12
+          }
+        },
+        {
+          "name_suffix": "800x800",
+          "params": {
+            "A_mm": 800,
+            "B_mm": 800,
+            "F_cc_m2": 0.133,
+            "weight_kg": 5.84
+          }
+        },
+        {
+          "name_suffix": "850x850",
+          "params": {
+            "A_mm": 850,
+            "B_mm": 850,
+            "F_cc_m2": 0.15,
+            "weight_kg": 6.61
+          }
+        },
+        {
+          "name_suffix": "900x900",
+          "params": {
+            "A_mm": 900,
+            "B_mm": 900,
+            "F_cc_m2": 0.168,
+            "weight_kg": 7.43
+          }
+        },
+        {
+          "name_suffix": "950x950",
+          "params": {
+            "A_mm": 950,
+            "B_mm": 950,
+            "F_cc_m2": 0.187,
+            "weight_kg": 8.3
+          }
+        },
+        {
+          "name_suffix": "1000x1000",
+          "params": {
+            "A_mm": 1000,
+            "B_mm": 1000,
+            "F_cc_m2": 0.207,
+            "weight_kg": 9.22
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные из алюминия",
+      "category_code": "VENT_GRILLES",
+      "source_pages": "26-33",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Сотовая решетка NJ",
+      "description": "Сотовая решетка NJ используется как декоративный элемент в вентиляционных системах.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1200x1200",
+          "params": {
+            "A_mm": 1200,
+            "B_mm": 1200
+          }
+        },
+        {
+          "name_suffix": "1200x600",
+          "params": {
+            "A_mm": 1200,
+            "B_mm": 600
+          }
+        },
+        {
+          "name_suffix": "600x1200",
+          "params": {
+            "A_mm": 600,
+            "B_mm": 1200
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные из алюминия",
+      "category_code": "VENT_GRILLES",
+      "source_pages": "26-33",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Перфорированная решетка PV",
+      "description": "Перфорированная решетка PV используется как декоративный элемент в вентиляционных системах.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1200x1200",
+          "params": {
+            "A_mm": 1200,
+            "B_mm": 1200
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные из алюминия",
+      "category_code": "VENT_GRILLES",
+      "source_pages": "26-33",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка с четырехсторонним распределением нерегулируемая TN",
+      "description": "Решетка TN предназначена для подачи воздуха в системах вентиляции и кондиционирования.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "1200x1200",
+          "params": {
+            "A_mm": 1200,
+            "B_mm": 1200
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные из алюминия",
+      "category_code": "VENT_GRILLES",
+      "source_pages": "26-33",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Решетка вентиляционная нерегулируемая ZW",
+      "description": "Вентиляционная однорядная алюминиевая решетка типа ZW, представляет собой решетку с одним рядом неподвижных жалюзи специальной аэродинамической формы.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "2000x1600",
+          "params": {
+            "A_mm": 2000,
+            "B_mm": 1600
+          }
+        },
+        {
+          "name_suffix": "1600x2000",
+          "params": {
+            "A_mm": 1600,
+            "B_mm": 2000
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные из алюминия",
+      "category_code": "VENT_GRILLES",
+      "source_pages": "34-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Клапан расхода воздуха КРВ",
+      "description": "Клапан расхода воздуха изготовлен из алюминиевого профиля в виде рамки и горизонтально расположенных жалюзи.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "600x600",
+          "params": {
+            "A_mm": 600,
+            "B_mm": 600
+          }
+        }
+      ],
+      "catalog_section": "Решетки вентиляционные из алюминия",
+      "category_code": "VENT_GRILLES",
+      "source_pages": "34-36",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Диффузоры ДПУ-М",
+      "description": "Данный тип диффузоров предназначен для подачи и удаления воздуха в системах вентиляции и кондиционирования в жилых, общественных и административных помещениях.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "Ø100",
+          "params": {
+            "D_mm": 100
+          }
+        },
+        {
+          "name_suffix": "Ø125",
+          "params": {
+            "D_mm": 125
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø200",
+          "params": {
+            "D_mm": 200
+          }
+        }
+      ],
+      "catalog_section": "Диффузоры",
+      "category_code": "DIFFUSERS",
+      "source_pages": "37-38",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Приточные диффузоры",
+      "description": "Предназначены исключительно для установки в приточные системы вентиляции и кондиционирования в общественных, жилых и административных зданиях.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "Ø100",
+          "params": {
+            "D_mm": 100
+          }
+        },
+        {
+          "name_suffix": "Ø125",
+          "params": {
+            "D_mm": 125
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø200",
+          "params": {
+            "D_mm": 200
+          }
+        }
+      ],
+      "catalog_section": "Диффузоры",
+      "category_code": "DIFFUSERS",
+      "source_pages": "37-38",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Вытяжные диффузоры",
+      "description": "Данный вид диффузора применяется в вытяжных системах вентиляции и кондиционирования в жилых и нежилых помещениях.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "Ø100",
+          "params": {
+            "D_mm": 100
+          }
+        },
+        {
+          "name_suffix": "Ø125",
+          "params": {
+            "D_mm": 125
+          }
+        },
+        {
+          "name_suffix": "Ø160",
+          "params": {
+            "D_mm": 160
+          }
+        },
+        {
+          "name_suffix": "Ø200",
+          "params": {
+            "D_mm": 200
+          }
+        }
+      ],
+      "catalog_section": "Диффузоры",
+      "category_code": "DIFFUSERS",
+      "source_pages": "37-38",
+      "supplier": "wheil"
+    },
+    {
+      "name": "Диффузоры потолочные четырехсторонние ДП-4, ДПР-4",
+      "description": "Диффузоры широко применяются в системах вентиляции и кондиционирования в административных, жилых и общественных зданиях.",
+      "default_unit": "шт",
+      "variants": [
+        {
+          "name_suffix": "300 мм",
+          "params": {
+            "size_mm": 300
+          }
+        },
+        {
+          "name_suffix": "450 мм",
+          "params": {
+            "size_mm": 450
+          }
+        },
+        {
+          "name_suffix": "600 мм",
+          "params": {
+            "size_mm": 600
+          }
+        }
+      ],
+      "catalog_section": "Диффузоры",
+      "category_code": "DIFFUSERS",
+      "source_pages": "37-38",
+      "supplier": "wheil"
+    }
+  ]
+}

@@ -408,6 +408,11 @@ class Counterparty(TimestampedModel):
         default=True,
         verbose_name='Активен'
     )
+    is_public = models.BooleanField(
+        default=False,
+        verbose_name='Показывать в публичном API',
+        help_text='Если включено — поставщик будет виден внешним пользователям публичного API',
+    )
 
     class Meta:
         verbose_name = 'Контрагент'

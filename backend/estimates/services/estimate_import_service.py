@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from decimal import Decimal, InvalidOperation
@@ -181,6 +182,7 @@ class EstimateImportService:
 
         provider_model = LLMProvider.get_default()
         if not provider_model:
+            logger.warning("No default LLM provider configured")
             return ParsedEstimate(rows=[], sections=[], total_rows=0, confidence=0.0)
 
         provider = get_provider(provider_model)
@@ -189,56 +191,108 @@ class EstimateImportService:
 Извлеки все строки сметы в структурированном виде.
 
 Для каждой строки укажи:
-- item_number: порядковый номер
-- name: наименование товара/материала/оборудования
-- model_name: модель/марка/артикул (если есть)
-- unit: единица измерения (шт, м.п., м², компл, кг и т.д.)
+- item_number: порядковый номер (целое число)
+- name: наименование товара/материала/оборудования (строка)
+- model_name: модель/марка/артикул, если есть (строка, "" если нет)
+- unit: единица измерения — шт, м.п., м², компл, кг и т.д. (строка)
 - quantity: количество (число)
 - material_unit_price: цена материала за единицу (число, 0 если не указана)
 - work_unit_price: цена работы за единицу (число, 0 если не указана)
-- section_name: название раздела/системы, к которому относится строка
+- section_name: название раздела/системы, к которому относится строка (строка, "" если нет)
 
-Верни JSON в формате:
+Верни ТОЛЬКО валидный JSON без markdown-форматирования в формате:
 {
-  "rows": [...],
-  "sections": ["список уникальных разделов"],
-  "confidence": 0.0-1.0
+  "rows": [{"item_number": 1, "name": "...", "model_name": "", "unit": "шт", "quantity": 1, "material_unit_price": 0, "work_unit_price": 0, "section_name": ""}],
+  "sections": ["список уникальных названий разделов"],
+  "confidence": 0.85
 }"""
 
-        import base64
-        file_b64 = base64.b64encode(file_content).decode()
+        # Определяем тип файла
+        ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'pdf'
+        file_type = ext if ext in ('pdf', 'png', 'jpg', 'jpeg') else 'pdf'
+
+        # Ограничиваем PDF — макс 15 страниц, чтобы не убить воркер по памяти/таймауту
+        if file_type == 'pdf':
+            try:
+                import fitz
+                doc = fitz.open(stream=file_content, filetype="pdf")
+                total_pages = len(doc)
+                if total_pages > 15:
+                    logger.info(f"PDF has {total_pages} pages, truncating to 15")
+                    new_doc = fitz.open()
+                    new_doc.insert_pdf(doc, to_page=14)
+                    file_content = new_doc.tobytes()
+                    new_doc.close()
+                doc.close()
+            except Exception as e:
+                logger.warning(f"PDF pre-processing failed: {e}")
 
         try:
-            result = provider.parse_with_schema(
+            response = provider.parse_with_prompt(
                 file_content=file_content,
-                filename=filename,
+                file_type=file_type,
                 system_prompt=system_prompt,
-                response_schema=ParsedEstimate,
+                user_prompt="Извлеки все строки из этой сметы:",
             )
-            if isinstance(result, ParsedEstimate):
-                result.total_rows = len(result.rows)
+            return self._parse_llm_response(response)
+        except json.JSONDecodeError as e:
+            logger.warning(f"PDF estimate: truncated/invalid JSON, salvaging rows: {e}")
+            raw = e.doc if hasattr(e, 'doc') else ''
+            result = self._salvage_truncated_json(raw)
+            if result.rows:
                 return result
-        except AttributeError:
-            try:
-                response = provider.parse_document(file_content, filename, system_prompt)
-                if response and isinstance(response, dict):
-                    rows_data = response.get('rows', [])
-                    parsed_rows = []
-                    for r in rows_data:
-                        try:
-                            parsed_rows.append(EstimateImportRow(**r))
-                        except Exception:
-                            continue
-                    return ParsedEstimate(
-                        rows=parsed_rows,
-                        sections=response.get('sections', []),
-                        total_rows=len(parsed_rows),
-                        confidence=response.get('confidence', 0.5),
-                    )
-            except Exception as e:
-                logger.error(f"PDF parsing failed: {e}")
+        except Exception as e:
+            logger.error(f"PDF estimate parsing failed: {e}", exc_info=True)
 
         return ParsedEstimate(rows=[], sections=[], total_rows=0, confidence=0.0)
+
+    @staticmethod
+    def _parse_llm_response(response: dict) -> ParsedEstimate:
+        if not response or not isinstance(response, dict):
+            return ParsedEstimate(rows=[], sections=[], total_rows=0, confidence=0.0)
+        rows_data = response.get('rows', [])
+        parsed_rows = []
+        for r in rows_data:
+            try:
+                parsed_rows.append(EstimateImportRow(**r))
+            except Exception:
+                continue
+        return ParsedEstimate(
+            rows=parsed_rows,
+            sections=response.get('sections', []),
+            total_rows=len(parsed_rows),
+            confidence=response.get('confidence', 0.5),
+        )
+
+    @staticmethod
+    def _salvage_truncated_json(raw_content: str) -> ParsedEstimate:
+        """Извлекает строки из обрезанного JSON-ответа LLM."""
+        if not raw_content:
+            return ParsedEstimate(rows=[], sections=[], total_rows=0, confidence=0.0)
+        parsed_rows = []
+        # Находим все полные JSON-объекты строк внутри массива rows
+        rows_match = re.search(r'"rows"\s*:\s*\[', raw_content)
+        if not rows_match:
+            return ParsedEstimate(rows=[], sections=[], total_rows=0, confidence=0.0)
+        rows_start = rows_match.end()
+        # Ищем все полные объекты {...} один за другим
+        pos = rows_start
+        brace_pattern = re.compile(r'\{[^{}]*\}')
+        for m in brace_pattern.finditer(raw_content, pos):
+            try:
+                obj = json.loads(m.group())
+                if 'name' in obj:
+                    parsed_rows.append(EstimateImportRow(**obj))
+            except Exception:
+                continue
+        if parsed_rows:
+            logger.info(f"Salvaged {len(parsed_rows)} rows from truncated JSON")
+        return ParsedEstimate(
+            rows=parsed_rows,
+            sections=[],
+            total_rows=len(parsed_rows),
+            confidence=0.3,
+        )
 
     @transaction.atomic
     def save_imported_items(
@@ -432,6 +486,9 @@ class EstimateImportService:
             sort_order__lt=section.sort_order,
         ).order_by('-sort_order').first()
 
+        # Флаг: при fallback на следующую секцию строки вставляем ПЕРЕД её items
+        prepend = False
+
         if not prev_section:
             prev_section = EstimateSection.objects.filter(
                 estimate=estimate,
@@ -442,11 +499,8 @@ class EstimateImportService:
                     name='Основной раздел',
                     sort_order=0,
                 )
-
-        max_sort = (
-            EstimateItem.objects.filter(section=prev_section)
-            .aggregate(m=Max('sort_order'))['m'] or 0
-        )
+            else:
+                prepend = True
 
         # Строки бывшего раздела — в порядке отображения
         demoted_item_pks = list(
@@ -454,26 +508,178 @@ class EstimateImportService:
             .values_list('pk', flat=True)
         )
 
-        # Новая строка встаёт сразу после последнего item предыдущей секции
-        new_item = EstimateItem.objects.create(
-            estimate=estimate,
-            section=prev_section,
-            name=section.name,
-            sort_order=max_sort + 1,
-            item_number=0,
-            unit='шт',
-            quantity=0,
-            material_unit_price=0,
-            work_unit_price=0,
-        )
+        demoted_count = len(demoted_item_pks) + 1  # +1 для новой строки-заголовка
 
-        # Бывшие items раздела идут сразу после новой строки (sort_order не пересекается)
-        for offset, pk in enumerate(demoted_item_pks, start=2):
-            EstimateItem.objects.filter(pk=pk).update(
+        if prepend:
+            # Сдвигаем существующие items целевой секции вниз, освобождая место
+            prev_section.items.update(sort_order=F('sort_order') + demoted_count + 1)
+
+            # Новая строка встаёт первой в целевой секции
+            new_item = EstimateItem.objects.create(
+                estimate=estimate,
                 section=prev_section,
-                sort_order=max_sort + offset,
+                name=section.name,
+                sort_order=1,
+                item_number=0,
+                unit='шт',
+                quantity=0,
+                material_unit_price=0,
+                work_unit_price=0,
             )
+
+            # Бывшие items раздела идут сразу после новой строки
+            for offset, pk in enumerate(demoted_item_pks, start=2):
+                EstimateItem.objects.filter(pk=pk).update(
+                    section=prev_section,
+                    sort_order=offset,
+                )
+        else:
+            max_sort = (
+                EstimateItem.objects.filter(section=prev_section)
+                .aggregate(m=Max('sort_order'))['m'] or 0
+            )
+
+            # Новая строка встаёт сразу после последнего item предыдущей секции
+            new_item = EstimateItem.objects.create(
+                estimate=estimate,
+                section=prev_section,
+                name=section.name,
+                sort_order=max_sort + 1,
+                item_number=0,
+                unit='шт',
+                quantity=0,
+                material_unit_price=0,
+                work_unit_price=0,
+            )
+
+            # Бывшие items раздела идут сразу после новой строки
+            for offset, pk in enumerate(demoted_item_pks, start=2):
+                EstimateItem.objects.filter(pk=pk).update(
+                    section=prev_section,
+                    sort_order=max_sort + offset,
+                )
 
         section.delete()
         self._renumber_items(estimate)
         return {'item_id': new_item.id}
+
+    @transaction.atomic
+    def move_item_up(self, item_id: int) -> Dict[str, Any]:
+        """Перемещает строку на одну позицию вверх внутри своей секции."""
+        item = EstimateItem.objects.get(pk=item_id)
+
+        prev_item = (
+            EstimateItem.objects.filter(
+                section=item.section,
+                sort_order__lt=item.sort_order,
+            )
+            .order_by('-sort_order')
+            .first()
+        )
+        if not prev_item:
+            return {'moved': False}
+
+        # Swap sort_order
+        item.sort_order, prev_item.sort_order = prev_item.sort_order, item.sort_order
+        item.save(update_fields=['sort_order'])
+        prev_item.save(update_fields=['sort_order'])
+
+        self._renumber_items(item.estimate)
+        return {'moved': True}
+
+    @transaction.atomic
+    def move_item_down(self, item_id: int) -> Dict[str, Any]:
+        """Перемещает строку на одну позицию вниз внутри своей секции."""
+        item = EstimateItem.objects.get(pk=item_id)
+
+        next_item = (
+            EstimateItem.objects.filter(
+                section=item.section,
+                sort_order__gt=item.sort_order,
+            )
+            .order_by('sort_order')
+            .first()
+        )
+        if not next_item:
+            return {'moved': False}
+
+        # Swap sort_order
+        item.sort_order, next_item.sort_order = next_item.sort_order, item.sort_order
+        item.save(update_fields=['sort_order'])
+        next_item.save(update_fields=['sort_order'])
+
+        self._renumber_items(item.estimate)
+        return {'moved': True}
+
+    @transaction.atomic
+    def move_item_to_section(self, item_id: int, target_section_id: int) -> Dict[str, Any]:
+        """Перемещает строку в другой раздел (в конец)."""
+        item = EstimateItem.objects.select_related('section').get(pk=item_id)
+        target_section = EstimateSection.objects.get(pk=target_section_id)
+
+        if item.section_id == target_section_id:
+            return {'moved': False}
+
+        max_sort = (
+            EstimateItem.objects.filter(section=target_section)
+            .aggregate(m=Max('sort_order'))['m'] or 0
+        )
+
+        item.section = target_section
+        item.sort_order = max_sort + 1
+        item.save(update_fields=['section', 'sort_order'])
+
+        self._renumber_items(item.estimate)
+        return {'moved': True}
+
+    @transaction.atomic
+    def bulk_move_items(self, item_ids: List[int], target_position: int) -> Dict[str, Any]:
+        """Перемещает группу строк на указанную позицию (1-based item_number).
+
+        Алгоритм:
+        1. Загружаем все строки сметы в текущем порядке
+        2. Извлекаем выбранные строки
+        3. Вставляем их на позицию target_position
+        4. Переназначаем sort_order и item_number
+        """
+        if not item_ids:
+            return {'moved': 0}
+
+        selected_items = list(
+            EstimateItem.objects.filter(id__in=item_ids).select_related('section')
+        )
+        if not selected_items:
+            return {'moved': 0}
+
+        estimate = selected_items[0].estimate
+        selected_ids_set = set(item_ids)
+
+        # Все строки сметы в текущем порядке
+        all_items = list(
+            EstimateItem.objects.filter(estimate=estimate)
+            .order_by('section__sort_order', 'sort_order', 'item_number')
+        )
+
+        # Разделяем на "остающиеся" и "перемещаемые" (сохраняя порядок)
+        remaining = [it for it in all_items if it.id not in selected_ids_set]
+        moving = [it for it in all_items if it.id in selected_ids_set]
+
+        # Clamp позицию
+        insert_idx = max(0, min(target_position - 1, len(remaining)))
+
+        # Вставляем перемещаемые строки на нужную позицию
+        new_order = remaining[:insert_idx] + moving + remaining[insert_idx:]
+
+        # Переназначаем sort_order
+        to_update = []
+        for i, item in enumerate(new_order):
+            new_sort = i + 1
+            if item.sort_order != new_sort:
+                item.sort_order = new_sort
+                to_update.append(item)
+
+        if to_update:
+            EstimateItem.objects.bulk_update(to_update, ['sort_order'])
+
+        self._renumber_items(estimate)
+        return {'moved': len(moving)}

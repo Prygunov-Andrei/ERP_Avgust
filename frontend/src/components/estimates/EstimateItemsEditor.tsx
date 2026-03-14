@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type ColumnDef, type RowSelectionState } from '@tanstack/react-table';
 import {
@@ -6,8 +6,11 @@ import {
   type EstimateItem,
   type CreateEstimateItemData,
   type EstimateSection,
+  type ColumnDef as ColumnDefAPI,
+  DEFAULT_COLUMN_CONFIG,
 } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
+import { computeAllFormulas } from '../../lib/formula-engine';
 import { CONSTANTS } from '../../constants';
 import { DataTable, createSelectColumn } from '../ui/data-table';
 import { Button } from '../ui/button';
@@ -15,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
-import { Plus, Trash2, ClipboardPaste, Loader2, Upload, Wand2, Hammer, FolderOpen } from 'lucide-react';
+import { Plus, Trash2, ClipboardPaste, Loader2, Upload, Wand2, Hammer, FolderOpen, ChevronUp, ChevronDown, ArrowRightFromLine, ArrowDownToLine, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EstimateImportDialog } from './EstimateImportDialog';
 import { AutoMatchDialog } from './AutoMatchDialog';
@@ -24,6 +27,8 @@ import { AutoMatchWorksDialog } from './AutoMatchWorksDialog';
 type EstimateItemsEditorProps = {
   estimateId: number;
   readOnly?: boolean;
+  columnConfig?: ColumnDefAPI[];
+  onOpenColumnConfig?: () => void;
 };
 
 // Union type for mixed table rows (sections as virtual header rows + real items)
@@ -68,6 +73,8 @@ function makeSectionRow(section: EstimateSection): TableRow {
 export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
   estimateId,
   readOnly = false,
+  columnConfig,
+  onOpenColumnConfig,
 }) => {
   const queryClient = useQueryClient();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -78,12 +85,15 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
   const [isAutoMatchOpen, setAutoMatchOpen] = useState(false);
   const [isAutoMatchWorksOpen, setAutoMatchWorksOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
+  const [moveTargetPosition, setMoveTargetPosition] = useState('');
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['estimate-items', estimateId],
     queryFn: () => api.getEstimateItems(estimateId),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
+    refetchOnWindowFocus: false,
+    placeholderData: (prev) => prev,
   });
 
   // Fetch sections internally so promote/demote updates are reflected
@@ -91,7 +101,15 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
     queryKey: ['estimate-sections', estimateId],
     queryFn: () => api.getEstimateSections(estimateId),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
+    refetchOnWindowFocus: false,
+    placeholderData: (prev) => prev,
   });
+
+  // Effective column config: use provided or default
+  const effectiveConfig = useMemo<ColumnDefAPI[]>(
+    () => (columnConfig && columnConfig.length > 0 ? columnConfig : DEFAULT_COLUMN_CONFIG),
+    [columnConfig],
+  );
 
   const [newItemForm, setNewItemForm] = useState<Partial<CreateEstimateItemData>>({
     estimate: estimateId,
@@ -103,12 +121,25 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
     work_unit_price: '0',
   });
 
+  // Sync section in form when sections change (e.g. after promote/demote)
+  useEffect(() => {
+    if (sections.length > 0) {
+      setNewItemForm((f) => {
+        const currentValid = f.section && sections.some((s) => s.id === f.section);
+        if (!currentValid) {
+          return { ...f, section: sections[0].id };
+        }
+        return f;
+      });
+    }
+  }, [sections]);
+
   // Build mixed display rows: section headers (if 2+ sections exist) + items
   const displayRows = useMemo<TableRow[]>(() => {
     const rows: TableRow[] = [];
     const sortedSections = [...sections].sort((a, b) => a.sort_order - b.sort_order);
-    // Show headers when there are 2+ sections (even if some are empty)
-    const showHeaders = sortedSections.length > 1;
+    // Show headers when there is at least one section
+    const showHeaders = sortedSections.length >= 1;
 
     for (const section of sortedSections) {
       const sectionItems = items
@@ -184,6 +215,20 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
     },
   });
 
+  const bulkMoveMutation = useMutation({
+    mutationFn: ({ itemIds, targetPosition }: { itemIds: number[]; targetPosition: number }) =>
+      api.bulkMoveEstimateItems(itemIds, targetPosition),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['estimate-items', estimateId] });
+      setMoveTargetPosition('');
+      setRowSelection({});
+      toast.success(`Перемещено ${result.moved} строк`);
+    },
+    onError: (error) => {
+      toast.error(`Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+    },
+  });
+
   const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['estimate-items', estimateId] });
     queryClient.invalidateQueries({ queryKey: ['estimate-sections', estimateId] });
@@ -215,6 +260,47 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
     },
   });
 
+  // Move item up/down
+  const moveMutation = useMutation({
+    mutationFn: ({ itemId, direction }: { itemId: number; direction: 'up' | 'down' }) =>
+      api.moveEstimateItem(itemId, { direction }),
+    onSuccess: () => {
+      invalidateAll();
+    },
+    onError: () => {
+      toast.error('Ошибка перемещения');
+    },
+  });
+
+  // Move item to another section
+  const moveToSectionMutation = useMutation({
+    mutationFn: ({ itemId, targetSectionId }: { itemId: number; targetSectionId: number }) =>
+      api.moveEstimateItem(itemId, { target_section_id: targetSectionId }),
+    onSuccess: () => {
+      invalidateAll();
+      toast.success('Строка перемещена в другой раздел');
+    },
+    onError: () => {
+      toast.error('Ошибка перемещения');
+    },
+  });
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    itemId: number;
+    sectionId: number;
+  } | null>(null);
+
+  // Close context menu on click outside
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [contextMenu]);
+
   const handleCellEdit = useCallback(
     (rowIndex: number, columnId: string, value: unknown) => {
       if (readOnly) return;
@@ -227,14 +313,25 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
       }
 
       debounceTimers.current[key] = setTimeout(() => {
-        updateItemMutation.mutate({
-          id: row.id,
-          data: { [columnId]: value },
-        });
+        // Check if this is a custom column (not a builtin model field)
+        const colDef = effectiveConfig.find((c) => c.key === columnId);
+        if (colDef && colDef.type.startsWith('custom_')) {
+          // Update custom_data
+          const existingCustomData = row.custom_data || {};
+          updateItemMutation.mutate({
+            id: row.id,
+            data: { custom_data: { ...existingCustomData, [columnId]: String(value ?? '') } } as any,
+          });
+        } else {
+          updateItemMutation.mutate({
+            id: row.id,
+            data: { [columnId]: value },
+          });
+        }
         delete debounceTimers.current[key];
       }, DEBOUNCE_MS);
     },
-    [displayRows, readOnly, updateItemMutation],
+    [displayRows, readOnly, updateItemMutation, effectiveConfig],
   );
 
   const handleDeleteSelected = useCallback(() => {
@@ -251,6 +348,22 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
       toast.success(`Удалено ${selectedIds.length} строк`);
     });
   }, [rowSelection, queryClient, estimateId]);
+
+  const handleMoveSelected = useCallback(() => {
+    const pos = parseInt(moveTargetPosition, 10);
+    if (!pos || pos < 1) {
+      toast.error('Введите корректный номер позиции');
+      return;
+    }
+    const selectedIds = Object.keys(rowSelection)
+      .filter((key) => rowSelection[key])
+      .map((key) => Number(key))
+      .filter((id) => id > 0);
+
+    if (selectedIds.length === 0) return;
+
+    bulkMoveMutation.mutate({ itemIds: selectedIds, targetPosition: pos });
+  }, [rowSelection, moveTargetPosition, bulkMoveMutation]);
 
   const handlePasteFromExcel = useCallback(() => {
     if (!pasteText.trim()) return;
@@ -338,116 +451,206 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
           );
         },
       });
+
+      // Move up/down column
+      cols.push({
+        id: 'move_order',
+        header: '',
+        size: 44,
+        enableResizing: false,
+        cell: ({ row }) => {
+          if (row.original._isSection) return null;
+
+          const itemId = row.original.id;
+          const sectionId = row.original.section;
+
+          // Determine if first/last in section
+          const sectionItems = items
+            .filter((i) => i.section === sectionId)
+            .sort((a, b) => a.sort_order - b.sort_order || a.item_number - b.item_number);
+          const idx = sectionItems.findIndex((i) => i.id === itemId);
+          const isFirst = idx === 0;
+          const isLast = idx === sectionItems.length - 1;
+
+          return (
+            <div className="flex flex-col gap-0">
+              <button
+                onClick={() => moveMutation.mutate({ itemId, direction: 'up' })}
+                className="p-0.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-20 disabled:cursor-default"
+                title="Переместить вверх"
+                disabled={isFirst || moveMutation.isPending}
+              >
+                <ChevronUp className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => moveMutation.mutate({ itemId, direction: 'down' })}
+                className="p-0.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-20 disabled:cursor-default"
+                title="Переместить вниз"
+                disabled={isLast || moveMutation.isPending}
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        },
+      });
     }
 
-    cols.push(
-      {
-        accessorKey: 'item_number',
-        header: '№',
-        size: 50,
-        enableSorting: true,
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) return null;
-          return getValue();
-        },
-      },
-      {
-        accessorKey: 'name',
-        header: 'Наименование',
-        size: 250,
-        meta: readOnly ? undefined : { editable: true, type: 'text' as const },
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) {
+    // Dynamic data columns from effectiveConfig
+    for (const colDef of effectiveConfig) {
+      if (!colDef.visible) continue;
+
+      if (colDef.type === 'builtin') {
+        const field = colDef.builtin_field || colDef.key;
+        const isNumber = ['quantity', 'material_unit_price', 'work_unit_price'].includes(field);
+        const isCurrency = ['material_unit_price', 'work_unit_price', 'material_total', 'work_total', 'line_total'].includes(field);
+        const isTotal = ['material_total', 'work_total', 'line_total'].includes(field);
+        const isEditable = colDef.editable && !readOnly;
+
+        cols.push({
+          accessorKey: field,
+          id: colDef.key,
+          header: colDef.label,
+          size: colDef.width,
+          enableSorting: field === 'item_number' || isTotal,
+          meta: isEditable ? { editable: true, type: (isNumber ? 'number' : 'text') as 'number' | 'text' } : undefined,
+          cell: ({ row, getValue }) => {
+            if (row.original._isSection) {
+              // Section row: show label for 'name' column, null for the rest
+              if (field === 'name') {
+                return (
+                  <span className="font-semibold text-blue-700 text-sm">
+                    {getValue() as string}
+                  </span>
+                );
+              }
+              return null;
+            }
+            const v = getValue();
+            if (isCurrency) return field === 'line_total'
+              ? <span className="font-medium">{formatCurrency(v as string)}</span>
+              : formatCurrency(v as string);
+            if (field === 'quantity' && typeof v === 'string') {
+              return parseFloat(v).toLocaleString('ru-RU');
+            }
+            return v as string;
+          },
+        });
+      } else if (colDef.type === 'formula') {
+        // Formula columns — read-only, computed on client or from server
+        cols.push({
+          id: colDef.key,
+          header: colDef.label,
+          size: colDef.width,
+          accessorFn: (row: TableRow) => {
+            if (row._isSection) return null;
+            // Prefer server-computed value if available
+            const serverVal = row.computed_values?.[colDef.key];
+            if (serverVal != null) return serverVal;
+            // Fallback: compute on client
+            try {
+              const builtinVars: Record<string, number> = {
+                item_number: row.item_number || 0,
+                quantity: parseFloat(row.quantity) || 0,
+                material_unit_price: parseFloat(row.material_unit_price) || 0,
+                work_unit_price: parseFloat(row.work_unit_price) || 0,
+                material_total: parseFloat(row.material_total) || 0,
+                work_total: parseFloat(row.work_total) || 0,
+                line_total: parseFloat(row.line_total) || 0,
+              };
+              const result = computeAllFormulas(effectiveConfig, builtinVars, row.custom_data || {});
+              const val = result[colDef.key];
+              return val != null ? String(val) : null;
+            } catch {
+              return null;
+            }
+          },
+          cell: ({ row, getValue }) => {
+            if (row.original._isSection) return null;
+            const v = getValue();
+            if (v == null) return <span className="text-muted-foreground">—</span>;
+            return formatCurrency(String(v));
+          },
+        });
+      } else if (colDef.type === 'custom_number') {
+        cols.push({
+          id: colDef.key,
+          header: colDef.label,
+          size: colDef.width,
+          accessorFn: (row: TableRow) => row.custom_data?.[colDef.key] ?? '',
+          meta: !readOnly && colDef.editable ? { editable: true, type: 'number' as const } : undefined,
+          cell: ({ row, getValue }) => {
+            if (row.original._isSection) return null;
+            const v = getValue() as string;
+            if (!v) return '';
+            return colDef.decimal_places != null ? formatCurrency(v) : parseFloat(v).toLocaleString('ru-RU');
+          },
+        });
+      } else if (colDef.type === 'custom_text') {
+        cols.push({
+          id: colDef.key,
+          header: colDef.label,
+          size: colDef.width,
+          accessorFn: (row: TableRow) => row.custom_data?.[colDef.key] ?? '',
+          meta: !readOnly && colDef.editable ? { editable: true, type: 'text' as const } : undefined,
+          cell: ({ row, getValue }) => {
+            if (row.original._isSection) return null;
+            return getValue() as string;
+          },
+        });
+      } else if (colDef.type === 'custom_date') {
+        cols.push({
+          id: colDef.key,
+          header: colDef.label,
+          size: colDef.width,
+          accessorFn: (row: TableRow) => row.custom_data?.[colDef.key] ?? '',
+          meta: !readOnly && colDef.editable ? { editable: true, type: 'text' as const } : undefined,
+          cell: ({ row, getValue }) => {
+            if (row.original._isSection) return null;
+            const v = getValue() as string;
+            if (!v) return '';
+            try { return new Date(v).toLocaleDateString('ru-RU'); } catch { return v; }
+          },
+        });
+      } else if (colDef.type === 'custom_select') {
+        cols.push({
+          id: colDef.key,
+          header: colDef.label,
+          size: colDef.width,
+          accessorFn: (row: TableRow) => row.custom_data?.[colDef.key] ?? '',
+          meta: !readOnly && colDef.editable
+            ? { editable: true, type: 'text' as const, selectOptions: colDef.options }
+            : undefined,
+          cell: ({ row, getValue }) => {
+            if (row.original._isSection) return null;
+            return getValue() as string;
+          },
+        });
+      } else if (colDef.type === 'custom_checkbox') {
+        cols.push({
+          id: colDef.key,
+          header: colDef.label,
+          size: colDef.width,
+          accessorFn: (row: TableRow) => row.custom_data?.[colDef.key] === 'true',
+          cell: ({ row, getValue }) => {
+            if (row.original._isSection) return null;
+            const checked = !!getValue();
+            if (readOnly || !colDef.editable) return checked ? '✓' : '';
             return (
-              <span className="font-semibold text-blue-700 text-sm">
-                {getValue() as string}
-              </span>
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={(e) => {
+                  const idx = displayRows.findIndex((r) => r.id === row.original.id);
+                  if (idx >= 0) handleCellEdit(idx, colDef.key, e.target.checked ? 'true' : 'false');
+                }}
+                className="h-4 w-4"
+              />
             );
-          }
-          return getValue() as string;
-        },
-      },
-      {
-        accessorKey: 'model_name',
-        header: 'Модель',
-        size: 150,
-        meta: readOnly ? undefined : { editable: true, type: 'text' as const },
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) return null;
-          return getValue() as string;
-        },
-      },
-      {
-        accessorKey: 'unit',
-        header: 'Ед.',
-        size: 60,
-        meta: readOnly ? undefined : { editable: true, type: 'text' as const },
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) return null;
-          return getValue() as string;
-        },
-      },
-      {
-        accessorKey: 'quantity',
-        header: 'Кол-во',
-        size: 80,
-        meta: readOnly ? undefined : { editable: true, type: 'number' as const },
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) return null;
-          const v = getValue();
-          return typeof v === 'string' ? parseFloat(v).toLocaleString('ru-RU') : v;
-        },
-      },
-      {
-        accessorKey: 'material_unit_price',
-        header: 'Цена мат.',
-        size: 100,
-        meta: readOnly ? undefined : { editable: true, type: 'number' as const },
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) return null;
-          return formatCurrency(getValue() as string);
-        },
-      },
-      {
-        accessorKey: 'work_unit_price',
-        header: 'Цена раб.',
-        size: 100,
-        meta: readOnly ? undefined : { editable: true, type: 'number' as const },
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) return null;
-          return formatCurrency(getValue() as string);
-        },
-      },
-      {
-        accessorKey: 'material_total',
-        header: 'Итого мат.',
-        size: 110,
-        enableSorting: true,
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) return null;
-          return formatCurrency(getValue() as string);
-        },
-      },
-      {
-        accessorKey: 'work_total',
-        header: 'Итого раб.',
-        size: 110,
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) return null;
-          return formatCurrency(getValue() as string);
-        },
-      },
-      {
-        accessorKey: 'line_total',
-        header: 'Итого',
-        size: 120,
-        enableSorting: true,
-        cell: ({ row, getValue }) => {
-          if (row.original._isSection) return null;
-          return <span className="font-medium">{formatCurrency(getValue() as string)}</span>;
-        },
-      },
-    );
+          },
+        });
+      }
+    }
 
     if (!readOnly) {
       cols.push({
@@ -472,19 +675,29 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
     }
 
     return cols;
-  }, [readOnly, deleteItemMutation, promoteMutation, demoteMutation]);
+  }, [readOnly, effectiveConfig, deleteItemMutation, promoteMutation, demoteMutation, displayRows, handleCellEdit]);
 
   const totals = useMemo(() => {
-    let materials = 0;
-    let works = 0;
-    let total = 0;
+    const aggCols = effectiveConfig.filter((c) => c.aggregatable && c.visible);
+    const sums: Record<string, number> = {};
+    for (const col of aggCols) sums[col.key] = 0;
+
     items.forEach((item) => {
-      materials += parseFloat(item.material_total) || 0;
-      works += parseFloat(item.work_total) || 0;
-      total += parseFloat(item.line_total) || 0;
+      for (const col of aggCols) {
+        let val: number | undefined;
+        if (col.type === 'builtin' && col.builtin_field) {
+          val = parseFloat((item as any)[col.builtin_field]) || 0;
+        } else if (col.type === 'formula') {
+          const sv = item.computed_values?.[col.key];
+          val = sv != null ? parseFloat(sv) : 0;
+        } else if (col.type === 'custom_number') {
+          val = parseFloat(item.custom_data?.[col.key] || '0') || 0;
+        }
+        if (val != null) sums[col.key] += val;
+      }
     });
-    return { materials, works, total };
-  }, [items]);
+    return { aggCols, sums };
+  }, [items, effectiveConfig]);
 
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
 
@@ -525,12 +738,42 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
             </>
           )}
           {selectedCount > 0 && (
-            <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
-              <Trash2 className="h-4 w-4 mr-1" />
-              Удалить ({selectedCount})
-            </Button>
+            <>
+              <div className="flex items-center gap-1">
+                <ArrowDownToLine className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="number"
+                  min={1}
+                  max={items.length}
+                  value={moveTargetPosition}
+                  onChange={(e) => setMoveTargetPosition(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleMoveSelected();
+                  }}
+                  placeholder={`Позиция 1–${items.length}`}
+                  className="h-8 w-36 text-sm"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleMoveSelected}
+                  disabled={bulkMoveMutation.isPending || !moveTargetPosition}
+                >
+                  {bulkMoveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : `Перенести (${selectedCount})`}
+                </Button>
+              </div>
+              <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                Удалить ({selectedCount})
+              </Button>
+            </>
           )}
           <div className="ml-auto flex items-center gap-3">
+            {onOpenColumnConfig && (
+              <Button size="sm" variant="outline" onClick={onOpenColumnConfig} title="Настройка столбцов">
+                <Settings2 className="h-4 w-4" />
+              </Button>
+            )}
             <Badge variant="secondary">{items.length} строк</Badge>
           </div>
         </div>
@@ -559,13 +802,57 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
         estimatedRowHeight={40}
         footerContent={
           <div className="flex items-center gap-6 py-2 font-medium">
-            <span>Итого материалы: {formatCurrency(totals.materials)}</span>
-            <span>Итого работы: {formatCurrency(totals.works)}</span>
-            <span className="text-lg">Всего: {formatCurrency(totals.total)}</span>
+            {totals.aggCols.map((col) => (
+              <span key={col.key}>
+                {col.label}: {formatCurrency(totals.sums[col.key])}
+              </span>
+            ))}
           </div>
         }
+        onRowContextMenu={!readOnly && sections.length > 1 ? (e, row) => {
+          const original = row.original as TableRow;
+          if (original._isSection) return;
+          e.preventDefault();
+          setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            itemId: original.id,
+            sectionId: original.section,
+          });
+        } : undefined}
         emptyMessage="Нет строк сметы. Добавьте строки вручную или импортируйте из Excel/PDF."
       />
+
+      {/* Context menu: move to section */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 min-w-48 rounded-md border bg-popover p-1 shadow-md"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onMouseLeave={() => setContextMenu(null)}
+        >
+          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+            Переместить в раздел
+          </div>
+          {sections
+            .filter((s) => s.id !== contextMenu.sectionId)
+            .map((s) => (
+              <button
+                key={s.id}
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                onClick={() => {
+                  moveToSectionMutation.mutate({
+                    itemId: contextMenu.itemId,
+                    targetSectionId: s.id,
+                  });
+                  setContextMenu(null);
+                }}
+              >
+                <ArrowRightFromLine className="h-3.5 w-3.5" />
+                {s.name}
+              </button>
+            ))}
+        </div>
+      )}
 
       {/* Add Item Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
@@ -711,6 +998,7 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 };

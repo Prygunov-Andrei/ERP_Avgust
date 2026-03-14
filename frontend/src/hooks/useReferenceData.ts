@@ -172,13 +172,20 @@ export const useCatalogCategories = () => {
 };
 
 /**
- * Хук для загрузки дерева категорий каталога
+ * Хук для загрузки дерева категорий каталога.
+ * Возвращает { tree, uncategorized_count } + стандартные поля useQuery.
  */
 export const useCatalogCategoryTree = () => {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['catalog-category-tree'],
     queryFn: () => api.getCategoryTree(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
+
+  return {
+    ...query,
+    categoryTree: query.data?.tree ?? null,
+    uncategorizedCount: query.data?.uncategorized_count ?? 0,
+  };
 };

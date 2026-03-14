@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { Invoice, InvoiceItem, InvoiceEvent } from '../../types/supply';
 import {
   Loader2, ArrowLeft, FileText, Check, XCircle, CalendarClock,
   ExternalLink, Clock, User, Download, Send, Trash2, Plus,
+  AlertCircle, CheckCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -69,7 +70,10 @@ export function InvoiceDetailPage() {
   const [rescheduleComment, setRescheduleComment] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
-  const { setDetailLabel } = useBreadcrumb();
+  const location = useLocation();
+  const isEstimateContext = location.pathname.startsWith('/estimates/invoices/');
+
+  const { setDetailLabel, setParentCrumb } = useBreadcrumb();
 
   const { data: invoice, isLoading, error } = useQuery<Invoice>({
     queryKey: ['invoice', id],
@@ -77,13 +81,22 @@ export function InvoiceDetailPage() {
     enabled: !!id,
   });
 
-  // Breadcrumb: show real invoice number
+  // Breadcrumb: show real invoice number + dynamic parent for estimate context
   useEffect(() => {
     if (invoice) {
       setDetailLabel(`Счёт ${invoice.invoice_number || `№${invoice.id}`}`);
+      if (isEstimateContext && invoice.estimate) {
+        setParentCrumb({
+          label: `Смета #${invoice.estimate}`,
+          path: `/estimates/estimates/${invoice.estimate}?tab=supplier-invoices`,
+        });
+      }
     }
-    return () => setDetailLabel(null);
-  }, [invoice?.invoice_number, invoice?.id, setDetailLabel]);
+    return () => {
+      setDetailLabel(null);
+      setParentCrumb(null);
+    };
+  }, [invoice?.invoice_number, invoice?.id, invoice?.estimate, isEstimateContext, setDetailLabel, setParentCrumb]);
 
   const backUrl = invoice?.estimate
     ? `/estimates/estimates/${invoice.estimate}?tab=supplier-invoices`
@@ -217,7 +230,9 @@ export function InvoiceDetailPage() {
 
   const isReview = invoice.status === 'review';
   const isVerified = invoice.status === 'verified';
-  const canDelete = ['recognition', 'review', 'cancelled'].includes(invoice.status);
+  const canDelete = isEstimateContext
+    ? ['recognition', 'review', 'verified', 'cancelled'].includes(invoice.status)
+    : ['recognition', 'review', 'cancelled'].includes(invoice.status);
 
   return (
     <div className="space-y-6">
@@ -257,7 +272,7 @@ export function InvoiceDetailPage() {
               <Trash2 className="w-5 h-5" />
             </Button>
           )}
-          {isVerified && (
+          {isVerified && !isEstimateContext && (
             <Button
               onClick={() => submitMutation.mutate()}
               disabled={submitMutation.isPending}
@@ -267,7 +282,7 @@ export function InvoiceDetailPage() {
               В реестр
             </Button>
           )}
-          {invoice.status === 'in_registry' && (
+          {invoice.status === 'in_registry' && !isEstimateContext && (
             <>
               <Button
                 variant="default"
@@ -479,7 +494,7 @@ export function InvoiceDetailPage() {
           )}
         </CardHeader>
         <CardContent className="p-0">
-          {invoice.items && invoice.items.length > 0 ? (
+          {invoice.items && invoice.items.length > 0 ? (<>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -570,6 +585,36 @@ export function InvoiceDetailPage() {
                 </tbody>
               </table>
             </div>
+            {(() => {
+              const itemsTotal = invoice.items.reduce((sum: number, item: InvoiceItem) => {
+                return sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.price_per_unit) || 0);
+              }, 0);
+              const grossAmount = parseFloat(invoice.amount_gross) || 0;
+              const diffPct = grossAmount > 0 ? Math.abs(itemsTotal - grossAmount) / grossAmount * 100 : 0;
+              const isMatch = diffPct <= 5;
+
+              return (
+                <div className="px-6 pb-4 flex items-center justify-between border-t pt-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium">Итого по позициям:</span>
+                    <span className="text-sm font-bold">{formatAmount(itemsTotal.toFixed(2))}</span>
+                    {grossAmount > 0 && (
+                      isMatch ? (
+                        <span className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" /> совпадает с суммой счёта
+                        </span>
+                      ) : (
+                        <span className="text-xs text-amber-600 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          расхождение с суммой счёта ({formatAmount(grossAmount.toFixed(2))}) на {diffPct.toFixed(1)}%
+                        </span>
+                      )
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </>
           ) : (
             <p className="p-6 text-sm text-muted-foreground text-center">
               Позиции отсутствуют
@@ -692,7 +737,7 @@ export function InvoiceDetailPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirm} onOpenChange={setDeleteConfirm}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Удалить счёт?</DialogTitle>
             <DialogDescription>

@@ -26,7 +26,7 @@ export function CatalogCategories() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Загрузка дерева категорий
-  const { data: categoryTree, isLoading: treeLoading } = useCatalogCategoryTree();
+  const { categoryTree, isLoading: treeLoading } = useCatalogCategoryTree();
 
   // Загрузка выбранной категории
   const { data: selectedCategory } = useQuery({

@@ -1217,3 +1217,119 @@ class EstimateItemSectionPromotionTests(BaseAPITestCase):
         self.assertEqual(ordered, [
             'Позиция 1', 'Позиция 2', 'Позиция 3', 'Позиция 4', 'Позиция 5',
         ])
+
+
+class EstimateItemMoveTests(BaseAPITestCase):
+    """Тесты перемещения строк сметы вверх/вниз и между разделами"""
+
+    def setUp(self):
+        super().setUp()
+        self.estimate = Estimate.objects.create(
+            name='Тестовая смета',
+            object=self.object,
+            legal_entity=self.legal_entity,
+            created_by=self.user,
+        )
+        self.section1 = EstimateSection.objects.create(
+            estimate=self.estimate, name='Раздел 1', sort_order=0,
+        )
+        self.section2 = EstimateSection.objects.create(
+            estimate=self.estimate, name='Раздел 2', sort_order=1,
+        )
+        self.items = [
+            EstimateItem.objects.create(
+                estimate=self.estimate, section=self.section1,
+                name=f'Позиция {i}', sort_order=i, item_number=i,
+                quantity=1, material_unit_price=100, work_unit_price=50,
+            ) for i in range(1, 4)
+        ]
+        self.item4 = EstimateItem.objects.create(
+            estimate=self.estimate, section=self.section2,
+            name='Позиция 4', sort_order=1, item_number=4,
+            quantity=1, material_unit_price=100, work_unit_price=50,
+        )
+
+    def test_move_item_down(self):
+        """Перемещение строки вниз на одну позицию"""
+        item1 = self.items[0]
+        response = self.client.post(f'/api/v1/estimate-items/{item1.id}/move/', {'direction': 'down'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['moved'])
+
+        ordered = list(
+            EstimateItem.objects.filter(section=self.section1)
+            .order_by('sort_order')
+            .values_list('name', flat=True)
+        )
+        self.assertEqual(ordered, ['Позиция 2', 'Позиция 1', 'Позиция 3'])
+
+    def test_move_item_up(self):
+        """Перемещение строки вверх на одну позицию"""
+        item3 = self.items[2]
+        response = self.client.post(f'/api/v1/estimate-items/{item3.id}/move/', {'direction': 'up'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['moved'])
+
+        ordered = list(
+            EstimateItem.objects.filter(section=self.section1)
+            .order_by('sort_order')
+            .values_list('name', flat=True)
+        )
+        self.assertEqual(ordered, ['Позиция 1', 'Позиция 3', 'Позиция 2'])
+
+    def test_move_first_item_up_noop(self):
+        """Первый элемент не перемещается вверх"""
+        item1 = self.items[0]
+        response = self.client.post(f'/api/v1/estimate-items/{item1.id}/move/', {'direction': 'up'})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data['moved'])
+
+    def test_move_last_item_down_noop(self):
+        """Последний элемент не перемещается вниз"""
+        item3 = self.items[2]
+        response = self.client.post(f'/api/v1/estimate-items/{item3.id}/move/', {'direction': 'down'})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data['moved'])
+
+    def test_move_item_to_section(self):
+        """Перемещение строки в другой раздел"""
+        item1 = self.items[0]
+        response = self.client.post(
+            f'/api/v1/estimate-items/{item1.id}/move/',
+            {'target_section_id': self.section2.id},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['moved'])
+
+        item1.refresh_from_db()
+        self.assertEqual(item1.section_id, self.section2.id)
+
+        # В section1 осталось 2 items
+        self.assertEqual(
+            EstimateItem.objects.filter(section=self.section1).count(), 2,
+        )
+        # В section2 стало 2 items
+        self.assertEqual(
+            EstimateItem.objects.filter(section=self.section2).count(), 2,
+        )
+
+    def test_move_item_to_same_section_noop(self):
+        """Перемещение в тот же раздел — нет эффекта"""
+        item1 = self.items[0]
+        response = self.client.post(
+            f'/api/v1/estimate-items/{item1.id}/move/',
+            {'target_section_id': self.section1.id},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data['moved'])
+
+    def test_move_nonexistent_item(self):
+        """Перемещение несуществующего item → 404"""
+        response = self.client.post('/api/v1/estimate-items/99999/move/', {'direction': 'up'})
+        self.assertEqual(response.status_code, 404)
+
+    def test_move_missing_params(self):
+        """Вызов без параметров → 400"""
+        item1 = self.items[0]
+        response = self.client.post(f'/api/v1/estimate-items/{item1.id}/move/', {})
+        self.assertEqual(response.status_code, 400)

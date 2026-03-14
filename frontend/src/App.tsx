@@ -51,6 +51,8 @@ import { CatalogCategories } from './components/catalog/CatalogCategories';
 import { CatalogProducts } from './components/catalog/CatalogProducts';
 import { ProductDetail } from './components/catalog/ProductDetail';
 import { CatalogModeration } from './components/catalog/CatalogModeration';
+import { SupplierCatalogsPage } from './components/catalog/SupplierCatalogsPage';
+import { SupplierCatalogDetail } from './components/catalog/SupplierCatalogDetail';
 import { InvoicesPage } from './components/supply/InvoicesPage';
 import { InvoiceDetailPage } from './components/supply/InvoiceDetailPage';
 import { SupplyRequestsPage } from './components/supply/SupplyRequestsPage';
@@ -58,6 +60,10 @@ import { RecurringPaymentsPage } from './components/supply/RecurringPaymentsPage
 import { IncomeRecordsPage } from './components/supply/IncomeRecordsPage';
 import { SupplyDashboardPage } from './components/supply/SupplyDashboardPage';
 import { BitrixSettingsPage } from './components/supply/BitrixSettingsPage';
+import { SupplierIntegrationsPage } from './components/supply/SupplierIntegrationsPage';
+import { SupplierIntegrationDetail } from './components/supply/SupplierIntegrationDetail';
+import { SupplierCatalogPage } from './components/supply/SupplierCatalogPage';
+import { SupplierProductDetail } from './components/supply/SupplierProductDetail';
 import { KanbanBoardPage, KanbanBoardConfig } from './components/kanban/KanbanBoardPage';
 import { CreateCommercialCardDialog } from './components/kanban/CreateCommercialCardDialog';
 import { KanbanCardDetailDialog } from './components/kanban/KanbanCardDetailDialog';
@@ -320,6 +326,7 @@ export default function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/estimates/invoices" element={<Navigate to="/estimates/estimates" replace />} />
           <Route path="/estimates/invoices/:id" element={
             <ProtectedRoute requiredSection="commercial.estimates">
               <Layout onLogout={handleLogout} user={user}>
@@ -495,6 +502,20 @@ export default function App() {
             <ProtectedRoute requiredSection="goods.moderation">
               <Layout onLogout={handleLogout} user={user}>
                 <CatalogModeration />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/catalog/supplier-catalogs" element={
+            <ProtectedRoute requiredSection="goods.catalog">
+              <Layout onLogout={handleLogout} user={user}>
+                <SupplierCatalogsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/catalog/supplier-catalogs/:id" element={
+            <ProtectedRoute requiredSection="goods.catalog">
+              <Layout onLogout={handleLogout} user={user}>
+                <SupplierCatalogDetail />
               </Layout>
             </ProtectedRoute>
           } />
@@ -740,6 +761,25 @@ export default function App() {
           } />
 
           {/* Снабжение и Склад */}
+          <Route path="/settings/integrations" element={
+            <ProtectedRoute requiredSection="supply">
+              <Layout onLogout={handleLogout} user={user}>
+                <SupplierIntegrationsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/settings/integrations/:id" element={
+            <ProtectedRoute requiredSection="supply">
+              <Layout onLogout={handleLogout} user={user}>
+                <SupplierIntegrationDetail />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          {/* Редиректы со старых путей */}
+          <Route path="/supply/integrations" element={<Navigate to="/settings/integrations" replace />} />
+          <Route path="/supply/integrations/:id" element={<Navigate to="/settings/integrations" replace />} />
+          <Route path="/supply/supplier-catalog" element={<Navigate to="/catalog/products" replace />} />
+          <Route path="/supply/supplier-catalog/:id" element={<Navigate to="/catalog/products" replace />} />
           <Route path="/supply/drivers" element={
             <ProtectedRoute requiredSection="supply.drivers">
               <Layout onLogout={handleLogout} user={user}>

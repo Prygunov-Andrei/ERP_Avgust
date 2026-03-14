@@ -20,10 +20,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { ArrowLeft, Loader2, FileText, Plus, Edit2, Trash2, Info, DollarSign, History, FileSpreadsheet, Table2, Receipt, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Loader2, FileText, Plus, Edit2, Trash2, Info, DollarSign, History, FileSpreadsheet, Table2, Receipt, RefreshCw, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { EstimateItemsEditor } from './EstimateItemsEditor';
 import { EstimateSupplierInvoices } from './EstimateSupplierInvoices';
+import { ColumnConfigDialog } from './ColumnConfigDialog';
+import { type ColumnDef as ColumnDefAPI, DEFAULT_COLUMN_CONFIG } from '../../lib/api';
 
 const STATUS_MAP = {
   draft: 'Черновик',
@@ -57,6 +59,9 @@ export function EstimateDetail() {
   const [deleteCharTarget, setDeleteCharTarget] = useState<number | null>(null);
   const [isVersionDialogOpen, setIsVersionDialogOpen] = useState(false);
   const [isMountingDialogOpen, setIsMountingDialogOpen] = useState(false);
+  const [deleteEstimateOpen, setDeleteEstimateOpen] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [isColumnConfigOpen, setColumnConfigOpen] = useState(false);
 
   const [sectionForm, setSectionForm] = useState({ name: '', sort_order: 0 });
   const [subsectionForm, setSubsectionForm] = useState({
@@ -102,6 +107,18 @@ export function EstimateDetail() {
     },
     onError: (error) => {
       toast.error(`Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+    },
+  });
+
+  const deleteEstimateMutation = useMutation({
+    mutationFn: () => api.deleteEstimate(Number(id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['estimates'] });
+      toast.success('Смета удалена');
+      navigate('/estimates/estimates');
+    },
+    onError: (error) => {
+      toast.error(`Ошибка удаления: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     },
   });
 
@@ -490,6 +507,30 @@ export function EstimateDetail() {
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Создать монтажную смету
           </Button>
+          <Button variant="outline" onClick={async () => {
+            try {
+              const blob = await api.exportEstimate(Number(id));
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `Смета_${estimate?.number || id}.xlsx`;
+              a.click();
+              URL.revokeObjectURL(url);
+            } catch (e) {
+              toast.error('Ошибка экспорта');
+            }
+          }}>
+            <Download className="w-4 h-4 mr-2" />
+            Экспорт в Excel
+          </Button>
+          <Button
+            variant="outline"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            onClick={() => { setDeleteConfirmName(''); setDeleteEstimateOpen(true); }}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Удалить
+          </Button>
         </div>
       </div>
 
@@ -852,6 +893,8 @@ export function EstimateDetail() {
             <EstimateItemsEditor
               estimateId={Number(id)}
               readOnly={estimate?.status === 'approved' || estimate?.status === 'agreed'}
+              columnConfig={estimate?.column_config}
+              onOpenColumnConfig={() => setColumnConfigOpen(true)}
             />
           </div>
         </TabsContent>
@@ -1377,6 +1420,59 @@ export function EstimateDetail() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Estimate Dialog */}
+      <Dialog open={deleteEstimateOpen} onOpenChange={setDeleteEstimateOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Удаление сметы</DialogTitle>
+            <DialogDescription>
+              Это действие необратимо. Все строки, разделы и характеристики сметы будут удалены.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-sm text-gray-600">
+                Для подтверждения введите название сметы: <span className="font-semibold text-gray-900">{estimate?.name}</span>
+              </Label>
+              <Input
+                className="mt-2"
+                placeholder="Введите название сметы"
+                value={deleteConfirmName}
+                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteEstimateOpen(false)}>
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteConfirmName !== estimate?.name || deleteEstimateMutation.isPending}
+              onClick={() => deleteEstimateMutation.mutate()}
+            >
+              {deleteEstimateMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Удаление...</>
+              ) : (
+                <><Trash2 className="w-4 h-4 mr-2" />Удалить смету</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Column Config Dialog */}
+      <ColumnConfigDialog
+        open={isColumnConfigOpen}
+        onOpenChange={setColumnConfigOpen}
+        estimateId={Number(id)}
+        currentConfig={estimate?.column_config || DEFAULT_COLUMN_CONFIG}
+        onSave={(config: ColumnDefAPI[]) => {
+          updateFieldMutation.mutate({ column_config: config });
+        }}
+      />
     </div>
   );
 }
