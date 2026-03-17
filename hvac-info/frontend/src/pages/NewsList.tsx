@@ -31,54 +31,59 @@ export default function NewsList() {
   const { t } = useTranslation();
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<NewsStatus>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
   const isAdmin = user?.is_staff === true;
 
   useEffect(() => {
-    loadNews();
+    setNews([]);
+    setCurrentPage(1);
+    loadNews(1, true);
   }, [language, statusFilter]);
 
-  const loadNews = async () => {
+  const loadNews = async (page: number = 1, reset: boolean = false) => {
     try {
-      setLoading(true);
+      if (reset) setLoading(true);
+      else setLoadingMore(true);
       setError(null);
-      const response = await newsService.getNews(language);
-      
-      // Backend может возвращать либо массив, либо пагинированный объект
-      let allNews: News[] = [];
+      const response = await newsService.getNews(language, page);
+
+      let pageNews: News[] = [];
+      let nextPage: string | null = null;
       if (Array.isArray(response)) {
-        // Если backend вернул массив напрямую
-        allNews = response;
+        pageNews = response;
       } else if (response.results && Array.isArray(response.results)) {
-        // Если backend вернул пагинированный объект
-        allNews = response.results;
-      } else {
-        allNews = [];
+        pageNews = response.results;
+        nextPage = response.next;
       }
-      
-      // Для обычных пользователей показываем только опубликованные
-      // Для адм��ов показываем все новости
-      let filteredNews = allNews;
+
       if (!isAdmin) {
-        filteredNews = allNews.filter(item => item.status === 'published');
+        pageNews = pageNews.filter(item => item.status === 'published');
       }
-      
-      // Применяем фильтр по статусу
       if (statusFilter !== 'all') {
-        filteredNews = filteredNews.filter(item => item.status === statusFilter);
+        pageNews = pageNews.filter(item => item.status === statusFilter);
       }
-      
-      setNews(filteredNews);
+
+      setNews(prev => reset ? pageNews : [...prev, ...pageNews]);
+      setHasMore(!!nextPage);
+      setCurrentPage(page);
     } catch (err: any) {
-      setError(err.response?.status === 500 
-        ? 'Ошибка сервера (500). Проверьте логи Django и конфигурацию API.' 
+      setError(err.response?.status === 500
+        ? 'Ошибка сервера (500). Проверьте логи Django и конфигурацию API.'
         : t('news.loadError'));
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const loadMore = () => {
+    loadNews(currentPage + 1, false);
   };
 
   const handleDelete = async (id: number) => {
@@ -353,6 +358,23 @@ export default function NewsList() {
               );
             })}
           </div>
+
+          {hasMore && (
+            <div className="flex justify-center py-8">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={loadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? (
+                  <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Загрузка...</>
+                ) : (
+                  'Показать ещё'
+                )}
+              </Button>
+            </div>
+          )}
 
           {news.length === 0 && !loading && !error && (
             <div className="text-center py-12">
