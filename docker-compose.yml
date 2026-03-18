@@ -71,7 +71,7 @@ services:
       exit 0;
       "
 
-  createkanbandb:
+  createhvacdb:
     image: postgres:14-alpine
     depends_on:
       postgres:
@@ -80,18 +80,68 @@ services:
       PGPASSWORD: ${DB_PASSWORD:-postgres}
       DB_USER: ${DB_USER:-postgres}
       DB_HOST: postgres
-      KANBAN_DB_NAME: ${KANBAN_DB_NAME:-kanban}
+      HVAC_DB_NAME: ${HVAC_DB_NAME:-hvac_db}
     entrypoint: >
       /bin/sh -c "
-      echo 'Ensuring kanban database exists...';
-      psql -h $$DB_HOST -U $$DB_USER -d postgres -tc \"SELECT 1 FROM pg_database WHERE datname='$$KANBAN_DB_NAME'\" | grep -q 1
-      || psql -h $$DB_HOST -U $$DB_USER -d postgres -c \"CREATE DATABASE \\\"$$KANBAN_DB_NAME\\\"\" ;
+      echo 'Ensuring hvac_db database exists...';
+      psql -h $$DB_HOST -U $$DB_USER -d postgres -tc \"SELECT 1 FROM pg_database WHERE datname='$$HVAC_DB_NAME'\" | grep -q 1
+      || psql -h $$DB_HOST -U $$DB_USER -d postgres -c \"CREATE DATABASE \\\"$$HVAC_DB_NAME\\\"\" ;
       exit 0;
       "
 
   # =========================================================================
-  # BACKEND (Django + Gunicorn)
+  # BACKEND (Django + Gunicorn) — общий набор env-переменных
   # =========================================================================
+
+  x-backend-env: &backend-env
+    DEBUG: ${DEBUG:-True}
+    SECRET_KEY: ${SECRET_KEY:-django-insecure-docker-dev-key-change-in-production}
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_NAME: ${DB_NAME:-finans_assistant}
+    DB_USER: ${DB_USER:-postgres}
+    DB_PASSWORD: ${DB_PASSWORD:-postgres}
+    CELERY_BROKER_URL: redis://redis:6379/0
+    CELERY_RESULT_BACKEND: redis://redis:6379/0
+    WORKLOG_S3_ENDPOINT_URL: http://minio:9000
+    WORKLOG_S3_PUBLIC_URL: http://localhost:9000
+    WORKLOG_S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+    WORKLOG_S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    WORKLOG_S3_BUCKET_NAME: worklog-media
+    KANBAN_S3_ENDPOINT_URL: http://minio:9000
+    KANBAN_S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+    KANBAN_S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    KANBAN_S3_BUCKET_NAME: files
+    PORTAL_S3_ENDPOINT_URL: http://minio:9000
+    PORTAL_S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+    PORTAL_S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    PORTAL_S3_BUCKET_NAME: portal-estimates
+    PORTAL_DOMAIN: ${PORTAL_DOMAIN:-}
+    TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+    ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+    SENTRY_DSN: ${SENTRY_DSN:-}
+    SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
+    GROK_API_KEY: ${GROK_API_KEY:-}
+    BANK_ENCRYPTION_KEY: ${BANK_ENCRYPTION_KEY:-}
+    JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
+    JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
+    JWT_ISSUER: ${JWT_ISSUER:-finans-assistant-erp}
+    JWT_AUDIENCE: ${JWT_AUDIENCE:-erp}
+    BREEZ_API_BASE_URL: ${BREEZ_API_BASE_URL:-https://api.breez.ru/v1}
+    BREEZ_API_AUTH_HEADER: ${BREEZ_API_AUTH_HEADER:-}
+    FNS_API_KEY: ${FNS_API_KEY:-}
+    ERP_SERVICE_TOKEN: ${ERP_SERVICE_TOKEN:-}
+    PRODUCTION_DOMAIN: ${PRODUCTION_DOMAIN:-}
+    PRODUCTION_IP: ${PRODUCTION_IP:-}
+    EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
+    EMAIL_HOST: ${EMAIL_HOST:-}
+    EMAIL_PORT: ${EMAIL_PORT:-587}
+    EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+    EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+    EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+    DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@example.com}
 
   backend:
     build:
@@ -104,52 +154,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=${DEBUG:-True}
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key-change-in-production}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-finans_assistant}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - WORKLOG_S3_ENDPOINT_URL=http://minio:9000
-      - WORKLOG_S3_PUBLIC_URL=http://localhost:9000
-      - WORKLOG_S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - WORKLOG_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - WORKLOG_S3_BUCKET_NAME=worklog-media
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
-      - SENTRY_DSN=${SENTRY_DSN}
-      - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-development}
-      - ERP_SERVICE_TOKEN=${ERP_SERVICE_TOKEN:-}
-      - PRODUCTION_DOMAIN=${PRODUCTION_DOMAIN:-}
-      - PRODUCTION_IP=${PRODUCTION_IP:-}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY:-}
-      - GROK_API_KEY=${GROK_API_KEY:-}
-      - BANK_ENCRYPTION_KEY=${BANK_ENCRYPTION_KEY:-}
-      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:-}
-      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY:-}
-      - JWT_ISSUER=${JWT_ISSUER:-finans-assistant-erp}
-      - JWT_AUDIENCE=${JWT_AUDIENCE:-kanban-service}
-      - BREEZ_API_BASE_URL=${BREEZ_API_BASE_URL:-https://api.breez.ru/v1}
-      - BREEZ_API_AUTH_HEADER=${BREEZ_API_AUTH_HEADER:-}
-      - FNS_API_KEY=${FNS_API_KEY:-}
-      # Portal S3 storage
-      - PORTAL_S3_ENDPOINT_URL=http://minio:9000
-      - PORTAL_S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - PORTAL_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - PORTAL_S3_BUCKET_NAME=portal-estimates
-      - PORTAL_DOMAIN=${PORTAL_DOMAIN:-}
-      # Email (SMTP)
-      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
-      - EMAIL_HOST=${EMAIL_HOST:-}
-      - EMAIL_PORT=${EMAIL_PORT:-587}
-      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
-      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
-      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
-      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-noreply@example.com}
+      <<: *backend-env
     volumes:
       - ./backend:/app
       - backend_media:/app/media
@@ -168,142 +173,13 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  kanban-api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    command: ["gunicorn", "kanban_service.wsgi:application", "--bind", "0.0.0.0:8010", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]
-    ports:
-      - "8010:8010"
-    environment:
-      - KANBAN_DEBUG=${KANBAN_DEBUG:-True}
-      - KANBAN_SECRET_KEY=${KANBAN_SECRET_KEY:-django-insecure-kanban-dev-key}
-      - KANBAN_DB_HOST=postgres
-      - KANBAN_DB_PORT=5432
-      - KANBAN_DB_NAME=${KANBAN_DB_NAME:-kanban}
-      - KANBAN_DB_USER=${DB_USER:-postgres}
-      - KANBAN_DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - KANBAN_CELERY_BROKER_URL=redis://redis:6379/1
-      - KANBAN_CELERY_RESULT_BACKEND=redis://redis:6379/1
-      - KANBAN_S3_ENDPOINT_URL=http://minio:9000
-      - KANBAN_S3_PUBLIC_URL=${KANBAN_S3_PUBLIC_URL:-http://localhost:3000}
-      - KANBAN_S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - KANBAN_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - KANBAN_S3_BUCKET_NAME=files
-      - ERP_API_BASE_URL=http://backend:8000/api/v1
-      - ERP_SERVICE_TOKEN=${ERP_SERVICE_TOKEN:-}
-      - ERP_JWT_SECRET=${SECRET_KEY}
-    depends_on:
-      createkanbandb:
-        condition: service_completed_successfully
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  kanban-celery-worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    command: celery -A kanban_service worker --loglevel=info --concurrency=2
-    environment:
-      - KANBAN_DEBUG=${KANBAN_DEBUG:-True}
-      - KANBAN_SECRET_KEY=${KANBAN_SECRET_KEY:-django-insecure-kanban-dev-key}
-      - KANBAN_DB_HOST=postgres
-      - KANBAN_DB_PORT=5432
-      - KANBAN_DB_NAME=${KANBAN_DB_NAME:-kanban}
-      - KANBAN_DB_USER=${DB_USER:-postgres}
-      - KANBAN_DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - KANBAN_CELERY_BROKER_URL=redis://redis:6379/1
-      - KANBAN_CELERY_RESULT_BACKEND=redis://redis:6379/1
-      - KANBAN_S3_ENDPOINT_URL=http://minio:9000
-      - KANBAN_S3_PUBLIC_URL=${KANBAN_S3_PUBLIC_URL:-http://localhost:3000}
-      - KANBAN_S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - KANBAN_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - KANBAN_S3_BUCKET_NAME=files
-      - ERP_API_BASE_URL=http://backend:8000/api/v1
-      - ERP_SERVICE_TOKEN=${ERP_SERVICE_TOKEN:-}
-    depends_on:
-      createkanbandb:
-        condition: service_completed_successfully
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  kanban-celery-beat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    command: celery -A kanban_service beat --loglevel=info
-    environment:
-      - KANBAN_DEBUG=${KANBAN_DEBUG:-True}
-      - KANBAN_SECRET_KEY=${KANBAN_SECRET_KEY:-django-insecure-kanban-dev-key}
-      - KANBAN_DB_HOST=postgres
-      - KANBAN_DB_PORT=5432
-      - KANBAN_DB_NAME=${KANBAN_DB_NAME:-kanban}
-      - KANBAN_DB_USER=${DB_USER:-postgres}
-      - KANBAN_DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - KANBAN_CELERY_BROKER_URL=redis://redis:6379/1
-      - KANBAN_CELERY_RESULT_BACKEND=redis://redis:6379/1
-      - KANBAN_S3_ENDPOINT_URL=http://minio:9000
-      - KANBAN_S3_PUBLIC_URL=${KANBAN_S3_PUBLIC_URL:-http://localhost:3000}
-      - KANBAN_S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - KANBAN_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - KANBAN_S3_BUCKET_NAME=files
-      - ERP_API_BASE_URL=http://backend:8000/api/v1
-      - ERP_SERVICE_TOKEN=${ERP_SERVICE_TOKEN:-}
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  # =========================================================================
-  # CELERY WORKER
-  # =========================================================================
-
   celery-worker:
     build:
       context: ./backend
       dockerfile: Dockerfile
     command: celery -A finans_assistant worker --loglevel=info --concurrency=2
     environment:
-      - DEBUG=${DEBUG:-True}
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key-change-in-production}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-finans_assistant}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - WORKLOG_S3_ENDPOINT_URL=http://minio:9000
-      - WORKLOG_S3_PUBLIC_URL=http://localhost:9000
-      - WORKLOG_S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - WORKLOG_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - WORKLOG_S3_BUCKET_NAME=worklog-media
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
-      - SENTRY_DSN=${SENTRY_DSN}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY:-}
-      - GROK_API_KEY=${GROK_API_KEY:-}
-      - BANK_ENCRYPTION_KEY=${BANK_ENCRYPTION_KEY:-}
-      - BREEZ_API_BASE_URL=${BREEZ_API_BASE_URL:-https://api.breez.ru/v1}
-      - BREEZ_API_AUTH_HEADER=${BREEZ_API_AUTH_HEADER:-}
-      - FNS_API_KEY=${FNS_API_KEY:-}
-      # Portal S3 storage
-      - PORTAL_S3_ENDPOINT_URL=http://minio:9000
-      - PORTAL_S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - PORTAL_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - PORTAL_S3_BUCKET_NAME=portal-estimates
-      - PORTAL_DOMAIN=${PORTAL_DOMAIN:-}
-      # Email (SMTP)
-      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
-      - EMAIL_HOST=${EMAIL_HOST:-}
-      - EMAIL_PORT=${EMAIL_PORT:-587}
-      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
-      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
-      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
-      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-noreply@example.com}
+      <<: *backend-env
     volumes:
       - ./backend:/app
       - backend_media:/app/media
@@ -315,33 +191,17 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # =========================================================================
-  # CELERY BEAT (планировщик)
-  # =========================================================================
-
   celery-beat:
     build:
       context: ./backend
       dockerfile: Dockerfile
     command: celery -A finans_assistant beat --loglevel=info
     environment:
-      - DEBUG=${DEBUG:-True}
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key-change-in-production}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-finans_assistant}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      <<: *backend-env
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
-
-  # =========================================================================
-  # CELERY PUBLIC WORKER (публичный портал смет — отдельная очередь)
-  # =========================================================================
 
   celery-public-worker:
     build:
@@ -349,37 +209,7 @@ services:
       dockerfile: Dockerfile
     command: celery -A finans_assistant worker --loglevel=info --concurrency=2 -Q public_tasks
     environment:
-      - DEBUG=${DEBUG:-True}
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-docker-dev-key-change-in-production}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-finans_assistant}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - WORKLOG_S3_ENDPOINT_URL=http://minio:9000
-      - WORKLOG_S3_PUBLIC_URL=http://localhost:9000
-      - WORKLOG_S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - WORKLOG_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - WORKLOG_S3_BUCKET_NAME=worklog-media
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY:-}
-      - GROK_API_KEY=${GROK_API_KEY:-}
-      # Portal S3 storage
-      - PORTAL_S3_ENDPOINT_URL=http://minio:9000
-      - PORTAL_S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
-      - PORTAL_S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
-      - PORTAL_S3_BUCKET_NAME=portal-estimates
-      - PORTAL_DOMAIN=${PORTAL_DOMAIN:-}
-      # Email (SMTP)
-      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
-      - EMAIL_HOST=${EMAIL_HOST:-}
-      - EMAIL_PORT=${EMAIL_PORT:-587}
-      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
-      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
-      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
-      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-noreply@example.com}
+      <<: *backend-env
     volumes:
       - ./backend:/app
       - backend_media:/app/media
@@ -402,18 +232,18 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - WEBHOOK_URL=${BOT_WEBHOOK_URL:-}
-      - WEBHOOK_PATH=/bot/webhook
-      - WEBAPP_HOST=0.0.0.0
-      - WEBAPP_PORT=8081
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-finans_assistant}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - REDIS_URL=redis://redis:6379/0
-      - MINI_APP_URL=${MINI_APP_URL:-}
+      BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      WEBHOOK_URL: ${BOT_WEBHOOK_URL:-}
+      WEBHOOK_PATH: /bot/webhook
+      WEBAPP_HOST: 0.0.0.0
+      WEBAPP_PORT: "8081"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-finans_assistant}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      REDIS_URL: redis://redis:6379/0
+      MINI_APP_URL: ${MINI_APP_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -422,7 +252,7 @@ services:
     restart: unless-stopped
 
   # =========================================================================
-  # ERP FRONTEND (React + nginx)
+  # ERP FRONTEND (Next.js)
   # =========================================================================
 
   frontend:
@@ -436,7 +266,7 @@ services:
     restart: unless-stopped
 
   # =========================================================================
-  # TELEGRAM MINI APP (React + nginx)
+  # TELEGRAM MINI APP
   # =========================================================================
 
   mini-app:
@@ -450,44 +280,12 @@ services:
     restart: unless-stopped
 
   # =========================================================================
-  # PORTAL — Публичный портал расчёта смет (React + nginx)
+  # HVAC-INFO — Новостной портал климатической индустрии
   # =========================================================================
-
-  portal:
-    build:
-      context: ./portal
-      dockerfile: Dockerfile
-    ports:
-      - "3002:80"
-    depends_on:
-      - backend
-    restart: unless-stopped
-
-  # =========================================================================
-  # HVAC-INFO — Новостной портал (отдельный Django + React)
-  # =========================================================================
-
-  createhvacdb:
-    image: postgres:14-alpine
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      PGPASSWORD: ${DB_PASSWORD:-postgres}
-      DB_USER: ${DB_USER:-postgres}
-      DB_HOST: postgres
-      HVAC_DB_NAME: ${HVAC_DB_NAME:-hvac_db}
-    entrypoint: >
-      /bin/sh -c "
-      echo 'Ensuring hvac_db database exists...';
-      psql -h $$DB_HOST -U $$DB_USER -d postgres -tc \"SELECT 1 FROM pg_database WHERE datname='$$HVAC_DB_NAME'\" | grep -q 1
-      || psql -h $$DB_HOST -U $$DB_USER -d postgres -c \"CREATE DATABASE \\\"$$HVAC_DB_NAME\\\"\" ;
-      exit 0;
-      "
 
   hvac-backend:
     build:
-      context: ./hvac-info/backend
+      context: ./hvac-backend
       dockerfile: Dockerfile
     command: ["gunicorn", "config.wsgi:application",
               "--bind", "0.0.0.0:8001", "--workers", "2", "--timeout", "120",
@@ -495,31 +293,27 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - DEBUG=${HVAC_DEBUG:-False}
-      - HVAC_ENV=prod
-      - SECRET_KEY=${HVAC_SECRET_KEY:-django-insecure-hvac-change-in-production}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${HVAC_DB_NAME:-hvac_db}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - ALLOWED_HOSTS=hvac-info.com,www.hvac-info.com,localhost,hvac-backend
-      # AI провайдеры
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - XAI_API_KEY=${XAI_API_KEY:-}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      # Email
-      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
-      - EMAIL_HOST=${EMAIL_HOST:-}
-      - EMAIL_PORT=${EMAIL_PORT:-587}
-      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
-      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
-      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
-      # Captcha
-      - HCAPTCHA_SECRET_KEY=${HCAPTCHA_SECRET_KEY:-}
-      # Translation
-      - TRANSLATION_API_KEY=${TRANSLATION_API_KEY:-}
+      DEBUG: ${HVAC_DEBUG:-False}
+      HVAC_ENV: prod
+      SECRET_KEY: ${HVAC_SECRET_KEY:-django-insecure-hvac-change-in-production}
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${HVAC_DB_NAME:-hvac_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      ALLOWED_HOSTS: hvac-info.com,www.hvac-info.com,localhost,hvac-backend
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      XAI_API_KEY: ${XAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      HCAPTCHA_SECRET_KEY: ${HCAPTCHA_SECRET_KEY:-}
+      TRANSLATION_API_KEY: ${TRANSLATION_API_KEY:-}
     volumes:
       - hvac_media:/app/media
       - hvac_static:/app/staticfiles
@@ -532,16 +326,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: unless-stopped
-
-  hvac-frontend:
-    build:
-      context: ./hvac-info/frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3003:3003"
-    depends_on:
-      - hvac-backend
     restart: unless-stopped
 
 volumes:
