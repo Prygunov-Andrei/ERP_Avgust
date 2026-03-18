@@ -47,6 +47,11 @@ build/
 .coverage
 htmlcov/
 
+# Secrets / credentials
+dev-remote-db.sh
+*.pem
+*.key
+
 # Misc
 *.bak
 *.tmp
@@ -58,9 +63,7 @@ backend/catalog/data/suppliers/**/*.pdf
 реквизиты*
 docs/private/
 
-# hvac-info
-hvac-info/backups/
-hvac-info/backend/media/
-hvac-info/backend/staticfiles/
-hvac-info/frontend/build/
-hvac-info/index_avgust/
+# hvac-backend
+hvac-backend/media/
+hvac-backend/staticfiles/
+hvac-backend/backups/
