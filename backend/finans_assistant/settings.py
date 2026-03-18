@@ -21,30 +21,32 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Загрузка переменных из .env файла (если существует)
 load_dotenv(BASE_DIR / '.env')
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-^)16g74+k9b!4mfbp3r6ih4h$1===oca==rjvsijbtr4uq&-=^')
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
+
+# SECURITY WARNING: keep the secret key used in production secret!
+_secret_key = os.environ.get('SECRET_KEY', '')
+if not _secret_key:
+    if not DEBUG:
+        raise RuntimeError(
+            'SECRET_KEY не задан в переменных окружения. '
+            'Добавьте SECRET_KEY=<случайная строка> в .env'
+        )
+    # В режиме разработки используем дефолтный ключ (небезопасно в prod)
+    _secret_key = 'django-insecure-dev-only-^)16g74+k9b!4mfbp3r6ih4h$1===oca'
+SECRET_KEY = _secret_key
 
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    '.ngrok-free.app',
-    'finance.ngrok.app',  # Development ngrok domain
-    '.ngrok.io',
 ]
 
-# Add production domain from environment variable
+# Production domain from environment variable
 PRODUCTION_DOMAIN = os.environ.get('PRODUCTION_DOMAIN', '')
 if PRODUCTION_DOMAIN:
     ALLOWED_HOSTS.extend([PRODUCTION_DOMAIN, f'www.{PRODUCTION_DOMAIN}'])
 
-# Optional: allow direct IP access (IP-only setup)
+# Optional: allow direct IP access
 PRODUCTION_IP = os.environ.get('PRODUCTION_IP', '')
 if PRODUCTION_IP:
     ALLOWED_HOSTS.append(PRODUCTION_IP)
@@ -54,24 +56,34 @@ PORTAL_DOMAIN = os.environ.get('PORTAL_DOMAIN', '')
 if PORTAL_DOMAIN:
     ALLOWED_HOSTS.append(PORTAL_DOMAIN)
 
+# В режиме разработки разрешаем ngrok (только если DEBUG=True)
+if DEBUG:
+    ALLOWED_HOSTS.extend([
+        '.ngrok-free.app',
+        'finance.ngrok.app',
+        '.ngrok.io',
+    ])
+
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:8000',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:8000',
-    'https://finance.ngrok.app',
-    'https://*.figmaiframepreview.figma.site',
-    'https://*.figma.site',
 ]
 
-# Add production domain to CSRF trusted origins
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend([
+        'https://finance.ngrok.app',
+        'https://*.ngrok-free.app',
+    ])
+
+# Production domains
 if PRODUCTION_DOMAIN:
     CSRF_TRUSTED_ORIGINS.extend([
         f'https://{PRODUCTION_DOMAIN}',
         f'https://www.{PRODUCTION_DOMAIN}',
     ])
 
-# Портал смет
 if PORTAL_DOMAIN:
     CSRF_TRUSTED_ORIGINS.append(f'https://{PORTAL_DOMAIN}')
 
