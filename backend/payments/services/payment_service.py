@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional
 
 from catalog.services import ProductMatcher
 from catalog.models import ProductPriceHistory
-from .models import (
+from payments.models import (
     Payment, PaymentRegistry, PaymentItem,
     Invoice, InvoiceItem, InvoiceEvent,
     RecurringPayment, IncomeRecord,

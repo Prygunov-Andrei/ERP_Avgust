@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional
 
 from catalog.services import ProductMatcher
 from catalog.models import ProductPriceHistory
-from .models import (
+from payments.models import (
     Payment, PaymentRegistry, PaymentItem,
     Invoice, InvoiceItem, InvoiceEvent,
     RecurringPayment, IncomeRecord,
@@ -835,7 +835,7 @@ class InvoiceService:
     def _update_bulk_session(session, success: bool, error: str = ''):
         """Атомарно обновляет счётчики BulkImportSession и финализирует при завершении."""
         from django.db.models import F
-        from .models import BulkImportSession
+        from payments.models import BulkImportSession
 
         updates = {'processed_files': F('processed_files') + 1}
         if success:
