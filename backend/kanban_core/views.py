@@ -16,7 +16,7 @@ from kanban_core.serializers import (
     AttachmentRelinkSerializer,
 )
 from kanban_core.services import log_card_event
-from kanban_service.permissions import RolePermission
+from kanban_core.permissions import RolePermission
 from kanban_files.models import FileObject
 
 

@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from kanban_object_tasks.models import ObjectTask
 from kanban_object_tasks.serializers import ObjectTaskSerializer
-from kanban_service.permissions import RolePermission
+from kanban_core.permissions import RolePermission
 
 
 class ObjectTaskViewSet(viewsets.ModelViewSet):

@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from kanban_supply.models import SupplyCase, InvoiceRef, DeliveryBatch
 from kanban_supply.serializers import SupplyCaseSerializer, InvoiceRefSerializer, DeliveryBatchSerializer
-from kanban_service.permissions import RolePermission
+from kanban_core.permissions import RolePermission
 
 
 class SupplyCaseViewSet(viewsets.ModelViewSet):

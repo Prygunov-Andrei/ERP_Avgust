@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from kanban_rules.models import Rule
 from kanban_rules.serializers import RuleSerializer
-from kanban_service.permissions import RolePermission
+from kanban_core.permissions import RolePermission
 
 
 class RuleViewSet(viewsets.ModelViewSet):

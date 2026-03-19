@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from kanban_service.permissions import RolePermission
+from kanban_core.permissions import RolePermission
 from kanban_warehouse.models import StockLocation, StockMove, StockMoveLine
 from kanban_warehouse.serializers import StockLocationSerializer, StockMoveSerializer
 
