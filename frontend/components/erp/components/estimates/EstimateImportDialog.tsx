@@ -113,7 +113,7 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
   // ── Excel: синхронный preview (как раньше) ──
 
   const previewMutation = useMutation({
-    mutationFn: (file: File) => api.importEstimateFile(estimateId, file, true),
+    mutationFn: (file: File) => api.estimates.importEstimateFile(estimateId, file, true),
     onSuccess: (data) => {
       setPreviewData(data as EstimateImportPreview);
       setSectionFlags(new Set());
@@ -129,7 +129,7 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
 
   const importMutation = useMutation({
     mutationFn: (rows: Array<{ name: string; model_name?: string; unit?: string; quantity?: string; material_unit_price?: string; work_unit_price?: string; is_section?: boolean }>) =>
-      api.importEstimateRows(estimateId, rows),
+      api.estimates.importEstimateRows(estimateId, rows),
     onSuccess: (data) => {
       const count = Array.isArray(data) ? data.length : 0;
       queryClient.invalidateQueries({ queryKey: ['estimate-items', estimateId] });
@@ -156,7 +156,7 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
 
     const poll = async () => {
       try {
-        const data = await api.getEstimateImportProgress(pdfSessionId);
+        const data = await api.estimates.getEstimateImportProgress(pdfSessionId);
         setPdfProgress({ current: data.current_page, total: data.total_pages });
         setPdfErrors(data.errors);
 
@@ -216,7 +216,7 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
       // PDF → progressive import через Celery
       setStep('progressive');
       setPdfProgress({ current: 0, total: 0 });
-      api.startEstimatePdfImport(estimateId, file)
+      api.estimates.startEstimatePdfImport(estimateId, file)
         .then(({ session_id, total_pages }) => {
           setPdfSessionId(session_id);
           setPdfProgress({ current: 0, total: total_pages });
@@ -259,7 +259,7 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
 
   const handleCancelPdf = useCallback(() => {
     if (pdfSessionId) {
-      api.cancelEstimateImport(pdfSessionId).catch(() => {});
+      api.estimates.cancelEstimateImport(pdfSessionId).catch(() => {});
     }
     stopPolling();
     if (previewData && previewData.rows.length > 0) {
@@ -272,7 +272,7 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
   const handleReset = useCallback(() => {
     stopPolling();
     if (pdfSessionId && step === 'progressive') {
-      api.cancelEstimateImport(pdfSessionId).catch(() => {});
+      api.estimates.cancelEstimateImport(pdfSessionId).catch(() => {});
     }
     setStep('upload');
     setSelectedFile(null);

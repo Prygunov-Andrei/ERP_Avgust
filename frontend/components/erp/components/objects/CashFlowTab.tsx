@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, ContractListItem } from '@/lib/api';
-import { CONSTANTS } from '../../constants';
+import { api, ContractListItem, ObjectCashFlowData } from '@/lib/api';
+import { CONSTANTS } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,7 +52,7 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
 
   const { data: contractsData, isLoading: contractsLoading } = useQuery({
     queryKey: ['object-contracts', objectId],
-    queryFn: () => api.getContracts({ object: objectId }),
+    queryFn: () => api.contracts.getContracts({ object: objectId }),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -66,7 +66,7 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
   const { data: cashFlow, isLoading: cashFlowLoading } = useQuery({
     queryKey: ['object-cashflow', objectId, startDate, endDate],
     queryFn: () =>
-      api.getObjectCashFlow(objectId, {
+      api.core.getObjectCashFlow(objectId, {
         start_date: startDate || undefined,
         end_date: endDate || undefined,
       }),
@@ -194,7 +194,7 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
                 </tr>
               </thead>
               <tbody>
-                {cashFlowData.map((row: any, idx: number) => {
+                {cashFlowData.map((row: ObjectCashFlowData, idx: number) => {
                   const income = Number(row.income ?? 0);
                   const expense = Number(row.expense ?? 0);
                   const net = Number(row.net ?? income - expense);

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@/hooks/erp-router';
-import { api, ProjectList, ConstructionObject } from '@/lib/api';
+import { api, ProjectList, ConstructionObject, unwrapResults } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { useObjects } from '@/hooks/useReferenceData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,14 +39,12 @@ export function Projects() {
 
   const { data: projects, isLoading, refetch } = useQuery({
     queryKey: ['projects', filters],
-    queryFn: () => api.getProjects(filters),
+    queryFn: () => api.estimates.getProjects(filters),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: objectsData } = useObjects();
-  const objects = Array.isArray(objectsData)
-    ? objectsData
-    : (objectsData as any)?.results ?? [];
+  const objects = unwrapResults(objectsData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +64,7 @@ export function Projects() {
     formDataToSend.append('file', formData.file);
 
     try {
-      const created = await api.createProject(formDataToSend);
+      const created = await api.estimates.createProject(formDataToSend);
       toast.success('Проект создан');
       setCreateDialogOpen(false);
       resetForm();
@@ -177,7 +175,7 @@ export function Projects() {
                 className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Все объекты</option>
-                {objects.map((obj: any) => (
+                {objects.map((obj) => (
                   <option key={obj.id} value={obj.id}>{obj.name}</option>
                 ))}
               </select>
@@ -388,7 +386,7 @@ export function Projects() {
                   required
                 >
                   <option value={0}>Выберите объект</option>
-                  {objects.map((obj: any) => (
+                  {objects.map((obj) => (
                     <option key={obj.id} value={obj.id}>{obj.name}</option>
                   ))}
                 </select>

@@ -4,6 +4,6 @@ from kanban_commercial.views import CommercialCaseViewSet
 
 
 router = DefaultRouter()
-router.register(r'v1/commercial/cases', CommercialCaseViewSet, basename='commercial-case')
+router.register(r'commercial/cases', CommercialCaseViewSet, basename='commercial-case')
 
 urlpatterns = router.urls

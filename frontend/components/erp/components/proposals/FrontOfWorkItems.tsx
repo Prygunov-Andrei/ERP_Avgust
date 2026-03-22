@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { api, FrontOfWorkItem, CreateFrontOfWorkItemData } from '@/lib/api';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,7 +41,7 @@ export function FrontOfWorkItems() {
   // Загрузка данных
   const { data: items, isLoading } = useQuery({
     queryKey: ['front-of-work-items', { search: searchQuery, category: categoryFilter, is_active: activeFilter }],
-    queryFn: () => api.getFrontOfWorkItems({
+    queryFn: () => api.proposals.getFrontOfWorkItems({
       search: searchQuery || undefined,
       category: categoryFilter || undefined,
       is_active: activeFilter,
@@ -51,7 +51,7 @@ export function FrontOfWorkItems() {
 
   // Мутации
   const createMutation = useMutation({
-    mutationFn: (data: CreateFrontOfWorkItemData) => api.createFrontOfWorkItem(data),
+    mutationFn: (data: CreateFrontOfWorkItemData) => api.proposals.createFrontOfWorkItem(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['front-of-work-items'] });
       toast.success('Пункт фронта работ создан');
@@ -64,7 +64,7 @@ export function FrontOfWorkItems() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CreateFrontOfWorkItemData> }) =>
-      api.updateFrontOfWorkItem(id, data),
+      api.proposals.updateFrontOfWorkItem(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['front-of-work-items'] });
       toast.success('Пункт фронта работ обновлен');
@@ -76,7 +76,7 @@ export function FrontOfWorkItems() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteFrontOfWorkItem(id),
+    mutationFn: (id: number) => api.proposals.deleteFrontOfWorkItem(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['front-of-work-items'] });
       toast.success('Пункт фронта работ удален');

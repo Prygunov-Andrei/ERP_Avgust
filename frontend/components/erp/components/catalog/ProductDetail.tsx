@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from '@/hooks/erp-router';
-import { api } from '@/lib/api';
+import { api , unwrapResults} from '@/lib/api';
 import { formatDate, formatAmount } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { useCatalogCategories } from '@/hooks';
 import { Product, ProductAlias } from '@/types/catalog';
 import { SupplierProduct, SupplierStock } from '@/types/supplier';
@@ -38,7 +38,7 @@ export function ProductDetail() {
   // Загрузка товара
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
-    queryFn: () => api.getProductById(parseInt(id!)),
+    queryFn: () => api.catalog.getProductById(parseInt(id!)),
     enabled: !!id,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
@@ -49,7 +49,7 @@ export function ProductDetail() {
   // Загрузка истории цен
   const { data: prices, isLoading: pricesLoading } = useQuery({
     queryKey: ['product-prices', id],
-    queryFn: () => api.getProductPrices(parseInt(id!)),
+    queryFn: () => api.catalog.getProductPrices(parseInt(id!)),
     enabled: !!id && activeTab === 'prices',
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
@@ -57,7 +57,7 @@ export function ProductDetail() {
   // Загрузка предложений поставщиков
   const { data: supplierProducts, isLoading: suppliersLoading } = useQuery({
     queryKey: ['supplier-products', { product: id }],
-    queryFn: () => api.getSupplierProducts(`product=${id}`),
+    queryFn: () => api.supply.getSupplierProducts(`product=${id}`),
     enabled: !!id && activeTab === 'suppliers',
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
@@ -65,37 +65,37 @@ export function ProductDetail() {
   // Обновление категории
   const updateCategoryMutation = useMutation({
     mutationFn: (categoryId: number | null) =>
-      api.updateProduct(parseInt(id!), { category: categoryId }),
+      api.catalog.updateProduct(parseInt(id!), { category: categoryId }),
     onSuccess: () => {
       toast.success('Категория обновлена');
       queryClient.invalidateQueries({ queryKey: ['product', id] });
       setIsEditingCategory(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
 
   // Подтверждение товара
   const verifyMutation = useMutation({
-    mutationFn: () => api.verifyProduct(parseInt(id!)),
+    mutationFn: () => api.catalog.verifyProduct(parseInt(id!)),
     onSuccess: () => {
       toast.success('Товар подтверждён');
       queryClient.invalidateQueries({ queryKey: ['product', id] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
 
   // Архивация товара
   const archiveMutation = useMutation({
-    mutationFn: () => api.archiveProduct(parseInt(id!)),
+    mutationFn: () => api.catalog.archiveProduct(parseInt(id!)),
     onSuccess: () => {
       toast.success('Товар архивирован');
       queryClient.invalidateQueries({ queryKey: ['product', id] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
@@ -149,7 +149,7 @@ export function ProductDetail() {
     setGalleryOpen(true);
   };
 
-  const supplierList = Array.isArray(supplierProducts) ? supplierProducts : (supplierProducts as any)?.results || [];
+  const supplierList = unwrapResults(supplierProducts);
 
   return (
     <div className="h-screen flex flex-col">
@@ -307,7 +307,7 @@ export function ProductDetail() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Без категории</SelectItem>
-                        {categories?.map((cat: any) => (
+                        {categories?.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id.toString()}>
                             {cat.full_path || cat.name}
                           </SelectItem>

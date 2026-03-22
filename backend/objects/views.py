@@ -8,6 +8,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from core.mixins import CashFlowMixin
 from .models import Object
 from .serializers import ObjectSerializer, ObjectListSerializer
+from .services import upload_object_photo, PhotoUploadError
 
 
 @extend_schema_view(
@@ -110,25 +111,14 @@ class ObjectViewSet(CashFlowMixin, viewsets.ModelViewSet):
     def upload_photo(self, request, pk=None):
         """Загрузить или обновить фотографию объекта"""
         obj = self.get_object()
-        photo = request.FILES.get('photo')
 
-        if not photo:
+        try:
+            upload_object_photo(obj, request.FILES.get('photo'))
+        except PhotoUploadError as exc:
             return Response(
-                {'error': 'Фотография не предоставлена'},
+                {'error': str(exc)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        if not photo.content_type.startswith('image/'):
-            return Response(
-                {'error': 'Файл должен быть изображением'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if obj.photo:
-            obj.photo.delete(save=False)
-
-        obj.photo = photo
-        obj.save(update_fields=['photo'])
 
         serializer = ObjectSerializer(obj, context={'request': request})
         return Response(serializer.data)

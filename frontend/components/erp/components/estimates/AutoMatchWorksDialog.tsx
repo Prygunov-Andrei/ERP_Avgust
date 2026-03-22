@@ -46,7 +46,7 @@ export const AutoMatchWorksDialog: React.FC<AutoMatchWorksDialogProps> = ({
   const [step, setStep] = useState<'config' | 'results'>('config');
 
   const matchMutation = useMutation({
-    mutationFn: () => api.autoMatchWorksForEstimate(estimateId),
+    mutationFn: () => api.estimates.autoMatchWorksForEstimate(estimateId),
     onSuccess: (data) => {
       const rows = (data || []).map((r) => ({
         ...r,
@@ -77,7 +77,7 @@ export const AutoMatchWorksDialog: React.FC<AutoMatchWorksDialogProps> = ({
     }));
 
     try {
-      const result = await api.applyMatchedWorks(items);
+      const result = await api.estimates.applyMatchedWorks(items);
       queryClient.invalidateQueries({ queryKey: ['estimate-items', estimateId] });
       toast.success(`Применено ${result.applied} работ`);
       onOpenChange(false);

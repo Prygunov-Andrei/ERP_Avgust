@@ -2,31 +2,31 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@/hooks/erp-router';
 import { Plus, Search, Filter, X } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, unwrapResults, Act } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function ActsList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<Record<string, string | undefined>>({});
   const [showFilters, setShowFilters] = useState(false);
 
   // Загрузка актов
   const { data: actsData, isLoading } = useQuery({
     queryKey: ['acts', { ...filters, search }],
-    queryFn: () => api.getActs({ ...filters, search }),
+    queryFn: () => api.contracts.getActs({ ...filters, search }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   // Загрузка договоров для фильтров
   const { data: contracts } = useQuery({
     queryKey: ['contracts'],
-    queryFn: () => api.getContracts(),
+    queryFn: () => api.contracts.getContracts(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -41,8 +41,8 @@ export function ActsList() {
     return <Badge className={item.className}>{item.label}</Badge>;
   };
 
-  const isOverdue = (act: any) => {
-    if (!act.due_date || act.status !== 'signed' || parseFloat(act.unpaid_amount) <= 0) {
+  const isOverdue = (act: Act) => {
+    if (!act.due_date || act.status !== 'signed' || parseFloat(act.unpaid_amount || '0') <= 0) {
       return false;
     }
     const dueDate = new Date(act.due_date);
@@ -64,7 +64,7 @@ export function ActsList() {
     );
   }
 
-  const acts = Array.isArray(actsData) ? actsData : (actsData as any)?.results || [];
+  const acts = unwrapResults(actsData);
 
   return (
     <div className="space-y-6">
@@ -171,7 +171,7 @@ export function ActsList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {acts.map((act: any) => {
+                {acts.map((act) => {
                   const overdue = isOverdue(act);
                   return (
                     <tr
@@ -208,7 +208,7 @@ export function ActsList() {
                       <td className="px-6 py-4 text-gray-600">{formatCurrency(act.vat_amount)}</td>
                       <td className="px-6 py-4">{getStatusBadge(act.status)}</td>
                       <td className="px-6 py-4">
-                        {parseFloat(act.unpaid_amount) > 0 ? (
+                        {parseFloat(act.unpaid_amount || '0') > 0 ? (
                           <span className="text-red-600">{formatCurrency(act.unpaid_amount)}</span>
                         ) : (
                           <span className="text-green-600">Оплачено</span>
@@ -225,7 +225,7 @@ export function ActsList() {
 
       {/* Счетчик */}
       <div className="text-gray-600">
-        Всего актов: {(actsData as any)?.count || (Array.isArray(actsData) ? actsData.length : 0)}
+        Всего актов: {acts.length}
       </div>
     </div>
   );

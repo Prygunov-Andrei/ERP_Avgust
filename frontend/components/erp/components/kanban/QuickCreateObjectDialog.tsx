@@ -32,7 +32,7 @@ export const QuickCreateObjectDialog = ({ open, onOpenChange, onCreated }: Props
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      return api.createConstructionObject({
+      return api.core.createConstructionObject({
         name: form.name.trim(),
         address: form.address.trim(),
         status: 'planned',
@@ -46,7 +46,7 @@ export const QuickCreateObjectDialog = ({ open, onOpenChange, onCreated }: Props
       onCreated(created);
       onOpenChange(false);
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       const detail = err?.message || 'Не удалось создать объект';
       toast.error(detail);
     },

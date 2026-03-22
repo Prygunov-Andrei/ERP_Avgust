@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
 interface ExcelExportProps {
-  data: any[];
+  data: Record<string, unknown>[];
   filename: string;
   sheetName?: string;
   buttonText?: string;

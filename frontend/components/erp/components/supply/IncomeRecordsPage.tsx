@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function IncomeRecordsPage() {
   const queryClient = useQueryClient();
@@ -57,7 +57,7 @@ export function IncomeRecordsPage() {
 
   const { data: response, isLoading } = useQuery({
     queryKey: ['income-records', searchQuery, currentPage, pageSize],
-    queryFn: () => (api as any).getIncomeRecords(buildParams()),
+    queryFn: () => api.supply.getIncomeRecords(buildParams()),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -66,7 +66,7 @@ export function IncomeRecordsPage() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => (api as any).deleteIncomeRecord(id),
+    mutationFn: (id: number) => api.supply.deleteIncomeRecord(id),
     onSuccess: () => {
       toast.success('Запись дохода удалена');
       queryClient.invalidateQueries({ queryKey: ['income-records'] });
@@ -75,7 +75,7 @@ export function IncomeRecordsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => (api as any).createIncomeRecord(data),
+    mutationFn: (data: Record<string, unknown>) => api.supply.createIncomeRecord(data),
     onSuccess: () => {
       toast.success('Доход записан');
       setIsCreateOpen(false);
@@ -86,8 +86,8 @@ export function IncomeRecordsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      (api as any).updateIncomeRecord(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
+      api.supply.updateIncomeRecord(id, data),
     onSuccess: () => {
       toast.success('Запись обновлена');
       setEditId(null);
@@ -127,7 +127,7 @@ export function IncomeRecordsPage() {
   };
 
   const handleSubmit = () => {
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       account: parseInt(formData.account),
       category: parseInt(formData.category),
       legal_entity: parseInt(formData.legal_entity),

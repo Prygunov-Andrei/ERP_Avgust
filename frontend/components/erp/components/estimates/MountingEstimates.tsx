@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@/hooks/erp-router';
-import { api, MountingEstimateList } from '@/lib/api';
+import { api, MountingEstimateList , unwrapResults, MountingEstimateCreateRequest} from '@/lib/api';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { useObjects } from '@/hooks/useReferenceData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,24 +46,22 @@ export function MountingEstimates() {
 
   const { data: mountingEstimates, isLoading, refetch } = useQuery({
     queryKey: ['mounting-estimates', filters],
-    queryFn: () => api.getMountingEstimates(filters),
+    queryFn: () => api.estimates.getMountingEstimates(filters),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: objectsData } = useObjects();
-  const objects = Array.isArray(objectsData)
-    ? objectsData
-    : (objectsData as any)?.results ?? [];
+  const objects = unwrapResults(objectsData);
 
   const { data: estimates } = useQuery({
     queryKey: ['estimates-all'],
-    queryFn: () => api.getEstimates(),
+    queryFn: () => api.estimates.getEstimates(),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: counterparties } = useQuery({
     queryKey: ['counterparties'],
-    queryFn: () => api.getCounterparties(),
+    queryFn: () => api.core.getCounterparties(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -76,7 +74,7 @@ export function MountingEstimates() {
     }
 
     try {
-      const created = await api.createMountingEstimate({
+      const created = await api.estimates.createMountingEstimate({
         name: formData.name,
         object: formData.object,
         source_estimate: formData.source_estimate,
@@ -101,7 +99,7 @@ export function MountingEstimates() {
     }
 
     try {
-      const created = await api.createMountingEstimateFromEstimateId(selectedEstimateForCreation);
+      const created = await api.estimates.createMountingEstimateFromEstimateId(selectedEstimateForCreation);
       toast.success('Монтажная смета создана из сметы');
       setCreateFromEstimateOpen(false);
       setSelectedEstimateForCreation(0);
@@ -202,7 +200,7 @@ export function MountingEstimates() {
                 className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Все объекты</option>
-                {objects.map((obj: any) => (
+                {objects.map((obj) => (
                   <option key={obj.id} value={obj.id}>{obj.name}</option>
                 ))}
               </select>
@@ -374,7 +372,7 @@ export function MountingEstimates() {
                   required
                 >
                   <option value={0}>Выберите объект</option>
-                  {objects.map((obj: any) => (
+                  {objects.map((obj) => (
                     <option key={obj.id} value={obj.id}>{obj.name}</option>
                   ))}
                 </select>
@@ -428,7 +426,7 @@ export function MountingEstimates() {
               <select
                 id="status"
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'sent' | 'approved' | 'rejected' })}
                 className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {Object.entries(STATUS_MAP).map(([key, { label }]) => (

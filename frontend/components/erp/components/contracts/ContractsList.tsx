@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@/hooks/erp-router';
 import { Plus, Search, Filter, X } from 'lucide-react';
-import { api, ContractListItem } from '@/lib/api';
+import { api, ContractListItem , unwrapResults} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,24 +11,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { CreateContractDialog } from '../CreateContractDialog';
 import { useObjects, useCounterparties, useLegalEntities } from '@/hooks';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function ContractsList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<Record<string, string | undefined>>({});
   const [showFilters, setShowFilters] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   // Загрузка договоров
   const { data: contractsData, isLoading } = useQuery({
     queryKey: ['contracts', { ...filters, search }],
-    queryFn: () => api.getContracts({ ...filters, search }),
+    queryFn: () => api.contracts.getContracts({ ...filters, search }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   // Извлекаем массив contracts из ответа API
-  const contracts = Array.isArray(contractsData) ? contractsData : (contractsData as any)?.results || [];
+  const contracts = unwrapResults(contractsData);
 
   // Загрузка справочников для фильтров с кешированием
   const { data: objectsData } = useObjects();
@@ -227,7 +227,7 @@ export function ContractsList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {contracts.map((contract: any) => (
+                {contracts.map((contract) => (
                   <tr
                     key={contract.id}
                     onClick={() => navigate(`/contracts/${contract.id}`)}

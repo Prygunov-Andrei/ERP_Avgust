@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { type ColumnDef } from '@tanstack/react-table';
 import { api, type AccumulativeEstimateRow } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download } from 'lucide-react';
@@ -16,13 +16,13 @@ type AccumulativeEstimateViewProps = {
 export const AccumulativeEstimateView: React.FC<AccumulativeEstimateViewProps> = ({ contractId }) => {
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ['accumulative-estimate', contractId],
-    queryFn: () => api.getAccumulativeEstimate(contractId),
+    queryFn: () => api.contracts.getAccumulativeEstimate(contractId),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const handleExport = useCallback(async () => {
     try {
-      const blob = await api.exportAccumulativeEstimate(contractId);
+      const blob = await api.contracts.exportAccumulativeEstimate(contractId);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -83,7 +83,7 @@ export const AccumulativeEstimateView: React.FC<AccumulativeEstimateViewProps> =
     [],
   );
 
-  const rowClassName = useCallback((row: any) => {
+  const rowClassName = useCallback((row: { original: AccumulativeEstimateRow }) => {
     const est = parseFloat(row.original.estimate_quantity) || 0;
     const purch = parseFloat(row.original.purchased_quantity) || 0;
     if (purch >= est && purch > 0) return 'bg-green-50';

@@ -4,9 +4,9 @@ from kanban_supply.views import SupplyCaseViewSet, InvoiceRefViewSet, DeliveryBa
 
 
 router = DefaultRouter()
-router.register(r'v1/supply/cases', SupplyCaseViewSet, basename='supply-case')
-router.register(r'v1/supply/invoice_refs', InvoiceRefViewSet, basename='supply-invoice-ref')
-router.register(r'v1/supply/deliveries', DeliveryBatchViewSet, basename='supply-delivery-batch')
+router.register(r'supply/cases', SupplyCaseViewSet, basename='supply-case')
+router.register(r'supply/invoice_refs', InvoiceRefViewSet, basename='supply-invoice-ref')
+router.register(r'supply/deliveries', DeliveryBatchViewSet, basename='supply-delivery-batch')
 
 urlpatterns = router.urls
 

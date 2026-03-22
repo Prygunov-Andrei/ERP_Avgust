@@ -90,7 +90,6 @@ echo "=========================================="
 echo "STEP 6: Database Migrations"
 echo "=========================================="
 docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
-docker compose -f docker-compose.prod.yml exec -T kanban-api python manage_kanban.py migrate --noinput
 docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
 
 echo ""
@@ -101,8 +100,6 @@ echo "Loading employees and legal entities..."
 docker compose -f docker-compose.prod.yml exec -T backend python manage.py load_real_employees
 echo "Настройка LLM-провайдеров..."
 docker compose -f docker-compose.prod.yml exec -T backend python manage.py setup_providers
-echo "Initializing kanban boards..."
-docker compose -f docker-compose.prod.yml exec -T kanban-api python manage_kanban.py init_commercial_board
 
 echo ""
 echo "=========================================="

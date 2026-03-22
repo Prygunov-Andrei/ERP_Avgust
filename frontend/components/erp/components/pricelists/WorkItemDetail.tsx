@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ArrowLeft, FileText, Clock, Users, Loader2, Star, Hash, Edit2, Trash2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDateTime } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function WorkItemDetail() {
   const { id } = useParams<{ id: string }>();
@@ -34,28 +34,28 @@ export function WorkItemDetail() {
 
   const { data: workItem, isLoading, error } = useQuery({
     queryKey: ['work-item', id],
-    queryFn: () => api.getWorkItemDetail(Number(id)),
+    queryFn: () => api.pricelists.getWorkItemDetail(Number(id)),
     enabled: !!id,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: sections } = useQuery({
     queryKey: ['work-sections-active'],
-    queryFn: () => api.getWorkSections(false).then((sections) => sections.filter((s: WorkSection) => s.is_active)),
+    queryFn: () => api.pricelists.getWorkSections(false).then((sections) => sections.filter((s: WorkSection) => s.is_active)),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
     enabled: isEditDialogOpen,
   });
 
   const { data: versions, isLoading: versionsLoading } = useQuery({
     queryKey: ['work-item-versions', id],
-    queryFn: () => api.getWorkItemVersions(Number(id)),
+    queryFn: () => api.pricelists.getWorkItemVersions(Number(id)),
     enabled: !!id && showVersions,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ itemId, data }: { itemId: number; data: Partial<CreateWorkItemData> }) =>
-      api.updateWorkItem(itemId, data),
+      api.pricelists.updateWorkItem(itemId, data),
     onSuccess: (updatedItem) => {
       queryClient.invalidateQueries({ queryKey: ['work-items'] });
       queryClient.invalidateQueries({ queryKey: ['work-item'] });
@@ -69,7 +69,7 @@ export function WorkItemDetail() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (itemId: number) => api.deleteWorkItem(itemId),
+    mutationFn: (itemId: number) => api.pricelists.deleteWorkItem(itemId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-items'] });
       toast.success('Работа удалена');
@@ -452,7 +452,7 @@ export function WorkItemDetail() {
                 <select
                   id="unit"
                   value={formData.unit}
-                  onChange={(e) => setFormData({ ...formData, unit: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value as CreateWorkItemData['unit'] })}
                   className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '../../common/EmptyState';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../../constants';
+import { CONSTANTS } from '@/constants';
 
 type ObjectContractsListProps = {
   objectId: number;
@@ -28,7 +28,7 @@ export const ObjectContractsList = ({ objectId, contractType }: ObjectContractsL
 
   const { data: contractsData, isLoading } = useQuery({
     queryKey: ['contracts', { object: objectId, contract_type: contractType }],
-    queryFn: () => api.getContracts({ object: objectId, contract_type: contractType }),
+    queryFn: () => api.contracts.getContracts({ object: objectId, contract_type: contractType }),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 

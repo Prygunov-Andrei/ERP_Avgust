@@ -36,13 +36,13 @@ export default function PortalCallbacksPage() {
 
   const { data: callbacks, isLoading } = useQuery({
     queryKey: ['portal-callbacks', statusFilter],
-    queryFn: () => (api as any).getPortalCallbacks(params),
+    queryFn: () => api.supply.getPortalCallbacks(params),
     staleTime: 30_000,
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) =>
-      (api as any).updateCallbackStatus(id, status),
+      api.supply.updateCallbackStatus(id, status),
     onSuccess: () => {
       toast.success('Статус обновлён');
       queryClient.invalidateQueries({ queryKey: ['portal-callbacks'] });
@@ -84,7 +84,7 @@ export default function PortalCallbacksPage() {
               {isLoading && (
                 <tr><td colSpan={7} className="text-center p-8 text-muted-foreground">Загрузка...</td></tr>
               )}
-              {callbacks?.map((cb: any) => (
+              {callbacks?.map((cb) => (
                 <tr key={cb.id} className="border-b hover:bg-muted/30">
                   <td className="p-3 font-mono">
                     <div className="flex items-center gap-2">
@@ -105,7 +105,7 @@ export default function PortalCallbacksPage() {
                     </Badge>
                   </td>
                   <td className="p-3 text-muted-foreground">
-                    {new Date(cb.created_at).toLocaleDateString('ru-RU')}
+                    {cb.created_at ? new Date(cb.created_at).toLocaleDateString('ru-RU') : '—'}
                   </td>
                   <td className="text-center p-3">
                     {cb.status === 'new' && (

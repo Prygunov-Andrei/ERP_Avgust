@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, CreatePaymentData, ParseInvoiceResponse, InvoiceItem } from '@/lib/api';
+import { api, CreatePaymentData, CreateCounterpartyData, ParseInvoiceResponse, InvoiceItem } from '@/lib/api';
 import { formatAmount } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { useAccounts, useExpenseCategories, useLegalEntities } from '@/hooks';
 import { Loader2, AlertCircle, FileText, Building2, Calendar, DollarSign, Hash, Receipt, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -53,7 +53,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
 
   const { data: contracts, error: contractsError } = useQuery({
     queryKey: ['contracts'],
-    queryFn: () => api.getContracts(),
+    queryFn: () => api.contracts.getContracts(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
     retry: false,
   });
@@ -136,25 +136,21 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
   // Обработчик создания нового контрагента
   const handleCreateCounterparty = async (data: { name: string; inn: string; kpp?: string }) => {
     try {
-      const counterpartyData: any = {
+      const counterpartyData: CreateCounterpartyData = {
         name: data.name.trim(),
         inn: data.inn.trim(),
         legal_form: 'ooo', // Используем lowercase латиницу, как в основной форме
         type: 'vendor',
+        ...(data.kpp && data.kpp.trim() ? { kpp: data.kpp.trim() } : {}),
       };
-      
-      // Добавляем kpp только если оно не пустое
-      if (data.kpp && data.kpp.trim()) {
-        counterpartyData.kpp = data.kpp.trim();
-      }
-      
-      const newCounterparty = await api.createCounterparty(counterpartyData);
+
+      const newCounterparty = await api.core.createCounterparty(counterpartyData);
       
       queryClient.invalidateQueries({ queryKey: ['counterparties'] });
       setFormData(prev => ({ ...prev, counterparty: newCounterparty.id }));
       toast.success('Контрагент успешно создан');
-    } catch (error: any) {
-      toast.error(`Ошибка создания контрагента: ${error.message}`);
+    } catch (error: unknown) {
+      toast.error(`Ошибка создания контрагента: ${(error instanceof Error ? error.message : String(error))}`);
     }
   };
 
@@ -213,7 +209,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
         }));
       }
 
-      const newPayment = await api.createPayment(payload);
+      const newPayment = await api.payments.createPayment(payload);
 
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
@@ -230,8 +226,8 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
       }
 
       onSuccess();
-    } catch (error: any) {
-      toast.error(`Ошибка создания платежа: ${error.message}`);
+    } catch (error: unknown) {
+      toast.error(`Ошибка создания платежа: ${(error instanceof Error ? error.message : String(error))}`);
     } finally {
       setIsSubmitting(false);
     }

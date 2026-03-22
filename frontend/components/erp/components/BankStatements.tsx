@@ -32,13 +32,13 @@ export const BankStatements = () => {
 
   const { data: bankAccounts, isLoading: accountsLoading } = useQuery({
     queryKey: ['bank-accounts'],
-    queryFn: () => api.getBankAccounts(),
+    queryFn: () => api.banking.getBankAccounts(),
   });
 
   const { data: transactionsData, isLoading: txLoading, refetch: refetchTx } = useQuery({
     queryKey: ['bank-transactions', selectedAccountId, searchQuery, filterType, filterReconciled],
     queryFn: () =>
-      api.getBankTransactions({
+      api.banking.getBankTransactions({
         bank_account: selectedAccountId !== 'all' ? parseInt(selectedAccountId) : undefined,
         search: searchQuery || undefined,
         transaction_type: filterType !== 'all' ? filterType : undefined,
@@ -48,26 +48,26 @@ export const BankStatements = () => {
   });
 
   const syncMutation = useMutation({
-    mutationFn: (bankAccountId: number) => api.syncBankStatements(bankAccountId),
+    mutationFn: (bankAccountId: number) => api.banking.syncBankStatements(bankAccountId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
       toast.success(`Синхронизировано: ${data.new_transactions} новых транзакций`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка синхронизации: ${error.message}`);
     },
   });
 
   const reconcileMutation = useMutation({
     mutationFn: ({ txId, paymentId }: { txId: number; paymentId: number }) =>
-      api.reconcileBankTransaction(txId, paymentId),
+      api.banking.reconcileBankTransaction(txId, paymentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
       setReconcileDialogTx(null);
       setReconcilePaymentId('');
       toast.success('Транзакция привязана к платежу');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });

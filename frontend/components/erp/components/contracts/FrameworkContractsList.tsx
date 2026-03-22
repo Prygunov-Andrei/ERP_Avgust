@@ -2,25 +2,25 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@/hooks/erp-router';
 import { Plus, Search, Filter, X, CheckCircle, XCircle } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api , unwrapResults} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { useCounterparties, useLegalEntities } from '@/hooks';
 
 export function FrameworkContractsList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<Record<string, string | undefined>>({});
   const [showFilters, setShowFilters] = useState(false);
 
   // Загрузка рамочных договоров
   const { data: contractsData, isLoading } = useQuery({
     queryKey: ['framework-contracts', { ...filters, search }],
-    queryFn: () => api.getFrameworkContracts({ ...filters, search }),
+    queryFn: () => api.contracts.getFrameworkContracts({ ...filters, search }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -29,8 +29,8 @@ export function FrameworkContractsList() {
   const { data: legalEntitiesData } = useLegalEntities();
 
   // Извлекаем массивы из ответов API
-  const counterparties = Array.isArray(counterpartiesData) ? counterpartiesData : (counterpartiesData as any)?.results || [];
-  const legalEntities = Array.isArray(legalEntitiesData) ? legalEntitiesData : (legalEntitiesData as any)?.results || [];
+  const counterparties = unwrapResults(counterpartiesData);
+  const legalEntities = unwrapResults(legalEntitiesData);
 
   const getStatusBadge = (status: string, isActive: boolean) => {
     if (status === 'draft') {
@@ -134,7 +134,7 @@ export function FrameworkContractsList() {
                 className="w-full px-3 py-2 border rounded-md mt-1"
               >
                 <option value="">Все исполнители</option>
-                {counterparties.map((cp: any) => (
+                {counterparties.map((cp) => (
                   <option key={cp.id} value={cp.id}>{cp.name}</option>
                 ))}
               </select>
@@ -147,7 +147,7 @@ export function FrameworkContractsList() {
                 className="w-full px-3 py-2 border rounded-md mt-1"
               >
                 <option value="">Все компании</option>
-                {legalEntities.map((le: any) => (
+                {legalEntities.map((le) => (
                   <option key={le.id} value={le.id}>{le.name}</option>
                 ))}
               </select>

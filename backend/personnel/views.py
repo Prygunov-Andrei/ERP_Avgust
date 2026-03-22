@@ -12,6 +12,12 @@ from .serializers import (
     PositionRecordSerializer,
     SalaryHistorySerializer,
 )
+from .services import (
+    create_position_record,
+    create_salary_record,
+    create_counterparty_for_employee,
+    build_org_chart,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -76,13 +82,8 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         data['employee'] = employee.pk
         serializer = PositionRecordSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
 
-        # Обновляем денормализованное поле
-        current = employee.positions.filter(is_current=True).first()
-        if current:
-            employee.current_position = current.position_title
-            employee.save(update_fields=['current_position'])
+        create_position_record(employee, serializer.validated_data, serializer.save)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -101,37 +102,23 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         data['employee'] = employee.pk
         serializer = SalaryHistorySerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
 
-        # Обновляем денормализованные поля
-        employee.salary_full = serializer.validated_data['salary_full']
-        employee.salary_official = serializer.validated_data['salary_official']
-        employee.save(update_fields=['salary_full', 'salary_official'])
+        create_salary_record(employee, serializer.validated_data, serializer.save)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     # ---------- Создание контрагента из сотрудника ----------
     @action(detail=True, methods=['post'], url_path='create-counterparty')
     def create_counterparty(self, request, pk=None):
-        from accounting.models import Counterparty
-
         employee = self.get_object()
 
-        if employee.counterparty:
+        try:
+            counterparty = create_counterparty_for_employee(employee)
+        except ValueError as exc:
             return Response(
-                {'error': 'У сотрудника уже есть привязанный контрагент.'},
+                {'error': str(exc)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        counterparty = Counterparty.objects.create(
-            name=employee.full_name,
-            short_name=employee.full_name,
-            type='employee',
-            legal_form='fiz',
-            inn='',
-        )
-        employee.counterparty = counterparty
-        employee.save(update_fields=['counterparty'])
 
         return Response(
             {
@@ -166,38 +153,7 @@ class OrgChartView(viewsets.ViewSet):
                 positions__is_current=True,
             ).distinct()
 
-        nodes = []
-        edges = []
-        employee_ids = set()
-
-        for emp in employees:
-            employee_ids.add(emp.id)
-            current_positions = emp.positions.all()
-            nodes.append({
-                'id': emp.id,
-                'full_name': emp.full_name,
-                'current_position': emp.current_position,
-                'is_active': emp.is_active,
-                'legal_entities': [
-                    {
-                        'id': p.legal_entity.id,
-                        'short_name': p.legal_entity.short_name,
-                        'position_title': p.position_title,
-                    }
-                    for p in current_positions
-                ],
-            })
-
-        # Собираем рёбра (только между видимыми сотрудниками)
-        for emp in employees:
-            for supervisor in emp.supervisors.all():
-                if supervisor.id in employee_ids:
-                    edges.append({
-                        'source': supervisor.id,
-                        'target': emp.id,
-                    })
-
-        return Response({'nodes': nodes, 'edges': edges})
+        return Response(build_org_chart(employees))
 
 
 class PositionRecordViewSet(viewsets.ModelViewSet):

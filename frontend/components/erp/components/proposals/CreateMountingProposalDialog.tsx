@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, MountingProposalDetail, MountingEstimateList, MountingCondition } from '@/lib/api';
+import { api, MountingProposalDetail, MountingEstimateList, MountingCondition , unwrapResults} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useObjects, useCounterparties } from '@/hooks';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 interface CreateMountingProposalDialogProps {
   open: boolean;
@@ -42,7 +42,7 @@ export function CreateMountingProposalDialog({
 
   const { data: tkpList } = useQuery({
     queryKey: ['technical-proposals'],
-    queryFn: () => api.getTechnicalProposals(),
+    queryFn: () => api.proposals.getTechnicalProposals(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -51,13 +51,13 @@ export function CreateMountingProposalDialog({
   const { data: mountingEstimates } = useQuery({
     queryKey: ['mounting-estimates', 'by-object', selectedObjectId],
     enabled: Boolean(selectedObjectId),
-    queryFn: () => api.getMountingEstimates({ object: selectedObjectId }),
+    queryFn: () => api.estimates.getMountingEstimates({ object: selectedObjectId }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: allConditions } = useQuery({
     queryKey: ['mounting-conditions', 'active'],
-    queryFn: () => api.getMountingConditions({ is_active: true }),
+    queryFn: () => api.proposals.getMountingConditions({ is_active: true }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -91,9 +91,9 @@ export function CreateMountingProposalDialog({
   const saveMutation = useMutation({
     mutationFn: async (data: FormData) => {
       if (mp) {
-        return api.updateMountingProposal(mp.id, data);
+        return api.proposals.updateMountingProposal(mp.id, data);
       } else {
-        return api.createMountingProposalStandalone(data);
+        return api.proposals.createMountingProposalStandalone(data);
       }
     },
     onSuccess: () => {
@@ -251,7 +251,7 @@ export function CreateMountingProposalDialog({
                     required
                   >
                     <option value="">Выберите объект</option>
-                    {(Array.isArray(objects) ? objects : (objects as any)?.results || []).map((obj: any) => (
+                    {(unwrapResults(objects)).map((obj) => (
                       <option key={obj.id} value={obj.id}>{obj.name}</option>
                     ))}
                   </select>
@@ -266,7 +266,7 @@ export function CreateMountingProposalDialog({
                     onChange={(e) => setFormData({ ...formData, counterparty: e.target.value })}
                   >
                     <option value="">Не выбран</option>
-                    {(Array.isArray(counterparties) ? counterparties : (counterparties as any)?.results || []).map((cp: any) => (
+                    {(unwrapResults(counterparties)).map((cp) => (
                       <option key={cp.id} value={cp.id}>{cp.name}</option>
                     ))}
                   </select>

@@ -9,7 +9,7 @@ import {
   type ContractEstimateSection,
 } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,27 +34,27 @@ export const ContractEstimateDetail: React.FC = () => {
 
   const { data: estimate, isLoading } = useQuery({
     queryKey: ['contract-estimate', id],
-    queryFn: () => api.getContractEstimateDetail(Number(id)),
+    queryFn: () => api.contracts.getContractEstimateDetail(Number(id)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: items = [] } = useQuery({
     queryKey: ['contract-estimate-items', id],
-    queryFn: () => api.getContractEstimateItems(Number(id)),
+    queryFn: () => api.contracts.getContractEstimateItems(Number(id)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: sections = [] } = useQuery({
     queryKey: ['contract-estimate-sections', id],
-    queryFn: () => api.getContractEstimateSections(Number(id)),
+    queryFn: () => api.contracts.getContractEstimateSections(Number(id)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const agreeMutation = useMutation({
-    mutationFn: () => api.updateContractEstimate(Number(id), { status: 'agreed' } as any),
+    mutationFn: () => api.contracts.updateContractEstimate(Number(id), { status: 'agreed' } as Partial<Record<string, string>>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contract-estimate', id] });
       toast.success('Смета согласована');
@@ -63,7 +63,7 @@ export const ContractEstimateDetail: React.FC = () => {
   });
 
   const signMutation = useMutation({
-    mutationFn: () => api.updateContractEstimate(Number(id), { status: 'signed' } as any),
+    mutationFn: () => api.contracts.updateContractEstimate(Number(id), { status: 'signed' } as Partial<Record<string, string>>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contract-estimate', id] });
       toast.success('Смета подписана');
@@ -72,7 +72,7 @@ export const ContractEstimateDetail: React.FC = () => {
   });
 
   const createVersionMutation = useMutation({
-    mutationFn: () => api.createContractEstimateVersion(Number(id), versionAmendmentId),
+    mutationFn: () => api.contracts.createContractEstimateVersion(Number(id), versionAmendmentId),
     onSuccess: (data) => {
       setVersionDialogOpen(false);
       toast.success(`Создана версия ${data.version_number}`);

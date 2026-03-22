@@ -38,8 +38,8 @@ async def _process_media(message: types.Message, media_type: str, file_id: str,
     if message.forward_date or message.forward_from:
         try:
             await message.delete()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to delete forwarded message {message.message_id}: {e}")
         return
 
     # Ищем звено по chat_id + topic_id
@@ -82,8 +82,8 @@ async def _process_media(message: types.Message, media_type: str, file_id: str,
         logger.debug(f"Cannot set reaction: {e}")
         try:
             await message.reply("Принято ✅")
-        except Exception:
-            pass
+        except Exception as e2:
+            logger.debug(f"Failed to send reply fallback for message {message.message_id}: {e2}")
 
     # Ставим задачу на скачивание (если есть file_id)
     if file_id:

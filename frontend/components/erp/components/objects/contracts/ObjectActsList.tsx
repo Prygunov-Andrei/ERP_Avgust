@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '../../common/EmptyState';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../../constants';
+import { CONSTANTS } from '@/constants';
 
 type ObjectActsListProps = {
   objectId: number;
@@ -31,7 +31,7 @@ export const ObjectActsList = ({ objectId, contractType }: ObjectActsListProps) 
 
   const { data: contractsData, isLoading: contractsLoading } = useQuery({
     queryKey: ['contracts', { object: objectId, contract_type: contractType }],
-    queryFn: () => api.getContracts({ object: objectId, contract_type: contractType }),
+    queryFn: () => api.contracts.getContracts({ object: objectId, contract_type: contractType }),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -43,7 +43,7 @@ export const ObjectActsList = ({ objectId, contractType }: ObjectActsListProps) 
     queryFn: async () => {
       if (contractIds.length === 0) return [];
       const results = await Promise.all(
-        contractIds.map((cid) => api.getActs(cid))
+        contractIds.map((cid) => api.contracts.getActs(cid))
       );
       return results.flat();
     },

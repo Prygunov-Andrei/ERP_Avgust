@@ -28,13 +28,13 @@ export function ObjectSettingsTab({ objectId, objectName }: ObjectSettingsTabPro
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   const deleteMutation = useMutation({
-    mutationFn: () => api.deleteConstructionObject(objectId),
+    mutationFn: () => api.core.deleteConstructionObject(objectId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['objects'] });
       toast.success('Объект успешно удалён');
       navigate('/objects');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Ошибка при удалении объекта');
     },
   });

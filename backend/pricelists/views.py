@@ -3,9 +3,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
-from io import BytesIO
-import openpyxl
-from openpyxl.styles import Font, Alignment, Border, Side
 
 from core.version_mixin import VersioningMixin
 from .models import (
@@ -18,6 +15,12 @@ from .serializers import (
     PriceListSerializer, PriceListListSerializer, PriceListCreateSerializer,
     PriceListAgreementSerializer, PriceListItemSerializer,
     AddRemoveItemsSerializer
+)
+from .services import (
+    add_items_to_pricelist,
+    remove_items_from_pricelist,
+    create_work_item_version,
+    export_pricelist_to_excel,
 )
 
 
@@ -117,20 +120,11 @@ class WorkItemViewSet(VersioningMixin, viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         """При обновлении создаём новую версию работы"""
         instance = self.get_object()
-        
-        # Создаём новую версию
-        new_version = instance.create_new_version()
-        
-        # Обновляем новую версию переданными данными
-        serializer = self.get_serializer(new_version, data=request.data, partial=True)
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        
-        # Применяем изменения к новой версии (кроме артикула и версионных полей)
-        for attr, value in serializer.validated_data.items():
-            if attr not in ['article', 'version_number', 'is_current', 'parent_version']:
-                setattr(new_version, attr, value)
-        new_version.save()
-        
+
+        new_version = create_work_item_version(instance, serializer.validated_data)
         return Response(WorkItemSerializer(new_version).data)
     
     # Метод versions() наследуется от VersioningMixin
@@ -197,48 +191,9 @@ class PriceListViewSet(viewsets.ModelViewSet):
         price_list = self.get_object()
         serializer = AddRemoveItemsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        work_item_ids = serializer.validated_data['work_item_ids']
-        work_items = WorkItem.objects.filter(id__in=work_item_ids, is_current=True)
-        work_items_dict = {wi.id: wi for wi in work_items}
-        
-        # Находим существующие элементы
-        existing_items = PriceListItem.objects.filter(
-            price_list=price_list,
-            work_item__in=work_items
-        ).select_related('work_item')
-        existing_work_item_ids = {item.work_item_id for item in existing_items}
-        
-        added = []
-        
-        # Обновляем неактивные элементы через bulk_update
-        items_to_update = [
-            item for item in existing_items 
-            if not item.is_included
-        ]
-        if items_to_update:
-            for item in items_to_update:
-                item.is_included = True
-                added.append(item.work_item_id)
-            PriceListItem.objects.bulk_update(items_to_update, ['is_included'])
-        
-        # Создаём новые элементы через bulk_create
-        new_work_items = [
-            work_items_dict[wid] for wid in work_item_ids 
-            if wid in work_items_dict and wid not in existing_work_item_ids
-        ]
-        if new_work_items:
-            new_items = [
-                PriceListItem(price_list=price_list, work_item=wi, is_included=True)
-                for wi in new_work_items
-            ]
-            PriceListItem.objects.bulk_create(new_items)
-            added.extend([wi.id for wi in new_work_items])
-        
-        return Response({
-            'added': added,
-            'count': len(added)
-        })
+
+        result = add_items_to_pricelist(price_list, serializer.validated_data['work_item_ids'])
+        return Response(result)
 
     @action(detail=True, methods=['post'], url_path='remove-items')
     def remove_items(self, request, pk=None):
@@ -246,144 +201,21 @@ class PriceListViewSet(viewsets.ModelViewSet):
         price_list = self.get_object()
         serializer = AddRemoveItemsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        work_item_ids = serializer.validated_data['work_item_ids']
-        deleted_count = PriceListItem.objects.filter(
-            price_list=price_list,
-            work_item_id__in=work_item_ids
-        ).delete()[0]
-        
-        return Response({
-            'removed': work_item_ids,
-            'count': deleted_count
-        })
+
+        result = remove_items_from_pricelist(price_list, serializer.validated_data['work_item_ids'])
+        return Response(result)
 
     @action(detail=True, methods=['get'])
     def export(self, request, pk=None):
         """Экспорт прайс-листа в Excel"""
         price_list = self.get_object()
-        
-        # Создаём Excel-файл
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Прайс-лист"
-        
-        # Стили
-        bold_font = Font(bold=True)
-        header_font = Font(bold=True, size=14)
-        center_align = Alignment(horizontal='center', vertical='center')
-        thin_border = Border(
-            left=Side(style='thin'),
-            right=Side(style='thin'),
-            top=Side(style='thin'),
-            bottom=Side(style='thin')
-        )
-        
-        # Заголовок
-        ws.merge_cells('A1:I1')
-        ws['A1'] = f"Прайс-лист №{price_list.number} от {price_list.date.strftime('%d.%m.%Y')}"
-        ws['A1'].font = header_font
-        ws['A1'].alignment = center_align
-        
-        # Название (если есть)
-        if price_list.name:
-            ws.merge_cells('A2:I2')
-            ws['A2'] = price_list.name
-            ws['A2'].alignment = center_align
-        
-        # Ставки по разрядам
-        row = 4
-        ws[f'A{row}'] = "Ставки по разрядам:"
-        ws[f'A{row}'].font = bold_font
-        row += 1
-        
-        for grade_num in range(1, 6):
-            rate = price_list.get_rate_for_grade(grade_num)
-            ws[f'A{row}'] = f"Разряд {grade_num}:"
-            ws[f'B{row}'] = f"{rate} руб/ч"
-            row += 1
-        
-        # Пустая строка
-        row += 1
-        
-        # Заголовки таблицы работ
-        ws[f'A{row}'] = "Работы:"
-        ws[f'A{row}'].font = bold_font
-        row += 1
-        
-        headers = ['Артикул', 'Раздел', 'Наименование', 'Ед.изм.', 'Часы', 'Разряд', 'Коэфф.', 'Стоимость', 'Комментарий']
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=row, column=col, value=header)
-            cell.font = bold_font
-            cell.alignment = center_align
-            cell.border = thin_border
-        
-        # Устанавливаем ширину столбцов
-        ws.column_dimensions['A'].width = 12
-        ws.column_dimensions['B'].width = 15
-        ws.column_dimensions['C'].width = 40
-        ws.column_dimensions['D'].width = 10
-        ws.column_dimensions['E'].width = 10
-        ws.column_dimensions['F'].width = 10
-        ws.column_dimensions['G'].width = 10
-        ws.column_dimensions['H'].width = 15
-        ws.column_dimensions['I'].width = 30  # Комментарий
-        
-        row += 1
-        
-        # Данные работ
-        for item in price_list.items.filter(is_included=True).select_related(
-            'work_item', 'work_item__section', 'work_item__grade'
-        ):
-            work = item.work_item
-            # Используем эффективный разряд (может быть дробным)
-            effective_grade = float(item.effective_grade)
-            values = [
-                work.article,
-                work.section.code,
-                work.name,
-                work.unit,
-                float(item.effective_hours),
-                effective_grade,  # Дробный разряд
-                float(item.effective_coefficient),
-                float(item.calculated_cost),
-                work.comment if work.comment else ''  # Комментарий
-            ]
-            for col, value in enumerate(values, 1):
-                cell = ws.cell(row=row, column=col, value=value)
-                cell.border = thin_border
-                if col in [5, 6, 7, 8]:  # Часы, Разряд, Коэфф., Стоимость
-                    cell.alignment = center_align
-                elif col == 9:  # Комментарий - выравнивание по левому краю
-                    cell.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
-            row += 1
-        
-        # Итого
-        total = sum(
-            item.calculated_cost
-            for item in price_list.items.filter(is_included=True)
-        )
-        row += 1
-        ws[f'G{row}'] = "ИТОГО:"
-        ws[f'G{row}'].font = bold_font
-        ws[f'H{row}'] = float(total)
-        ws[f'H{row}'].font = bold_font
-        # Объединяем ячейки для строки "Итого" (столбец комментария)
-        ws.merge_cells(f'I{row}:I{row}')
-        
-        # Сохраняем в BytesIO
-        output = BytesIO()
-        wb.save(output)
-        output.seek(0)
-        
-        # Формируем ответ
+        content, filename = export_pricelist_to_excel(price_list)
+
         response = HttpResponse(
-            output.read(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            content,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
-        filename = f"pricelist_{price_list.number}_{price_list.date.strftime('%Y%m%d')}.xlsx"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        
         return response
 
 

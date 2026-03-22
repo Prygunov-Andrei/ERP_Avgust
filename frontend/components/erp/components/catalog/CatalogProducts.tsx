@@ -1,8 +1,8 @@
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { CONSTANTS } from '../../constants';
+import { api , unwrapResults} from '@/lib/api';
+import { CONSTANTS } from '@/constants';
 import { useCatalogCategoryTree } from '@/hooks';
 import { Product, CategoryTreeNode } from '@/types/catalog';
 import { Input } from '@/components/ui/input';
@@ -40,7 +40,7 @@ export function CatalogProducts() {
   // Загрузка поставщиков (контрагенты-вендоры)
   const { data: suppliers } = useQuery({
     queryKey: ['counterparties-vendors'],
-    queryFn: () => api.getCounterparties({ type: 'vendor' }),
+    queryFn: () => api.core.getCounterparties({ type: 'vendor' }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -48,9 +48,9 @@ export function CatalogProducts() {
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['products', selectedCategoryId, filters, page],
     queryFn: () =>
-      api.getProducts({
+      api.catalog.getProducts({
         category: selectedCategoryId === 'uncategorized'
-          ? 'uncategorized' as any
+          ? 'uncategorized'
           : selectedCategoryId ? parseInt(selectedCategoryId) : undefined,
         status: filters.status || undefined,
         is_service: filters.is_service ? filters.is_service === 'true' : undefined,
@@ -90,7 +90,7 @@ export function CatalogProducts() {
 
   // Мутации
   const createMutation = useMutation({
-    mutationFn: (data: any) => api.createProduct(data),
+    mutationFn: (data: Record<string, unknown>) => api.catalog.createProduct(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['category-tree'] });
@@ -100,7 +100,7 @@ export function CatalogProducts() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteProduct(id),
+    mutationFn: (id: number) => api.catalog.deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['category-tree'] });
@@ -309,7 +309,7 @@ export function CatalogProducts() {
               </SelectContent>
             </Select>
 
-            {suppliers && (Array.isArray(suppliers) ? suppliers : (suppliers as any)?.results || []).length > 0 && (
+            {suppliers && (unwrapResults(suppliers)).length > 0 && (
               <Select
                 value={filters.supplier || "all"}
                 onValueChange={(v) => { setFilters({ ...filters, supplier: v === "all" ? "" : v }); setPage(1); }}
@@ -319,7 +319,7 @@ export function CatalogProducts() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Все поставщики</SelectItem>
-                  {(Array.isArray(suppliers) ? suppliers : (suppliers as any)?.results || []).map((s: any) => (
+                  {(unwrapResults(suppliers)).map((s) => (
                     <SelectItem key={s.id} value={s.id.toString()}>
                       {s.name}
                     </SelectItem>

@@ -157,13 +157,13 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
       const formData = new FormData();
       filesToUpload.forEach((f) => formData.append('files', f));
       if (estimateId) formData.append('estimate_id', String(estimateId));
-      return (api as any).bulkUploadInvoices(formData);
+      return api.supply.bulkUploadInvoices(formData);
     },
-    onSuccess: (data: { session_id: number }) => {
-      setSessionId(data.session_id);
+    onSuccess: (data) => {
+      setSessionId(data.id);
       // step already set to 'processing' in handleStartUpload
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       setStep('select');  // Revert to file selection on error
       toast.error('Ошибка загрузки', {
         description: error?.message || 'Попробуйте ещё раз',
@@ -177,7 +177,7 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
 
     const poll = async () => {
       try {
-        const data: BulkSession = await (api as any).getBulkSessionStatus(sessionId);
+        const data = await api.supply.getBulkSessionStatus(sessionId) as unknown as BulkSession;
         setSessionData(data);
 
         if (data.status === 'completed' || data.status === 'completed_with_errors') {

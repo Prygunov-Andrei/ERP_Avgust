@@ -36,9 +36,9 @@ export function CreateVersionDialog({
       const data = selectedDate !== currentDate ? { date: selectedDate } : {};
       
       if (itemType === 'tkp') {
-        return api.createTechnicalProposalVersion(itemId, data);
+        return api.proposals.createTechnicalProposalVersion(itemId, data);
       } else {
-        return api.createMountingProposalVersion(itemId, data);
+        return api.proposals.createMountingProposalVersion(itemId, data);
       }
     },
     onSuccess: (data) => {

@@ -64,14 +64,15 @@ export function SupplierCatalogDetail() {
 
   const loadCatalog = useCallback(async () => {
     try {
-      const data = await api.getSupplierCatalog(catalogId);
+      const data = await api.catalog.getSupplierCatalog(catalogId);
       setCatalog(data);
       // Обновляем секции только если пользователь не редактировал
       if (!sectionsChanged) {
         setEditedSections(data.sections || []);
       }
-    } catch (err: any) {
-      toast.error(`Ошибка загрузки каталога: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Ошибка загрузки каталога: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ export function SupplierCatalogDetail() {
 
   // --- Обработчики секций ---
 
-  const handleSectionChange = (index: number, field: keyof SupplierCatalogSection, value: any) => {
+  const handleSectionChange = (index: number, field: keyof SupplierCatalogSection, value: SupplierCatalogSection[keyof SupplierCatalogSection]) => {
     setEditedSections(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
@@ -121,12 +122,13 @@ export function SupplierCatalogDetail() {
   const saveSections = async () => {
     setActionLoading('save_sections');
     try {
-      await api.updateCatalogSections(catalogId, editedSections);
+      await api.catalog.updateCatalogSections(catalogId, editedSections);
       setSectionsChanged(false);
       toast.success('Секции сохранены');
       await loadCatalog();
-    } catch (err: any) {
-      toast.error(`Ошибка сохранения: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Ошибка сохранения: ${message}`);
     } finally {
       setActionLoading(null);
     }
@@ -137,11 +139,12 @@ export function SupplierCatalogDetail() {
   const handleDetectToc = async () => {
     setActionLoading('detect_toc');
     try {
-      await api.detectCatalogToc(catalogId);
+      await api.catalog.detectCatalogToc(catalogId);
       toast.success('Определение оглавления запущено');
       await loadCatalog();
-    } catch (err: any) {
-      toast.error(`Ошибка: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Ошибка: ${message}`);
     } finally {
       setActionLoading(null);
     }
@@ -150,11 +153,12 @@ export function SupplierCatalogDetail() {
   const handleParse = async () => {
     setActionLoading('parse');
     try {
-      await api.parseCatalog(catalogId);
+      await api.catalog.parseCatalog(catalogId);
       toast.success('Парсинг запущен');
       await loadCatalog();
-    } catch (err: any) {
-      toast.error(`Ошибка: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Ошибка: ${message}`);
     } finally {
       setActionLoading(null);
     }
@@ -169,11 +173,12 @@ export function SupplierCatalogDetail() {
         setConfirmDialog(prev => ({ ...prev, open: false }));
         setActionLoading('import');
         try {
-          await api.importCatalogToDb(catalogId);
+          await api.catalog.importCatalogToDb(catalogId);
           toast.success('Импорт запущен');
           await loadCatalog();
-        } catch (err: any) {
-          toast.error(`Ошибка: ${err.message}`);
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          toast.error(`Ошибка: ${message}`);
         } finally {
           setActionLoading(null);
         }
@@ -190,11 +195,12 @@ export function SupplierCatalogDetail() {
         setConfirmDialog(prev => ({ ...prev, open: false }));
         setActionLoading('cancel');
         try {
-          await api.cancelCatalogTask(catalogId);
+          await api.catalog.cancelCatalogTask(catalogId);
           toast.success('Операция отменена');
           await loadCatalog();
-        } catch (err: any) {
-          toast.error(`Ошибка: ${err.message}`);
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          toast.error(`Ошибка: ${message}`);
         } finally {
           setActionLoading(null);
         }

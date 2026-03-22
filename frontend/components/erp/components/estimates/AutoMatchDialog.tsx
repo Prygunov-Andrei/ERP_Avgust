@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ColumnDef } from '@tanstack/react-table';
-import { api, type AutoMatchResult, type AutoMatchOffer } from '@/lib/api';
+import { api, type AutoMatchResult, type AutoMatchOffer , unwrapResults} from '@/lib/api';
 import { DataTable } from '@/components/ui/data-table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Loader2, Wand2, Check, X, Package, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 type AutoMatchDialogProps = {
   open: boolean;
@@ -41,14 +41,14 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
   // Загрузка поставщиков
   const { data: suppliers } = useQuery({
     queryKey: ['counterparties-vendors'],
-    queryFn: () => api.getCounterparties({ type: 'vendor' }),
+    queryFn: () => api.core.getCounterparties({ type: 'vendor' }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
     enabled: open,
   });
 
   const matchMutation = useMutation({
     mutationFn: () =>
-      api.autoMatchEstimateItems(estimateId, {
+      api.estimates.autoMatchEstimateItems(estimateId, {
         supplierIds: selectedSupplierIds.length > 0 ? selectedSupplierIds : undefined,
         priceStrategy,
       }),
@@ -89,7 +89,7 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
     }));
 
     try {
-      await api.bulkUpdateEstimateItems(updates);
+      await api.estimates.bulkUpdateEstimateItems(updates);
       queryClient.invalidateQueries({ queryKey: ['estimate-items', estimateId] });
       toast.success(`Применено ${accepted.length} совпадений`);
       onOpenChange(false);
@@ -220,7 +220,7 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
     onOpenChange(false);
   }, [onOpenChange]);
 
-  const supplierList = Array.isArray(suppliers) ? suppliers : (suppliers as any)?.results || [];
+  const supplierList = unwrapResults(suppliers);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -243,7 +243,7 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
               <div>
                 <Label className="mb-2 block">Поставщики</Label>
                 <div className="flex flex-wrap gap-2">
-                  {supplierList.map((s: any) => (
+                  {supplierList.map((s) => (
                     <button
                       key={s.id}
                       onClick={() => toggleSupplier(s.id)}

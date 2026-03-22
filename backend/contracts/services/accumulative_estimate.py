@@ -152,6 +152,48 @@ class AccumulativeEstimateService:
         """Данные для экспорта в Excel."""
         return AccumulativeEstimateService.get_accumulative(contract_estimate_id)
 
+    @staticmethod
+    def export_to_excel(contract_estimate_id: int):
+        """Экспорт накопительной сметы в Excel (HttpResponse).
+
+        Returns:
+            django.http.HttpResponse с .xlsx файлом.
+        """
+        import openpyxl
+        from django.http import HttpResponse
+
+        ce = ContractEstimate.objects.select_related('contract').get(
+            pk=contract_estimate_id,
+        )
+        data = AccumulativeEstimateService.export_accumulative_data(ce.id)
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Накопительная смета'
+        headers = [
+            '№', 'Раздел', 'Наименование', 'Модель', 'Ед.',
+            'Кол-во (смета)', 'Цена мат.', 'Цена работ',
+            'Закуплено кол.', 'Закуплено сумма', 'Остаток кол.',
+        ]
+        ws.append(headers)
+        for row in data:
+            ws.append([
+                row['item_number'], row['section_name'], row['name'],
+                row['model_name'], row['unit'],
+                row['estimate_quantity'], row['estimate_material_price'],
+                row['estimate_work_price'], row['purchased_quantity'],
+                row['purchased_amount'], row['remaining_quantity'],
+            ])
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = (
+            f'attachment; filename="accumulative_{ce.contract.number}.xlsx"'
+        )
+        wb.save(response)
+        return response
+
 
 def models_Q_any_deviation():
     """Q-объект для фильтрации отклонений."""

@@ -45,7 +45,7 @@ export function InvoiceUploader({ onParsed, onError, onFileSelected, disabled = 
     try {
       if (enableParsing) {
         setState('parsing');
-        const result = await api.parseInvoice(file);
+        const result = await api.core.parseInvoice(file);
 
         if (result.success) {
           setState('success');
@@ -62,21 +62,21 @@ export function InvoiceUploader({ onParsed, onError, onFileSelected, disabled = 
         setState('success');
         // Не вызываем onParsed, так как парсинга не было
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setState('error');
       let errorMsg = 'Ошибка при обработке файла';
 
       // Обработка специфичных ошибок
-      if (error.message?.includes('CORS') || error.message?.includes('ERR_FAILED')) {
+      if ((error instanceof Error ? error.message : String(error))?.includes('CORS') || (error instanceof Error ? error.message : String(error))?.includes('ERR_FAILED')) {
         errorMsg = 'Ошибка подключения к серверу. Проверьте настройки CORS или доступность API.';
-      } else if (error.message?.includes('429')) {
+      } else if ((error instanceof Error ? error.message : String(error))?.includes('429')) {
         errorMsg = 'Превышен лимит запросов. Попробуйте через несколько минут.';
-      } else if (error.message?.includes('400')) {
+      } else if ((error instanceof Error ? error.message : String(error))?.includes('400')) {
         errorMsg = 'Ошибка обработки файла. Проверьте, что файл не повреждён.';
-      } else if (error.message?.includes('500') || error.message?.includes('503')) {
+      } else if ((error instanceof Error ? error.message : String(error))?.includes('500') || (error instanceof Error ? error.message : String(error))?.includes('503')) {
         errorMsg = 'Сервер временно недоступен. Попробуйте позже.';
-      } else if (error.message) {
-        errorMsg = error.message;
+      } else if ((error instanceof Error ? error.message : String(error))) {
+        errorMsg = (error instanceof Error ? error.message : String(error));
       }
 
       setErrorMessage(errorMsg);

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { kanbanApi } from '@/lib/kanbanApi';
+import { api } from '@/lib/api';
 import type { Counterparty, ConstructionObject } from '@/lib/api';
+import { unwrapResults } from '@/lib/api/types/common';
 import { useObjects, useCounterparties } from '@/hooks/useReferenceData';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -57,21 +58,17 @@ export const CreateCommercialCardDialog = ({
   const [isQuickCreateObjOpen, setIsQuickCreateObjOpen] = useState(false);
 
   const { data: objectsData } = useObjects();
-  const objects = Array.isArray(objectsData)
-    ? objectsData
-    : (objectsData as any)?.results ?? [];
+  const objects = unwrapResults<ConstructionObject>(objectsData);
 
   const { data: counterpartiesData } = useCounterparties(undefined, { enabled: open, retry: false });
-  const allCounterparties = Array.isArray(counterpartiesData)
-    ? counterpartiesData
-    : (counterpartiesData as any)?.results ?? [];
+  const allCounterparties = unwrapResults<Counterparty>(counterpartiesData);
   const potentialCustomers = allCounterparties.filter(
-    (c: any) => c.type === 'potential_customer' || c.type === 'customer',
+    (c) => c.type === 'potential_customer' || c.type === 'customer',
   );
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const card = await kanbanApi.createCard({
+      const card = await api.kanban.createCard({
         board: boardId,
         column: firstColumnId,
         type: cardType,
@@ -85,7 +82,7 @@ export const CreateCommercialCardDialog = ({
         },
       });
 
-      await kanbanApi.createCommercialCase({
+      await api.kanban.createCommercialCase({
         card: card.id,
         erp_object_id: form.objectId ? Number(form.objectId) : null,
         erp_object_name: form.objectName,
@@ -106,7 +103,7 @@ export const CreateCommercialCardDialog = ({
   });
 
   const handleObjectChange = (value: string) => {
-    const obj = objects.find((o: any) => String(o.id) === value);
+    const obj = objects.find((o) => String(o.id) === value);
     setForm((prev) => ({
       ...prev,
       objectId: value,
@@ -115,7 +112,7 @@ export const CreateCommercialCardDialog = ({
   };
 
   const handleCounterpartyChange = (value: string) => {
-    const cp = potentialCustomers.find((c: any) => String(c.id) === value);
+    const cp = potentialCustomers.find((c) => String(c.id) === value);
     setForm((prev) => ({
       ...prev,
       counterpartyId: value,
@@ -191,7 +188,7 @@ export const CreateCommercialCardDialog = ({
                   <SelectValue placeholder="Выберите объект" />
                 </SelectTrigger>
                 <SelectContent>
-                  {objects.map((obj: any) => (
+                  {objects.map((obj) => (
                     <SelectItem key={obj.id} value={String(obj.id)}>
                       {obj.name}
                     </SelectItem>
@@ -233,7 +230,7 @@ export const CreateCommercialCardDialog = ({
                   <SelectValue placeholder="Выберите контрагента" />
                 </SelectTrigger>
                 <SelectContent>
-                  {potentialCustomers.map((cp: any) => (
+                  {potentialCustomers.map((cp) => (
                     <SelectItem key={cp.id} value={String(cp.id)}>
                       {cp.name}
                     </SelectItem>

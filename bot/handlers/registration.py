@@ -11,6 +11,7 @@ from services.db import (
     get_supergroup_invite_link,
     find_worker_by_telegram_id,
 )
+from middlewares.auth import invalidate_worker_cache
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -109,6 +110,9 @@ async def handle_language_choice(callback: types.CallbackQuery, state: FSMContex
         )
         await state.clear()
         return
+
+    # Инвалидируем кеш worker — новый worker должен подхватиться middleware
+    invalidate_worker_cache(telegram_id)
 
     # Регистрация успешна
     lang_names = {

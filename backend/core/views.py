@@ -88,8 +88,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Обычные пользователи видят только себя"""
         if self.request.user.is_staff:
-            return User.objects.select_related('profile').all()
-        return User.objects.select_related('profile').filter(id=self.request.user.id)
+            return User.objects.select_related('profile', 'employee').all()
+        return User.objects.select_related('profile', 'employee').filter(id=self.request.user.id)
     
     def get_serializer_context(self):
         """Добавляем request в контекст сериализатора"""
@@ -114,7 +114,8 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def me(self, request):
         """Получить информацию о текущем пользователе"""
-        serializer = self.get_serializer(request.user, context={'request': request})
+        user = User.objects.select_related('profile', 'employee').get(pk=request.user.pk)
+        serializer = self.get_serializer(user, context={'request': request})
         return Response(serializer.data)
     
     @action(

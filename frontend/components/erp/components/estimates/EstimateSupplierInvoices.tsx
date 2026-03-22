@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@/hooks/erp-router';
 import { Upload, Loader2, Eye, FileText } from 'lucide-react';
 import { api } from '@/lib/api';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BulkInvoiceUpload } from '../finance/BulkInvoiceUpload';
@@ -34,7 +34,7 @@ export const EstimateSupplierInvoices = ({ estimateId }: EstimateSupplierInvoice
 
   const { data: invoicesResponse, isLoading } = useQuery({
     queryKey: ['estimate-invoices', estimateId],
-    queryFn: () => (api as any).getInvoices(`estimate=${estimateId}`),
+    queryFn: () => api.supply.getInvoices(`estimate=${estimateId}`),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -42,9 +42,9 @@ export const EstimateSupplierInvoices = ({ estimateId }: EstimateSupplierInvoice
 
   const stats = {
     total: invoices.length,
-    recognition: invoices.filter((i: any) => i.status === 'recognition').length,
-    review: invoices.filter((i: any) => i.status === 'review').length,
-    verified: invoices.filter((i: any) => i.status === 'verified').length,
+    recognition: invoices.filter((i) => i.status === 'recognition').length,
+    review: invoices.filter((i) => i.status === 'review').length,
+    verified: invoices.filter((i) => i.status === 'verified').length,
   };
 
   if (isLoading) {
@@ -110,7 +110,7 @@ export const EstimateSupplierInvoices = ({ estimateId }: EstimateSupplierInvoice
               </tr>
             </thead>
             <tbody>
-              {invoices.map((invoice: any) => (
+              {invoices.map((invoice) => (
                 <tr
                   key={invoice.id}
                   className="border-b hover:bg-muted/30 cursor-pointer transition-colors"

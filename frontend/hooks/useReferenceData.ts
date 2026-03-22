@@ -19,7 +19,7 @@ const GC_TIME = CONSTANTS.QUERY_GC_TIME_MS;
 export const useObjects = (filters?: { status?: string; search?: string }, options?: { enabled?: boolean; retry?: boolean | number }) => {
   return useQuery({
     queryKey: ['objects', filters],
-    queryFn: () => api.getObjects(filters),
+    queryFn: () => api.core.getObjects(filters),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
     ...options,
@@ -32,7 +32,7 @@ export const useObjects = (filters?: { status?: string; search?: string }, optio
 export const useCounterparties = (filters?: { search?: string }, options?: { enabled?: boolean; retry?: boolean | number }) => {
   return useQuery({
     queryKey: ['counterparties', filters],
-    queryFn: () => api.getCounterparties(filters),
+    queryFn: () => api.core.getCounterparties(filters),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
     ...options,
@@ -45,7 +45,7 @@ export const useCounterparties = (filters?: { search?: string }, options?: { ena
 export const useLegalEntities = () => {
   return useQuery({
     queryKey: ['legal-entities'],
-    queryFn: () => api.getLegalEntities(),
+    queryFn: () => api.core.getLegalEntities(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -57,7 +57,7 @@ export const useLegalEntities = () => {
 export const useAccounts = () => {
   return useQuery({
     queryKey: ['accounts'],
-    queryFn: () => api.getAccounts(),
+    queryFn: () => api.core.getAccounts(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -69,7 +69,7 @@ export const useAccounts = () => {
 export const useTaxSystems = () => {
   return useQuery({
     queryKey: ['tax-systems'],
-    queryFn: () => api.getTaxSystems(),
+    queryFn: () => api.core.getTaxSystems(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -81,7 +81,7 @@ export const useTaxSystems = () => {
 export const useExpenseCategories = () => {
   return useQuery({
     queryKey: ['expense-categories'],
-    queryFn: () => api.getExpenseCategories(),
+    queryFn: () => api.payments.getExpenseCategories(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -93,7 +93,7 @@ export const useExpenseCategories = () => {
 export const useFrameworkContracts = () => {
   return useQuery({
     queryKey: ['framework-contracts'],
-    queryFn: () => api.getFrameworkContracts(),
+    queryFn: () => api.contracts.getFrameworkContracts(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -105,7 +105,7 @@ export const useFrameworkContracts = () => {
 export const usePriceLists = () => {
   return useQuery({
     queryKey: ['price-lists'],
-    queryFn: () => api.getPriceLists(),
+    queryFn: () => api.pricelists.getPriceLists(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -117,7 +117,7 @@ export const usePriceLists = () => {
 export const useWorkerGrades = (isActive?: boolean) => {
   return useQuery({
     queryKey: ['worker-grades', isActive],
-    queryFn: () => api.getWorkerGrades(isActive),
+    queryFn: () => api.pricelists.getWorkerGrades(isActive),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -129,7 +129,7 @@ export const useWorkerGrades = (isActive?: boolean) => {
 export const useWorkSections = (tree?: boolean) => {
   return useQuery({
     queryKey: ['work-sections', tree],
-    queryFn: () => api.getWorkSections(tree),
+    queryFn: () => api.pricelists.getWorkSections(tree),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -141,7 +141,7 @@ export const useWorkSections = (tree?: boolean) => {
 export const useMountingConditions = () => {
   return useQuery({
     queryKey: ['mounting-conditions'],
-    queryFn: () => api.getMountingConditions(),
+    queryFn: () => api.proposals.getMountingConditions(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -153,7 +153,7 @@ export const useMountingConditions = () => {
 export const useFrontOfWorkItems = () => {
   return useQuery({
     queryKey: ['front-of-work-items'],
-    queryFn: () => api.getFrontOfWorkItems(),
+    queryFn: () => api.proposals.getFrontOfWorkItems(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -165,7 +165,7 @@ export const useFrontOfWorkItems = () => {
 export const useCatalogCategories = () => {
   return useQuery({
     queryKey: ['catalog-categories'],
-    queryFn: () => api.getCategories(),
+    queryFn: () => api.catalog.getCategories(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });
@@ -178,7 +178,7 @@ export const useCatalogCategories = () => {
 export const useCatalogCategoryTree = () => {
   const query = useQuery({
     queryKey: ['catalog-category-tree'],
-    queryFn: () => api.getCategoryTree(),
+    queryFn: () => api.catalog.getCategoryTree(),
     staleTime: REFERENCE_STALE_TIME,
     gcTime: GC_TIME,
   });

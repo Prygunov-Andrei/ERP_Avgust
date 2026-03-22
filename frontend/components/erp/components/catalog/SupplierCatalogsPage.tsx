@@ -45,10 +45,10 @@ export function SupplierCatalogsPage() {
   const loadCatalogs = async () => {
     try {
       setLoading(true);
-      const data = await api.getSupplierCatalogs();
+      const data = await api.catalog.getSupplierCatalogs();
       setCatalogs(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      toast.error(`Ошибка загрузки каталогов: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Ошибка загрузки каталогов: ${(err instanceof Error ? err.message : String(err))}`);
     } finally {
       setLoading(false);
     }
@@ -97,13 +97,13 @@ export function SupplierCatalogsPage() {
       }
       formData.append('pdf_file', uploadFile);
 
-      await api.uploadSupplierCatalog(formData);
+      await api.catalog.uploadSupplierCatalog(formData);
       toast.success('Каталог загружен');
       setUploadOpen(false);
       resetUploadForm();
       loadCatalogs();
-    } catch (err: any) {
-      toast.error(`Ошибка загрузки: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Ошибка загрузки: ${(err instanceof Error ? err.message : String(err))}`);
     } finally {
       setUploading(false);
     }
@@ -114,13 +114,13 @@ export function SupplierCatalogsPage() {
 
     try {
       setDeleting(true);
-      await api.deleteSupplierCatalog(deletingCatalog.id);
+      await api.catalog.deleteSupplierCatalog(deletingCatalog.id);
       toast.success('Каталог удалён');
       setDeleteOpen(false);
       setDeletingCatalog(null);
       loadCatalogs();
-    } catch (err: any) {
-      toast.error(`Ошибка удаления: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Ошибка удаления: ${(err instanceof Error ? err.message : String(err))}`);
     } finally {
       setDeleting(false);
     }

@@ -18,12 +18,14 @@ from kanban_core.serializers import (
 from kanban_core.services import log_card_event
 from kanban_core.permissions import RolePermission
 from kanban_files.models import FileObject
+from core.kanban_permissions import KanbanRolePermissionMixin
 
 
-class BoardViewSet(viewsets.ModelViewSet):
+class BoardViewSet(KanbanRolePermissionMixin, viewsets.ModelViewSet):
     queryset = Board.objects.prefetch_related('columns').all()
     serializer_class = BoardSerializer
     permission_classes = [IsAuthenticated]
+    kanban_write_role = 'kanban_admin'
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -32,16 +34,12 @@ class BoardViewSet(viewsets.ModelViewSet):
             qs = qs.filter(key=key)
         return qs
 
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAuthenticated(), RolePermission('kanban_admin')]
-        return super().get_permissions()
 
-
-class ColumnViewSet(viewsets.ModelViewSet):
+class ColumnViewSet(KanbanRolePermissionMixin, viewsets.ModelViewSet):
     queryset = Column.objects.select_related('board').all()
     serializer_class = ColumnSerializer
     permission_classes = [IsAuthenticated]
+    kanban_write_role = 'kanban_admin'
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -49,11 +47,6 @@ class ColumnViewSet(viewsets.ModelViewSet):
         if board_id:
             qs = qs.filter(board_id=board_id)
         return qs
-
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAuthenticated(), RolePermission('kanban_admin')]
-        return super().get_permissions()
 
 
 class CardViewSet(viewsets.ModelViewSet):

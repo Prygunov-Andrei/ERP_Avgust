@@ -9,17 +9,14 @@ from rest_framework.response import Response
 from kanban_core.permissions import RolePermission
 from kanban_warehouse.models import StockLocation, StockMove, StockMoveLine
 from kanban_warehouse.serializers import StockLocationSerializer, StockMoveSerializer
+from core.kanban_permissions import KanbanRolePermissionMixin
 
 
-class StockLocationViewSet(viewsets.ModelViewSet):
+class StockLocationViewSet(KanbanRolePermissionMixin, viewsets.ModelViewSet):
     queryset = StockLocation.objects.all()
     serializer_class = StockLocationSerializer
     permission_classes = [IsAuthenticated]
-
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAuthenticated(), RolePermission('warehouse')]
-        return super().get_permissions()
+    kanban_write_role = 'warehouse'
 
 
 class StockMoveViewSet(viewsets.ModelViewSet):

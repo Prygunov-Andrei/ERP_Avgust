@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { formatDate, formatAmount } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { useCatalogCategories, useCatalogCategoryTree } from '@/hooks';
 import { Product, ProductDuplicate } from '@/types/catalog';
 import { Button } from '@/components/ui/button';
@@ -28,30 +28,30 @@ export function CatalogModeration() {
   // Загрузка новых товаров
   const { data: newProductsData, isLoading: newProductsLoading } = useQuery({
     queryKey: ['products', 'new'],
-    queryFn: () => api.getProducts({ status: 'new' }),
+    queryFn: () => api.catalog.getProducts({ status: 'new' }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   // Подтверждение товара
   const verifyMutation = useMutation({
-    mutationFn: (id: number) => api.verifyProduct(id),
+    mutationFn: (id: number) => api.catalog.verifyProduct(id),
     onSuccess: () => {
       toast.success('Товар подтверждён');
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
 
   // Архивация товара
   const archiveMutation = useMutation({
-    mutationFn: (id: number) => api.archiveProduct(id),
+    mutationFn: (id: number) => api.catalog.archiveProduct(id),
     onSuccess: () => {
       toast.success('Товар архивирован');
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
@@ -60,11 +60,11 @@ export function CatalogModeration() {
   const handleFindDuplicates = async () => {
     setIsSearchingDuplicates(true);
     try {
-      const result = await api.findDuplicateProducts();
+      const result = await api.catalog.findDuplicateProducts();
       setDuplicates(result);
       toast.success(`Найдено ${result.length} групп похожих товаров`);
-    } catch (error: any) {
-      toast.error(`Ошибка: ${error.message}`);
+    } catch (error: unknown) {
+      toast.error(`Ошибка: ${(error instanceof Error ? error.message : String(error))}`);
     } finally {
       setIsSearchingDuplicates(false);
     }
@@ -73,7 +73,7 @@ export function CatalogModeration() {
   // Объединение товаров
   const mergeMutation = useMutation({
     mutationFn: (data: { target_id: number; source_ids: number[] }) =>
-      api.mergeProducts(data),
+      api.catalog.mergeProducts(data),
     onSuccess: () => {
       toast.success('Товары объединены');
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -82,7 +82,7 @@ export function CatalogModeration() {
       // Обновляем список дубликатов
       handleFindDuplicates();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
@@ -200,7 +200,7 @@ export function CatalogModeration() {
                               // Ищем похожие для конкретного товара
                               setIsSearchingDuplicates(true);
                               try {
-                                const result = await api.findDuplicateProducts();
+                                const result = await api.catalog.findDuplicateProducts();
                                 // Фильтруем только группы с этим товаром
                                 const filtered = result.filter(
                                   (group: ProductDuplicate) =>
@@ -214,8 +214,8 @@ export function CatalogModeration() {
                                 } else {
                                   toast.info('Похожие товары не найдены');
                                 }
-                              } catch (error: any) {
-                                toast.error(`Ошибка: ${error.message}`);
+                              } catch (error: unknown) {
+                                toast.error(`Ошибка: ${(error instanceof Error ? error.message : String(error))}`);
                               } finally {
                                 setIsSearchingDuplicates(false);
                               }
@@ -294,8 +294,8 @@ export function CatalogModeration() {
                         onClick={() => {
                           // Загружаем полные данные товаров для объединения
                           Promise.all([
-                            api.getProductById(group.product.id),
-                            ...group.similar.map((s) => api.getProductById(s.id)),
+                            api.catalog.getProductById(group.product.id),
+                            ...group.similar.map((s) => api.catalog.getProductById(s.id)),
                           ]).then((products) => {
                             setSelectedProducts(products);
                             setMergeModalOpen(true);

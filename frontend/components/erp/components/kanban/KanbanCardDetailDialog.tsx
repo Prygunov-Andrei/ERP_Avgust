@@ -1,15 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  kanbanApi,
-  KanbanCard,
-  KanbanColumn,
-  CommercialCase,
-  CardColor,
-  KanbanAttachment,
-} from '@/lib/kanbanApi';
 import { api } from '@/lib/api';
-import type { Counterparty, ConstructionObject } from '@/lib/api';
+import type {
+  KanbanCard, KanbanColumn, CommercialCase, CardColor, KanbanAttachment,
+  Counterparty, ConstructionObject,
+} from '@/lib/api';
+import type { TechnicalProposalListItem } from '@/lib/api/types/proposals';
+import { unwrapResults } from '@/lib/api/types/common';
 import { useObjects, useCounterparties } from '@/hooks/useReferenceData';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -69,51 +66,43 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
   const commercialCaseQuery = useQuery({
     queryKey: ['kanban', 'commercial-case', cardId],
     enabled: Boolean(cardId) && open,
-    queryFn: () => kanbanApi.getCommercialCaseByCard(cardId as string),
+    queryFn: () => api.kanban.getCommercialCaseByCard(cardId as string),
   });
 
   const attachmentsQuery = useQuery({
     queryKey: ['kanban', 'attachments', cardId],
     enabled: Boolean(cardId) && open,
-    queryFn: () => kanbanApi.getCardAttachments(cardId as string),
+    queryFn: () => api.kanban.getCardAttachments(cardId as string),
   });
 
   const { data: objectsData } = useObjects();
-  const objects = Array.isArray(objectsData) ? objectsData : (objectsData as any)?.results ?? [];
+  const objects = unwrapResults<ConstructionObject>(objectsData);
 
   const { data: counterpartiesData } = useCounterparties(undefined, { enabled: open, retry: false });
-  const allCounterparties = Array.isArray(counterpartiesData)
-    ? counterpartiesData
-    : (counterpartiesData as any)?.results ?? [];
+  const allCounterparties = unwrapResults<Counterparty>(counterpartiesData);
   const potentialCustomers = allCounterparties.filter(
-    (c: any) => c.type === 'potential_customer' || c.type === 'customer',
+    (c) => c.type === 'potential_customer' || c.type === 'customer',
   );
 
   const tkpByObjectQuery = useQuery({
     queryKey: ['technical-proposals-by-object', objectId],
     enabled: Boolean(objectId) && open,
-    queryFn: () => api.getTechnicalProposals({ object: Number(objectId) }),
+    queryFn: () => api.proposals.getTechnicalProposals({ object: Number(objectId) }),
     staleTime: 60_000,
   });
 
-  const allTkpForObject: any[] = (() => {
-    const data = tkpByObjectQuery.data;
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    if ((data as any)?.results) return (data as any).results;
-    return [];
-  })();
+  const allTkpForObject: TechnicalProposalListItem[] = unwrapResults<TechnicalProposalListItem>(tkpByObjectQuery.data);
 
-  const linkedTkps = allTkpForObject.filter((t: any) => tkpIds.includes(t.id));
-  const availableTkps = allTkpForObject.filter((t: any) => !tkpIds.includes(t.id));
+  const linkedTkps = allTkpForObject.filter((t) => tkpIds.includes(t.id));
+  const availableTkps = allTkpForObject.filter((t) => !tkpIds.includes(t.id));
 
   useEffect(() => {
     if (!card || !open) return;
     setTitle(card.title || '');
     setColor((card.meta?.color as CardColor) || null);
     setObjectId(card.meta?.erp_object_id ? String(card.meta.erp_object_id) : '');
-    setObjectName(card.meta?.erp_object_name || '');
-    setSystemName(card.meta?.system_name || '');
+    setObjectName((card.meta?.erp_object_name as string) || '');
+    setSystemName((card.meta?.system_name as string) || '');
   }, [card, open]);
 
   useEffect(() => {
@@ -136,7 +125,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
   const updateCardMutation = useMutation({
     mutationFn: async () => {
       if (!cardId) throw new Error('Нет ID карточки');
-      await kanbanApi.updateCard(cardId, {
+      await api.kanban.updateCard(cardId, {
         title: title.trim(),
         meta: {
           ...(card?.meta || {}),
@@ -161,9 +150,9 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
       };
 
       if (cc) {
-        await kanbanApi.updateCommercialCase(cc.id, caseData);
+        await api.kanban.updateCommercialCase(cc.id, caseData);
       } else {
-        await kanbanApi.createCommercialCase({ card: cardId, ...caseData });
+        await api.kanban.createCommercialCase({ card: cardId, ...caseData });
       }
     },
     onSuccess: () => {
@@ -171,9 +160,9 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
       toast.success('Карточка сохранена');
       onUpdated();
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       console.error('Save card failed:', err);
-      toast.error(`Ошибка сохранения: ${err?.message || 'Неизвестная ошибка'}`);
+      toast.error(`Ошибка сохранения: ${err.message || 'Неизвестная ошибка'}`);
     },
   });
 
@@ -182,26 +171,27 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
       setColor(newColor);
       if (!cardId) return;
       try {
-        await kanbanApi.updateCard(cardId, {
+        await api.kanban.updateCard(cardId, {
           meta: { ...(card?.meta || {}), color: newColor },
         });
         onUpdated();
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Color change failed:', err);
-        toast.error(`Ошибка смены цвета: ${err?.message || 'Неизвестная ошибка'}`);
+        const message = err instanceof Error ? err.message : 'Неизвестная ошибка';
+        toast.error(`Ошибка смены цвета: ${message}`);
       }
     },
     [cardId, card?.meta, onUpdated],
   );
 
   const handleObjectChange = (value: string) => {
-    const obj = objects.find((o: any) => String(o.id) === value);
+    const obj = objects.find((o) => String(o.id) === value);
     setObjectId(value);
     setObjectName(obj?.name || '');
   };
 
   const handleCounterpartyChange = (value: string) => {
-    const cp = potentialCustomers.find((c: any) => String(c.id) === value);
+    const cp = potentialCustomers.find((c) => String(c.id) === value);
     setCounterpartyId(value);
     setCounterpartyName(cp?.name || '');
     if (!contactsInfo && cp?.contact_info) setContactsInfo(cp.contact_info);
@@ -243,7 +233,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
       setUploadProgress(`Загрузка ${i + 1}/${total}: ${file.name}`);
       try {
         const sha256 = await computeSha256(file);
-        const initResp = await kanbanApi.initFileUpload({
+        const initResp = await api.kanban.initFileUpload({
           sha256,
           size_bytes: file.size,
           mime_type: file.type || 'application/octet-stream',
@@ -259,15 +249,16 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
           if (!uploadResp.ok) {
             throw new Error(`HTTP ${uploadResp.status} при загрузке файла`);
           }
-          await kanbanApi.finalizeFileUpload(initResp.file.id);
+          await api.kanban.finalizeFileUpload(initResp.file.id);
         }
 
-        await kanbanApi.attachFileToCard(cardId, initResp.file.id, { title: file.name });
+        await api.kanban.attachFileToCard(cardId, initResp.file.id, { title: file.name });
         successCount++;
-      } catch (err: any) {
+      } catch (err: unknown) {
         errorCount++;
         console.error(`File upload failed (${file.name}):`, err);
-        toast.error(`Ошибка загрузки "${file.name}": ${err?.message || 'Неизвестная ошибка'}`);
+        const message = err instanceof Error ? err.message : 'Неизвестная ошибка';
+        toast.error(`Ошибка загрузки "${file.name}": ${message}`);
       }
     }
 
@@ -284,7 +275,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
 
   const handleDownload = async (attachment: KanbanAttachment) => {
     try {
-      const resp = await kanbanApi.getFileDownloadUrl(attachment.file);
+      const resp = await api.kanban.getFileDownloadUrl(attachment.file);
       window.open(resp.download_url, '_blank');
     } catch (err) {
       console.error('Download failed:', err);
@@ -372,7 +363,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
                   <SelectValue placeholder="Выберите объект" />
                 </SelectTrigger>
                 <SelectContent>
-                  {objects.map((obj: any) => (
+                  {objects.map((obj) => (
                     <SelectItem key={obj.id} value={String(obj.id)}>
                       {obj.name}
                     </SelectItem>
@@ -412,7 +403,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
                   <SelectValue placeholder="Выберите контрагента" />
                 </SelectTrigger>
                 <SelectContent>
-                  {potentialCustomers.map((cp: any) => (
+                  {potentialCustomers.map((cp) => (
                     <SelectItem key={cp.id} value={String(cp.id)}>
                       {cp.name}
                     </SelectItem>
@@ -441,7 +432,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
             )}
             <div className="space-y-2">
               {tkpIds.map((id) => {
-                const tkp = linkedTkps.find((t: any) => t.id === id);
+                const tkp = linkedTkps.find((t) => t.id === id);
                 return (
                   <div key={id} className="flex items-center justify-between border rounded-md p-2">
                     <div className="text-sm">
@@ -487,7 +478,7 @@ export const KanbanCardDetailDialog = ({ card, open, onOpenChange, allColumns, o
                     <SelectValue placeholder="Выберите ТКП..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableTkps.map((tkp: any) => (
+                    {availableTkps.map((tkp) => (
                       <SelectItem key={tkp.id} value={String(tkp.id)}>
                         #{tkp.number || tkp.id} — {tkp.name || tkp.object_name || 'Без названия'}
                       </SelectItem>

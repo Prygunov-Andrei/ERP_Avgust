@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Label } from '@/components/ui/label';
 import { Plus, Edit2, Trash2, Loader2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { useWorkerGrades, useWorkSections } from '@/hooks';
 
 export function WorkerGradeSkillsComponent() {
@@ -30,7 +30,7 @@ export function WorkerGradeSkillsComponent() {
 
   const { data: skills, isLoading } = useQuery({
     queryKey: ['worker-grade-skills', selectedGrade, selectedSection],
-    queryFn: () => api.getWorkerGradeSkills(selectedGrade, selectedSection),
+    queryFn: () => api.pricelists.getWorkerGradeSkills(selectedGrade, selectedSection),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -40,7 +40,7 @@ export function WorkerGradeSkillsComponent() {
   const sections = allSections?.filter((s) => s.is_active && s.parent === null);
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateWorkerGradeSkillsData) => api.createWorkerGradeSkills(data),
+    mutationFn: (data: CreateWorkerGradeSkillsData) => api.pricelists.createWorkerGradeSkills(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['worker-grade-skills'] });
       setDialogOpen(false);
@@ -55,7 +55,7 @@ export function WorkerGradeSkillsComponent() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CreateWorkerGradeSkillsData> }) =>
-      api.updateWorkerGradeSkills(id, data),
+      api.pricelists.updateWorkerGradeSkills(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['worker-grade-skills'] });
       setDialogOpen(false);
@@ -69,7 +69,7 @@ export function WorkerGradeSkillsComponent() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteWorkerGradeSkills(id),
+    mutationFn: (id: number) => api.pricelists.deleteWorkerGradeSkills(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['worker-grade-skills'] });
       setDeleteDialogOpen(false);

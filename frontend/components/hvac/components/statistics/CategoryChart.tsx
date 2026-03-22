@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '../ui/card';
+import { Card } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { AlertTriangle } from 'lucide-react';
 
@@ -55,7 +55,7 @@ export default function CategoryChart({
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }: any) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
@@ -84,11 +84,13 @@ export default function CategoryChart({
               <Legend
                 verticalAlign="bottom"
                 height={36}
-                formatter={(value, entry: any) => {
-                  const percent = totalSources > 0 ? ((entry.payload.value / totalSources) * 100).toFixed(1) : '0';
+                formatter={(value, entry) => {
+                  const entryPayload = entry.payload as { value?: number } | undefined;
+                  const entryValue = entryPayload?.value ?? 0;
+                  const percent = totalSources > 0 ? ((entryValue / totalSources) * 100).toFixed(1) : '0';
                   return (
                     <span className="text-sm">
-                      {value} ({entry.payload.value} — {percent}%)
+                      {value} ({entryValue} — {percent}%)
                     </span>
                   );
                 }}

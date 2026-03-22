@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from core.serializer_fields import AnnotatedCountField
 from .models import (
     FrontOfWorkItem,
     MountingCondition,
@@ -162,7 +163,10 @@ class TechnicalProposalDetailSerializer(serializers.ModelSerializer):
     validity_date = serializers.DateField(read_only=True)
     currency_rates = serializers.DictField(read_only=True)
     file_url = serializers.SerializerMethodField()
-    versions_count = serializers.SerializerMethodField()
+    versions_count = AnnotatedCountField(
+        annotated_attr='annotated_versions_count',
+        count_attr='child_versions',
+    )
     is_latest_version = serializers.SerializerMethodField()
     status_history = TKPStatusHistorySerializer(many=True, read_only=True)
 
@@ -202,13 +206,9 @@ class TechnicalProposalDetailSerializer(serializers.ModelSerializer):
             return obj.file.url
         return None
     
-    def get_versions_count(self, obj):
-        """Использует annotated поле если доступно (оптимизация N+1)"""
-        if hasattr(obj, 'annotated_versions_count'):
-            return obj.annotated_versions_count
-        return obj.child_versions.count()
-
     def get_is_latest_version(self, obj):
+        if hasattr(obj, 'annotated_versions_count'):
+            return obj.annotated_versions_count == 0
         return obj.child_versions.count() == 0
 
 
@@ -263,8 +263,11 @@ class MountingProposalDetailSerializer(serializers.ModelSerializer):
         required=False
     )
     file_url = serializers.SerializerMethodField()
-    versions_count = serializers.SerializerMethodField()
-    
+    versions_count = AnnotatedCountField(
+        annotated_attr='annotated_versions_count',
+        count_attr='child_versions',
+    )
+
     class Meta:
         model = MountingProposal
         fields = '__all__'
@@ -276,7 +279,7 @@ class MountingProposalDetailSerializer(serializers.ModelSerializer):
             'conditions': {'read_only': True},
             'mounting_estimates': {'read_only': True}
         }
-    
+
     def get_file_url(self, obj):
         if obj.file:
             request = self.context.get('request')
@@ -284,12 +287,6 @@ class MountingProposalDetailSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.file.url)
             return obj.file.url
         return None
-    
-    def get_versions_count(self, obj):
-        """Использует annotated поле если доступно (оптимизация N+1)"""
-        if hasattr(obj, 'annotated_versions_count'):
-            return obj.annotated_versions_count
-        return obj.child_versions.count()
 
 
 class TechnicalProposalAddEstimatesSerializer(serializers.Serializer):

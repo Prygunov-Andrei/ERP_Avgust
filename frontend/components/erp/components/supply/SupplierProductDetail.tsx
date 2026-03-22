@@ -1,3 +1,4 @@
+import type { Product } from '@/types/catalog';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from '@/hooks/erp-router';
 import { ArrowLeft, Loader2, Package, Link2, ExternalLink, FileText, ChevronLeft, ChevronRight, Search } from 'lucide-react';
@@ -23,10 +24,10 @@ export function SupplierProductDetail() {
   const loadProduct = async () => {
     try {
       setLoading(true);
-      const data = await (api as any).getSupplierProduct(Number(id));
+      const data = await api.supply.getSupplierProduct(Number(id));
       setProduct(data);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -288,7 +289,7 @@ function LinkProductDialog({ open, onOpenChange, supplierProductId, onLinked }: 
   onLinked: () => void;
 }) {
     const [search, setSearch] = useState('');
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [linking, setLinking] = useState(false);
 
@@ -296,7 +297,7 @@ function LinkProductDialog({ open, onOpenChange, supplierProductId, onLinked }: 
     if (!search.trim()) return;
     try {
       setLoading(true);
-      const data = await (api as any).getProducts(`search=${encodeURIComponent(search)}&page_size=20`);
+      const data = await api.catalog.getProducts({ search, page: 1 });
       setResults(data.results || []);
     } catch { /* ignore */ } finally {
       setLoading(false);
@@ -314,11 +315,11 @@ function LinkProductDialog({ open, onOpenChange, supplierProductId, onLinked }: 
   const handleLink = async (productId: number) => {
     try {
       setLinking(true);
-      await (api as any).linkSupplierProduct(supplierProductId, productId);
+      await api.supply.linkSupplierProduct(supplierProductId, productId);
       toast.success('Товар привязан и обогащён');
       onLinked();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error((err instanceof Error ? err.message : String(err)));
     } finally {
       setLinking(false);
     }
@@ -345,7 +346,7 @@ function LinkProductDialog({ open, onOpenChange, supplierProductId, onLinked }: 
             <div className="flex justify-center py-4"><Loader2 className="w-6 h-6 animate-spin" /></div>
           ) : results.length > 0 ? (
             <div className="max-h-[300px] overflow-y-auto space-y-1">
-              {results.map((p: any) => (
+              {results.map((p) => (
                 <div
                   key={p.id}
                   className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"

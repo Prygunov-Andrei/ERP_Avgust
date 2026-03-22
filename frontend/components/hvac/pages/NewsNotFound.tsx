@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@/hooks/erp-router';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 import newsService, { News } from '../services/newsService';
-import { Card } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Calendar, AlertCircle, RefreshCw, ExternalLink, Trash2, AlertTriangle } from 'lucide-react';
 
 import { toast } from 'sonner';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { getLocalizedDate } from '../utils/i18nHelpers';
-import { Checkbox } from '../components/ui/checkbox';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function NewsNotFound() {
   const { user } = useAuth();
@@ -44,7 +44,7 @@ export default function NewsNotFound() {
       setError(null);
       const data = await newsService.getNoNewsFound();
       setRecords(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load no-news-found records:', err);
       setError('Не удалось загрузить записи');
     } finally {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api , unwrapResults} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useObjects, useCounterparties, useLegalEntities, useFrameworkContracts } from '@/hooks';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 
 interface CreateContractDialogProps {
   contractId?: number;
@@ -24,7 +24,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
   // Загрузка данных договора для редактирования
   const { data: existingContract } = useQuery({
     queryKey: ['contract', contractId],
-    queryFn: () => api.getContractDetail(contractId!),
+    queryFn: () => api.contracts.getContractDetail(contractId!),
     enabled: isEditing,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
@@ -37,25 +37,25 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
 
   const { data: technicalProposals } = useQuery({
     queryKey: ['technical-proposals', 'approved'],
-    queryFn: () => api.getTechnicalProposals({ status: 'approved' }),
+    queryFn: () => api.proposals.getTechnicalProposals({ status: 'approved' }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: mountingProposals } = useQuery({
     queryKey: ['mounting-proposals', 'approved'],
-    queryFn: () => api.getMountingProposals({ status: 'approved' }),
+    queryFn: () => api.proposals.getMountingProposals({ status: 'approved' }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: parentContracts } = useQuery({
     queryKey: ['contracts', 'income'],
-    queryFn: () => api.getContracts(),
+    queryFn: () => api.contracts.getContracts(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: users } = useQuery({
     queryKey: ['users'],
-    queryFn: () => api.getUsers(),
+    queryFn: () => api.auth.getUsers(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -116,12 +116,12 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
   }, [existingContract]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => isEditing ? api.updateContract(contractId!, data) : api.createContract(data),
+    mutationFn: (data: Record<string, unknown>) => isEditing ? api.contracts.updateContract(contractId!, data) : api.contracts.createContract(data),
     onSuccess: () => {
       toast.success(isEditing ? 'Договор обновлен' : 'Договор создан');
       onSuccess();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error?.message || 'Не удалось сохранить договор'}`);
     },
   });
@@ -134,7 +134,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
       return;
     }
 
-    const dataToSubmit: any = {
+    const dataToSubmit: Record<string, unknown> = {
       object_id: parseInt(formData.object_id),
       number: formData.number,
       name: formData.name,
@@ -178,8 +178,8 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
   });
 
   // Фильтрация родительских договоров (только доходные)
-  const allContracts = Array.isArray(parentContracts) ? parentContracts : (parentContracts as any)?.results || [];
-  const incomeContracts = allContracts.filter((c: any) => c.contract_type === 'income');
+  const allContracts = unwrapResults(parentContracts);
+  const incomeContracts = allContracts.filter((c) => c.contract_type === 'income');
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 mt-4">
@@ -219,7 +219,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
               </SelectTrigger>
               <SelectContent>
                 {objects && objects.length > 0 ? (
-                  objects.map((obj: any) => (
+                  objects.map((obj) => (
                     <SelectItem key={obj.id} value={obj.id.toString()}>
                       {obj.name}
                     </SelectItem>
@@ -335,7 +335,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
               </SelectTrigger>
               <SelectContent>
                 {legalEntities && legalEntities.length > 0 ? (
-                  legalEntities.map((entity: any) => (
+                  legalEntities.map((entity) => (
                     <SelectItem key={entity.id} value={entity.id.toString()}>
                       {entity.short_name || entity.name}
                     </SelectItem>
@@ -359,7 +359,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
               </SelectTrigger>
               <SelectContent>
                 {filteredCounterparties && filteredCounterparties.length > 0 ? (
-                  filteredCounterparties.map((cp: any) => (
+                  filteredCounterparties.map((cp) => (
                     <SelectItem key={cp.id} value={cp.id.toString()}>
                       {cp.short_name || cp.name}
                     </SelectItem>
@@ -387,7 +387,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
                 <SelectValue placeholder="Выберите ТКП" />
               </SelectTrigger>
               <SelectContent>
-                {technicalProposals?.results?.map((tp: any) => (
+                {technicalProposals?.results?.map((tp) => (
                   <SelectItem key={tp.id} value={tp.id.toString()}>
                     {tp.number} - {tp.name}
                   </SelectItem>
@@ -405,7 +405,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
                 <SelectValue placeholder="Выберите МП" />
               </SelectTrigger>
               <SelectContent>
-                {mountingProposals?.results?.map((mp: any) => (
+                {mountingProposals?.results?.map((mp) => (
                   <SelectItem key={mp.id} value={mp.id.toString()}>
                     {mp.number} - {mp.name}
                   </SelectItem>
@@ -422,7 +422,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
               <SelectValue placeholder="Выберите договор" />
             </SelectTrigger>
             <SelectContent>
-              {incomeContracts?.map((c: any) => (
+              {incomeContracts?.map((c) => (
                 <SelectItem key={c.id} value={c.id.toString()}>
                   {c.number} - {c.name}
                 </SelectItem>
@@ -452,7 +452,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
                 <SelectValue placeholder="Выберите рамочный договор" />
               </SelectTrigger>
               <SelectContent>
-                {frameworkContracts?.results?.map((fc: any) => (
+                {frameworkContracts?.results?.map((fc) => (
                   <SelectItem key={fc.id} value={fc.id.toString()}>
                     {fc.number} - {fc.name}
                   </SelectItem>
@@ -487,9 +487,9 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
                 <SelectValue placeholder="Выберите начальника участка" />
               </SelectTrigger>
               <SelectContent>
-                {users?.results?.map((u: any) => (
+                {users?.results?.map((u) => (
                   <SelectItem key={u.id} value={u.id.toString()}>
-                    {u.full_name || u.username}
+                    {(u.full_name as string) || u.username}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -502,9 +502,9 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
                 <SelectValue placeholder="Выберите инженера" />
               </SelectTrigger>
               <SelectContent>
-                {users?.results?.map((u: any) => (
+                {users?.results?.map((u) => (
                   <SelectItem key={u.id} value={u.id.toString()}>
-                    {u.full_name || u.username}
+                    {(u.full_name as string) || u.username}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -1,14 +1,14 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { Button } from './ui/button';
-import { Alert, AlertDescription } from './ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Calendar, AlertCircle, Sparkles, Clock } from 'lucide-react';
 import referencesService from '../services/referencesService';
 import ManufacturerNewsDiscoveryProgress from './ManufacturerNewsDiscoveryProgress';
 import { useNavigate } from '@/hooks/erp-router';
 import { useDiscovery } from '../hooks/useDiscovery';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ManufacturerNewsDiscoveryDialogProps {
   open: boolean;

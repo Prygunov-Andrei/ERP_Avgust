@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from core.models import TimestampedModel
+from core.text_utils import normalize_name as _normalize_name
 
 
 class Category(TimestampedModel):
@@ -171,15 +172,11 @@ class Product(TimestampedModel):
 
     @staticmethod
     def normalize_name(name: str) -> str:
-        """Нормализует название для поиска"""
-        import re
-        # Lowercase
-        normalized = name.lower()
-        # Удаляем спецсимволы, оставляем буквы, цифры, пробелы
-        normalized = re.sub(r'[^\w\s]', ' ', normalized)
-        # Убираем множественные пробелы
-        normalized = re.sub(r'\s+', ' ', normalized).strip()
-        return normalized
+        """Нормализует название для поиска.
+
+        Делегирует в core.text_utils.normalize_name (без strip_legal_forms).
+        """
+        return _normalize_name(name)
 
 
 class ProductAlias(TimestampedModel):

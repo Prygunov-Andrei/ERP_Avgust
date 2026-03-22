@@ -188,20 +188,37 @@ class ManufacturerAdmin(TranslationAdmin):
             # Если это AJAX запрос - запускаем поиск в фоне
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 import threading
-                
+                import time as _time
+
+                DISCOVERY_WALL_CLOCK_LIMIT = 1800  # 30 минут для полного прогона по производителям
+
                 def run_discovery():
+                    start_time = _time.monotonic()
+                    logger.info(
+                        "Manufacturers discovery thread started: %d manufacturers, provider=%s",
+                        manufacturer_count, provider,
+                    )
                     try:
                         service = NewsDiscoveryService(user=request.user)
                         service.discover_all_manufacturers_news(
                             status_obj=status_obj,
                             last_search_date_override=last_search_date_override,
                         )
+                        duration = _time.monotonic() - start_time
+                        logger.info(
+                            "Manufacturers discovery thread finished: duration=%.1fs",
+                            duration,
+                        )
                     except Exception as e:
-                        logger.error(f"Error during manufacturers news discovery: {str(e)}")
+                        duration = _time.monotonic() - start_time
+                        logger.error(
+                            "Manufacturers discovery thread failed after %.1fs: %s",
+                            duration, str(e),
+                        )
                         status_obj.status = 'error'
                         status_obj.save()
-                
-                thread = threading.Thread(target=run_discovery)
+
+                thread = threading.Thread(target=run_discovery, name="discovery-manufacturers")
                 thread.daemon = True
                 thread.start()
                 
@@ -442,8 +459,14 @@ class NewsResourceAdmin(TranslationAdmin):
         
         # Запускаем поиск в фоне
         import threading
-        
+        import time as _time
+
         def run_discovery():
+            start_time = _time.monotonic()
+            logger.info(
+                "Selected resources discovery thread started: %d resources, provider=%s",
+                len(resource_ids), provider,
+            )
             try:
                 service = NewsDiscoveryService(user=request.user)
                 # Обрабатываем только выбранные источники
@@ -460,15 +483,24 @@ class NewsResourceAdmin(TranslationAdmin):
                         logger.error(f"Error processing resource {resource_id}: {str(e)}")
                         status_obj.processed_count += 1
                         status_obj.save()
-                
+
+                duration = _time.monotonic() - start_time
                 status_obj.status = 'completed'
                 status_obj.save()
+                logger.info(
+                    "Selected resources discovery thread finished: %d resources, duration=%.1fs",
+                    len(resource_ids), duration,
+                )
             except Exception as e:
-                logger.error(f"Error during selected resources discovery: {str(e)}")
+                duration = _time.monotonic() - start_time
+                logger.error(
+                    "Selected resources discovery thread failed after %.1fs: %s",
+                    duration, str(e),
+                )
                 status_obj.status = 'error'
                 status_obj.save()
-        
-        thread = threading.Thread(target=run_discovery)
+
+        thread = threading.Thread(target=run_discovery, name="discovery-selected-resources")
         thread.daemon = True
         thread.start()
         
@@ -598,9 +630,16 @@ class NewsResourceAdmin(TranslationAdmin):
             # Если это AJAX запрос - запускаем поиск в фоне и возвращаем статус
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 import threading
+                import time as _time
                 resources_list = list(resources_qs.order_by('id'))
-                
+
                 def run_discovery():
+                    start_time = _time.monotonic()
+                    logger.info(
+                        "All-resources discovery thread started: %d resources, provider=%s, config=%s",
+                        resource_count, status_provider,
+                        selected_config.name if selected_config else 'default',
+                    )
                     try:
                         service = NewsDiscoveryService(user=request.user, config=selected_config)
                         service.discover_all_news(
@@ -608,13 +647,22 @@ class NewsResourceAdmin(TranslationAdmin):
                             resources=resources_list,
                             last_search_date_override=last_search_date_override,
                         )
+                        duration = _time.monotonic() - start_time
+                        logger.info(
+                            "All-resources discovery thread finished: %d resources, duration=%.1fs",
+                            resource_count, duration,
+                        )
                     except Exception as e:
-                        logger.error(f"Error during news discovery: {str(e)}")
+                        duration = _time.monotonic() - start_time
+                        logger.error(
+                            "All-resources discovery thread failed after %.1fs: %s",
+                            duration, str(e),
+                        )
                         status_obj.status = 'error'
                         status_obj.save()
-                
+
                 # Запускаем поиск в отдельном потоке
-                thread = threading.Thread(target=run_discovery)
+                thread = threading.Thread(target=run_discovery, name="discovery-all-resources")
                 thread.daemon = True
                 thread.start()
                 

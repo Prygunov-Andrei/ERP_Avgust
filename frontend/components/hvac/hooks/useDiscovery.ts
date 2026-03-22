@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { toast } from 'sonner';
 
 export interface DiscoveryInfo {
@@ -76,7 +77,7 @@ export function useDiscovery({ open, totalItems, requireConfig = false, loadInfo
     try {
       const info = await loadInfoFn();
       setDiscoveryInfo(info);
-    } catch (err: any) {
+    } catch (_err: unknown) {
       // Устанавливаем дефолтные значения при ошибке
       setDiscoveryInfo({
         last_discovery_date: null,
@@ -111,8 +112,9 @@ export function useDiscovery({ open, totalItems, requireConfig = false, loadInfo
       // Переходим к отображению прогресса
       setStage('progress');
       toast.success('Поиск новостей запущен!');
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Не удалось запустить поиск новостей';
+    } catch (err: unknown) {
+      const respData = axios.isAxiosError(err) ? err.response?.data as Record<string, string> | undefined : undefined;
+      const errorMsg = respData?.error || respData?.message || 'Не удалось запустить поиск новостей';
       setError(errorMsg);
       toast.error(`Ошибка: ${errorMsg}`);
     } finally {

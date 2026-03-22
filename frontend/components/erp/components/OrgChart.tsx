@@ -126,7 +126,7 @@ export function OrgChart() {
   const { data: orgData, isLoading } = useQuery<OrgChartData>({
     queryKey: ['org-chart', filterLegalEntity],
     queryFn: () =>
-      api.getOrgChart(filterLegalEntity !== 'all' ? Number(filterLegalEntity) : undefined),
+      api.personnel.getOrgChart(filterLegalEntity !== 'all' ? Number(filterLegalEntity) : undefined),
   });
 
   const { initialNodes, initialEdges } = useMemo(() => {

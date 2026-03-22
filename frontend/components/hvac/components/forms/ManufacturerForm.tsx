@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Alert, AlertDescription } from '../ui/alert';
+import axios from 'axios';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import referencesService, { Manufacturer, ManufacturerCreateData } from '../../services/referencesService';
 import { toast } from 'sonner';
@@ -130,21 +131,23 @@ export default function ManufacturerForm({ open, onOpenChange, manufacturer, onS
 
       onSuccess();
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving manufacturer:', err);
-      
+
       // Обработка ошибок валидации от сервера
-      if (err.response?.status === 400 && err.response?.data) {
+      if (axios.isAxiosError(err) && err.response?.status === 400 && err.response?.data) {
         const serverErrors: FormErrors = {};
-        Object.keys(err.response.data).forEach(key => {
-          const messages = err.response.data[key];
+        const data = err.response.data as Record<string, string | string[]>;
+        Object.keys(data).forEach(key => {
+          const messages = data[key];
           serverErrors[key as keyof FormErrors] = Array.isArray(messages) ? messages[0] : messages;
         });
         setErrors(serverErrors);
-      } else if (err.response?.status === 401 || err.response?.status === 403) {
+      } else if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
         setErrors({ general: 'У вас нет прав для выполнения этой операции' });
       } else {
-        setErrors({ general: err.response?.data?.message || 'Ошибка при сохранении производителя' });
+        const msg = axios.isAxiosError(err) ? (err.response?.data as Record<string, string>)?.message : undefined;
+        setErrors({ general: msg || 'Ошибка при сохранении производителя' });
       }
       
       toast.error(isEdit ? 'Ошибка при обновлении производителя' : 'Ошибка при создании производителя');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from './ui/card';
-import { Alert, AlertDescription } from './ui/alert';
+import { Card } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, Zap, Brain, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import referencesService from '../services/referencesService';
 
@@ -34,7 +34,7 @@ export default function ProviderSelection({ selectedProvider, onProviderChange }
         if (selectedProvider === 'auto') {
           onProviderChange(data.default);
         }
-      } catch (err: any) {
+      } catch (_err: unknown) {
         // При ошибке используем fallback провайдеры
         // Это позволяет продолжить работу даже если API недоступен
         setProviders([

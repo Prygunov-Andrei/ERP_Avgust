@@ -6,7 +6,7 @@ import {
   FolderOpen, ClipboardList, Wrench, CreditCard, Mail,
   Package, CheckSquare, Landmark, Receipt,
   Truck, CalendarClock, TrendingUp, BarChart3, ShoppingCart, Link2,
-  ExternalLink, HardHat, Search, BookOpen, HelpCircle, Archive,
+  ExternalLink, HardHat, Search, BookOpen, HelpCircle,
   Calendar, PieChart, Wallet, Scale, Megaphone, Calculator, Globe, Phone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -79,6 +79,7 @@ const menuItems: MenuItem[] = [
       { id: 'finance-dashboard', label: 'Дашборд Финансы', icon: <BarChart3 className="w-4 h-4" />, path: '/finance/dashboard', section: 'finance.dashboard' },
       { id: 'finance-payments', label: 'Платежи', icon: <CreditCard className="w-4 h-4" />, path: '/finance/payments', section: 'finance.payments' },
       { id: 'finance-statements', label: 'Выписки за период', icon: <Landmark className="w-4 h-4" />, path: '/bank-statements', section: 'finance.statements' },
+      { id: 'finance-payment-orders', label: 'Платёжные поручения', icon: <Receipt className="w-4 h-4" />, path: '/bank-payment-orders', section: 'finance.payment_orders' },
       { id: 'finance-recurring', label: 'Периодические платежи', icon: <CalendarClock className="w-4 h-4" />, path: '/supply/recurring', section: 'finance.recurring' },
       { id: 'finance-debtors', label: 'Дебиторская задолженность', icon: <Scale className="w-4 h-4" />, path: '/finance/debtors', section: 'finance.debtors' },
       { id: 'finance-accounting', label: 'Бухгалтерия', icon: <Calculator className="w-4 h-4" />, path: '/finance/accounting', section: 'finance.accounting' },
@@ -113,7 +114,9 @@ const menuItems: MenuItem[] = [
     path: '/supply',
     section: 'supply',
     children: [
+      { id: 'supply-dashboard', label: 'Дашборд снабжения', icon: <BarChart3 className="w-4 h-4" />, path: '/supply/dashboard', section: 'supply.dashboard' },
       { id: 'kanban-supply', label: 'Канбан Снабжения', icon: <ShoppingCart className="w-4 h-4" />, path: '/kanban/supply', section: 'supply.kanban' },
+      { id: 'supply-bitrix-requests', label: 'Запросы из Битрикс', icon: <ShoppingCart className="w-4 h-4" />, path: '/supply/requests', section: 'supply.bitrix_requests' },
       { id: 'supply-invoices', label: 'Счета на оплату', icon: <Receipt className="w-4 h-4" />, path: '/finance/payments?tab=invoices', section: 'supply.invoices', isShortcut: true, shortcutSection: 'finance' },
       { id: 'supply-drivers', label: 'Календарь водителей', icon: <Calendar className="w-4 h-4" />, path: '/supply/drivers', section: 'supply.drivers' },
       { id: 'supply-moderation', label: 'Модерация товаров', icon: <CheckSquare className="w-4 h-4" />, path: '/catalog/moderation', section: 'supply.moderation', isShortcut: true, shortcutSection: 'goods.moderation' },
@@ -221,6 +224,7 @@ const menuItems: MenuItem[] = [
       { id: 'ref-counterparties', label: 'Контрагенты', icon: <Users className="w-4 h-4" />, path: '/counterparties', section: 'settings.counterparties' },
       { id: 'ref-settings', label: 'Настройки', icon: <Settings className="w-4 h-4" />, path: '/settings', section: 'settings.config' },
       { id: 'ref-supplier-integrations', label: 'Интеграции поставщиков', icon: <Link2 className="w-4 h-4" />, path: '/settings/integrations', section: 'supply.integrations' },
+      { id: 'ref-bitrix-settings', label: 'Настройки Битрикс24', icon: <Link2 className="w-4 h-4" />, path: '/settings/bitrix', section: 'settings.bitrix' },
       { id: 'ref-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/settings/instructions' },
     ],
   },
@@ -228,22 +232,6 @@ const menuItems: MenuItem[] = [
   // 11. СПРАВКА
   { id: 'help', label: 'Справка', icon: <HelpCircle className="w-5 h-5" />, path: '/help', section: 'help' },
 
-  // --- Разделитель ---
-  { id: 'separator', label: '', icon: <></>, path: '', isSeparator: true },
-
-  // НЕРАСПРЕДЕЛЁННОЕ
-  {
-    id: 'unassigned',
-    label: 'Нераспределённое',
-    icon: <Archive className="w-5 h-5" />,
-    path: '/unassigned',
-    children: [
-      { id: 'legacy-orders', label: 'Платёжные поручения', icon: <Receipt className="w-4 h-4" />, path: '/bank-payment-orders' },
-      { id: 'legacy-bitrix-requests', label: 'Запросы из Битрикс', icon: <ShoppingCart className="w-4 h-4" />, path: '/supply/requests' },
-      { id: 'legacy-bitrix-settings', label: 'Настройки Битрикс24', icon: <Link2 className="w-4 h-4" />, path: '/settings/bitrix' },
-      { id: 'legacy-supply-dashboard', label: 'Дашборд снабжения', icon: <BarChart3 className="w-4 h-4" />, path: '/supply/dashboard' },
-    ],
-  },
 ];
 
 const pageTitles: Record<string, string> = {
@@ -315,8 +303,7 @@ const pageTitles: Record<string, string> = {
   'settings/llm': 'Настройки LLM',
   // 11. Справка
   help: 'Справка',
-  // Legacy / Нераспределённое
-  payments: 'Платежи (legacy)',
+  payments: 'Платежи',
   'bank-payment-orders': 'Платёжные поручения',
   'supply/requests': 'Запросы из Битрикс',
   'settings/bitrix': 'Интеграция с Битрикс24',
@@ -506,8 +493,6 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
               );
             }
 
-            const isUnassigned = item.id === 'unassigned';
-
             // Проверяем, активен ли какой-либо дочерний пункт
             const isAnyChildActive = item.children?.some(child => 
               location.pathname === child.path
@@ -531,9 +516,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                     isActive
                       ? 'bg-blue-50 text-blue-600'
-                      : isUnassigned
-                        ? 'text-gray-400 hover:bg-gray-50'
-                        : 'text-gray-700 hover:bg-gray-50'
+                      : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex-shrink-0">
@@ -541,7 +524,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                   </div>
                   {isSidebarOpen && (
                     <>
-                      <span className={`truncate ${isUnassigned ? 'text-xs uppercase tracking-wider' : ''}`}>
+                      <span className="truncate">
                         {item.label}
                       </span>
                       {item.id === 'contracts' && <NotificationBadge type="expiring-contracts" />}
@@ -565,9 +548,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                             isChildActive
                               ? 'bg-blue-50 text-blue-600'
-                              : isUnassigned
-                                ? 'text-gray-400 hover:bg-gray-50'
-                                : 'text-gray-700 hover:bg-gray-50'
+                              : 'text-gray-700 hover:bg-gray-50'
                           }`}
                         >
                           <div className="flex-shrink-0">

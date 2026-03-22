@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, LLMProvider } from '@/lib/api';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 import { Loader2, Check, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,12 +13,12 @@ export function LLMSettings() {
 
   const { data: providers, isLoading } = useQuery({
     queryKey: ['llm-providers'],
-    queryFn: () => api.getLLMProviders(),
+    queryFn: () => api.core.getLLMProviders(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const setDefaultMutation = useMutation({
-    mutationFn: (id: number) => api.setDefaultLLMProvider(id),
+    mutationFn: (id: number) => api.core.setDefaultLLMProvider(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['llm-providers'] });
       toast.success('Провайдер по умолчанию изменён');

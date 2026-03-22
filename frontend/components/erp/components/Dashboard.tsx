@@ -5,7 +5,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate } from '@/hooks/erp-router';
-import { CONSTANTS, COLORS, LOCALE } from '../constants';
+import { CONSTANTS, COLORS, LOCALE } from '@/constants';
 import { formatDate, formatAmount, formatCurrency, formatThousands } from '@/lib/utils';
 
 // Время кеширования данных Dashboard (5 минут)
@@ -17,14 +17,14 @@ export function Dashboard() {
   // Загрузка данных аналитики с кешированием
   const { data: cashFlowData, isLoading: cashFlowLoading } = useQuery({
     queryKey: ['cashflow'],
-    queryFn: () => api.getCashFlow('year'),
+    queryFn: () => api.payments.getCashFlow('year'),
     retry: false,
     staleTime: DASHBOARD_STALE_TIME,
   });
 
   const { data: debtData, isLoading: debtLoading } = useQuery({
     queryKey: ['debt-summary'],
-    queryFn: () => api.getDebtSummary(),
+    queryFn: () => api.payments.getDebtSummary(),
     retry: false,
     staleTime: DASHBOARD_STALE_TIME,
   });
@@ -32,7 +32,7 @@ export function Dashboard() {
   // ОПТИМИЗАЦИЯ: Один запрос вместо 5 отдельных для получения всех договоров
   const { data: allContractsData } = useQuery({
     queryKey: ['contracts-dashboard'],
-    queryFn: () => api.getContracts({ page_size: CONSTANTS.MAX_PAGE_SIZE }),
+    queryFn: () => api.contracts.getContracts({ page_size: CONSTANTS.MAX_PAGE_SIZE }),
     retry: false,
     staleTime: DASHBOARD_STALE_TIME,
   });
@@ -40,7 +40,7 @@ export function Dashboard() {
   // Загрузка последних договоров (отдельный запрос, т.к. нужна сортировка)
   const { data: recentContracts } = useQuery({
     queryKey: ['recent-contracts'],
-    queryFn: () => api.getContracts({ ordering: '-contract_date', page_size: CONSTANTS.RECENT_ITEMS_COUNT }),
+    queryFn: () => api.contracts.getContracts({ ordering: '-contract_date', page_size: CONSTANTS.RECENT_ITEMS_COUNT }),
     retry: false,
     staleTime: DASHBOARD_STALE_TIME,
   });
@@ -48,7 +48,7 @@ export function Dashboard() {
   // Загрузка счетов
   const { data: accountsData } = useQuery({
     queryKey: ['accounts-active'],
-    queryFn: () => api.getAccounts({ is_active: true }),
+    queryFn: () => api.core.getAccounts({ is_active: true }),
     retry: false,
     staleTime: DASHBOARD_STALE_TIME,
   });
@@ -56,7 +56,7 @@ export function Dashboard() {
   // Загрузка последних платежей
   const { data: recentPayments } = useQuery({
     queryKey: ['recent-payments'],
-    queryFn: () => api.getPayments({ ordering: '-payment_date', page_size: CONSTANTS.RECENT_ITEMS_COUNT }),
+    queryFn: () => api.payments.getPayments({ ordering: '-payment_date', page_size: CONSTANTS.RECENT_ITEMS_COUNT }),
     retry: false,
     staleTime: DASHBOARD_STALE_TIME,
   });
@@ -69,11 +69,11 @@ export function Dashboard() {
       const thirtyDaysLater = new Date();
       thirtyDaysLater.setDate(now.getDate() + CONSTANTS.CONTRACT_EXPIRY_WARNING_DAYS);
       
-      const contracts = await api.getContracts({ status: 'active', page_size: 100 });
+      const contracts = await api.contracts.getContracts({ status: 'active', page_size: 100 });
       
       // Фильтруем договоры с end_date в ближайшие 30 дней
       if (contracts.results) {
-        return contracts.results.filter((contract: any) => {
+        return contracts.results.filter((contract) => {
           if (!contract.end_date) return false;
           const endDate = new Date(contract.end_date);
           return endDate >= now && endDate <= thirtyDaysLater;
@@ -85,7 +85,7 @@ export function Dashboard() {
     staleTime: DASHBOARD_STALE_TIME,
   });
 
-  const safeGetNumber = (value: any): number => {
+  const safeGetNumber = (value: unknown): number => {
     if (value === null || value === undefined) {
       return 0;
     }
@@ -101,7 +101,7 @@ export function Dashboard() {
   // ОПТИМИЗАЦИЯ: Вычисление метрик из одного запроса
   const allContracts = allContractsData?.results || [];
   const totalContracts = allContractsData?.count || 0;
-  const activeContracts = allContracts.filter((c: any) => c.status === 'active').length;
+  const activeContracts = allContracts.filter((c) => c.status === 'active').length;
   
   const totalContractsSum = allContracts.reduce(
     (sum, contract) => sum + safeGetNumber(contract.total_amount), 
@@ -283,7 +283,7 @@ export function Dashboard() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }: any) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                     outerRadius={CONSTANTS.PIE_CHART_RADIUS}
                     fill={COLORS.CHART_DEFAULT}
                     dataKey="value"
@@ -321,7 +321,7 @@ export function Dashboard() {
             </div>
             <div className="space-y-3">
               {recentPayments && Array.isArray(recentPayments.results) && recentPayments.results.length > 0 ? (
-                recentPayments.results.slice(0, 10).map((payment: any) => (
+                recentPayments.results.slice(0, 10).map((payment) => (
                   <div
                     key={payment.id}
                     onClick={() => navigate(`/payments`)}
@@ -369,7 +369,7 @@ export function Dashboard() {
             </div>
             <div className="space-y-3">
               {recentContracts && Array.isArray(recentContracts.results) && recentContracts.results.length > 0 ? (
-                recentContracts.results.slice(0, 10).map((contract: any) => (
+                recentContracts.results.slice(0, 10).map((contract) => (
                   <div
                     key={contract.id}
                     onClick={() => navigate(`/contracts/${contract.id}`)}
@@ -412,8 +412,8 @@ export function Dashboard() {
               </span>
             </div>
             <div className="space-y-3">
-              {expiringContracts.map((contract: any) => {
-                const daysLeft = Math.ceil((new Date(contract.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+              {expiringContracts.map((contract) => {
+                const daysLeft = Math.ceil((new Date(contract.end_date!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                 return (
                   <div
                     key={contract.id}

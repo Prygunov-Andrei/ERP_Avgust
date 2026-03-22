@@ -1,10 +1,9 @@
 """
-Excel-экспорт сметы для публичного портала.
+Excel-экспорт сметы.
 
-Генерирует .xlsx с тремя секциями:
-1. Основное оборудование (точные совпадения, confidence >= 0.9)
-2. Аналоги (is_analog=True)
-3. Требует уточнения (нет product или цена = 0)
+Два режима:
+1. export() / export_public() — публичный портал, 3 секции (основное/аналоги/уточнение).
+2. export_with_column_config() — экспорт с учётом column_config (формулы, custom-столбцы).
 
 При export_public=True — применяет наценку из PublicPricingConfig.
 """
@@ -16,7 +15,7 @@ from typing import Optional
 import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 
-from estimates.models import Estimate, EstimateItem
+from estimates.models import Estimate, EstimateItem, EstimateSection
 
 logger = logging.getLogger(__name__)
 
@@ -320,3 +319,143 @@ class EstimateExcelExporter:
             materials += mat_price * qty
             works += work_price * qty
         return {'materials': materials, 'works': works}
+
+    # ── Экспорт с column_config ─────────────────────────────────────
+
+    def export_with_column_config(self) -> BytesIO:
+        """Генерирует Excel-файл сметы с учётом column_config.
+
+        Использует видимые столбцы из estimate.column_config (или DEFAULT),
+        поддерживает builtin/formula/custom-типы и агрегатные итоги.
+
+        Returns:
+            BytesIO с .xlsx файлом.
+        """
+        from estimates.column_defaults import DEFAULT_COLUMN_CONFIG
+        from estimates.formula_engine import compute_all_formulas
+
+        estimate = self.estimate
+        config = estimate.column_config or DEFAULT_COLUMN_CONFIG
+        visible_cols = [c for c in config if c.get('visible', True)]
+
+        items = EstimateItem.objects.filter(
+            estimate=estimate,
+        ).select_related('section').order_by(
+            'section__sort_order', 'sort_order', 'item_number',
+        )
+
+        sections = EstimateSection.objects.filter(
+            estimate=estimate,
+        ).order_by('sort_order')
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Смета'
+
+        bold = Font(bold=True)
+        header_font = Font(bold=True, size=14)
+        section_font = Font(bold=True, size=11, color='1F4E79')
+        center = Alignment(horizontal='center', vertical='center')
+        thin_border = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin'),
+        )
+        num_fmt = '#,##0.00'
+
+        # Title
+        num_cols = len(visible_cols)
+        last_col_letter = openpyxl.utils.get_column_letter(max(num_cols, 1))
+        ws.merge_cells(f'A1:{last_col_letter}1')
+        ws['A1'] = f'Смета №{estimate.number} — {estimate.name}'
+        ws['A1'].font = header_font
+        ws['A1'].alignment = center
+
+        # Column headers (row 3)
+        for col_idx, col_def in enumerate(visible_cols, 1):
+            cell = ws.cell(row=3, column=col_idx, value=col_def.get('label', col_def['key']))
+            cell.font = bold
+            cell.alignment = center
+            cell.border = thin_border
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col_idx)].width = max(
+                col_def.get('width', 100) / 8, 8,
+            )
+
+        row_num = 4
+        agg_sums = {c['key']: Decimal('0') for c in visible_cols if c.get('aggregatable')}
+
+        for section in sections:
+            # Section header
+            ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=num_cols)
+            cell = ws.cell(row=row_num, column=1, value=section.name)
+            cell.font = section_font
+            row_num += 1
+
+            section_items = [i for i in items if i.section_id == section.id]
+            for item in section_items:
+                builtin_values = {
+                    'item_number': Decimal(str(item.item_number or 0)),
+                    'quantity': item.quantity or Decimal('0'),
+                    'material_unit_price': item.material_unit_price or Decimal('0'),
+                    'work_unit_price': item.work_unit_price or Decimal('0'),
+                    'material_total': item.material_total or Decimal('0'),
+                    'work_total': item.work_total or Decimal('0'),
+                    'line_total': item.line_total or Decimal('0'),
+                }
+                custom_data = item.custom_data or {}
+                computed = compute_all_formulas(config, builtin_values, custom_data)
+
+                for col_idx, col_def in enumerate(visible_cols, 1):
+                    key = col_def['key']
+                    col_type = col_def.get('type', 'builtin')
+                    value = None
+
+                    if col_type == 'builtin':
+                        field = col_def.get('builtin_field', key)
+                        value = getattr(item, field, None)
+                    elif col_type == 'formula':
+                        value = computed.get(key)
+                    elif col_type.startswith('custom_'):
+                        value = custom_data.get(key, '')
+
+                    cell = ws.cell(row=row_num, column=col_idx)
+                    cell.border = thin_border
+
+                    if isinstance(value, Decimal):
+                        cell.value = float(value)
+                        cell.number_format = num_fmt
+                    elif value is not None:
+                        try:
+                            cell.value = float(value)
+                            cell.number_format = num_fmt
+                        except (ValueError, TypeError):
+                            cell.value = str(value) if value else ''
+                    else:
+                        cell.value = ''
+
+                    # Accumulate aggregatables
+                    if key in agg_sums and value is not None:
+                        try:
+                            agg_sums[key] += Decimal(str(value))
+                        except Exception:
+                            pass
+
+                row_num += 1
+
+        # Footer totals
+        if agg_sums:
+            row_num += 1
+            for col_idx, col_def in enumerate(visible_cols, 1):
+                key = col_def['key']
+                cell = ws.cell(row=row_num, column=col_idx)
+                cell.font = bold
+                cell.border = thin_border
+                if key in agg_sums:
+                    cell.value = float(agg_sums[key])
+                    cell.number_format = num_fmt
+                elif col_idx == 1:
+                    cell.value = 'ИТОГО'
+
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        return buffer

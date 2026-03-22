@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from decimal import Decimal
+from core.serializer_fields import AnnotatedCountField
 from .models import (
     WorkerGrade, WorkSection, WorkerGradeSkills,
     WorkItem, PriceList, PriceListAgreement, PriceListItem
@@ -217,10 +218,17 @@ class PriceListSerializer(serializers.ModelSerializer):
 
 class PriceListListSerializer(serializers.ModelSerializer):
     """Упрощённый сериализатор для списка прайс-листов"""
-    
+
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    items_count = serializers.SerializerMethodField()
-    agreements_count = serializers.SerializerMethodField()
+    items_count = AnnotatedCountField(
+        annotated_attr='annotated_items_count',
+        count_attr='items',
+        count_filter={'is_included': True},
+    )
+    agreements_count = AnnotatedCountField(
+        annotated_attr='annotated_agreements_count',
+        count_attr='agreements',
+    )
 
     class Meta:
         model = PriceList
@@ -229,24 +237,6 @@ class PriceListListSerializer(serializers.ModelSerializer):
             'version_number', 'items_count', 'agreements_count',
             'created_at', 'updated_at'
         ]
-
-    def get_items_count(self, obj):
-        """
-        Использует annotated поле если доступно (оптимизация),
-        иначе вычисляет через запрос (fallback).
-        """
-        if hasattr(obj, 'annotated_items_count'):
-            return obj.annotated_items_count
-        return obj.items.filter(is_included=True).count()
-
-    def get_agreements_count(self, obj):
-        """
-        Использует annotated поле если доступно (оптимизация),
-        иначе вычисляет через запрос (fallback).
-        """
-        if hasattr(obj, 'annotated_agreements_count'):
-            return obj.annotated_agreements_count
-        return obj.agreements.count()
 
 
 class PriceListCreateSerializer(serializers.ModelSerializer):

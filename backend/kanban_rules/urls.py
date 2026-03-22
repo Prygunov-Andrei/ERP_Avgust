@@ -4,7 +4,7 @@ from kanban_rules.views import RuleViewSet
 
 
 router = DefaultRouter()
-router.register(r'v1/rules', RuleViewSet, basename='kanban-rule')
+router.register(r'rules', RuleViewSet, basename='kanban-rule')
 
 urlpatterns = router.urls
 

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, CardContent, CardHeader } from './ui/card';
-import { Badge } from './ui/badge';
-import { Progress } from './ui/progress';
+import axios from 'axios';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import referencesService, { ManufacturerNewsDiscoveryStatus } from '../services/referencesService';
 
@@ -79,13 +80,13 @@ export default function ManufacturerNewsDiscoveryProgress({ onComplete, onError 
                 }
               }
             }
-          } catch (err: any) {
+          } catch (_err: unknown) {
             // Не прерываем опрос при единичных ошибках
           }
         }, 3000); // Опрос каждые 3 секунды
       }
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Не удалось получить статус поиска по производителям';
+    } catch (err: unknown) {
+      const errorMsg = axios.isAxiosError(err) ? (err.response?.data as Record<string, string>)?.message || 'Не удалось получить статус поиска по производителям' : 'Не удалось получить статус поиска по производителям';
       setError(errorMsg);
       if (onError) {
         onError(errorMsg);

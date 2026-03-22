@@ -2,14 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@/hooks/erp-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
-import { api, FrameworkContractDetail } from '@/lib/api';
+import { api } from '@/lib/api';
+import type { FrameworkContractDetail, LegalEntity, Counterparty } from '@/lib/api';
+import type { PriceListList } from '@/lib/api/types/pricelists';
+import type { CreateFrameworkContractData } from '@/lib/api/types/contracts';
+import { unwrapResults } from '@/lib/api/types/common';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { useLegalEntities, usePriceLists } from '@/hooks';
 
 interface FrameworkContractFormData {
@@ -47,7 +51,7 @@ export function CreateFrameworkContractForm() {
   // Загрузка существующего рамочного договора для редактирования
   const { data: existingContract, isLoading: isLoadingContract } = useQuery({
     queryKey: ['framework-contract', id],
-    queryFn: () => api.getFrameworkContract(parseInt(id!)),
+    queryFn: () => api.contracts.getFrameworkContract(parseInt(id!)),
     enabled: isEditing,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
@@ -57,7 +61,7 @@ export function CreateFrameworkContractForm() {
 
   const { data: counterpartiesData } = useQuery({
     queryKey: ['counterparties', { type: 'vendor,both' }],
-    queryFn: () => api.getCounterparties({ type: 'vendor,both' }),
+    queryFn: () => api.core.getCounterparties({ type: 'vendor,both' }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -84,31 +88,28 @@ export function CreateFrameworkContractForm() {
   // Создание рамочного договора
   const createMutation = useMutation({
     mutationFn: async (data: FrameworkContractFormData) => {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', data.name);
-      formDataToSend.append('date', data.date);
-      formDataToSend.append('valid_from', data.valid_from);
-      formDataToSend.append('valid_until', data.valid_until);
-      formDataToSend.append('legal_entity', data.legal_entity.toString());
-      formDataToSend.append('counterparty', data.counterparty.toString());
-      formDataToSend.append('status', data.status);
-      if (data.notes) formDataToSend.append('notes', data.notes);
-      if (data.file) formDataToSend.append('file', data.file);
-      if (data.price_lists.length > 0) {
-        data.price_lists.forEach(id => {
-          formDataToSend.append('price_lists', id.toString());
-        });
-      }
+      const payload: CreateFrameworkContractData = {
+        name: data.name,
+        date: data.date,
+        valid_from: data.valid_from,
+        valid_until: data.valid_until,
+        legal_entity: Number(data.legal_entity),
+        counterparty: Number(data.counterparty),
+        status: data.status,
+        notes: data.notes || undefined,
+        file: data.file || undefined,
+        price_lists: data.price_lists.length > 0 ? data.price_lists : undefined,
+      };
 
-      return api.createFrameworkContract(formDataToSend as any);
+      return api.contracts.createFrameworkContract(payload);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['framework-contracts'] });
       toast.success('Рамочный договор создан');
       navigate(`/contracts/framework-contracts/${data.id}`);
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.error || error.message || 'Ошибка создания';
+    onError: (error: Error) => {
+      const errorMessage = (error as Error & { response?: { data?: { error?: string } } }).response?.data?.error || error.message || 'Ошибка создания';
       toast.error(errorMessage);
     },
   });
@@ -116,23 +117,20 @@ export function CreateFrameworkContractForm() {
   // Обновление рамочного договора
   const updateMutation = useMutation({
     mutationFn: async (data: FrameworkContractFormData) => {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', data.name);
-      formDataToSend.append('date', data.date);
-      formDataToSend.append('valid_from', data.valid_from);
-      formDataToSend.append('valid_until', data.valid_until);
-      formDataToSend.append('legal_entity', data.legal_entity.toString());
-      formDataToSend.append('counterparty', data.counterparty.toString());
-      formDataToSend.append('status', data.status);
-      if (data.notes) formDataToSend.append('notes', data.notes);
-      if (data.file) formDataToSend.append('file', data.file);
-      if (data.price_lists.length > 0) {
-        data.price_lists.forEach(id => {
-          formDataToSend.append('price_lists', id.toString());
-        });
-      }
+      const payload: CreateFrameworkContractData = {
+        name: data.name,
+        date: data.date,
+        valid_from: data.valid_from,
+        valid_until: data.valid_until,
+        legal_entity: Number(data.legal_entity),
+        counterparty: Number(data.counterparty),
+        status: data.status,
+        notes: data.notes || undefined,
+        file: data.file || undefined,
+        price_lists: data.price_lists.length > 0 ? data.price_lists : undefined,
+      };
 
-      return api.updateFrameworkContract(parseInt(id!), formDataToSend as any);
+      return api.contracts.updateFrameworkContract(parseInt(id!), payload);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['framework-contracts'] });
@@ -140,8 +138,8 @@ export function CreateFrameworkContractForm() {
       toast.success('Рамочный договор обновлён');
       navigate(`/contracts/framework-contracts/${data.id}`);
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.error || error.message || 'Ошибка обновления';
+    onError: (error: Error) => {
+      const errorMessage = (error as Error & { response?: { data?: { error?: string } } }).response?.data?.error || error.message || 'Ошибка обновления';
       toast.error(errorMessage);
     },
   });
@@ -172,7 +170,7 @@ export function CreateFrameworkContractForm() {
     }
   };
 
-  const handleChange = (field: keyof FrameworkContractFormData, value: any) => {
+  const handleChange = (field: keyof FrameworkContractFormData, value: FrameworkContractFormData[keyof FrameworkContractFormData]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -193,9 +191,9 @@ export function CreateFrameworkContractForm() {
     );
   }
 
-  const legalEntities = Array.isArray(legalEntitiesData) ? legalEntitiesData : (legalEntitiesData as any)?.results || [];
-  const counterparties = Array.isArray(counterpartiesData) ? counterpartiesData : (counterpartiesData as any)?.results || [];
-  const priceLists = Array.isArray(priceListsData) ? priceListsData : (priceListsData as any)?.results || [];
+  const legalEntities = unwrapResults<LegalEntity>(legalEntitiesData);
+  const counterparties = unwrapResults<Counterparty>(counterpartiesData);
+  const priceLists = unwrapResults<PriceListList>(priceListsData);
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
   return (
@@ -305,7 +303,7 @@ export function CreateFrameworkContractForm() {
                 required
               >
                 <option value="">Выберите компанию</option>
-                {legalEntities.map((entity: any) => (
+                {legalEntities.map((entity) => (
                   <option key={entity.id} value={entity.id}>
                     {entity.short_name || entity.name}
                   </option>
@@ -323,7 +321,7 @@ export function CreateFrameworkContractForm() {
                 required
               >
                 <option value="">Выберите контрагента</option>
-                {counterparties.map((cp: any) => (
+                {counterparties.map((cp) => (
                   <option key={cp.id} value={cp.id}>
                     {cp.short_name || cp.name}
                   </option>
@@ -347,7 +345,7 @@ export function CreateFrameworkContractForm() {
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {priceLists.map((pl: any) => (
+              {priceLists.map((pl) => (
                 <label
                   key={pl.id}
                   className="flex items-center gap-3 p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"

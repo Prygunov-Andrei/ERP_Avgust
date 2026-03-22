@@ -2,10 +2,9 @@ import logging
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Sum, Avg, Count, Q
-from django.utils import timezone
-from datetime import timedelta
+from django.db.models import Q
 from .models import Manufacturer, Brand, NewsResource, NewsResourceStatistics, ManufacturerStatistics
+from .services import ManufacturerStatisticsService, ResourceStatisticsService
 
 logger = logging.getLogger(__name__)
 from .serializers import (
@@ -58,96 +57,7 @@ class ManufacturerViewSet(viewsets.ModelViewSet):
         Возвращает общую статистику по всем производителям для инфографики.
         Используется на фронтенде для отображения дашборда.
         """
-        # Получаем все статистики
-        all_stats = ManufacturerStatistics.objects.all()
-        
-        # Общая статистика
-        total_manufacturers = Manufacturer.objects.count()
-        manufacturers_with_stats = all_stats.count()
-        active_manufacturers = all_stats.filter(is_active=True).count()
-        
-        # Агрегированная статистика
-        total_news_all = all_stats.aggregate(Sum('total_news_found'))['total_news_found__sum'] or 0
-        total_searches_all = all_stats.aggregate(Sum('total_searches'))['total_searches__sum'] or 0
-        total_no_news_all = all_stats.aggregate(Sum('total_no_news'))['total_no_news__sum'] or 0
-        total_errors_all = all_stats.aggregate(Sum('total_errors'))['total_errors__sum'] or 0
-        
-        # Средние значения
-        avg_success_rate = all_stats.aggregate(Avg('success_rate'))['success_rate__avg'] or 0.0
-        avg_news_per_search = all_stats.aggregate(Avg('avg_news_per_search'))['avg_news_per_search__avg'] or 0.0
-        avg_ranking_score = all_stats.aggregate(Avg('ranking_score'))['ranking_score__avg'] or 0.0
-        
-        # Статистика за последние 30 дней
-        news_last_30d_all = all_stats.aggregate(Sum('news_last_30_days'))['news_last_30_days__sum'] or 0
-        
-        # Топ производители
-        top_by_news = all_stats.order_by('-total_news_found')[:10]
-        top_by_ranking = all_stats.order_by('-ranking_score')[:10]
-        top_by_activity = all_stats.order_by('-news_last_30_days')[:10]
-        
-        # Категории производителей
-        high_performers = all_stats.filter(ranking_score__gte=50).count()
-        medium_performers = all_stats.filter(ranking_score__gte=20, ranking_score__lt=50).count()
-        low_performers = all_stats.filter(ranking_score__lt=20).count()
-        
-        # Проблемные производители (высокий процент ошибок)
-        problematic = all_stats.filter(error_rate__gte=30).count()
-        
-        return Response({
-            'overview': {
-                'total_manufacturers': total_manufacturers,
-                'manufacturers_with_stats': manufacturers_with_stats,
-                'active_manufacturers': active_manufacturers,
-                'inactive_manufacturers': total_manufacturers - active_manufacturers,
-            },
-            'aggregated': {
-                'total_news_found': total_news_all,
-                'total_searches': total_searches_all,
-                'total_no_news': total_no_news_all,
-                'total_errors': total_errors_all,
-                'news_last_30_days': news_last_30d_all,
-            },
-            'averages': {
-                'success_rate': round(avg_success_rate, 2),
-                'avg_news_per_search': round(avg_news_per_search, 2),
-                'avg_ranking_score': round(avg_ranking_score, 2),
-            },
-            'categories': {
-                'high_performers': high_performers,
-                'medium_performers': medium_performers,
-                'low_performers': low_performers,
-                'problematic': problematic,
-            },
-            'top_manufacturers': {
-                'by_news': [
-                    {
-                        'id': stat.manufacturer.id,
-                        'name': stat.manufacturer.name,
-                        'total_news': stat.total_news_found,
-                        'ranking_score': stat.ranking_score,
-                    }
-                    for stat in top_by_news
-                ],
-                'by_ranking': [
-                    {
-                        'id': stat.manufacturer.id,
-                        'name': stat.manufacturer.name,
-                        'ranking_score': stat.ranking_score,
-                        'total_news': stat.total_news_found,
-                    }
-                    for stat in top_by_ranking
-                ],
-                'by_activity': [
-                    {
-                        'id': stat.manufacturer.id,
-                        'name': stat.manufacturer.name,
-                        'news_last_30_days': stat.news_last_30_days,
-                        'ranking_score': stat.ranking_score,
-                    }
-                    for stat in top_by_activity
-                ],
-            }
-        })
+        return Response(ManufacturerStatisticsService.get_summary())
     
     @action(detail=False, methods=['get'])
     def search_brands(self, request):
@@ -371,16 +281,34 @@ class NewsResourceViewSet(viewsets.ModelViewSet):
         
         # Запускаем поиск в фоне
         import threading
-        
+        import time as _time
+
+        # Максимальное время выполнения фонового поиска (секунды)
+        DISCOVERY_WALL_CLOCK_LIMIT = 300  # 5 минут
+
         def run_discovery():
+            start_time = _time.monotonic()
+            logger.info(
+                "Discovery thread started for resource %s (%s), provider=%s",
+                resource.id, resource.name, provider,
+            )
             try:
                 service = NewsDiscoveryService(user=request.user)
                 created, errors, error_msg = service.discover_news_for_resource(resource, provider=provider)
-                logger.info(f"Discovery completed for resource {resource.id}: created={created}, errors={errors}, provider={provider}")
+                duration = _time.monotonic() - start_time
+                logger.info(
+                    "Discovery thread finished for resource %s: created=%s, errors=%s, "
+                    "provider=%s, duration=%.1fs",
+                    resource.id, created, errors, provider, duration,
+                )
             except Exception as e:
-                logger.error(f"Error during single resource discovery: {str(e)}")
-        
-        thread = threading.Thread(target=run_discovery)
+                duration = _time.monotonic() - start_time
+                logger.error(
+                    "Discovery thread failed for resource %s after %.1fs: %s",
+                    resource.id, duration, str(e),
+                )
+
+        thread = threading.Thread(target=run_discovery, name=f"discovery-resource-{resource.id}")
         thread.daemon = True
         thread.start()
         
@@ -444,104 +372,4 @@ class NewsResourceViewSet(viewsets.ModelViewSet):
         Возвращает общую статистику по всем источникам для инфографики.
         Используется на фронтенде для отображения дашборда.
         """
-        # Получаем все статистики
-        all_stats = NewsResourceStatistics.objects.all()
-        
-        # Общая статистика
-        total_resources = NewsResource.objects.count()
-        resources_with_stats = all_stats.count()
-        active_resources = all_stats.filter(is_active=True).count()
-        
-        # Агрегированная статистика
-        total_news_all = all_stats.aggregate(Sum('total_news_found'))['total_news_found__sum'] or 0
-        total_searches_all = all_stats.aggregate(Sum('total_searches'))['total_searches__sum'] or 0
-        total_no_news_all = all_stats.aggregate(Sum('total_no_news'))['total_no_news__sum'] or 0
-        total_errors_all = all_stats.aggregate(Sum('total_errors'))['total_errors__sum'] or 0
-        
-        # Средние значения
-        avg_success_rate = all_stats.aggregate(Avg('success_rate'))['success_rate__avg'] or 0.0
-        avg_news_per_search = all_stats.aggregate(Avg('avg_news_per_search'))['avg_news_per_search__avg'] or 0.0
-        avg_ranking_score = all_stats.aggregate(Avg('ranking_score'))['ranking_score__avg'] or 0.0
-        
-        # Статистика за последние 30 дней
-        news_last_30d_all = all_stats.aggregate(Sum('news_last_30_days'))['news_last_30_days__sum'] or 0
-        
-        # Топ источники
-        top_by_news = all_stats.order_by('-total_news_found')[:10]
-        top_by_ranking = all_stats.order_by('-ranking_score')[:10]
-        top_by_activity = all_stats.order_by('-news_last_30_days')[:10]
-        
-        # Категории источников
-        high_performers = all_stats.filter(ranking_score__gte=50).count()
-        medium_performers = all_stats.filter(ranking_score__gte=20, ranking_score__lt=50).count()
-        low_performers = all_stats.filter(ranking_score__lt=20).count()
-        
-        # Проблемные источники (высокий процент ошибок)
-        problematic = all_stats.filter(error_rate__gte=30).count()
-        
-        # Статистика по типам источников
-        auto_sources = NewsResource.objects.filter(source_type='auto').count()
-        manual_sources = NewsResource.objects.filter(source_type='manual').count()
-        hybrid_sources = NewsResource.objects.filter(source_type='hybrid').count()
-        
-        return Response({
-            'overview': {
-                'total_resources': total_resources,
-                'resources_with_stats': resources_with_stats,
-                'active_resources': active_resources,
-                'inactive_resources': total_resources - active_resources,
-            },
-            'source_types': {
-                'auto': auto_sources,
-                'manual': manual_sources,
-                'hybrid': hybrid_sources,
-                'auto_searchable': auto_sources + hybrid_sources,  # Всего для автопоиска
-            },
-            'aggregated': {
-                'total_news_found': total_news_all,
-                'total_searches': total_searches_all,
-                'total_no_news': total_no_news_all,
-                'total_errors': total_errors_all,
-                'news_last_30_days': news_last_30d_all,
-            },
-            'averages': {
-                'success_rate': round(avg_success_rate, 2),
-                'avg_news_per_search': round(avg_news_per_search, 2),
-                'avg_ranking_score': round(avg_ranking_score, 2),
-            },
-            'categories': {
-                'high_performers': high_performers,
-                'medium_performers': medium_performers,
-                'low_performers': low_performers,
-                'problematic': problematic,
-            },
-            'top_sources': {
-                'by_news': [
-                    {
-                        'id': stat.resource.id,
-                        'name': stat.resource.name,
-                        'total_news': stat.total_news_found,
-                        'ranking_score': stat.ranking_score,
-                    }
-                    for stat in top_by_news
-                ],
-                'by_ranking': [
-                    {
-                        'id': stat.resource.id,
-                        'name': stat.resource.name,
-                        'ranking_score': stat.ranking_score,
-                        'total_news': stat.total_news_found,
-                    }
-                    for stat in top_by_ranking
-                ],
-                'by_activity': [
-                    {
-                        'id': stat.resource.id,
-                        'name': stat.resource.name,
-                        'news_last_30_days': stat.news_last_30_days,
-                        'ranking_score': stat.ranking_score,
-                    }
-                    for stat in top_by_activity
-                ],
-            }
-        })
+        return Response(ResourceStatisticsService.get_summary())

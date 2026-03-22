@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@/hooks/erp-router';
-import { api, EstimateList } from '@/lib/api';
-import { CONSTANTS } from '../../constants';
+import { api, EstimateList , unwrapResults} from '@/lib/api';
+import { CONSTANTS } from '@/constants';
 import { useObjects } from '@/hooks/useReferenceData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,24 +45,22 @@ export function Estimates() {
 
   const { data: estimates, isLoading, refetch } = useQuery({
     queryKey: ['estimates', filters],
-    queryFn: () => api.getEstimates(filters),
+    queryFn: () => api.estimates.getEstimates(filters),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: objectsData, error: objectsError } = useObjects();
-  const objects = Array.isArray(objectsData)
-    ? objectsData
-    : (objectsData as any)?.results ?? [];
+  const objects = unwrapResults(objectsData);
 
   const { data: legalEntities } = useQuery({
     queryKey: ['legal-entities'],
-    queryFn: () => api.getLegalEntities(),
+    queryFn: () => api.core.getLegalEntities(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: projects } = useQuery({
     queryKey: ['projects-all'],
-    queryFn: () => api.getProjects(),
+    queryFn: () => api.estimates.getProjects(),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -97,7 +95,7 @@ export function Estimates() {
     };
 
     try {
-      const created = await api.createEstimate(formDataToSend);
+      const created = await api.estimates.createEstimate(formDataToSend);
       toast.success('Смета создана');
       setCreateDialogOpen(false);
       resetForm();
@@ -192,7 +190,7 @@ export function Estimates() {
                 className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Все объекты</option>
-                {objects.map((obj: any) => (
+                {objects.map((obj) => (
                   <option key={obj.id} value={obj.id}>{obj.name}</option>
                 ))}
               </select>
@@ -347,7 +345,7 @@ export function Estimates() {
                   required
                 >
                   <option value={0}>Выберите объект</option>
-                  {objects.map((obj: any) => (
+                  {objects.map((obj) => (
                     <option key={obj.id} value={obj.id}>{obj.name}</option>
                   ))}
                 </select>

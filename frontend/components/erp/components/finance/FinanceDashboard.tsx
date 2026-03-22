@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, Account } from '@/lib/api';
+import { api, Account , unwrapResults} from '@/lib/api';
 
 const formatCurrency = (value: string | number | undefined | null): string => {
   if (value === null || value === undefined) return '—';
@@ -62,12 +62,10 @@ const StubSection = ({
 export const FinanceDashboard = () => {
   const { data: accounts, isLoading } = useQuery({
     queryKey: ['accounts-active'],
-    queryFn: () => api.getAccounts({ is_active: true }),
+    queryFn: () => api.core.getAccounts({ is_active: true }),
   });
 
-  const accountList: Account[] = Array.isArray(accounts)
-    ? accounts
-    : (accounts as any)?.results ?? [];
+  const accountList: Account[] = unwrapResults(accounts);
 
   const totalBalance = accountList.reduce((sum, acc) => {
     const bal = parseFloat(acc.current_balance || acc.balance || '0');

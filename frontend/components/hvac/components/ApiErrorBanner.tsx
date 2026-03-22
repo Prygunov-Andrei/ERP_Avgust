@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Alert, AlertDescription } from './ui/alert';
-import { Button } from './ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Settings } from 'lucide-react';
 import { useNavigate } from '@/hooks/erp-router';
+import axios from 'axios';
 import ApiDiagnostics from './ApiDiagnostics';
 
 interface ApiErrorBannerProps {
-  error: any;
+  error: unknown;
   onRetry?: () => void;
   showConfigLink?: boolean;
 }
@@ -15,13 +16,18 @@ export default function ApiErrorBanner({ error, onRetry, showConfigLink = false 
   const navigate = useNavigate();
   const [showDiagnostics, setShowDiagnostics] = useState(false);
 
+  const errMsg = error instanceof Error ? error.message : '';
+  const axErr = axios.isAxiosError(error) ? error : null;
+  const respStatus = axErr?.response?.status;
+  const respData = axErr?.response?.data as Record<string, string> | undefined;
+
   // Определяем тип ошибки
-  const isNetworkError = error?.message?.includes('Network Error') || error?.code === 'ERR_NETWORK';
-  const isTimeoutError = error?.code === 'ECONNABORTED' || error?.message?.includes('timeout');
-  const is500Error = error?.response?.status === 500;
-  const is404Error = error?.response?.status === 404;
-  const is403Error = error?.response?.status === 403;
-  const is401Error = error?.response?.status === 401;
+  const isNetworkError = errMsg.includes('Network Error') || axErr?.code === 'ERR_NETWORK';
+  const isTimeoutError = axErr?.code === 'ECONNABORTED' || errMsg.includes('timeout');
+  const is500Error = respStatus === 500;
+  const is404Error = respStatus === 404;
+  const is403Error = respStatus === 403;
+  const is401Error = respStatus === 401;
 
   // Показываем диагностику сразу при критических ошибках подключения
   const shouldShowDiagnostics = isNetworkError || isTimeoutError;
@@ -37,7 +43,7 @@ export default function ApiErrorBanner({ error, onRetry, showConfigLink = false 
     description = 'Сервер не отвечает (таймаут 30 сек). Возможно, Django сервер или ngrok туннель не запущены.';
   } else if (is500Error) {
     title = 'Внутренняя ошибка сервера';
-    description = error?.response?.data?.detail || 'Произошла ошибка на сервере. Обратитесь к администратору.';
+    description = respData?.detail || 'Произошла ошибка на сервере. Обратитесь к администратору.';
   } else if (is404Error) {
     title = 'Данные не найдены';
     description = 'Запрашиваемый ресурс не найден на сервере.';
@@ -47,8 +53,8 @@ export default function ApiErrorBanner({ error, onRetry, showConfigLink = false 
   } else if (is401Error) {
     title = 'Требуется авторизация';
     description = 'Ваша сессия истекла. Пожалуйста, войдите снова.';
-  } else if (error?.response?.data?.detail) {
-    description = error.response.data.detail;
+  } else if (respData?.detail) {
+    description = respData.detail;
   }
 
   // Если критическая ошибка подключения, показываем диагностику
@@ -68,9 +74,9 @@ export default function ApiErrorBanner({ error, onRetry, showConfigLink = false 
         <AlertDescription className="mt-1">{description}</AlertDescription>
         
         {/* Дополнительная информация для отладки */}
-        {error?.response?.data?.error && (
+        {respData?.error && (
           <AlertDescription className="mt-2 text-xs opacity-75">
-            Детали: {error.response.data.error}
+            Детали: {respData.error}
           </AlertDescription>
         )}
 

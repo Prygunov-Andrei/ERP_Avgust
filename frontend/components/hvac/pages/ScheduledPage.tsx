@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from '@/hooks/erp-router';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import newsService, { News } from '../services/newsService';
 import { toast } from 'sonner';
 import { Edit, Trash2, Send, Clock, FileText } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { ImageWithFallback } from '@/components/common/ImageWithFallback';
 import { stripHtml, extractFirstImageFromHtml } from '../utils/htmlHelpers';
 
 export default function ScheduledPage() {

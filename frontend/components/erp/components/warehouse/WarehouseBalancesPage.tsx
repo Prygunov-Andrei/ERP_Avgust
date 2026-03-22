@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { kanbanApi, StockBalanceRow, StockLocation } from '@/lib/kanbanApi';
+import { api } from '@/lib/api';
+import type { StockBalanceRow, StockLocation } from '@/lib/api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -11,13 +12,13 @@ export const WarehouseBalancesPage = () => {
 
   const locationsQuery = useQuery({
     queryKey: ['warehouse', 'locations'],
-    queryFn: () => kanbanApi.listStockLocations(),
+    queryFn: () => api.kanban.listStockLocations(),
   });
 
   const balancesQuery = useQuery({
     queryKey: ['warehouse', 'balances', locationId],
     enabled: Boolean(locationId),
-    queryFn: () => kanbanApi.getBalances(locationId),
+    queryFn: () => api.kanban.getBalances(locationId),
   });
 
   const locations = useMemo(() => (locationsQuery.data || []).slice().sort((a, b) => (a.title || '').localeCompare(b.title || '', 'ru')), [locationsQuery.data]);

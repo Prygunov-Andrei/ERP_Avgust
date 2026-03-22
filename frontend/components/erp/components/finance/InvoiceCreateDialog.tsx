@@ -12,6 +12,9 @@ import {
   Loader2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import type { ConstructionObject, Counterparty, Account, LegalEntity, ExpenseCategory } from '@/lib/api';
+import type { Act, ContractListItem } from '@/lib/api/types/contracts';
+import { unwrapResults } from '@/lib/api/types/common';
 import {
   Dialog,
   DialogContent,
@@ -163,35 +166,29 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
 
   const { data: accountsData } = useQuery({
     queryKey: ['accounts-all'],
-    queryFn: () => api.getAccounts(),
+    queryFn: () => api.core.getAccounts(),
     enabled: step === 'form',
   });
-  const accounts: any[] = Array.isArray(accountsData)
-    ? accountsData
-    : (accountsData as any)?.results ?? [];
+  const accounts = unwrapResults<Account>(accountsData);
 
   const { data: legalEntitiesData } = useQuery({
     queryKey: ['legal-entities'],
-    queryFn: () => api.getLegalEntities(),
+    queryFn: () => api.core.getLegalEntities(),
     enabled: step === 'form',
   });
-  const legalEntities: any[] = Array.isArray(legalEntitiesData)
-    ? legalEntitiesData
-    : (legalEntitiesData as any)?.results ?? [];
+  const legalEntities = unwrapResults<LegalEntity>(legalEntitiesData);
 
   const { data: objectsData } = useQuery({
     queryKey: ['objects'],
-    queryFn: () => api.getObjects(),
+    queryFn: () => api.core.getObjects(),
     enabled: step === 'form' && (invoiceType === 'supplier' || invoiceType === 'act_based'),
   });
-  const objects: any[] = Array.isArray(objectsData)
-    ? objectsData
-    : (objectsData as any)?.results ?? [];
+  const objects = unwrapResults<ConstructionObject>(objectsData);
 
   const { data: contractsData } = useQuery({
     queryKey: ['contracts', objectId, invoiceType],
     queryFn: () =>
-      api.getContracts({
+      api.contracts.getContracts({
         object: objectId ? Number(objectId) : undefined,
         contract_type: invoiceType === 'act_based' ? 'expense' : undefined,
       }),
@@ -200,40 +197,34 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
       (invoiceType === 'supplier' || invoiceType === 'act_based') &&
       !!objectId,
   });
-  const contracts: any[] = Array.isArray(contractsData)
-    ? contractsData
-    : (contractsData as any)?.results ?? [];
+  const contracts = unwrapResults<ContractListItem>(contractsData);
 
   const { data: counterpartiesData } = useQuery({
     queryKey: ['counterparties'],
-    queryFn: () => api.getCounterparties(),
+    queryFn: () => api.core.getCounterparties(),
     enabled: step === 'form' && (invoiceType === 'supplier' || invoiceType === 'warehouse'),
   });
-  const counterparties: any[] = Array.isArray(counterpartiesData)
-    ? counterpartiesData
-    : (counterpartiesData as any)?.results ?? [];
+  const counterparties = unwrapResults<Counterparty>(counterpartiesData);
 
   const { data: actsData } = useQuery({
     queryKey: ['acts', contractId],
-    queryFn: () => api.getActs(Number(contractId)),
+    queryFn: () => api.contracts.getActs(Number(contractId)),
     enabled: step === 'form' && invoiceType === 'act_based' && !!contractId,
   });
-  const acts: any[] = Array.isArray(actsData) ? actsData : (actsData as any)?.results ?? [];
+  const acts = unwrapResults<Act>(actsData);
 
   const { data: categoriesData } = useQuery({
     queryKey: ['expense-categories'],
-    queryFn: () => api.getExpenseCategories(),
+    queryFn: () => api.payments.getExpenseCategories(),
     enabled:
       step === 'form' &&
       (invoiceType === 'household' || invoiceType === 'internal_transfer'),
   });
-  const categories: any[] = Array.isArray(categoriesData)
-    ? categoriesData
-    : (categoriesData as any)?.results ?? [];
+  const categories = unwrapResults<ExpenseCategory>(categoriesData);
 
   useEffect(() => {
     if (invoiceType !== 'act_based' || !actId) return;
-    const selectedAct = acts.find((a: any) => String(a.id) === actId);
+    const selectedAct = acts.find((a) => String(a.id) === actId);
     if (selectedAct?.amount_gross) {
       setAmountGross(selectedAct.amount_gross);
     }
@@ -242,7 +233,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
   const handleCheckBalance = async () => {
     if (!objectId || !amountGross) return;
     try {
-      const result: any = await (api as any).request(
+      const result = await api.request<{ sufficient: boolean; balance: string }>(
         `/invoices/check_balance/?object_id=${objectId}&amount=${amountGross}`
       );
       if (result && !result.sufficient) {
@@ -259,13 +250,13 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
   };
 
   const createMutation = useMutation({
-    mutationFn: (formData: FormData) => (api as any).createInvoice(formData),
+    mutationFn: (formData: FormData) => api.supply.createInvoice(formData),
     onSuccess: () => {
       toast.success('Счёт создан');
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       handleOpenChange(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Ошибка создания счёта', {
         description: error?.message || 'Попробуйте ещё раз',
       });
@@ -428,7 +419,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                     <SelectValue placeholder="Выберите объект" />
                   </SelectTrigger>
                   <SelectContent>
-                    {objects.map((obj: any) => (
+                    {objects.map((obj) => (
                       <SelectItem key={obj.id} value={String(obj.id)}>
                         {obj.name}
                       </SelectItem>
@@ -446,7 +437,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                     <SelectValue placeholder="Выберите договор" />
                   </SelectTrigger>
                   <SelectContent>
-                    {contracts.map((c: any) => (
+                    {contracts.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
                         {c.number} — {c.name}
                       </SelectItem>
@@ -467,7 +458,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                     <SelectValue placeholder="Выберите акт" />
                   </SelectTrigger>
                   <SelectContent>
-                    {acts.map((a: any) => (
+                    {acts.map((a) => (
                       <SelectItem key={a.id} value={String(a.id)}>
                         Акт {a.number} — {formatCurrency(a.amount_gross)}
                       </SelectItem>
@@ -485,7 +476,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                     <SelectValue placeholder="Выберите контрагента" />
                   </SelectTrigger>
                   <SelectContent>
-                    {counterparties.map((cp: any) => (
+                    {counterparties.map((cp) => (
                       <SelectItem key={cp.id} value={String(cp.id)}>
                         {cp.name}
                       </SelectItem>
@@ -504,8 +495,8 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                   </SelectTrigger>
                   <SelectContent>
                     {categories
-                      .filter((c: any) => c.account_type === 'expense' || !c.account_type)
-                      .map((c: any) => (
+                      .filter((c) => c.account_type === 'expense' || !c.account_type)
+                      .map((c) => (
                         <SelectItem key={c.id} value={String(c.id)}>
                           {c.name}
                         </SelectItem>
@@ -524,7 +515,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                       <SelectValue placeholder="Откуда" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((c: any) => (
+                      {categories.map((c) => (
                         <SelectItem key={c.id} value={String(c.id)}>
                           {c.name}
                         </SelectItem>
@@ -539,7 +530,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                       <SelectValue placeholder="Куда" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((c: any) => (
+                      {categories.map((c) => (
                         <SelectItem key={c.id} value={String(c.id)}>
                           {c.name}
                         </SelectItem>
@@ -554,7 +545,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                       <SelectValue placeholder="Юр. лицо получатель" />
                     </SelectTrigger>
                     <SelectContent>
-                      {legalEntities.map((le: any) => (
+                      {legalEntities.map((le) => (
                         <SelectItem key={le.id} value={String(le.id)}>
                           {le.name}
                         </SelectItem>
@@ -648,7 +639,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                     <SelectValue placeholder="Выберите счёт" />
                   </SelectTrigger>
                   <SelectContent>
-                    {accounts.map((acc: any) => (
+                    {accounts.map((acc) => (
                       <SelectItem key={acc.id} value={String(acc.id)}>
                         {acc.name}
                       </SelectItem>
@@ -663,7 +654,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                     <SelectValue placeholder="Выберите юр. лицо" />
                   </SelectTrigger>
                   <SelectContent>
-                    {legalEntities.map((le: any) => (
+                    {legalEntities.map((le) => (
                       <SelectItem key={le.id} value={String(le.id)}>
                         {le.name}
                       </SelectItem>

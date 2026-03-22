@@ -15,6 +15,7 @@ import {
   Bar,
 } from 'recharts';
 import { api, ContractDetail as ContractDetailType } from '@/lib/api';
+import type { CashFlowPeriodRow } from '@/lib/api/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -35,7 +36,7 @@ import { WorkScheduleTab } from '../WorkScheduleTab';
 import { ActsTab } from '../ActsTab';
 import { ContractTextEditor } from './ContractTextEditor';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS, COLORS } from '../../constants';
+import { CONSTANTS, COLORS } from '@/constants';
 
 type TabType = 'info' | 'amendments' | 'schedule' | 'acts' | 'cashflow' | 'text';
 
@@ -50,7 +51,7 @@ export function ContractDetail() {
   // Загрузка договора
   const { data: contract, isLoading } = useQuery({
     queryKey: ['contract', id],
-    queryFn: () => api.getContract(parseInt(id!)),
+    queryFn: () => api.contracts.getContract(parseInt(id!)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
@@ -58,7 +59,7 @@ export function ContractDetail() {
   // Загрузка баланса
   const { data: balance } = useQuery({
     queryKey: ['contract-balance', id],
-    queryFn: () => api.getContractBalance(parseInt(id!)),
+    queryFn: () => api.contracts.getContractBalance(parseInt(id!)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
@@ -66,14 +67,14 @@ export function ContractDetail() {
   // Загрузка маржи (только для доходных договоров)
   const { data: margin } = useQuery({
     queryKey: ['contract-margin', id],
-    queryFn: () => api.getContractMargin(parseInt(id!)),
+    queryFn: () => api.contracts.getContractMargin(parseInt(id!)),
     enabled: !!id && contract?.contract_type === 'income',
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   // Удаление договора
   const deleteMutation = useMutation({
-    mutationFn: () => api.deleteContract(parseInt(id!)),
+    mutationFn: () => api.contracts.deleteContract(parseInt(id!)),
     onSuccess: () => {
       toast.success('Договор удалён');
       navigate('/contracts');
@@ -192,7 +193,7 @@ export function ContractDetail() {
           {balance && (
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-gray-600 mb-1">Баланс</div>
-              <div className={balanceColor}>{formatCurrency(balance.balance, (balance as any).currency)}</div>
+              <div className={balanceColor}>{formatCurrency(balance.balance, (balance as { balance: string; currency?: string }).currency)}</div>
             </div>
           )}
           {margin && contract.contract_type === 'income' && (
@@ -440,7 +441,7 @@ function CashFlowTab({ contractId }: { contractId: number }) {
   // Загрузка данных cash-flow по периодам
   const { data: cashFlow, isLoading } = useQuery({
     queryKey: ['contract-cashflow', contractId, periodType, startDate, endDate],
-    queryFn: () => api.getContractCashFlowPeriods(contractId, { 
+    queryFn: () => api.contracts.getContractCashFlowPeriods(contractId, { 
       period_type: periodType,
       start_date: startDate || undefined, 
       end_date: endDate || undefined 
@@ -526,7 +527,7 @@ function CashFlowTab({ contractId }: { contractId: number }) {
                 <XAxis dataKey="period" />
                 <YAxis />
                 <Tooltip
-                  formatter={(value: any) => formatAmount(Number(value))}
+                  formatter={(value) => formatAmount(Number(value))}
                 />
                 <Legend />
                 <Line
@@ -557,7 +558,7 @@ function CashFlowTab({ contractId }: { contractId: number }) {
                 <XAxis dataKey="period" />
                 <YAxis />
                 <Tooltip
-                  formatter={(value: any) => formatAmount(Number(value))}
+                  formatter={(value) => formatAmount(Number(value))}
                 />
                 <Legend />
                 <Bar dataKey="income" fill={COLORS.CHART_INCOME} name="Приход" />
@@ -579,7 +580,7 @@ function CashFlowTab({ contractId }: { contractId: number }) {
                 </tr>
               </thead>
               <tbody>
-                {cashFlowData.map((row: any, index: number) => (
+                {cashFlowData.map((row: CashFlowPeriodRow, index: number) => (
                   <tr key={index} className="border-b border-gray-100">
                     <td className="py-3 text-gray-900">{row.period}</td>
                     <td className="py-3 text-right text-green-600">

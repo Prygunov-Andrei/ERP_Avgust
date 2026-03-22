@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit2, Loader2, Search, List, Network } from 'lucide-react';
 import { toast } from 'sonner';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function WorkSections() {
   const queryClient = useQueryClient();
@@ -27,18 +27,18 @@ export function WorkSections() {
 
   const { data: sections, isLoading } = useQuery({
     queryKey: ['work-sections', viewMode, searchQuery],
-    queryFn: () => api.getWorkSections(viewMode === 'tree', searchQuery || undefined),
+    queryFn: () => api.pricelists.getWorkSections(viewMode === 'tree', searchQuery || undefined),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: allSections } = useQuery({
     queryKey: ['work-sections-all'],
-    queryFn: () => api.getWorkSections(false),
+    queryFn: () => api.pricelists.getWorkSections(false),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateWorkSectionData) => api.createWorkSection(data),
+    mutationFn: (data: CreateWorkSectionData) => api.pricelists.createWorkSection(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-sections'] });
       queryClient.invalidateQueries({ queryKey: ['work-sections-all'] });
@@ -53,7 +53,7 @@ export function WorkSections() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CreateWorkSectionData> }) =>
-      api.updateWorkSection(id, data),
+      api.pricelists.updateWorkSection(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-sections'] });
       queryClient.invalidateQueries({ queryKey: ['work-sections-all'] });

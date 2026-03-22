@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import { api, type ContractText } from '@/lib/api';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,7 +26,7 @@ export const ContractTextEditor: React.FC<ContractTextEditorProps> = ({
 
   const { data: texts = [], isLoading } = useQuery({
     queryKey: ['contract-texts', contractId],
-    queryFn: () => api.getContractTexts(contractId),
+    queryFn: () => api.contracts.getContractTexts(contractId),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -36,7 +36,7 @@ export const ContractTextEditor: React.FC<ContractTextEditorProps> = ({
 
   const createTextMutation = useMutation({
     mutationFn: () =>
-      api.createContractText({
+      api.contracts.createContractText({
         contract: contractId,
         content_md: content,
         amendment: amendmentId,
@@ -52,7 +52,7 @@ export const ContractTextEditor: React.FC<ContractTextEditorProps> = ({
   const updateTextMutation = useMutation({
     mutationFn: () => {
       if (!currentText) throw new Error('Нет текста для обновления');
-      return api.updateContractText(currentText.id, { content_md: content });
+      return api.contracts.updateContractText(currentText.id, { content_md: content });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contract-texts', contractId] });

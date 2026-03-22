@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function WorkerGrades() {
   const queryClient = useQueryClient();
@@ -26,13 +26,13 @@ export function WorkerGrades() {
 
   const { data: grades, isLoading, error } = useQuery({
     queryKey: ['worker-grades'],
-    queryFn: () => api.getWorkerGrades(),
+    queryFn: () => api.pricelists.getWorkerGrades(),
     retry: false,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateWorkerGradeData) => api.createWorkerGrade(data),
+    mutationFn: (data: CreateWorkerGradeData) => api.pricelists.createWorkerGrade(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['worker-grades'] });
       setDialogOpen(false);
@@ -46,7 +46,7 @@ export function WorkerGrades() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CreateWorkerGradeData> }) =>
-      api.updateWorkerGrade(id, data),
+      api.pricelists.updateWorkerGrade(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['worker-grades'] });
       setDialogOpen(false);

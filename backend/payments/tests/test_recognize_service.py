@@ -57,12 +57,15 @@ def _create_invoice(status=Invoice.Status.RECOGNITION, **kwargs):
 
 @pytest.fixture
 def mock_parse_invoice():
-    """Мокает _parse_invoice_file для тестов без реального LLM."""
+    """Мокает _parse_invoice_file и _save_parsed_document для тестов без реального LLM."""
     parsed = _make_parsed_invoice()
     with patch.object(
         InvoiceService, '_parse_invoice_file',
         return_value=(parsed, 1500),
-    ) as m:
+    ) as m, patch.object(
+        InvoiceService, '_save_parsed_document',
+        return_value=None,
+    ):
         m.parsed = parsed
         yield m
 
@@ -163,6 +166,7 @@ class TestAutoCounterparty:
         cp = Counterparty.objects.create(
             name='Existing Vendor',
             type=Counterparty.Type.VENDOR,
+            legal_form=Counterparty.LegalForm.OOO,
             inn='7707083893',
         )
 
@@ -176,13 +180,22 @@ class TestAutoCounterparty:
 @pytest.mark.django_db
 class TestBusinessDuplicate:
     def test_detects_business_duplicate(self, mock_parse_invoice, mock_categorize):
-        """Дубликат по номеру + сумме → предупреждение, items НЕ создаются."""
-        # Существующий счёт с тем же номером и суммой
+        """Дубликат по номеру + сумме + ИНН → предупреждение, items НЕ создаются."""
+        from accounting.models import Counterparty
+        # Контрагент с тем же ИНН, что вернёт mock LLM
+        cp = Counterparty.objects.create(
+            name='ООО Поставщик',
+            type=Counterparty.Type.VENDOR,
+            legal_form=Counterparty.LegalForm.OOO,
+            inn='7707083893',
+        )
+        # Существующий счёт с тем же номером, суммой и контрагентом
         Invoice.objects.create(
             invoice_type=Invoice.InvoiceType.SUPPLIER,
             status=Invoice.Status.REVIEW,
             invoice_number='СЧ-001',
             amount_gross=Decimal('12000.00'),
+            counterparty=cp,
         )
 
         invoice = _create_invoice()

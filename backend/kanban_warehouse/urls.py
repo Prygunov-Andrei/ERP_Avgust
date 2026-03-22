@@ -4,8 +4,8 @@ from kanban_warehouse.views import StockLocationViewSet, StockMoveViewSet
 
 
 router = DefaultRouter()
-router.register(r'v1/warehouse/locations', StockLocationViewSet, basename='warehouse-location')
-router.register(r'v1/warehouse/moves', StockMoveViewSet, basename='warehouse-move')
+router.register(r'warehouse/locations', StockLocationViewSet, basename='warehouse-location')
+router.register(r'warehouse/moves', StockMoveViewSet, basename='warehouse-move')
 
 urlpatterns = router.urls
 

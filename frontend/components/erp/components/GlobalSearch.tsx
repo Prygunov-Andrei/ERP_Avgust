@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import { useNavigate } from '@/hooks/erp-router';
 import { Input } from '@/components/ui/input';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 
 export function GlobalSearch() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,7 +16,7 @@ export function GlobalSearch() {
   // Поиск по контрагентам
   const { data: counterparties, isLoading: loadingCounterparties } = useQuery({
     queryKey: ['search-counterparties', searchQuery],
-    queryFn: () => api.getCounterparties({ search: searchQuery }),
+    queryFn: () => api.core.getCounterparties({ search: searchQuery }),
     enabled: searchQuery.length >= 2,
     retry: false,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
@@ -25,7 +25,7 @@ export function GlobalSearch() {
   // Поиск по договорам
   const { data: contracts, isLoading: loadingContracts } = useQuery({
     queryKey: ['search-contracts', searchQuery],
-    queryFn: () => api.getContracts({ search: searchQuery, page_size: 10 }),
+    queryFn: () => api.contracts.getContracts({ search: searchQuery, page_size: 10 }),
     enabled: searchQuery.length >= 2,
     retry: false,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
@@ -34,7 +34,7 @@ export function GlobalSearch() {
   // Поиск по объектам
   const { data: objects, isLoading: loadingObjects } = useQuery({
     queryKey: ['search-objects', searchQuery],
-    queryFn: () => api.getConstructionObjects({ search: searchQuery }),
+    queryFn: () => api.core.getConstructionObjects({ search: searchQuery }),
     enabled: searchQuery.length >= 2,
     retry: false,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
@@ -43,7 +43,7 @@ export function GlobalSearch() {
   // Поиск по платежам
   const { data: payments, isLoading: loadingPayments } = useQuery({
     queryKey: ['search-payments', searchQuery],
-    queryFn: () => api.getPayments({ search: searchQuery, page_size: 10 }),
+    queryFn: () => api.payments.getPayments({ search: searchQuery, page_size: 10 }),
     enabled: searchQuery.length >= 2,
     retry: false,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
@@ -114,7 +114,7 @@ export function GlobalSearch() {
                   <div className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wide">
                     Контрагенты
                   </div>
-                  {counterparties.slice(0, 5).map((item: any) => (
+                  {counterparties.slice(0, 5).map((item) => (
                     <button
                       key={`counterparty-${item.id}`}
                       onClick={() => handleNavigate('/counterparties')}
@@ -133,7 +133,7 @@ export function GlobalSearch() {
                   <div className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wide">
                     Договоры
                   </div>
-                  {contracts.results.slice(0, 5).map((item: any) => (
+                  {contracts.results.slice(0, 5).map((item) => (
                     <button
                       key={`contract-${item.id}`}
                       onClick={() => handleNavigate(`/contracts/${item.id}`)}
@@ -154,7 +154,7 @@ export function GlobalSearch() {
                   <div className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wide">
                     Объекты
                   </div>
-                  {objects.slice(0, 5).map((item: any) => (
+                  {objects.slice(0, 5).map((item) => (
                     <button
                       key={`object-${item.id}`}
                       onClick={() => handleNavigate(`/objects/${item.id}`)}
@@ -173,7 +173,7 @@ export function GlobalSearch() {
                   <div className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wide">
                     Платежи
                   </div>
-                  {payments.results.slice(0, 5).map((item: any) => (
+                  {payments.results.slice(0, 5).map((item) => (
                     <button
                       key={`payment-${item.id}`}
                       onClick={() => handleNavigate('/payments')}

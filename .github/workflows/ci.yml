@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: Frontend (typecheck + tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test
+    timeout-minutes: 10
+
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_DB: test_finans_assistant
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: pytest
+        env:
+          DEBUG: "True"
+          SECRET_KEY: ci-test-secret-key
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_NAME: test_finans_assistant
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          CELERY_BROKER_URL: redis://localhost:6379/0
+          CELERY_RESULT_BACKEND: redis://localhost:6379/0
+      - name: Lint with ruff
+        run: pip install ruff && ruff check . --select=E,F,W --ignore=E501,E402 --exclude=migrations,__pycache__,.venv
+    timeout-minutes: 10
+
+  bot:
+    name: Bot Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: bot/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest --timeout=30
+    timeout-minutes: 10
+
+  hvac-backend:
+    name: HVAC Backend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hvac-backend
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_DB: test_hvac_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: hvac-backend/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest --timeout=60
+        env:
+          SECRET_KEY: ci-test-key
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_hvac_db
+    timeout-minutes: 10

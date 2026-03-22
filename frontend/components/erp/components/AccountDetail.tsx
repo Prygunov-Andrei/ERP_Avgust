@@ -1,11 +1,11 @@
 import { useParams, useNavigate } from '@/hooks/erp-router';
 import { useQuery } from '@tanstack/react-query';
-import { api, Account, AccountBalance } from '@/lib/api';
+import { api, Account, AccountBalance , unwrapResults} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, CreditCard, Building2, TrendingUp } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 
 export function AccountDetail() {
   const { id } = useParams<{ id: string }>();
@@ -14,24 +14,20 @@ export function AccountDetail() {
 
   const { data: account, isLoading: accountLoading, error: accountError } = useQuery({
     queryKey: ['account', id],
-    queryFn: () => api.getAccountById(parseInt(id!)),
+    queryFn: () => api.core.getAccountById(parseInt(id!)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: balances, isLoading: balancesLoading } = useQuery({
     queryKey: ['account-balances', id, balancesSource],
-    queryFn: () => api.getAccountBalancesHistory(parseInt(id!), balancesSource),
+    queryFn: () => api.core.getAccountBalancesHistory(parseInt(id!), balancesSource),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   // Преобразуем balances в массив, если это объект с пагинацией
-  const balancesArray = Array.isArray(balances)
-    ? balances
-    : (balances && typeof balances === 'object' && 'results' in balances)
-      ? (balances as any).results
-      : [];
+  const balancesArray = unwrapResults(balances);
 
   if (accountLoading) {
     return (
@@ -220,7 +216,7 @@ export function AccountDetail() {
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {balancesArray
-                        .sort((a: any, b: any) => new Date(b.balance_date).getTime() - new Date(a.balance_date).getTime())
+                        .sort((a, b) => new Date(b.balance_date).getTime() - new Date(a.balance_date).getTime())
                         .map((balance: AccountBalance) => (
                           <tr key={balance.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">

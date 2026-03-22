@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { api, MountingCondition, CreateMountingConditionData } from '@/lib/api';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,7 +40,7 @@ export function MountingConditions() {
   // Загрузка данных
   const { data: conditions, isLoading } = useQuery({
     queryKey: ['mounting-conditions', { search: searchQuery, is_active: activeFilter }],
-    queryFn: () => api.getMountingConditions({
+    queryFn: () => api.proposals.getMountingConditions({
       search: searchQuery || undefined,
       is_active: activeFilter,
     }),
@@ -49,7 +49,7 @@ export function MountingConditions() {
 
   // Мутации
   const createMutation = useMutation({
-    mutationFn: (data: CreateMountingConditionData) => api.createMountingCondition(data),
+    mutationFn: (data: CreateMountingConditionData) => api.proposals.createMountingCondition(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mounting-conditions'] });
       toast.success('Условие создано');
@@ -62,7 +62,7 @@ export function MountingConditions() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CreateMountingConditionData> }) =>
-      api.updateMountingCondition(id, data),
+      api.proposals.updateMountingCondition(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mounting-conditions'] });
       toast.success('Условие обновлено');
@@ -74,7 +74,7 @@ export function MountingConditions() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteMountingCondition(id),
+    mutationFn: (id: number) => api.proposals.deleteMountingCondition(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mounting-conditions'] });
       toast.success('Условие удалено');

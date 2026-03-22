@@ -9,12 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatAmount } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function SupplyDashboardPage() {
   const { data: dashboard, isLoading, error } = useQuery<DashboardData>({
     queryKey: ['invoice-dashboard'],
-    queryFn: () => (api as any).getInvoiceDashboard(),
+    queryFn: () => api.supply.getInvoiceDashboard(),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 

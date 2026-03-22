@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, ContractAmendment, CreateContractAmendmentData } from '@/lib/api';
+import { api, ContractAmendment, CreateContractAmendmentData , unwrapResults} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 
 interface ContractAmendmentsTabProps {
   contractId: number;
@@ -34,33 +34,33 @@ export function ContractAmendmentsTab({ contractId }: ContractAmendmentsTabProps
 
   const { data: amendments, isLoading } = useQuery({
     queryKey: ['contract-amendments', contractId],
-    queryFn: () => api.getContractAmendments(contractId),
+    queryFn: () => api.contracts.getContractAmendments(contractId),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   // Безопасное преобразование данных
-  const amendmentsList = Array.isArray(amendments) ? amendments : (amendments as any)?.results || [];
+  const amendmentsList = unwrapResults(amendments);
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateContractAmendmentData) => api.createContractAmendment(data),
+    mutationFn: (data: CreateContractAmendmentData) => api.contracts.createContractAmendment(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contract-amendments', contractId] });
       queryClient.invalidateQueries({ queryKey: ['contract', contractId] });
       setIsDialogOpen(false);
       toast.success('Дополнительное соглашение создано');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error?.message || 'Не удалось создать дополнительное соглашение'}`);
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteContractAmendment(id),
+    mutationFn: (id: number) => api.contracts.deleteContractAmendment(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contract-amendments', contractId] });
       toast.success('Дополнительное соглашение удалено');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error?.message || 'Не удалось удалить'}`);
     },
   });
@@ -134,7 +134,7 @@ export function ContractAmendmentsTab({ contractId }: ContractAmendmentsTabProps
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {amendmentsList.map((amendment: any) => (
+                {amendmentsList.map((amendment) => (
                   <tr key={amendment.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-2.5">
                       <div className="text-sm font-medium text-gray-900">{amendment.number}</div>

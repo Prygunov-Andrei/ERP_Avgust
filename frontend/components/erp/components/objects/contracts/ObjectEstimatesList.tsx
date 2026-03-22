@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '../../common/EmptyState';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../../constants';
+import { CONSTANTS } from '@/constants';
 
 type ObjectEstimatesListProps = {
   objectId: number;
@@ -22,7 +22,7 @@ const ESTIMATE_STATUS_CONFIG: Record<string, { label: string; className: string 
 export const ObjectEstimatesList = ({ objectId, contractType }: ObjectEstimatesListProps) => {
   const { data: contractsData, isLoading: contractsLoading } = useQuery({
     queryKey: ['contracts', { object: objectId, contract_type: contractType }],
-    queryFn: () => api.getContracts({ object: objectId, contract_type: contractType }),
+    queryFn: () => api.contracts.getContracts({ object: objectId, contract_type: contractType }),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -34,7 +34,7 @@ export const ObjectEstimatesList = ({ objectId, contractType }: ObjectEstimatesL
     queryFn: async () => {
       if (contractIds.length === 0) return [];
       const results = await Promise.all(
-        contractIds.map((cid) => api.getContractEstimates(cid))
+        contractIds.map((cid) => api.contracts.getContractEstimates(cid))
       );
       return results.flat();
     },

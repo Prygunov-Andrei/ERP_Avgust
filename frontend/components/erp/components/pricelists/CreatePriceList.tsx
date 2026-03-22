@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function CreatePriceList() {
   const navigate = useNavigate();
@@ -34,19 +34,19 @@ export function CreatePriceList() {
 
   const { data: grades } = useQuery({
     queryKey: ['worker-grades-active'],
-    queryFn: () => api.getWorkerGrades(true),
+    queryFn: () => api.pricelists.getWorkerGrades(true),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: sections } = useQuery({
     queryKey: ['work-sections-active'],
-    queryFn: () => api.getWorkSections(false).then((sections) => sections.filter((s) => s.is_active)),
+    queryFn: () => api.pricelists.getWorkSections(false).then((sections) => sections.filter((s) => s.is_active)),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: workItems } = useQuery({
     queryKey: ['work-items-current'],
-    queryFn: () => api.getWorkItems().then((items) => items.filter((i) => i.is_current)),
+    queryFn: () => api.pricelists.getWorkItems().then((items) => items.filter((i) => i.is_current)),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -97,7 +97,7 @@ export function CreatePriceList() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: CreatePriceListData) => api.createPriceList(data),
+    mutationFn: (data: CreatePriceListData) => api.pricelists.createPriceList(data),
     onSuccess: (newPriceList) => {
       queryClient.invalidateQueries({ queryKey: ['price-lists'] });
       toast.success(`Прайс-лист создан: ${newPriceList.number}`);
@@ -217,7 +217,7 @@ export function CreatePriceList() {
                 id="status"
                 value={formData.status}
                 onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value as any })
+                  setFormData({ ...formData, status: e.target.value as CreatePriceListData['status'] })
                 }
                 className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >

@@ -28,27 +28,33 @@ cp .env.example .env   # отредактировать значения
 - **ERP API (Swagger)**: http://localhost:8000/api/docs/
 - **MinIO Console**: http://localhost:9001
 
-## Структура проекта
+## Структура репозитория
 
 ```
 ERP_Avgust/
 ├── backend/           # Django ERP API (finans_assistant project)
 │   ├── core/          # Базовые модели, auth, throttling, validators
-│   ├── payments/services/  # invoice_service.py, payment_service.py
-│   ├── banking/services/   # statement_sync.py, payment_order.py
-│   ├── kanban_*/      # Канбан-модули (7 приложений, часть основного backend)
-│   └── ...
-├── frontend/          # Next.js 16 App Router
-│   ├── app/erp/       # ERP-раздел (96 страниц, настоящий App Router)
+│   ├── accounting/    # Юрлица, счета, контрагенты
+│   ├── contracts/     # Договоры, акты, сметы по договорам
+│   ├── payments/      # Счета на оплату, доходы, периодические платежи
+│   ├── estimates/     # Проекты, сметы, спецификации
+│   ├── banking/       # Интеграция с банком Точка
+│   ├── supply/        # Снабжение (Bitrix24)
+│   ├── catalog/       # Каталог товаров
+│   ├── kanban_*/      # Канбан-модули (7 приложений, часть backend)
+│   └── ...            # + personnel, communications, pricelists, proposals, llm_services, worklog
+├── frontend/          # Next.js 16 App Router (единая точка входа)
+│   ├── app/erp/       # ERP-раздел
 │   ├── components/
 │   │   ├── erp/       # ERP-компоненты
-│   │   ├── hvac/      # HVAC-компоненты (отдельный продукт)
-│   │   └── ui/        # shadcn/ui (единственная копия)
-│   ├── lib/api/       # Модульный API-клиент (client.ts + types.ts)
-│   └── hooks/erp-router.ts  # next/navigation совместимость
-├── hvac-backend/      # Django HVAC API (отдельная БД)
-├── bot/               # Telegram бот
-├── docs/              # Документация
+│   │   ├── hvac/      # HVAC-компоненты
+│   │   └── ui/        # shadcn/ui (общие UI-примитивы)
+│   └── lib/api/       # API-клиент (client.ts + types.ts)
+├── hvac-backend/      # Django HVAC API (отдельная БД hvac_db)
+├── bot/               # Telegram бот (aiogram 3.x)
+├── mini-app/          # Telegram Mini App (Vite + React, worklog)
+├── deploy/            # Скрипты деплоя, nginx, backup
+├── docs/              # Документация (runbooks, reference, archive)
 └── tests/e2e/         # E2E тесты
 ```
 

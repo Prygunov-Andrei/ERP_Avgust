@@ -77,7 +77,7 @@ export function InvoiceDetailPage() {
 
   const { data: invoice, isLoading, error } = useQuery<Invoice>({
     queryKey: ['invoice', id],
-    queryFn: () => (api as any).getInvoice(Number(id)),
+    queryFn: () => api.supply.getInvoice(Number(id)),
     enabled: !!id,
   });
 
@@ -108,19 +108,19 @@ export function InvoiceDetailPage() {
   };
 
   const submitMutation = useMutation({
-    mutationFn: () => (api as any).submitInvoiceToRegistry(Number(id)),
+    mutationFn: () => api.supply.submitInvoiceToRegistry(Number(id)),
     onSuccess: () => { toast.success('Счёт отправлен в реестр'); invalidate(); },
-    onError: (err: any) => toast.error(err?.data?.error || 'Ошибка при отправке в реестр'),
+    onError: (err: Error) => toast.error(err.message || 'Ошибка при отправке в реестр'),
   });
 
   const approveMutation = useMutation({
-    mutationFn: () => (api as any).approveInvoice(Number(id)),
+    mutationFn: () => api.supply.approveInvoice(Number(id)),
     onSuccess: () => { toast.success('Счёт одобрен'); invalidate(); },
     onError: () => toast.error('Ошибка при одобрении'),
   });
 
   const rejectMutation = useMutation({
-    mutationFn: (comment: string) => (api as any).rejectInvoice(Number(id), comment),
+    mutationFn: (comment: string) => api.supply.rejectInvoice(Number(id), comment),
     onSuccess: () => {
       toast.success('Счёт отклонён');
       setRejectDialog(false);
@@ -132,7 +132,7 @@ export function InvoiceDetailPage() {
 
   const rescheduleMutation = useMutation({
     mutationFn: ({ newDate, comment }: { newDate: string; comment: string }) =>
-      (api as any).rescheduleInvoice(Number(id), newDate, comment),
+      api.supply.rescheduleInvoice(Number(id), newDate, comment),
     onSuccess: () => {
       toast.success('Оплата перенесена');
       setRescheduleDialog(false);
@@ -144,35 +144,35 @@ export function InvoiceDetailPage() {
   });
 
   const deleteInvoiceMutation = useMutation({
-    mutationFn: () => (api as any).deleteInvoice(Number(id)),
+    mutationFn: () => api.supply.deleteInvoice(Number(id)),
     onSuccess: () => {
       toast.success('Счёт удалён');
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['estimate-invoices'] });
       navigate(backUrl);
     },
-    onError: (err: any) => toast.error(err?.data?.detail || 'Ошибка при удалении'),
+    onError: (err: Error) => toast.error(err.message || 'Ошибка при удалении'),
   });
 
   // ==================== Inline item editing ====================
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
   const updateItemMutation = useMutation({
-    mutationFn: ({ itemId, data }: { itemId: number; data: Record<string, any> }) =>
-      (api as any).updateInvoiceItem(itemId, data),
+    mutationFn: ({ itemId, data }: { itemId: number; data: Record<string, unknown> }) =>
+      api.supply.updateInvoiceItem(itemId, data),
     onError: () => toast.error('Ошибка при обновлении позиции'),
     onSuccess: () => invalidate(),
   });
 
   const deleteItemMutation = useMutation({
-    mutationFn: (itemId: number) => (api as any).deleteInvoiceItem(itemId),
+    mutationFn: (itemId: number) => api.supply.deleteInvoiceItem(itemId),
     onSuccess: () => { toast.success('Позиция удалена'); invalidate(); },
     onError: () => toast.error('Ошибка при удалении позиции'),
   });
 
   const createItemMutation = useMutation({
     mutationFn: () =>
-      (api as any).createInvoiceItem({
+      api.supply.createInvoiceItem({
         invoice: Number(id),
         raw_name: 'Новая позиция',
         quantity: '1',
@@ -191,7 +191,7 @@ export function InvoiceDetailPage() {
         clearTimeout(debounceTimers.current[timerKey]);
       }
       debounceTimers.current[timerKey] = setTimeout(() => {
-        const patch: Record<string, any> = { [field]: value };
+        const patch: Record<string, unknown> = { [field]: value };
         // Auto-recalculate amount when quantity or price changes
         if (field === 'quantity' || field === 'price_per_unit') {
           const item = invoice?.items?.find((i: InvoiceItem) => i.id === itemId);

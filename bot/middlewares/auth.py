@@ -1,7 +1,8 @@
 """Middleware для авторизации пользователей через worklog_worker."""
 
 import logging
-from typing import Callable, Dict, Any, Awaitable
+import time
+from typing import Callable, Dict, Any, Awaitable, Optional
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
@@ -9,6 +10,33 @@ from aiogram.types import Message, CallbackQuery
 from services.db import find_worker_by_telegram_id
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# In-memory TTL-кеш для worker lookup (снижает нагрузку на БД)
+# ---------------------------------------------------------------------------
+
+_worker_cache: dict[int, tuple[Optional[dict], float]] = {}
+_CACHE_TTL = 60  # seconds
+
+
+def _get_cached_worker(telegram_id: int) -> Optional[dict]:
+    """Возвращает worker из кеша или None если протух / отсутствует."""
+    if telegram_id in _worker_cache:
+        data, ts = _worker_cache[telegram_id]
+        if time.monotonic() - ts < _CACHE_TTL:
+            return data
+        del _worker_cache[telegram_id]
+    return None
+
+
+def _set_cached_worker(telegram_id: int, data: Optional[dict]) -> None:
+    """Сохраняет worker в кеш с текущим timestamp."""
+    _worker_cache[telegram_id] = (data, time.monotonic())
+
+
+def invalidate_worker_cache(telegram_id: int) -> None:
+    """Удаляет запись из кеша (вызывать при регистрации / обновлении worker)."""
+    _worker_cache.pop(telegram_id, None)
 
 
 class WorkerAuthMiddleware(BaseMiddleware):
@@ -33,7 +61,10 @@ class WorkerAuthMiddleware(BaseMiddleware):
             telegram_id = event.from_user.id
 
         if telegram_id:
-            worker = await find_worker_by_telegram_id(telegram_id)
+            worker = _get_cached_worker(telegram_id)
+            if worker is None:
+                worker = await find_worker_by_telegram_id(telegram_id)
+                _set_cached_worker(telegram_id, worker)
             data['worker'] = worker
         else:
             data['worker'] = None

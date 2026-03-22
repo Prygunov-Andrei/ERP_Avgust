@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from '@/hooks/erp-router';
 import { api, Act } from '@/lib/api';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 import { Loader2, ArrowLeft, FileText, Pencil, Trash2, CheckCircle, Download, DollarSign } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,29 +35,29 @@ export function ActDetail() {
 
   const { data: act, isLoading, error } = useQuery({
     queryKey: ['act', actId],
-    queryFn: () => api.getActDetail(actId),
+    queryFn: () => api.contracts.getActDetail(actId),
     enabled: !!actId,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => api.deleteAct(actId),
+    mutationFn: () => api.contracts.deleteAct(actId),
     onSuccess: () => {
       toast.success('Акт удален');
       navigate('/contracts/acts');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка удаления: ${error?.message || 'Неизвестная ошибка'}`);
     },
   });
 
   const signMutation = useMutation({
-    mutationFn: () => api.signAct(actId),
+    mutationFn: () => api.contracts.signAct(actId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['act', actId] });
       toast.success('Акт подписан');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка подписания: ${error?.message || 'Неизвестная ошибка'}`);
     },
   });
@@ -445,12 +445,12 @@ function ActEditForm({ act, onSuccess }: ActEditFormProps) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => api.updateAct(act.id, data),
+    mutationFn: (data: Record<string, unknown>) => api.contracts.updateAct(act.id, data),
     onSuccess: () => {
       toast.success('Акт обновлен');
       onSuccess();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error?.message || 'Не удалось обновить акт'}`);
     },
   });

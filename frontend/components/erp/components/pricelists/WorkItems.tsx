@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Loader2, MessageSquare, Info } from 'lucide-react';
 import { toast } from 'sonner';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function WorkItems() {
   const queryClient = useQueryClient();
@@ -35,14 +35,14 @@ export function WorkItems() {
 
   const { data: workItems, isLoading, error, refetch } = useQuery({
     queryKey: ['work-items'],
-    queryFn: () => api.getWorkItems(),
+    queryFn: () => api.pricelists.getWorkItems(),
     retry: false,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: sections } = useQuery({
     queryKey: ['work-sections-active'],
-    queryFn: () => api.getWorkSections(false).then((sections) => sections.filter((s) => s.is_active)),
+    queryFn: () => api.pricelists.getWorkSections(false).then((sections) => sections.filter((s) => s.is_active)),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -68,7 +68,7 @@ export function WorkItems() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateWorkItemData) => api.createWorkItem(data),
+    mutationFn: (data: CreateWorkItemData) => api.pricelists.createWorkItem(data),
     onSuccess: (newItem) => {
       queryClient.invalidateQueries({ queryKey: ['work-items'] });
       setDialogOpen(false);
@@ -82,7 +82,7 @@ export function WorkItems() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CreateWorkItemData> }) =>
-      api.updateWorkItem(id, data),
+      api.pricelists.updateWorkItem(id, data),
     onSuccess: (updatedItem) => {
       queryClient.invalidateQueries({ queryKey: ['work-items'] });
       setDialogOpen(false);
@@ -412,7 +412,7 @@ export function WorkItems() {
                 <select
                   id="unit"
                   value={formData.unit}
-                  onChange={(e) => setFormData({ ...formData, unit: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value as CreateWorkItemData['unit'] })}
                   className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >

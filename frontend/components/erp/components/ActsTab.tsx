@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, Act, CreateActData } from '@/lib/api';
+import { api, Act, CreateActData , unwrapResults} from '@/lib/api';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 import { Loader2, Plus, FileText, MoreVertical, Pencil, Trash2, CheckCircle, Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,59 +37,59 @@ export function ActsTab({ contractId }: ActsTabProps) {
 
   const { data: actsData, isLoading } = useQuery({
     queryKey: ['acts', contractId],
-    queryFn: () => api.getActs(contractId),
+    queryFn: () => api.contracts.getActs(contractId),
     enabled: !!contractId,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   // Извлекаем массив из ответа API
-  const acts = Array.isArray(actsData) ? actsData : (actsData as any)?.results || [];
+  const acts = unwrapResults(actsData);
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateActData) => api.createAct(data),
+    mutationFn: (data: CreateActData) => api.contracts.createAct(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['acts', contractId] });
       setIsDialogOpen(false);
       setEditingAct(null);
       toast.success('Акт создан');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error?.message || 'Не удалось создать акт'}`);
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CreateActData> }) => 
-      api.updateAct(id, data),
+      api.contracts.updateAct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['acts', contractId] });
       setIsDialogOpen(false);
       setEditingAct(null);
       toast.success('Акт обновлен');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error?.message || 'Не удалось обновить акт'}`);
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteAct(id),
+    mutationFn: (id: number) => api.contracts.deleteAct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['acts', contractId] });
       toast.success('Акт удален');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error?.message || 'Не удалось удалить акт'}`);
     },
   });
 
   const signMutation = useMutation({
-    mutationFn: (id: number) => api.signAct(id),
+    mutationFn: (id: number) => api.contracts.signAct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['acts', contractId] });
       toast.success('Акт подписан');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error?.message || 'Не удалось подписать акт'}`);
     },
   });
@@ -209,7 +209,7 @@ export function ActsTab({ contractId }: ActsTabProps) {
                   <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Статус
                   </th>
-                  {acts.some((act: any) => act.unpaid_amount) && (
+                  {acts.some((act) => act.unpaid_amount) && (
                     <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Не оплачено
                     </th>
@@ -220,7 +220,7 @@ export function ActsTab({ contractId }: ActsTabProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {acts.map((act: any) => (
+                {acts.map((act) => (
                   <tr key={act.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-2.5">
                       <div className="text-sm font-medium text-gray-900">{act.number}</div>
@@ -254,7 +254,7 @@ export function ActsTab({ contractId }: ActsTabProps) {
                         {getStatusLabel(act.status)}
                       </span>
                     </td>
-                    {acts.some((a: any) => a.unpaid_amount) && (
+                    {acts.some((a) => a.unpaid_amount) && (
                       <td className="px-4 py-2.5 whitespace-nowrap">
                         {act.unpaid_amount ? (
                           <div className="text-sm font-medium text-orange-600">

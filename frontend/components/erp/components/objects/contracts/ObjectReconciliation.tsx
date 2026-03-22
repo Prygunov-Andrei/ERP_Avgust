@@ -4,7 +4,7 @@ import { api, ContractListItem } from '@/lib/api';
 import { EmptyState } from '../../common/EmptyState';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../../constants';
+import { CONSTANTS } from '@/constants';
 
 type ObjectReconciliationProps = {
   objectId: number;
@@ -20,7 +20,7 @@ type BalanceData = {
 export const ObjectReconciliation = ({ objectId, contractType }: ObjectReconciliationProps) => {
   const { data: contractsData, isLoading: contractsLoading } = useQuery({
     queryKey: ['contracts', { object: objectId, contract_type: contractType }],
-    queryFn: () => api.getContracts({ object: objectId, contract_type: contractType }),
+    queryFn: () => api.contracts.getContracts({ object: objectId, contract_type: contractType }),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -33,7 +33,7 @@ export const ObjectReconciliation = ({ objectId, contractType }: ObjectReconcili
       const results = await Promise.all(
         contracts.map(async (c) => {
           try {
-            const balance = await api.getContractBalance(c.id);
+            const balance = await api.contracts.getContractBalance(c.id);
             return { contract: c, balance: balance as BalanceData };
           } catch {
             return {

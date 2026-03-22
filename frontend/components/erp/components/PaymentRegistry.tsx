@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, PaymentRegistryItem, ExpenseCategory, Account, ContractListItem, Act } from '@/lib/api';
+import { api, PaymentRegistryItem, ExpenseCategory, Account, ContractListItem, Act, PaginatedResponse} from '@/lib/api';
 import { Loader2, Plus, CheckCircle, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useExpenseCategories, useAccounts } from '@/hooks';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 import { formatDate, formatAmount } from '@/lib/utils';
 
 export function PaymentRegistry() {
@@ -49,7 +49,7 @@ export function PaymentRegistry() {
   // Загрузка данных с пагинацией
   const { data: paymentsData, isLoading: paymentsLoading } = useQuery({
     queryKey: ['payment-registry', currentPage, statusFilter],
-    queryFn: () => api.getPaymentRegistry(currentPage, statusFilter),
+    queryFn: () => api.payments.getPaymentRegistry(currentPage, statusFilter),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -63,20 +63,20 @@ export function PaymentRegistry() {
 
   const { data: contracts } = useQuery({
     queryKey: ['contracts'],
-    queryFn: () => api.getContracts(),
+    queryFn: () => api.contracts.getContracts(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: acts } = useQuery({
     queryKey: ['acts', selectedContractId],
-    queryFn: () => api.getActs(selectedContractId!),
+    queryFn: () => api.contracts.getActs(selectedContractId!),
     enabled: !!selectedContractId,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: api.createPaymentRegistryItem.bind(api),
+    mutationFn: api.payments.createPaymentRegistryItem.bind(api.payments),
     onSuccess: async (newItem) => {
       
       // Переходим на первую страницу и обновляем кэш
@@ -103,10 +103,10 @@ export function PaymentRegistry() {
   });
 
   const approveMutation = useMutation({
-    mutationFn: api.approvePaymentRegistryItem.bind(api),
+    mutationFn: api.payments.approvePaymentRegistryItem.bind(api.payments),
     onSuccess: (updatedItem: PaymentRegistryItem) => {
       // Обновляем только текущую страницу
-      queryClient.setQueryData(['payment-registry', currentPage], (oldData: any) => {
+      queryClient.setQueryData(['payment-registry', currentPage], (oldData: PaginatedResponse<PaymentRegistryItem> | undefined) => {
         if (!oldData || !oldData.results) return oldData;
         return {
           ...oldData,
@@ -123,10 +123,10 @@ export function PaymentRegistry() {
   });
 
   const payMutation = useMutation({
-    mutationFn: (id: number) => api.payPaymentRegistryItem(id),
+    mutationFn: (id: number) => api.payments.payPaymentRegistryItem(id),
     onSuccess: (updatedItem: PaymentRegistryItem) => {
       // Обновляем только текущую страницу
-      queryClient.setQueryData(['payment-registry', currentPage], (oldData: any) => {
+      queryClient.setQueryData(['payment-registry', currentPage], (oldData: PaginatedResponse<PaymentRegistryItem> | undefined) => {
         if (!oldData || !oldData.results) return oldData;
         return {
           ...oldData,
@@ -149,9 +149,9 @@ export function PaymentRegistry() {
 
   const cancelMutation = useMutation({
     mutationFn: ({ id, reason }: { id: number; reason?: string }) =>
-      api.cancelPaymentRegistryItem(id, reason),
+      api.payments.cancelPaymentRegistryItem(id, reason),
     onSuccess: (updatedItem: PaymentRegistryItem) => {
-      queryClient.setQueryData(['payment-registry', currentPage], (oldData: any) => {
+      queryClient.setQueryData(['payment-registry', currentPage], (oldData: PaginatedResponse<PaymentRegistryItem> | undefined) => {
         if (!oldData || !oldData.results) return oldData;
         return {
           ...oldData,

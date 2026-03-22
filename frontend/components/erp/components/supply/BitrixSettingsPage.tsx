@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 export function BitrixSettingsPage() {
   const queryClient = useQueryClient();
@@ -43,12 +43,12 @@ export function BitrixSettingsPage() {
 
   const { data: integrations, isLoading } = useQuery<BitrixIntegration[]>({
     queryKey: ['bitrix-integrations'],
-    queryFn: () => (api as any).getBitrixIntegrations(),
+    queryFn: () => api.supply.getBitrixIntegrations(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => (api as any).createBitrixIntegration(data),
+    mutationFn: (data: Record<string, unknown>) => api.supply.createBitrixIntegration(data),
     onSuccess: () => {
       toast.success('Интеграция создана');
       setIsFormOpen(false);
@@ -59,8 +59,8 @@ export function BitrixSettingsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      (api as any).updateBitrixIntegration(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
+      api.supply.updateBitrixIntegration(id, data),
     onSuccess: () => {
       toast.success('Интеграция обновлена');
       setIsFormOpen(false);
@@ -72,7 +72,7 @@ export function BitrixSettingsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => (api as any).deleteBitrixIntegration(id),
+    mutationFn: (id: number) => api.supply.deleteBitrixIntegration(id),
     onSuccess: () => {
       toast.success('Интеграция удалена');
       queryClient.invalidateQueries({ queryKey: ['bitrix-integrations'] });

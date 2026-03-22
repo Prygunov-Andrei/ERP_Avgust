@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { formatDate, formatAmount } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { useCatalogCategories, useCatalogCategoryTree } from '@/hooks';
 import { Category, CategoryTreeNode } from '@/types/catalog';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ export function CatalogCategories() {
   // Загрузка выбранной категории
   const { data: selectedCategory } = useQuery({
     queryKey: ['category', selectedCategoryId],
-    queryFn: () => api.getCategoryById(selectedCategoryId!),
+    queryFn: () => api.catalog.getCategoryById(selectedCategoryId!),
     enabled: !!selectedCategoryId && !isCreating,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
@@ -59,7 +59,7 @@ export function CatalogCategories() {
       setFormData({
         name: selectedCategory.name || '',
         code: selectedCategory.code || '',
-        parent_category: selectedCategory.parent?.id || null,
+        parent_category: selectedCategory.parent || null,
         description: selectedCategory.description || '',
         sort_order: selectedCategory.sort_order?.toString() || '0',
         is_active: selectedCategory.is_active ?? true,
@@ -69,42 +69,42 @@ export function CatalogCategories() {
 
   // Создание категории
   const createMutation = useMutation({
-    mutationFn: (data: any) => api.createCategory(data),
+    mutationFn: (data: Record<string, unknown>) => api.catalog.createCategory(data),
     onSuccess: () => {
       toast.success('Категория создана');
       queryClient.invalidateQueries({ queryKey: ['category-tree'] });
       setIsCreating(false);
       resetForm();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
 
   // Обновление категории
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      api.updateCategory(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
+      api.catalog.updateCategory(id, data),
     onSuccess: () => {
       toast.success('Категория обновлена');
       queryClient.invalidateQueries({ queryKey: ['category-tree'] });
       queryClient.invalidateQueries({ queryKey: ['category', selectedCategoryId] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
 
   // Удаление категории
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteCategory(id),
+    mutationFn: (id: number) => api.catalog.deleteCategory(id),
     onSuccess: () => {
       toast.success('Категория удалена');
       queryClient.invalidateQueries({ queryKey: ['category-tree'] });
       setSelectedCategoryId(null);
       resetForm();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });

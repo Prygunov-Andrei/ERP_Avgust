@@ -33,12 +33,12 @@ export function CounterpartyDedup({ onBack }: { onBack: () => void }) {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['counterparty-duplicates'],
-    queryFn: () => api.getCounterpartyDuplicates(0.85),
+    queryFn: () => api.core.getCounterpartyDuplicates(0.85),
   });
 
   const mergeMutation = useMutation({
     mutationFn: ({ keepId, removeIds }: { keepId: number; removeIds: number[] }) =>
-      api.mergeCounterparties(keepId, removeIds),
+      api.core.mergeCounterparties(keepId, removeIds),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['counterparty-duplicates'] });
       queryClient.invalidateQueries({ queryKey: ['counterparties'] });
@@ -49,7 +49,7 @@ export function CounterpartyDedup({ onBack }: { onBack: () => void }) {
       toast.success(`Объединено ${result.merged} дубликатов. ${movedStr ? `Перенесено: ${movedStr}` : ''}`);
       setMergeConfirm(null);
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(`Ошибка слияния: ${err?.message || 'Неизвестная ошибка'}`);
     },
   });
@@ -81,10 +81,10 @@ export function CounterpartyDedup({ onBack }: { onBack: () => void }) {
     setValidatingGroup(groupIdx);
     try {
       const inns = group.counterparties.map(cp => cp.inn);
-      const response = await api.validateCounterpartyInns(inns);
+      const response = await api.core.validateCounterpartyInns(inns);
       setFnsResults(prev => ({ ...prev, ...response.results }));
-    } catch (err: any) {
-      toast.error(`Ошибка проверки ФНС: ${err?.message || ''}`);
+    } catch (err: unknown) {
+      toast.error(`Ошибка проверки ФНС: ${(err instanceof Error ? err.message : String(err)) || ''}`);
     } finally {
       setValidatingGroup(null);
     }

@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Landmark, Loader2, Plus, MoreVertical, Pencil, Trash2, Wifi, WifiOff, RefreshCw, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLegalEntities } from '@/hooks';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 
 export const BankConnectionsTab = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -22,52 +22,52 @@ export const BankConnectionsTab = () => {
 
   const { data: connections, isLoading, error } = useQuery({
     queryKey: ['bank-connections'],
-    queryFn: () => api.getBankConnections(),
+    queryFn: () => api.banking.getBankConnections(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: entities } = useLegalEntities();
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateBankConnectionData) => api.createBankConnection(data),
+    mutationFn: (data: CreateBankConnectionData) => api.banking.createBankConnection(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
       setIsDialogOpen(false);
       toast.success('Банковское подключение создано');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message || 'Неизвестная ошибка'}`);
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CreateBankConnectionData> }) =>
-      api.updateBankConnection(id, data),
+      api.banking.updateBankConnection(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
       setEditingConnection(null);
       toast.success('Подключение обновлено');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteBankConnection(id),
+    mutationFn: (id: number) => api.banking.deleteBankConnection(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
       setDeletingConnection(null);
       toast.success('Подключение удалено');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
       setDeletingConnection(null);
     },
   });
 
   const testMutation = useMutation({
-    mutationFn: (id: number) => api.testBankConnection(id),
+    mutationFn: (id: number) => api.banking.testBankConnection(id),
     onSuccess: (data) => {
       if (data.status === 'ok') {
         toast.success('Подключение работает');
@@ -75,7 +75,7 @@ export const BankConnectionsTab = () => {
         toast.error(`Ошибка: ${data.message}`);
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка тестирования: ${error.message}`);
     },
   });
@@ -287,7 +287,7 @@ const BankConnectionForm = ({ connection, entities, onSubmit, isLoading }: BankC
       return;
     }
 
-    const data: any = {
+    const data: Record<string, unknown> = {
       name: formData.name,
       legal_entity: parseInt(formData.legal_entity),
       provider: formData.provider,
@@ -300,7 +300,7 @@ const BankConnectionForm = ({ connection, entities, onSubmit, isLoading }: BankC
     if (formData.client_id.trim()) data.client_id = formData.client_id;
     if (formData.client_secret.trim()) data.client_secret = formData.client_secret;
 
-    onSubmit(data);
+    onSubmit(data as unknown as CreateBankConnectionData);
   };
 
   return (
@@ -398,7 +398,7 @@ const BankConnectionForm = ({ connection, entities, onSubmit, isLoading }: BankC
           <Label htmlFor="conn-payment-mode">Режим платежей</Label>
           <Select
             value={formData.payment_mode}
-            onValueChange={(value) => setFormData({ ...formData, payment_mode: value as any })}
+            onValueChange={(value) => setFormData({ ...formData, payment_mode: value as 'for_sign' | 'auto_sign' })}
             disabled={isLoading}
           >
             <SelectTrigger className="mt-1.5">

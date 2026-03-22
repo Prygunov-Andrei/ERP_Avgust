@@ -23,7 +23,7 @@ export function SupplierIntegrationDetail() {
   const [status, setStatus] = useState<SupplierSyncStatus | null>(null);
   const [categories, setCategories] = useState<SupplierCategory[]>([]);
   const [syncLogs, setSyncLogs] = useState<SupplierSyncLog[]>([]);
-  const [ourCategories, setOurCategories] = useState<any[]>([]);
+  const [ourCategories, setOurCategories] = useState<{ id: number; name: string; full_path?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncingCatalog, setSyncingCatalog] = useState(false);
   const [syncingStock, setSyncingStock] = useState(false);
@@ -33,13 +33,14 @@ export function SupplierIntegrationDetail() {
   const loadIntegration = async () => {
     try {
       setLoading(true);
-      const data = await (api as any).getSupplierIntegration(Number(id));
+      const data = await api.supply.getSupplierIntegration(Number(id));
       setIntegration(data);
       setEditForm({ name: data.name, base_url: data.base_url, auth_header: '', is_active: data.is_active });
-      const st = await (api as any).getSupplierSyncStatus(Number(id));
+      const st = await api.supply.getSupplierSyncStatus(Number(id));
       setStatus(st);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -47,16 +48,16 @@ export function SupplierIntegrationDetail() {
 
   const loadCategories = async () => {
     try {
-      const data = await (api as any).getSupplierCategories(`integration=${id}&page_size=500`);
+      const data = await api.supply.getSupplierCategories(`integration=${id}&page_size=500`);
       setCategories(data.results || []);
-      const cats = await (api as any).getCategories();
-      setOurCategories(cats.results || cats || []);
+      const cats = await api.catalog.getCategories();
+      setOurCategories(cats || []);
     } catch { /* ignore */ }
   };
 
   const loadLogs = async () => {
     try {
-      const data = await (api as any).getSupplierSyncLogs(`integration=${id}&page_size=50`);
+      const data = await api.supply.getSupplierSyncLogs(`integration=${id}&page_size=50`);
       setSyncLogs(data.results || []);
     } catch { /* ignore */ }
   };
@@ -70,10 +71,11 @@ export function SupplierIntegrationDetail() {
   const handleSyncCatalog = async () => {
     try {
       setSyncingCatalog(true);
-      await (api as any).syncSupplierCatalog(Number(id));
+      await api.supply.syncSupplierCatalog(Number(id));
       toast.success('Импорт каталога запущен');
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(message);
     } finally {
       setSyncingCatalog(false);
     }
@@ -82,10 +84,11 @@ export function SupplierIntegrationDetail() {
   const handleSyncStock = async () => {
     try {
       setSyncingStock(true);
-      await (api as any).syncSupplierStock(Number(id));
+      await api.supply.syncSupplierStock(Number(id));
       toast.success('Синхронизация остатков запущена');
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(message);
     } finally {
       setSyncingStock(false);
     }
@@ -93,34 +96,37 @@ export function SupplierIntegrationDetail() {
 
   const handleSave = async () => {
     try {
-      const payload: any = { name: editForm.name, base_url: editForm.base_url, is_active: editForm.is_active };
+      const payload: Record<string, unknown> = { name: editForm.name, base_url: editForm.base_url, is_active: editForm.is_active };
       if (editForm.auth_header) payload.auth_header = editForm.auth_header;
-      await (api as any).updateSupplierIntegration(Number(id), payload);
+      await api.supply.updateSupplierIntegration(Number(id), payload);
       toast.success('Сохранено');
       setEditing(false);
       loadIntegration();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(message);
     }
   };
 
   const handleDelete = async () => {
     try {
-      await (api as any).deleteSupplierIntegration(Number(id));
+      await api.supply.deleteSupplierIntegration(Number(id));
       toast.success('Интеграция удалена');
       navigate('/supply/integrations');
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(message);
     }
   };
 
   const handleCategoryMapping = async (categoryId: number, ourCategoryId: number | null) => {
     try {
-      await (api as any).updateSupplierCategoryMapping(categoryId, ourCategoryId);
+      await api.supply.updateSupplierCategoryMapping(categoryId, ourCategoryId);
       toast.success('Маппинг обновлён');
       loadCategories();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(message);
     }
   };
 
@@ -256,7 +262,7 @@ export function SupplierIntegrationDetail() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="_none">Не привязана</SelectItem>
-                              {ourCategories.map((c: any) => (
+                              {ourCategories.map((c) => (
                                 <SelectItem key={c.id} value={c.id.toString()}>{c.full_path || c.name}</SelectItem>
                               ))}
                             </SelectContent>

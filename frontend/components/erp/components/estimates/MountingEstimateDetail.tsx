@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from '@/hooks/erp-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, MountingEstimateCreateRequest} from '@/lib/api';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -49,19 +49,19 @@ export function MountingEstimateDetail() {
 
   const { data: mountingEstimate, isLoading } = useQuery({
     queryKey: ['mounting-estimate', id],
-    queryFn: () => api.getMountingEstimateDetail(Number(id)),
+    queryFn: () => api.estimates.getMountingEstimateDetail(Number(id)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: counterparties } = useQuery({
     queryKey: ['counterparties'],
-    queryFn: () => api.getCounterparties(),
+    queryFn: () => api.core.getCounterparties(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: (status: string) => api.updateMountingEstimate(Number(id), { status } as any),
+    mutationFn: (status: string) => api.estimates.updateMountingEstimate(Number(id), { status } as Partial<MountingEstimateCreateRequest>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mounting-estimate', id] });
       toast.success('Статус обновлен');
@@ -72,7 +72,7 @@ export function MountingEstimateDetail() {
   });
 
   const updateMountingEstimateMutation = useMutation({
-    mutationFn: (data: any) => api.updateMountingEstimate(Number(id), data),
+    mutationFn: (data: Record<string, unknown>) => api.estimates.updateMountingEstimate(Number(id), data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mounting-estimate', id] });
       setEditDialogOpen(false);
@@ -84,7 +84,7 @@ export function MountingEstimateDetail() {
   });
 
   const createVersionMutation = useMutation({
-    mutationFn: () => api.createMountingEstimateVersion(Number(id)),
+    mutationFn: () => api.estimates.createMountingEstimateVersion(Number(id)),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mounting-estimates'] });
       toast.success('Новая версия создана');
@@ -96,7 +96,7 @@ export function MountingEstimateDetail() {
   });
 
   const agreeMutation = useMutation({
-    mutationFn: (counterpartyId: number) => api.agreeMountingEstimate(Number(id), counterpartyId),
+    mutationFn: (counterpartyId: number) => api.estimates.agreeMountingEstimate(Number(id), counterpartyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mounting-estimate', id] });
       setAgreeDialogOpen(false);

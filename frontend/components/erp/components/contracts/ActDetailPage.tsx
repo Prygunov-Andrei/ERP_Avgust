@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type ColumnDef } from '@tanstack/react-table';
 import { api, type Act, type ActItem } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,13 +31,13 @@ export const ActDetailPage: React.FC = () => {
 
   const { data: act, isLoading } = useQuery({
     queryKey: ['act', id],
-    queryFn: () => api.getActDetail(Number(id)),
+    queryFn: () => api.contracts.getActDetail(Number(id)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const agreeMutation = useMutation({
-    mutationFn: () => api.agreeAct(Number(id)),
+    mutationFn: () => api.contracts.agreeAct(Number(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['act', id] });
       toast.success('Акт согласован');
@@ -46,7 +46,7 @@ export const ActDetailPage: React.FC = () => {
   });
 
   const signMutation = useMutation({
-    mutationFn: () => api.signAct(Number(id)),
+    mutationFn: () => api.contracts.signAct(Number(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['act', id] });
       toast.success('Акт подписан');

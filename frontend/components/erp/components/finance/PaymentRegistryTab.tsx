@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useNavigate } from '@/hooks/erp-router';
 import { CheckCircle2, XCircle, Clock, Loader2, Landmark, Banknote } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api , unwrapResults} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -99,17 +99,15 @@ export const PaymentRegistryTab = () => {
 
   const { data: invoicesData, isLoading: invoicesLoading } = useQuery({
     queryKey: ['invoices-registry', queryParams],
-    queryFn: () => (api as any).getInvoices(queryParams),
+    queryFn: () => api.supply.getInvoices(queryParams),
   });
-  const invoices: any[] = invoicesData?.results ?? [];
+  const invoices = invoicesData?.results ?? [];
 
   const { data: accountsData } = useQuery({
     queryKey: ['accounts-active'],
-    queryFn: () => api.getAccounts({ is_active: true }),
+    queryFn: () => api.core.getAccounts({ is_active: true }),
   });
-  const accounts: any[] = Array.isArray(accountsData)
-    ? accountsData
-    : (accountsData as any)?.results ?? [];
+  const accounts = unwrapResults(accountsData);
 
   const statusSummary = useMemo(() => {
     const summary: Record<string, { count: number; amount: number }> = {};
@@ -117,13 +115,13 @@ export const PaymentRegistryTab = () => {
       const s = inv.status;
       if (!summary[s]) summary[s] = { count: 0, amount: 0 };
       summary[s].count++;
-      summary[s].amount += parseFloat(inv.amount_gross) || 0;
+      summary[s].amount += parseFloat(inv.amount_gross || '0') || 0;
     }
     return summary;
   }, [invoices]);
 
   const approveMutation = useMutation({
-    mutationFn: (id: number) => (api as any).approveInvoice(id),
+    mutationFn: (id: number) => api.supply.approveInvoice(id),
     onSuccess: () => {
       toast.success('Счёт согласован');
       queryClient.invalidateQueries({ queryKey: ['invoices-registry'] });
@@ -133,7 +131,7 @@ export const PaymentRegistryTab = () => {
 
   const rejectMutation = useMutation({
     mutationFn: ({ id, comment }: { id: number; comment: string }) =>
-      (api as any).rejectInvoice(id, comment),
+      api.supply.rejectInvoice(id, comment),
     onSuccess: () => {
       toast.success('Счёт отклонён');
       queryClient.invalidateQueries({ queryKey: ['invoices-registry'] });
@@ -145,7 +143,7 @@ export const PaymentRegistryTab = () => {
 
   const rescheduleMutation = useMutation({
     mutationFn: ({ id, newDate, comment }: { id: number; newDate: string; comment: string }) =>
-      (api as any).rescheduleInvoice(id, newDate, comment),
+      api.supply.rescheduleInvoice(id, newDate, comment),
     onSuccess: () => {
       toast.success('Дата оплаты перенесена');
       queryClient.invalidateQueries({ queryKey: ['invoices-registry'] });
@@ -157,7 +155,7 @@ export const PaymentRegistryTab = () => {
   });
 
   const markCashPaidMutation = useMutation({
-    mutationFn: (id: number) => (api as any).markCashPaid(id),
+    mutationFn: (id: number) => api.supply.markCashPaid(id),
     onSuccess: () => {
       toast.success('Оплата наличными подтверждена');
       queryClient.invalidateQueries({ queryKey: ['invoices-registry'] });
@@ -194,7 +192,7 @@ export const PaymentRegistryTab = () => {
   return (
     <div className="space-y-4 mt-4">
       <div className="flex gap-3 overflow-x-auto pb-1">
-        {accounts.map((acc: any) => {
+        {accounts.map((acc) => {
           const bal = acc.current_balance || acc.balance || '0';
           const isCash = acc.account_type === 'cash';
           return (
@@ -276,7 +274,7 @@ export const PaymentRegistryTab = () => {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {invoices.map((invoice: any) => {
+              {invoices.map((invoice) => {
                 const highlight = getDueDateHighlight(invoice.due_date, invoice.status);
 
                 return (

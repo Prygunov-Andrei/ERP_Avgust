@@ -10,6 +10,35 @@ import {
   Banknote,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import type { ConstructionObject, Counterparty, Account, LegalEntity, ExpenseCategory } from '@/lib/api';
+import type { Act, ContractListItem } from '@/lib/api/types/contracts';
+import { unwrapResults } from '@/lib/api/types/common';
+
+interface IncomeRecord {
+  id: number;
+  income_type: string;
+  amount: string;
+  payment_date: string | null;
+  counterparty_name?: string;
+  object_name?: string;
+  description?: string;
+  is_cash?: boolean;
+}
+
+interface CreateIncomeRecordData {
+  income_type: string;
+  amount: string;
+  is_cash: boolean;
+  payment_date?: string;
+  description?: string;
+  account?: number;
+  legal_entity?: number;
+  counterparty?: number;
+  object?: number;
+  contract?: number;
+  act?: number;
+  category?: number;
+}
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -77,76 +106,64 @@ export const IncomingPaymentsTab = () => {
 
   const { data: recordsData, isLoading: recordsLoading } = useQuery({
     queryKey: ['income-records'],
-    queryFn: () => (api as any).getIncomeRecords(),
+    queryFn: () => (api as unknown as { getIncomeRecords: (q?: string) => Promise<{ results: IncomeRecord[] }> }).getIncomeRecords(),
   });
-  const records: any[] = recordsData?.results ?? [];
+  const records: IncomeRecord[] = recordsData?.results ?? [];
 
   const { data: cashRecordsData } = useQuery({
     queryKey: ['income-records-cash'],
-    queryFn: () => (api as any).getIncomeRecords('is_cash=true'),
+    queryFn: () => (api as unknown as { getIncomeRecords: (q?: string) => Promise<{ results: IncomeRecord[] }> }).getIncomeRecords('is_cash=true'),
   });
-  const cashRecords: any[] = cashRecordsData?.results ?? [];
+  const cashRecords: IncomeRecord[] = cashRecordsData?.results ?? [];
 
   const { data: accountsData } = useQuery({
     queryKey: ['accounts-all'],
-    queryFn: () => api.getAccounts(),
+    queryFn: () => api.core.getAccounts(),
     enabled: createDialogOpen,
   });
-  const accounts: any[] = Array.isArray(accountsData)
-    ? accountsData
-    : (accountsData as any)?.results ?? [];
+  const accounts = unwrapResults<Account>(accountsData);
 
   const { data: legalEntitiesData } = useQuery({
     queryKey: ['legal-entities'],
-    queryFn: () => api.getLegalEntities(),
+    queryFn: () => api.core.getLegalEntities(),
     enabled: createDialogOpen,
   });
-  const legalEntities: any[] = Array.isArray(legalEntitiesData)
-    ? legalEntitiesData
-    : (legalEntitiesData as any)?.results ?? [];
+  const legalEntities = unwrapResults<LegalEntity>(legalEntitiesData);
 
   const { data: objectsData } = useQuery({
     queryKey: ['objects'],
-    queryFn: () => api.getObjects(),
+    queryFn: () => api.core.getObjects(),
     enabled: createDialogOpen && isCustomerType,
   });
-  const objects: any[] = Array.isArray(objectsData)
-    ? objectsData
-    : (objectsData as any)?.results ?? [];
+  const objects = unwrapResults<ConstructionObject>(objectsData);
 
   const { data: contractsData } = useQuery({
     queryKey: ['contracts', objectId],
-    queryFn: () => api.getContracts({ object: Number(objectId) }),
+    queryFn: () => api.contracts.getContracts({ object: Number(objectId) }),
     enabled: createDialogOpen && isCustomerType && !!objectId,
   });
-  const contracts: any[] = Array.isArray(contractsData)
-    ? contractsData
-    : (contractsData as any)?.results ?? [];
+  const contracts = unwrapResults<ContractListItem>(contractsData);
 
   const { data: actsData } = useQuery({
     queryKey: ['acts', contractId],
-    queryFn: () => api.getActs(Number(contractId)),
+    queryFn: () => api.contracts.getActs(Number(contractId)),
     enabled: createDialogOpen && incomeType === 'customer_act' && !!contractId,
   });
-  const acts: any[] = Array.isArray(actsData) ? actsData : (actsData as any)?.results ?? [];
+  const acts = unwrapResults<Act>(actsData);
 
   const { data: counterpartiesData } = useQuery({
     queryKey: ['counterparties'],
-    queryFn: () => api.getCounterparties(),
+    queryFn: () => api.core.getCounterparties(),
     enabled: createDialogOpen,
   });
-  const counterparties: any[] = Array.isArray(counterpartiesData)
-    ? counterpartiesData
-    : (counterpartiesData as any)?.results ?? [];
+  const counterparties = unwrapResults<Counterparty>(counterpartiesData);
 
   const { data: categoriesData } = useQuery({
     queryKey: ['expense-categories'],
-    queryFn: () => api.getExpenseCategories(),
+    queryFn: () => api.payments.getExpenseCategories(),
     enabled: createDialogOpen && !isCustomerType,
   });
-  const categories: any[] = Array.isArray(categoriesData)
-    ? categoriesData
-    : (categoriesData as any)?.results ?? [];
+  const categories = unwrapResults<ExpenseCategory>(categoriesData);
 
   const resetForm = () => {
     setIncomeType('');
@@ -164,7 +181,7 @@ export const IncomingPaymentsTab = () => {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => (api as any).createIncomeRecord(data),
+    mutationFn: (data: Record<string, unknown>) => api.supply.createIncomeRecord(data),
     onSuccess: () => {
       toast.success('Входящий платёж создан');
       queryClient.invalidateQueries({ queryKey: ['income-records'] });
@@ -172,7 +189,7 @@ export const IncomingPaymentsTab = () => {
       setCreateDialogOpen(false);
       resetForm();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error('Ошибка создания', {
         description: error?.message || 'Попробуйте ещё раз',
       });
@@ -180,7 +197,7 @@ export const IncomingPaymentsTab = () => {
   });
 
   const handleCreateSubmit = () => {
-    const data: any = {
+    const data: Record<string, unknown> = {
       income_type: incomeType,
       amount,
       is_cash: isCash,
@@ -206,7 +223,7 @@ export const IncomingPaymentsTab = () => {
   };
 
   const totalIncome = useMemo(
-    () => records.reduce((sum: number, r: any) => sum + (parseFloat(r.amount) || 0), 0),
+    () => records.reduce((sum: number, r) => sum + (parseFloat(r.amount) || 0), 0),
     [records]
   );
 
@@ -260,7 +277,7 @@ export const IncomingPaymentsTab = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {records.map((record: any) => (
+                    {records.map((record) => (
                       <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3">
                           <Badge variant="outline">
@@ -330,7 +347,7 @@ export const IncomingPaymentsTab = () => {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {cashRecords.map((record: any) => (
+                {cashRecords.map((record) => (
                   <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 text-gray-600">{formatDate(record.payment_date)}</td>
                     <td className="px-4 py-3">
@@ -386,7 +403,7 @@ export const IncomingPaymentsTab = () => {
                       <SelectValue placeholder="Выберите объект" />
                     </SelectTrigger>
                     <SelectContent>
-                      {objects.map((obj: any) => (
+                      {objects.map((obj) => (
                         <SelectItem key={obj.id} value={String(obj.id)}>{obj.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -400,7 +417,7 @@ export const IncomingPaymentsTab = () => {
                         <SelectValue placeholder="Выберите договор" />
                       </SelectTrigger>
                       <SelectContent>
-                        {contracts.map((c: any) => (
+                        {contracts.map((c) => (
                           <SelectItem key={c.id} value={String(c.id)}>
                             {c.number} — {c.name}
                           </SelectItem>
@@ -417,7 +434,7 @@ export const IncomingPaymentsTab = () => {
                         <SelectValue placeholder="Выберите акт" />
                       </SelectTrigger>
                       <SelectContent>
-                        {acts.map((a: any) => (
+                        {acts.map((a) => (
                           <SelectItem key={a.id} value={String(a.id)}>
                             Акт {a.number} — {formatCurrency(a.amount_gross)}
                           </SelectItem>
@@ -437,7 +454,7 @@ export const IncomingPaymentsTab = () => {
                     <SelectValue placeholder="Выберите категорию" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((c: any) => (
+                    {categories.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -453,7 +470,7 @@ export const IncomingPaymentsTab = () => {
                     <SelectValue placeholder="Счёт" />
                   </SelectTrigger>
                   <SelectContent>
-                    {accounts.map((acc: any) => (
+                    {accounts.map((acc) => (
                       <SelectItem key={acc.id} value={String(acc.id)}>{acc.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -466,7 +483,7 @@ export const IncomingPaymentsTab = () => {
                     <SelectValue placeholder="Юр. лицо" />
                   </SelectTrigger>
                   <SelectContent>
-                    {legalEntities.map((le: any) => (
+                    {legalEntities.map((le) => (
                       <SelectItem key={le.id} value={String(le.id)}>{le.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -481,7 +498,7 @@ export const IncomingPaymentsTab = () => {
                   <SelectValue placeholder="Выберите контрагента" />
                 </SelectTrigger>
                 <SelectContent>
-                  {counterparties.map((cp: any) => (
+                  {counterparties.map((cp) => (
                     <SelectItem key={cp.id} value={String(cp.id)}>{cp.name}</SelectItem>
                   ))}
                 </SelectContent>

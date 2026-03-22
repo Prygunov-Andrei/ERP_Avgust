@@ -2,11 +2,13 @@
 Сервисный слой для операций с платежами.
 Вынесено из PaymentSerializer для соблюдения принципа Single Responsibility.
 """
+import json
 import logging
 from datetime import date, timedelta
 from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
+from rest_framework import serializers
 from typing import List, Dict, Any, Optional
 
 from catalog.services import ProductMatcher
@@ -19,10 +21,81 @@ from payments.models import (
 
 logger = logging.getLogger(__name__)
 
+# Максимальное количество позиций в одном платеже
+MAX_PAYMENT_ITEMS = 200
+
 
 class PaymentService:
     """Сервис для создания и обработки платежей"""
-    
+
+    @staticmethod
+    def validate_payment_data(data: Dict[str, Any], *, is_create: bool = False,
+                              has_file_in_request: bool = False,
+                              item_create_serializer_class=None) -> Dict[str, Any]:
+        """
+        Валидация бизнес-правил платежа.
+
+        Args:
+            data: validated_data из сериализатора
+            is_create: True если это POST (создание)
+            has_file_in_request: True если в request.FILES есть scan_file
+            item_create_serializer_class: класс сериализатора для валидации позиций
+
+        Returns:
+            data (возможно мутированный — items_input десериализован из строки)
+
+        Raises:
+            serializers.ValidationError
+        """
+        category = data.get('category')
+        contract = data.get('contract')
+
+        # Бизнес-правило: категория требует договор
+        if category and category.requires_contract and not contract:
+            raise serializers.ValidationError({
+                'contract_id': f'Категория "{category.name}" требует указания договора'
+            })
+
+        # Бизнес-правило: файл обязателен при создании
+        if is_create:
+            if not data.get('scan_file') and not has_file_in_request:
+                raise serializers.ValidationError({
+                    'scan_file': 'Документ (счёт или акт) обязателен для создания платежа'
+                })
+
+        # Валидация items_input
+        items_input = data.get('items_input')
+        if items_input is not None:
+            if isinstance(items_input, str):
+                try:
+                    items_input = json.loads(items_input)
+                    data['items_input'] = items_input
+                except json.JSONDecodeError:
+                    raise serializers.ValidationError({
+                        'items_input': 'Неверный формат JSON'
+                    })
+
+            if not isinstance(items_input, list):
+                raise serializers.ValidationError({
+                    'items_input': 'Должен быть список'
+                })
+
+            if len(items_input) > MAX_PAYMENT_ITEMS:
+                raise serializers.ValidationError({
+                    'items_input': f'Слишком много позиций ({len(items_input)}). '
+                                   f'Максимум: {MAX_PAYMENT_ITEMS}'
+                })
+
+            # Валидируем каждую позицию через переданный сериализатор
+            if item_create_serializer_class is not None:
+                item_serializer = item_create_serializer_class(data=items_input, many=True)
+                if not item_serializer.is_valid():
+                    raise serializers.ValidationError({
+                        'items_input': item_serializer.errors
+                    })
+
+        return data
+
     @staticmethod
     @transaction.atomic
     def create_payment(

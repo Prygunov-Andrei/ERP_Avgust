@@ -9,10 +9,11 @@ export function useHvacLanguage() {
   return {
     language: 'ru' as Language,
     setLanguage: (_lang: Language) => {},
-    getLocalizedField: (obj: any, field: string) => {
+    getLocalizedField: (obj: object | null | undefined, field: string): string => {
       if (!obj) return '';
+      const rec = obj as Record<string, unknown>;
       // Пробуем ru-версию поля, затем базовое
-      return obj[`${field}_ru`] || obj[field] || '';
+      return String(rec[`${field}_ru`] || rec[field] || '');
     },
   };
 }

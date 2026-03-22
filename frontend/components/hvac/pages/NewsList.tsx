@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Link } from '@/hooks/erp-router';
 import { useHvacLanguage as useLanguage } from '../hooks/useHvacLanguage';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 import newsService, { News } from '../services/newsService';
-import { Card, CardContent, CardHeader } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Calendar, AlertCircle, RefreshCw, Edit, Trash2, FileText, ExternalLink, Sparkles, AlertTriangle } from 'lucide-react';
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { ImageWithFallback } from '@/components/common/ImageWithFallback';
 
 import { useTranslation } from 'react-i18next';
 import { getLocalizedField, getLocalizedDate } from '../utils/i18nHelpers';
 import { getExcerpt } from '../utils/htmlHelpers';
 import { toast } from 'sonner';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { getMediaUrl, getServerBaseUrl } from '../config/api';
 import {
   Select,
@@ -21,7 +22,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../components/ui/select';
+} from '@/components/ui/select';
 
 type NewsStatus = 'all' | 'published' | 'draft' | 'scheduled';
 
@@ -72,8 +73,9 @@ export default function NewsList() {
       setNews(prev => reset ? pageNews : [...prev, ...pageNews]);
       setHasMore(!!nextPage);
       setCurrentPage(page);
-    } catch (err: any) {
-      setError(err.response?.status === 500
+    } catch (err: unknown) {
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      setError(status === 500
         ? 'Ошибка сервера (500). Проверьте логи Django и конфигурацию API.'
         : t('news.loadError'));
     } finally {

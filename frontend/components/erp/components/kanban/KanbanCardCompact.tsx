@@ -3,7 +3,7 @@ import { Draggable } from '@hello-pangea/dnd';
 import { ArrowRightFromLine } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { KanbanCard, CardColor } from '@/lib/kanbanApi';
+import type { KanbanCard, CardColor } from '@/lib/api';
 
 type TunnelActionProp = {
   label: string;
@@ -35,9 +35,9 @@ const isOverdue = (dueDate: string | null) => {
 
 export const KanbanCardCompact = ({ card, index, onDoubleClick, tunnelAction }: Props) => {
   const color = (card.meta?.color as CardColor) || null;
-  const objectName = card.meta?.erp_object_name || '';
-  const systemName = card.meta?.system_name || '';
-  const counterpartyName = card.meta?.erp_counterparty_name || '';
+  const objectName = (card.meta?.erp_object_name as string) || '';
+  const systemName = (card.meta?.system_name as string) || '';
+  const counterpartyName = (card.meta?.erp_counterparty_name as string) || '';
   const colorStyle = color ? COLOR_STYLES[color] || {} : {};
 
   return (

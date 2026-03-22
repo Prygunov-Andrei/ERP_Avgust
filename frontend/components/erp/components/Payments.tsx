@@ -17,7 +17,7 @@ import { InvoiceItemsTable } from './payments/InvoiceItemsTable';
 import { CounterpartySelector } from './payments/CounterpartySelector';
 import { PaymentCreateForm } from './payments/PaymentCreateForm';
 import { useAccounts, useExpenseCategories, useLegalEntities } from '@/hooks';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 import { formatDate, formatAmount, getPaymentTypeBadgeClass, getPaymentStatusBadgeClass, getStatusLabel, getTypeLabel } from '@/lib/utils';
 
 export function Payments() {
@@ -58,7 +58,7 @@ export function Payments() {
   // Загрузка данных
   const { data: paymentsResponse, isLoading: paymentsLoading } = useQuery({
     queryKey: ['payments', filters, searchQuery, currentPage, pageSize],
-    queryFn: () => api.getPayments({
+    queryFn: () => api.payments.getPayments({
       payment_type: filters.payment_type !== 'all' ? filters.payment_type as 'income' | 'expense' : undefined,
       contract: filters.contract !== 'all' ? parseInt(filters.contract) : undefined,
       account: filters.account !== 'all' ? parseInt(filters.account) : undefined,
@@ -84,7 +84,7 @@ export function Payments() {
 
   const { data: contracts } = useQuery({
     queryKey: ['contracts'],
-    queryFn: () => api.getContracts(),
+    queryFn: () => api.contracts.getContracts(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
@@ -136,7 +136,7 @@ export function Payments() {
         payload.legal_entity_id = selectedAccount.legal_entity;
       }
 
-      return api.createPayment(payload);
+      return api.payments.createPayment(payload);
     },
     onSuccess: (newPayment) => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
@@ -769,7 +769,7 @@ export function Payments() {
                           });
                           setTimeout(() => {
                             queryClient.setQueryData(['payments', filters, searchQuery], () => 
-                              api.getPayments({ internal_transfer_group: selectedPayment.internal_transfer_group! })
+                              api.payments.getPayments({ internal_transfer_group: selectedPayment.internal_transfer_group! })
                             );
                           }, 100);
                         }}
@@ -809,7 +809,7 @@ export function Payments() {
                 <div className="border-t pt-4">
                   <h4 className="text-sm font-medium mb-3">Позиции товаров ({selectedPayment.items_count || selectedPayment.items.length})</h4>
                   <InvoiceItemsTable
-                    items={selectedPayment.items.map((item: any) => ({
+                    items={selectedPayment.items.map((item) => ({
                       raw_name: item.raw_name,
                       quantity: item.quantity,
                       unit: item.unit,

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 
-import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
   BarChart3, 
   DollarSign, 
@@ -19,7 +19,7 @@ import searchConfigService, {
   NewsDiscoveryRunListItem 
 } from '../services/searchConfigService';
 import ApiErrorBanner from '../components/ApiErrorBanner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -27,7 +27,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/ui/table';
+} from '@/components/ui/table';
 import { useNavigate } from '@/hooks/erp-router';
 
 export default function DiscoveryAnalyticsPage() {
@@ -36,7 +36,7 @@ export default function DiscoveryAnalyticsPage() {
   const [stats, setStats] = useState<DiscoveryStats | null>(null);
   const [runs, setRuns] = useState<NewsDiscoveryRunListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
   const [periodDays, setPeriodDays] = useState<number | undefined>(7);
 
   const isAdmin = user?.is_staff === true;
@@ -59,7 +59,7 @@ export default function DiscoveryAnalyticsPage() {
       
       setStats(statsData);
       setRuns(runsData?.results || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading analytics:', err);
       setError(err);
       // Устанавливаем пустые данные при ошибке
@@ -150,12 +150,12 @@ export default function DiscoveryAnalyticsPage() {
             </Card>
           )}
 
-          {error && (
+          {error ? (
             <ApiErrorBanner
               error={error}
               onRetry={loadData}
             />
-          )}
+          ) : null}
 
           {!loading && !error && stats && (
             <>

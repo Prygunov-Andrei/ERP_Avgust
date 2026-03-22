@@ -1,3 +1,4 @@
+import axios from 'axios';
 import apiClient from './apiClient';
 
 export interface NewsMedia {
@@ -83,18 +84,22 @@ const newsService = {
       const params = page ? { page } : {};
       const response = await apiClient.get('/news/', { ...config, params });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      const statusText = axios.isAxiosError(error) ? error.response?.statusText : undefined;
+      const data = axios.isAxiosError(error) ? error.response?.data : undefined;
+      const message = error instanceof Error ? error.message : String(error);
       console.error('newsService.getNews error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message,
+        status,
+        statusText,
+        data,
+        message,
         language,
         page,
       });
-      
+
       // Если ошибка 500, попробуем без языкового заголовка
-      if (error.response?.status === 500 && language) {
+      if (status === 500 && language) {
         console.warn('Retrying without Accept-Language header...');
         try {
           const params = page ? { page } : {};

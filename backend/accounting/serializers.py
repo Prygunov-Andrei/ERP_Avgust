@@ -46,40 +46,50 @@ class AccountSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'current_balance', 'created_at', 'updated_at']
     
+    def _cached_current_balance(self, obj):
+        """Cache current balance per serializer call to avoid repeated DB queries."""
+        cache_attr = '_cached_balance'
+        if not hasattr(obj, cache_attr):
+            try:
+                setattr(obj, cache_attr, obj.get_current_balance())
+            except Exception:
+                setattr(obj, cache_attr, None)
+        return getattr(obj, cache_attr)
+
+    def _cached_bank_snapshot(self, obj):
+        """Cache latest bank snapshot per serializer call to avoid repeated DB queries."""
+        cache_attr = '_cached_bank_snap'
+        if not hasattr(obj, cache_attr):
+            try:
+                snap = obj.balances.filter(
+                    source=AccountBalance.Source.BANK_TOCHKA
+                ).order_by('-balance_date', '-id').first()
+            except Exception:
+                snap = None
+            setattr(obj, cache_attr, snap)
+        return getattr(obj, cache_attr)
+
     def get_current_balance(self, obj):
-        """Получить текущий баланс счета"""
-        try:
-            return obj.get_current_balance()
-        except Exception:
-            return None
+        return self._cached_current_balance(obj)
 
     def get_bank_account_id(self, obj):
         bank_account = getattr(obj, 'bank_account', None)
         return getattr(bank_account, 'id', None)
 
-    def _get_latest_bank_snapshot(self, obj):
-        # source появится после миграции; пока код должен работать и без него
-        try:
-            qs = obj.balances.filter(source=AccountBalance.Source.BANK_TOCHKA)
-        except Exception:
-            return None
-        return qs.order_by('-balance_date', '-id').first()
-
     def get_bank_balance_latest(self, obj):
-        snap = self._get_latest_bank_snapshot(obj)
+        snap = self._cached_bank_snapshot(obj)
         return getattr(snap, 'balance', None)
 
     def get_bank_balance_date(self, obj):
-        snap = self._get_latest_bank_snapshot(obj)
+        snap = self._cached_bank_snapshot(obj)
         return getattr(snap, 'balance_date', None)
 
     def get_bank_delta(self, obj):
-        snap = self._get_latest_bank_snapshot(obj)
+        snap = self._cached_bank_snapshot(obj)
         if not snap:
             return None
-        try:
-            internal = obj.get_current_balance()
-        except Exception:
+        internal = self._cached_current_balance(obj)
+        if internal is None:
             return None
         try:
             return (Decimal(str(snap.balance)) - Decimal(str(internal)))

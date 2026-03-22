@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from '@/hooks/erp-router';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, LayoutDashboard, UserCheck, HardHat, Settings } from 'lucide-react';
@@ -18,7 +18,7 @@ export function ObjectDetail() {
 
   const { data: object, isLoading, error } = useQuery({
     queryKey: ['construction-object', objectId],
-    queryFn: () => api.getConstructionObjectById(objectId),
+    queryFn: () => api.core.getConstructionObjectById(objectId),
     enabled: !!objectId,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });

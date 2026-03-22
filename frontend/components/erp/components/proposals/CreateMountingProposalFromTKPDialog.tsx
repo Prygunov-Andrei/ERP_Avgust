@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@/hooks/erp-router';
 import { X } from 'lucide-react';
 import { api, MountingCondition, Counterparty } from '@/lib/api';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -42,7 +42,7 @@ export function CreateMountingProposalFromTKPDialog({
   const { data: counterparties } = useQuery({
     queryKey: ['counterparties-executors'],
     queryFn: async () => {
-      const all = await api.getCounterparties({ type: 'vendor' });
+      const all = await api.core.getCounterparties({ type: 'vendor' });
       return all.filter((c) => c.vendor_subtype === 'executor' || c.vendor_subtype === 'both');
     },
     enabled: open,
@@ -51,14 +51,14 @@ export function CreateMountingProposalFromTKPDialog({
 
   const { data: mountingEstimates } = useQuery({
     queryKey: ['mounting-estimates', tkpObjectId],
-    queryFn: () => api.getMountingEstimates(tkpObjectId ? { object: tkpObjectId } : undefined),
+    queryFn: () => api.estimates.getMountingEstimates(tkpObjectId ? { object: tkpObjectId } : undefined),
     enabled: open,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: conditions } = useQuery({
     queryKey: ['mounting-conditions-active'],
-    queryFn: () => api.getMountingConditions({ is_active: true }),
+    queryFn: () => api.proposals.getMountingConditions({ is_active: true }),
     enabled: open,
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
@@ -75,7 +75,7 @@ export function CreateMountingProposalFromTKPDialog({
 
   const createMutation = useMutation({
     mutationFn: () => {
-      const data: any = {
+      const data: Record<string, unknown> = {
         counterparty: parseInt(formData.counterparty),
       };
 
@@ -95,7 +95,7 @@ export function CreateMountingProposalFromTKPDialog({
         data.conditions_ids = selectedConditionIds;
       }
 
-      return api.createMountingProposalFromTKP(tkpId, data);
+      return api.proposals.createMountingProposalFromTKP(tkpId, data as { counterparty: number; notes?: string });
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mounting-proposals'] });
@@ -174,7 +174,7 @@ export function CreateMountingProposalFromTKPDialog({
               <Label>Монтажные сметы</Label>
               {mountingEstimates && mountingEstimates.length > 0 ? (
                 <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                  {mountingEstimates.map((est: any) => (
+                  {mountingEstimates.map((est) => (
                     <label
                       key={est.id}
                       className="flex items-start gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded"

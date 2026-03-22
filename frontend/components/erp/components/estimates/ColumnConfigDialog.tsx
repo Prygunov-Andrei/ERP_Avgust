@@ -88,13 +88,13 @@ export const ColumnConfigDialog: React.FC<Props> = ({
   // Templates
   const { data: templates = [] } = useQuery({
     queryKey: ['column-config-templates'],
-    queryFn: () => api.getColumnConfigTemplates(),
+    queryFn: () => api.estimates.getColumnConfigTemplates(),
     enabled: open,
   });
 
   const saveTemplateMutation = useMutation({
     mutationFn: (data: { name: string; description: string; column_config: ColumnDefAPI[] }) =>
-      api.createColumnConfigTemplate(data),
+      api.estimates.createColumnConfigTemplate(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['column-config-templates'] });
       setSaveTemplateOpen(false);
@@ -106,7 +106,7 @@ export const ColumnConfigDialog: React.FC<Props> = ({
   });
 
   const applyTemplateMutation = useMutation({
-    mutationFn: (templateId: number) => api.applyColumnConfigTemplate(templateId, estimateId),
+    mutationFn: (templateId: number) => api.estimates.applyColumnConfigTemplate(templateId, estimateId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['estimate', String(estimateId)] });
       toast.success('Шаблон применён');
@@ -116,7 +116,7 @@ export const ColumnConfigDialog: React.FC<Props> = ({
   });
 
   const deleteTemplateMutation = useMutation({
-    mutationFn: (id: number) => api.deleteColumnConfigTemplate(id),
+    mutationFn: (id: number) => api.estimates.deleteColumnConfigTemplate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['column-config-templates'] });
       toast.success('Шаблон удалён');

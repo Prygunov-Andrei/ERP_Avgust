@@ -36,7 +36,7 @@ export function ERPAuthProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem('access_token');
       if (token) {
         try {
-          const userData = await api.getCurrentUser();
+          const userData = await api.auth.getCurrentUser();
           setUser(userData as ERPUser);
           setIsAuthenticated(true);
         } catch (error) {
@@ -53,7 +53,7 @@ export function ERPAuthProvider({ children }: { children: ReactNode }) {
               duration: 5000,
             });
           } else {
-            api.logout();
+            api.auth.logout();
             setIsAuthenticated(false);
             setUser(null);
             router.replace('/login');
@@ -69,7 +69,7 @@ export function ERPAuthProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   const handleLogout = () => {
-    api.logout();
+    api.auth.logout();
     document.cookie = 'access_token=; path=/; max-age=0';
     window.location.href = '/';
   };

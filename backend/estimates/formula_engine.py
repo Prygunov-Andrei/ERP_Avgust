@@ -6,6 +6,8 @@
 функции round(), max(), min(), abs().
 """
 
+from __future__ import annotations
+
 import re
 from decimal import Decimal, InvalidOperation, DivisionByZero
 from enum import Enum, auto

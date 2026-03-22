@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { type ColumnDef } from '@tanstack/react-table';
 import { api, type EstimateDeviationRow } from '@/lib/api';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { DataTable } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
@@ -23,7 +23,7 @@ export const EstimateDeviationsView: React.FC<EstimateDeviationsViewProps> = ({ 
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ['estimate-deviations', contractId],
-    queryFn: () => api.getEstimateDeviations(contractId),
+    queryFn: () => api.contracts.getEstimateDeviations(contractId),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 

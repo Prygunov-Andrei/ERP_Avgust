@@ -3,11 +3,11 @@ import { useHvacLanguage as useLanguage } from '../hooks/useHvacLanguage';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 import referencesService, { Resource } from '../services/referencesService';
 
-import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
-import { Input } from '../components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Globe, FolderOpen, Grid3x3, Globe2, MapPin, Sparkles, Award, Users, Plus, AlertTriangle, ArrowUpDown, Zap, Hand, Cog, Search, X } from 'lucide-react';
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { ImageWithFallback } from '@/components/common/ImageWithFallback';
 import NewsDiscoveryDialog from '../components/NewsDiscoveryDialog';
 import ApiErrorBanner from '../components/ApiErrorBanner';
 import SourceStatisticsDashboard from '../components/statistics/SourceStatisticsDashboard';
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/ui/table';
+} from '@/components/ui/table';
 import { useTranslation } from 'react-i18next';
 
 type GroupingMode = 'sections' | 'alphabet';
@@ -77,9 +77,9 @@ export default function ResourcesPage() {
       
       const data = await referencesService.getResources(language, filters);
       setResources(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading resources:', err);
-      setError(err); // Сохраняем весь объект ошибки
+      setError(err instanceof Error ? err.message : 'Ошибка загрузки');
     } finally {
       if (!silent) setLoading(false);
     }

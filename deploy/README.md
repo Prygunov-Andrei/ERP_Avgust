@@ -7,7 +7,7 @@
 **Сервер:** `SERVER_IP` / `PRODUCTION_DOMAIN` (SSH: `root@SERVER_IP`)
 
 Текущий production:
-- `SERVER_IP`: `72.56.111.111`
+- `SERVER_IP`: `216.57.110.41`
 - `PRODUCTION_DOMAIN`: `avgust.prygunov.com`
 
 ### Автоматическая установка (рекомендуется)

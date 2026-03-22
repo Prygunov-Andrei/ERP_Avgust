@@ -4,10 +4,10 @@ import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 import { useHvacLanguage as useLanguage } from '../hooks/useHvacLanguage';
 import referencesService, { Brand } from '../services/referencesService';
 
-import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ImageWithFallback } from '@/components/common/ImageWithFallback';
 import { Building2, Plus, Edit2, Trash2 } from 'lucide-react';
 import BrandForm from '../components/forms/BrandForm';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
@@ -39,7 +39,7 @@ export default function BrandsPage() {
       setError('');
       const data = await referencesService.getBrands(language);
       setBrands(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading brands:', err);
       setError(t('brands.loadError'));
     } finally {
@@ -81,7 +81,7 @@ export default function BrandsPage() {
       loadBrands();
       setDeleteDialogOpen(false);
       setBrandToDelete(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting brand:', err);
       toast.error('Ошибка при удалении бренда');
     } finally {
@@ -97,19 +97,20 @@ export default function BrandsPage() {
   const handleFormSubmit = async (brand: Brand) => {
     setFormOpen(false);
     setLoading(true);
+    const brandData = { name: brand.name, manufacturer: brand.manufacturer, description: brand.description };
     try {
       if (brand.id) {
-        await referencesService.updateBrand(brand.id, brand as any);
+        await referencesService.updateBrand(brand.id, brandData);
         setBrands(
           brands.map((b) => (b.id === brand.id ? { ...brand } : b))
         );
         toast.success(t('brands.updateSuccess'));
       } else {
-        const newBrand = await referencesService.createBrand(brand as any);
+        const newBrand = await referencesService.createBrand(brandData);
         setBrands([...brands, newBrand]);
         toast.success(t('brands.createSuccess'));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving brand:', err);
       toast.error(t('brands.saveError'));
     } finally {

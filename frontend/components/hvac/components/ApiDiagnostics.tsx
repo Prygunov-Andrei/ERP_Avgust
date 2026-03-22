@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, RefreshCw, Settings } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Alert, AlertDescription } from './ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { API_CONFIG } from '../config/api';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface ApiDiagnosticsProps {
-  error?: any;
+  error?: unknown;
   onSuccess?: () => void;
 }
 
@@ -60,11 +60,12 @@ export default function ApiDiagnostics({ error, onSuccess }: ApiDiagnosticsProps
       } else {
         return { success: false, message: `API вернул ошибку: ${response.status}` };
       }
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
         return { success: false, message: 'Таймаут соединения (10 сек)' };
       }
-      return { success: false, message: `Ошибка подключения: ${err.message}` };
+      const message = err instanceof Error ? err.message : String(err);
+      return { success: false, message: `Ошибка подключения: ${message}` };
     }
   };
 
@@ -120,11 +121,11 @@ export default function ApiDiagnostics({ error, onSuccess }: ApiDiagnosticsProps
                 <span className="font-medium">Текущий URL:</span>
                 <code className="text-sm bg-muted px-2 py-1 rounded">{currentUrl}</code>
               </div>
-              {error && (
+              {error ? (
                 <div className="text-sm text-destructive mt-2">
-                  <strong>Ошибка:</strong> {error.message || 'timeout of 30000ms exceeded'}
+                  <strong>Ошибка:</strong> {error instanceof Error ? error.message : 'timeout of 30000ms exceeded'}
                 </div>
-              )}
+              ) : null}
             </div>
           </AlertDescription>
         </Alert>

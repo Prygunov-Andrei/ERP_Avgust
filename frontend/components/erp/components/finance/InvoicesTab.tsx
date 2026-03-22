@@ -78,21 +78,21 @@ export const InvoicesTab = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['invoices', queryParams],
-    queryFn: () => (api as any).getInvoices(queryParams),
+    queryFn: () => api.supply.getInvoices(queryParams),
   });
 
-  const invoices: any[] = data?.results ?? [];
+  const invoices = data?.results ?? [];
 
   const summary = useMemo(() => {
     const totalCount = invoices.length;
     const totalAmount = invoices.reduce(
-      (sum: number, inv: any) => sum + (parseFloat(inv.amount_gross) || 0),
+      (sum, inv) => sum + (parseFloat(inv.amount_gross || '0') || 0),
       0
     );
-    const overdueInvoices = invoices.filter((inv: any) => isOverdue(inv.due_date, inv.status));
+    const overdueInvoices = invoices.filter((inv) => isOverdue(inv.due_date, inv.status));
     const overdueCount = overdueInvoices.length;
     const overdueAmount = overdueInvoices.reduce(
-      (sum: number, inv: any) => sum + (parseFloat(inv.amount_gross) || 0),
+      (sum, inv) => sum + (parseFloat(inv.amount_gross || '0') || 0),
       0
     );
     return { totalCount, totalAmount, overdueCount, overdueAmount };
@@ -187,7 +187,7 @@ export const InvoicesTab = () => {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {invoices.map((invoice: any) => {
+              {invoices.map((invoice) => {
                 const overdue = isOverdue(invoice.due_date, invoice.status);
                 const isDebt = invoice.is_debt;
 
@@ -206,7 +206,7 @@ export const InvoicesTab = () => {
                     }}
                   >
                     <td className="px-4 py-3 text-gray-600">
-                      {INVOICE_TYPE_LABELS[invoice.invoice_type] || invoice.invoice_type || '—'}
+                      {INVOICE_TYPE_LABELS[invoice.invoice_type || ''] || invoice.invoice_type || '—'}
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {invoice.invoice_number || invoice.number || `#${invoice.id}`}

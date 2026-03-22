@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '../ui/card';
+import { Card } from '@/components/ui/card';
 import { Trophy, TrendingUp, Zap } from 'lucide-react';
 import { TopManufacturer } from '../../services/referencesService';
 

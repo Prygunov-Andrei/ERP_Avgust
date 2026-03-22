@@ -1,5 +1,6 @@
 """Прямое подключение к PostgreSQL через asyncpg."""
 
+import asyncio
 import uuid
 import asyncpg
 import logging
@@ -10,20 +11,33 @@ logger = logging.getLogger(__name__)
 
 _pool: Optional[asyncpg.Pool] = None
 
+_POOL_MAX_RETRIES = 3
+
 
 async def get_pool() -> asyncpg.Pool:
-    """Возвращает пул соединений к БД."""
+    """Возвращает пул соединений к БД (с retry при первом подключении)."""
     global _pool
     if _pool is None:
-        _pool = await asyncpg.create_pool(
-            host=settings.DB_HOST,
-            port=settings.DB_PORT,
-            database=settings.DB_NAME,
-            user=settings.DB_USER,
-            password=settings.DB_PASSWORD,
-            min_size=2,
-            max_size=10,
-        )
+        for attempt in range(_POOL_MAX_RETRIES):
+            try:
+                _pool = await asyncpg.create_pool(
+                    host=settings.DB_HOST,
+                    port=settings.DB_PORT,
+                    database=settings.DB_NAME,
+                    user=settings.DB_USER,
+                    password=settings.DB_PASSWORD,
+                    min_size=2,
+                    max_size=10,
+                    command_timeout=10,
+                )
+                break
+            except (asyncpg.PostgresConnectionError, OSError) as e:
+                if attempt == _POOL_MAX_RETRIES - 1:
+                    logger.error(f"Failed to create DB pool after {_POOL_MAX_RETRIES} attempts: {e}")
+                    raise
+                delay = 2 ** attempt
+                logger.warning(f"DB pool creation attempt {attempt + 1} failed: {e}, retrying in {delay}s")
+                await asyncio.sleep(delay)
     return _pool
 
 
@@ -147,14 +161,13 @@ async def get_team_topic_info(team_id: str) -> Optional[dict]:
     row = await pool.fetchrow(
         """
         SELECT t.topic_id, t.topic_name,
-               s.telegram_group_id AS chat_id
+               s_grp.telegram_group_id AS chat_id
         FROM worklog_team t
-        JOIN worklog_supergroup s ON s.object_id = (
-            SELECT object_id FROM worklog_shift WHERE id = t.shift_id
-        ) AND s.contractor_id = (
-            SELECT contractor_id FROM worklog_shift WHERE id = t.shift_id
-        )
-        WHERE t.id = $1::uuid AND s.is_active = true
+        JOIN worklog_shift sh ON sh.id = t.shift_id
+        JOIN worklog_supergroup s_grp
+             ON s_grp.object_id = sh.object_id
+            AND s_grp.contractor_id = sh.contractor_id
+        WHERE t.id = $1::uuid AND s_grp.is_active = true
         """,
         team_id,
     )
@@ -172,6 +185,7 @@ async def get_supergroup_invite_link(telegram_id: int) -> Optional[str]:
         FROM worklog_supergroup s
         JOIN worklog_worker w ON w.contractor_id = s.contractor_id
         WHERE w.telegram_id = $1
+        ORDER BY s.id
         LIMIT 1
         """,
         telegram_id,

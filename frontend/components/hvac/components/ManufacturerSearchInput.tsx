@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, Loader2 } from 'lucide-react';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import referencesService, { ManufacturerSearchResult } from '../services/referencesService';
 
 interface ManufacturerSearchInputProps {

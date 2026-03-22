@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { formatDate } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 const STATUS_LABELS: Record<SupplyRequestStatus, string> = {
   received: 'Получен',
@@ -61,7 +61,7 @@ export function SupplyRequestsPage() {
 
   const { data: response, isLoading } = useQuery({
     queryKey: ['supply-requests', statusFilter, searchQuery, currentPage, pageSize],
-    queryFn: () => (api as any).getSupplyRequests(buildParams()),
+    queryFn: () => api.supply.getSupplyRequests(buildParams()),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 

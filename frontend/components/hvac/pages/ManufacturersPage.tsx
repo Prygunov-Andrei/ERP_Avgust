@@ -3,8 +3,8 @@ import { useHvacLanguage as useLanguage } from '../hooks/useHvacLanguage';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 import referencesService, { Manufacturer } from '../services/referencesService';
 
-import { Card } from '../components/ui/card';
-import { Button } from '../components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ExternalLink, ChevronDown, ChevronUp, AlertCircle, RefreshCw, Sparkles, Plus, Edit2, Trash2 } from 'lucide-react';
 import {
   Table,
@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/ui/table';
+} from '@/components/ui/table';
 import { useTranslation } from 'react-i18next';
 import ManufacturerStatisticsDashboard from '../components/statistics/ManufacturerStatisticsDashboard';
 import ManufacturerNewsDiscoveryDialog from '../components/ManufacturerNewsDiscoveryDialog';
@@ -52,7 +52,7 @@ export default function ManufacturersPage() {
       // Разворачиваем все регионы по умолчанию
       const regions = new Set(data.map(m => m.region || 'Другие').filter(Boolean));
       setExpandedRegions(regions);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading manufacturers:', err);
       setError(t('manufacturers.loadError'));
     } finally {
@@ -104,7 +104,7 @@ export default function ManufacturersPage() {
       loadManufacturers();
       setDeleteDialogOpen(false);
       setManufacturerToDelete(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting manufacturer:', err);
       toast.error(t('manufacturers.deleteError'));
     } finally {

@@ -46,7 +46,7 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
   });
 
   const [showCreateCounterparty, setShowCreateCounterparty] = useState(false);
-  const parsedVendor = (invoice as any).parsed_vendor as { name?: string; inn?: string; kpp?: string } | null;
+  const parsedVendor = (invoice as unknown as { parsed_vendor: { name?: string; inn?: string; kpp?: string } | null }).parsed_vendor as { name?: string; inn?: string; kpp?: string } | null;
   const [cpForm, setCpForm] = useState({
     name: parsedVendor?.name || '',
     inn: parsedVendor?.inn || '',
@@ -84,35 +84,35 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
   // Load reference data
   const { data: counterparties } = useQuery({
     queryKey: ['counterparties'],
-    queryFn: () => api.getCounterparties(),
+    queryFn: () => api.core.getCounterparties(),
   });
 
   const { data: categories } = useQuery({
     queryKey: ['expense-categories', 'expense-only'],
-    queryFn: () => api.getExpenseCategories(false, 'expense'),
+    queryFn: () => api.payments.getExpenseCategories(false, 'expense'),
     enabled: showCategory,
   });
 
   const { data: objects } = useQuery({
     queryKey: ['objects'],
-    queryFn: () => api.getObjects(),
+    queryFn: () => api.core.getObjects(),
   });
 
   const { data: contractsData } = useQuery({
     queryKey: ['contracts', { object: Number(form.object) }],
-    queryFn: () => api.getContracts({ object: Number(form.object) }),
+    queryFn: () => api.contracts.getContracts({ object: Number(form.object) }),
     enabled: showContract,
   });
   const contracts = contractsData?.results || [];
 
   const { data: legalEntities } = useQuery({
     queryKey: ['legal-entities'],
-    queryFn: () => api.getLegalEntities(),
+    queryFn: () => api.core.getLegalEntities(),
   });
 
   const { data: accounts } = useQuery({
     queryKey: ['accounts'],
-    queryFn: () => api.getAccounts({ is_active: true }),
+    queryFn: () => api.core.getAccounts({ is_active: true }),
   });
 
   const invalidateInvoice = () => {
@@ -121,8 +121,8 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
   };
 
   const saveMutation = useMutation({
-    mutationFn: (data: Record<string, any>) =>
-      (api as any).updateInvoice(invoice.id, data),
+    mutationFn: (data: Record<string, unknown>) =>
+      api.supply.updateInvoice(invoice.id, data),
     onSuccess: () => {
       toast.success('Изменения сохранены');
       invalidateInvoice();
@@ -131,20 +131,19 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
   });
 
   const verifyMutation = useMutation({
-    mutationFn: () => (api as any).verifyInvoice(invoice.id),
+    mutationFn: () => api.supply.verifyInvoice(invoice.id),
     onSuccess: () => {
       toast.success('Счёт подтверждён');
       invalidateInvoice();
     },
-    onError: (err: any) => {
-      const message = err?.data?.error || err?.message || 'Ошибка при подтверждении';
-      toast.error(message);
+    onError: (err: Error) => {
+      toast.error(err.message || 'Ошибка при подтверждении');
     },
   });
 
   const createCounterpartyMutation = useMutation({
     mutationFn: (data: { name: string; inn: string; kpp: string }) =>
-      api.createCounterparty({
+      api.core.createCounterparty({
         name: data.name,
         inn: data.inn,
         kpp: data.kpp,
@@ -152,21 +151,20 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
         vendor_subtype: 'supplier',
         legal_form: data.inn.length === 12 ? 'ip' : 'ooo',
       }),
-    onSuccess: (created: any) => {
+    onSuccess: (created) => {
       toast.success(`Контрагент "${created.name}" создан`);
       setShowCreateCounterparty(false);
       queryClient.invalidateQueries({ queryKey: ['counterparties'] });
       // Автоматически выбираем созданного контрагента
       setForm(prev => ({ ...prev, counterparty: created.id.toString() }));
     },
-    onError: (err: any) => {
-      const message = err?.data?.inn?.[0] || err?.data?.name?.[0] || err?.message || 'Ошибка создания';
-      toast.error(message);
+    onError: (err: Error) => {
+      toast.error(err.message || 'Ошибка создания');
     },
   });
 
   const buildPatchData = () => {
-    const data: Record<string, any> = {};
+    const data: Record<string, unknown> = {};
     data.invoice_type = form.invoice_type;
     if (form.counterparty) data.counterparty = Number(form.counterparty);
     else data.counterparty = null;
@@ -269,7 +267,7 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
                     <SelectValue placeholder="Выберите контрагента" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(counterparties || []).map((c: any) => (
+                    {(counterparties || []).map((c) => (
                       <SelectItem key={c.id} value={c.id.toString()}>
                         {c.name} {c.inn ? `(ИНН: ${c.inn})` : ''}
                       </SelectItem>
@@ -333,7 +331,7 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
                   <SelectValue placeholder="Выберите объект" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(objects || []).map((o: any) => (
+                  {(objects || []).map((o) => (
                     <SelectItem key={o.id} value={o.id.toString()}>
                       {o.name}
                     </SelectItem>
@@ -352,9 +350,9 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
                   <SelectValue placeholder="Выберите договор" />
                 </SelectTrigger>
                 <SelectContent>
-                  {contracts.map((c: any) => (
+                  {contracts.map((c) => (
                     <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.number} — {c.name || c.contract_type_display}
+                      {c.number} — {c.name || c.contract_type_display || ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -371,7 +369,7 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
                   <SelectValue placeholder="Выберите категорию" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(categories || []).map((c: any) => (
+                  {(categories || []).map((c) => (
                     <SelectItem key={c.id} value={c.id.toString()}>
                       {c.name}
                     </SelectItem>
@@ -390,7 +388,7 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
                   <SelectValue placeholder="Юрлицо" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(legalEntities || []).map((le: any) => (
+                  {(legalEntities || []).map((le) => (
                     <SelectItem key={le.id} value={le.id.toString()}>
                       {le.short_name || le.name}
                     </SelectItem>
@@ -405,7 +403,7 @@ export function InvoiceEditForm({ invoice, className = '' }: InvoiceEditFormProp
                   <SelectValue placeholder="Счёт" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(accounts || []).map((a: any) => (
+                  {(accounts || []).map((a) => (
                     <SelectItem key={a.id} value={a.id.toString()}>
                       {a.name}
                     </SelectItem>

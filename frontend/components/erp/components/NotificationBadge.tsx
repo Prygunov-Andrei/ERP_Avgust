@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 
 interface NotificationBadgeProps {
   type: 'expiring-contracts' | 'unpaid-acts' | 'unchecked-projects';
@@ -13,10 +13,10 @@ async function fetchExpiringContracts() {
   const thirtyDaysLater = new Date();
   thirtyDaysLater.setDate(now.getDate() + 30);
   
-  const contracts = await api.getContracts({ status: 'active', page_size: 100 });
+  const contracts = await api.contracts.getContracts({ status: 'active', page_size: 100 });
   
   if (contracts.results) {
-    return contracts.results.filter((contract: any) => {
+    return contracts.results.filter((contract) => {
       if (!contract.end_date) return false;
       const endDate = new Date(contract.end_date);
       return endDate >= now && endDate <= thirtyDaysLater;

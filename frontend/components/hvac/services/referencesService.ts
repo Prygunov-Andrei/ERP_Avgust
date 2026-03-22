@@ -315,7 +315,7 @@ const referencesService = {
       });
       
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw error;
     }
   },

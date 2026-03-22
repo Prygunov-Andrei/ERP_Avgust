@@ -1,5 +1,3 @@
-import json
-
 from rest_framework import serializers
 
 from contracts.models import Contract, Act
@@ -12,9 +10,6 @@ from .models import (
     JournalEntry,
 )
 from .services import PaymentService
-
-# Максимальное количество позиций в одном платеже
-MAX_PAYMENT_ITEMS = 200
 
 
 class ExpenseCategorySerializer(serializers.ModelSerializer):
@@ -63,6 +58,8 @@ class ExpenseCategorySerializer(serializers.ModelSerializer):
             ExpenseCategory.AccountType.OBJECT,
             ExpenseCategory.AccountType.CONTRACT,
         ):
+            if hasattr(obj, '_annotated_balance'):
+                return str(obj._annotated_balance)
             return str(obj.get_balance())
         return None
 
@@ -203,54 +200,14 @@ class PaymentSerializer(DisplayFieldMixin, serializers.ModelSerializer):
         return obj.items.count()
     
     def validate(self, data):
-        """Валидация данных платежа"""
-        category = data.get('category')
-        contract = data.get('contract')
-        
-        if category and category.requires_contract and not contract:
-            raise serializers.ValidationError({
-                'contract_id': f'Категория "{category.name}" требует указания договора'
-            })
-        
-        # Проверяем наличие файла при создании
+        """Валидация данных платежа — бизнес-логика делегирована в PaymentService."""
         request = self.context.get('request')
-        if request and request.method == 'POST':
-            if not data.get('scan_file') and not request.FILES.get('scan_file'):
-                raise serializers.ValidationError({
-                    'scan_file': 'Документ (счёт или акт) обязателен для создания платежа'
-                })
-        
-        # Валидация items_input
-        items_input = data.get('items_input')
-        if items_input is not None:
-            if isinstance(items_input, str):
-                try:
-                    items_input = json.loads(items_input)
-                    data['items_input'] = items_input
-                except json.JSONDecodeError:
-                    raise serializers.ValidationError({
-                        'items_input': 'Неверный формат JSON'
-                    })
-            
-            if not isinstance(items_input, list):
-                raise serializers.ValidationError({
-                    'items_input': 'Должен быть список'
-                })
-            
-            # Проверяем лимит позиций
-            if len(items_input) > MAX_PAYMENT_ITEMS:
-                raise serializers.ValidationError({
-                    'items_input': f'Слишком много позиций ({len(items_input)}). Максимум: {MAX_PAYMENT_ITEMS}'
-                })
-            
-            # Валидируем каждую позицию
-            item_serializer = PaymentItemCreateSerializer(data=items_input, many=True)
-            if not item_serializer.is_valid():
-                raise serializers.ValidationError({
-                    'items_input': item_serializer.errors
-                })
-        
-        return data
+        return PaymentService.validate_payment_data(
+            data,
+            is_create=bool(request and request.method == 'POST'),
+            has_file_in_request=bool(request and request.FILES.get('scan_file')),
+            item_create_serializer_class=PaymentItemCreateSerializer,
+        )
     
     def create(self, validated_data):
         """
@@ -468,7 +425,7 @@ class InvoiceListSerializer(serializers.ModelSerializer):
     invoice_type_display = serializers.CharField(source='get_invoice_type_display', read_only=True)
     is_overdue = serializers.BooleanField(read_only=True)
     estimate_number = serializers.CharField(source='estimate.number', read_only=True, default=None)
-    items_count = serializers.IntegerField(source='items.count', read_only=True)
+    items_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Invoice

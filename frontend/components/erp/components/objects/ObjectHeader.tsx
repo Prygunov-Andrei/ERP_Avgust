@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { api, ConstructionObject } from '@/lib/api';
+import { api, ConstructionObject, CreateConstructionObjectData} from '@/lib/api';
 import { formatDate, formatDateTime, getStatusBadgeClass, getStatusLabel, cn } from '@/lib/utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -75,22 +75,22 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
 
   const fieldMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      api.updateConstructionObject(objectId, data as any),
+      api.core.updateConstructionObject(objectId, data as Partial<CreateConstructionObjectData>),
     onSuccess: () => {
       invalidateObject();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Ошибка при сохранении');
     },
   });
 
   const photoMutation = useMutation({
-    mutationFn: (file: File) => api.uploadObjectPhoto(objectId, file),
+    mutationFn: (file: File) => api.core.uploadObjectPhoto(objectId, file),
     onSuccess: () => {
       invalidateObject();
       toast.success('Фото обновлено');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Ошибка загрузки фото');
     },
     onSettled: () => {

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 const FREQUENCY_LABELS: Record<string, string> = {
   monthly: 'Ежемесячно',
@@ -56,14 +56,14 @@ export function RecurringPaymentsPage() {
 
   const { data: response, isLoading } = useQuery({
     queryKey: ['recurring-payments', searchQuery],
-    queryFn: () => (api as any).getRecurringPayments(searchQuery ? `search=${searchQuery}` : ''),
+    queryFn: () => api.supply.getRecurringPayments(searchQuery ? `search=${searchQuery}` : ''),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const payments: RecurringPayment[] = response?.results || [];
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => (api as any).deleteRecurringPayment(id),
+    mutationFn: (id: number) => api.supply.deleteRecurringPayment(id),
     onSuccess: () => {
       toast.success('Периодический платёж удалён');
       queryClient.invalidateQueries({ queryKey: ['recurring-payments'] });
@@ -72,7 +72,7 @@ export function RecurringPaymentsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => (api as any).createRecurringPayment(data),
+    mutationFn: (data: Record<string, unknown>) => api.supply.createRecurringPayment(data),
     onSuccess: () => {
       toast.success('Периодический платёж создан');
       setIsCreateOpen(false);
@@ -83,8 +83,8 @@ export function RecurringPaymentsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      (api as any).updateRecurringPayment(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
+      api.supply.updateRecurringPayment(id, data),
     onSuccess: () => {
       toast.success('Периодический платёж обновлён');
       setEditId(null);

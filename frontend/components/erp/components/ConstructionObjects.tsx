@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@/hooks/erp-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, ConstructionObject, CreateConstructionObjectData } from '@/lib/api';
-import { CONSTANTS } from '../constants';
+import { api, ConstructionObject, CreateConstructionObjectData, unwrapResults } from '@/lib/api';
+import { CONSTANTS } from '@/constants';
 import { formatDate } from '@/lib/utils';
 import { useObjects } from '@/hooks/useReferenceData';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -39,18 +39,16 @@ export function ConstructionObjects({ defaultStatusFilter, defaultCreateStatus, 
     status: statusFilter || undefined,
     search: searchQuery || undefined,
   });
-  const objects = Array.isArray(objectsData)
-    ? objectsData
-    : (objectsData as any)?.results ?? [];
+  const objects = unwrapResults(objectsData);
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateConstructionObjectData) => api.createConstructionObject(data),
+    mutationFn: (data: CreateConstructionObjectData) => api.core.createConstructionObject(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['objects'] });
       setIsDialogOpen(false);
       toast.success('Объект успешно создан');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       if (error.message && error.message.includes('already exists')) {
         toast.error('Объект с таким названием уже существует');
       } else {
@@ -394,7 +392,7 @@ function ConstructionObjectForm({ object, onSubmit, isLoading, defaultStatus }: 
           </Label>
           <Select
             value={formData.status}
-            onValueChange={(value: any) => setFormData({ ...formData, status: value })}
+            onValueChange={(value: string) => setFormData({ ...formData, status: value })}
             disabled={isLoading}
           >
             <SelectTrigger className="mt-1.5">

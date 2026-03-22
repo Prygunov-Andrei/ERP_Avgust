@@ -42,13 +42,13 @@ export const ActCreateDialog: React.FC<ActCreateDialogProps> = ({
 
   const { data: contractEstimates = [] } = useQuery({
     queryKey: ['contract-estimates-for-act', contractId],
-    queryFn: () => api.getContractEstimates(contractId),
+    queryFn: () => api.contracts.getContractEstimates(contractId),
     enabled: open && actType !== 'simple',
   });
 
   const { data: accRows = [] } = useQuery({
     queryKey: ['accumulative-for-act', contractId],
-    queryFn: () => api.getAccumulativeEstimate(contractId),
+    queryFn: () => api.contracts.getAccumulativeEstimate(contractId),
     enabled: open && actType === 'ks2' && !!selectedCE,
   });
 
@@ -99,7 +99,7 @@ export const ActCreateDialog: React.FC<ActCreateDialogProps> = ({
           .map((k) => ({
             contract_estimate_item_id: accRows[Number(k)]?.item_id,
           }));
-        return api.createActFromAccumulative({
+        return api.contracts.createActFromAccumulative({
           contract_estimate_id: selectedCE,
           number: form.number,
           date: form.date,
@@ -121,7 +121,7 @@ export const ActCreateDialog: React.FC<ActCreateDialogProps> = ({
         description: form.description,
         contract_estimate: selectedCE || undefined,
       };
-      return api.createAct(data);
+      return api.contracts.createAct(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['acts'] });

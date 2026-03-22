@@ -6,32 +6,37 @@ import { Language } from '../hooks/useHvacLanguage';
  * @param fieldName - базовое имя поля (без суффикса языка)
  * @param language - текущий язык
  * @returns локализованное значение или пустую строку
- * 
- * Пример: getLocalizedField(news, 'title', 'en') вернет news.title_en, 
+ *
+ * Пример: getLocalizedField(news, 'title', 'en') вернет news.title_en,
  * если его нет - news.title_ru, если и его нет - ''
  */
 export function getLocalizedField(
-  obj: any,
+  obj: object | null | undefined,
   fieldName: string,
   language: Language
 ): string {
   if (!obj) return '';
 
+  const rec = obj as Record<string, unknown>;
+
   // 1. Пытаемся получить поле для текущего языка
   const localizedFieldName = `${fieldName}_${language}`;
-  if (obj[localizedFieldName] && obj[localizedFieldName].trim()) {
-    return obj[localizedFieldName];
+  const localizedValue = rec[localizedFieldName];
+  if (typeof localizedValue === 'string' && localizedValue.trim()) {
+    return localizedValue;
   }
 
   // 2. Если нет, пробуем базовое поле без суффикса
-  if (obj[fieldName] && typeof obj[fieldName] === 'string' && obj[fieldName].trim()) {
-    return obj[fieldName];
+  const baseValue = rec[fieldName];
+  if (typeof baseValue === 'string' && baseValue.trim()) {
+    return baseValue;
   }
 
   // 3. Fallback на русский язык
   const fallbackFieldName = `${fieldName}_ru`;
-  if (obj[fallbackFieldName] && obj[fallbackFieldName].trim()) {
-    return obj[fallbackFieldName];
+  const fallbackValue = rec[fallbackFieldName];
+  if (typeof fallbackValue === 'string' && fallbackValue.trim()) {
+    return fallbackValue;
   }
 
   // 4. Если ничего не нашли, возвращаем пустую строку
@@ -49,7 +54,7 @@ export function getLocalizedDate(
   language: Language
 ): string {
   const date = new Date(dateString);
-  
+
   const localeMap: Record<Language, string> = {
     ru: 'ru-RU',
     en: 'en-US',
@@ -71,17 +76,17 @@ export function getLocalizedDate(
  * @param language - текущий язык
  * @returns массив объектов с локализованными полями
  */
-export function localizeArray<T extends Record<string, any>>(
+export function localizeArray<T extends Record<string, unknown>>(
   items: T[],
   fields: string[],
   language: Language
 ): T[] {
   return items.map(item => {
-    const localizedItem = { ...item };
+    const localizedItem: Record<string, unknown> = { ...item };
     fields.forEach(field => {
-      (localizedItem as any)[field] = getLocalizedField(item, field, language);
+      localizedItem[field] = getLocalizedField(item, field, language);
     });
-    return localizedItem;
+    return localizedItem as T;
   });
 }
 
@@ -93,14 +98,16 @@ export function localizeArray<T extends Record<string, any>>(
  * @returns true если перевод доступен
  */
 export function hasTranslation(
-  obj: any,
+  obj: object | null | undefined,
   fieldName: string,
   language: Language
 ): boolean {
   if (!obj) return false;
-  
+
+  const rec = obj as Record<string, unknown>;
   const localizedFieldName = `${fieldName}_${language}`;
-  return Boolean(obj[localizedFieldName] && obj[localizedFieldName].trim());
+  const value = rec[localizedFieldName];
+  return typeof value === 'string' && Boolean(value.trim());
 }
 
 /**
@@ -110,14 +117,16 @@ export function hasTranslation(
  * @returns массив доступных языков
  */
 export function getAvailableLanguages(
-  obj: any,
+  obj: object | null | undefined,
   fieldName: string
 ): Language[] {
   if (!obj) return [];
-  
+
+  const rec = obj as Record<string, unknown>;
   const languages: Language[] = ['ru', 'en', 'de', 'pt'];
   return languages.filter(lang => {
     const localizedFieldName = `${fieldName}_${lang}`;
-    return Boolean(obj[localizedFieldName] && obj[localizedFieldName].trim());
+    const value = rec[localizedFieldName];
+    return typeof value === 'string' && Boolean(value.trim());
   });
 }

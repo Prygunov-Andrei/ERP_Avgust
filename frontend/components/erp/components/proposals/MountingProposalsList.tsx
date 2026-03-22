@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from '@/hooks/erp-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api , unwrapResults} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,7 +30,7 @@ import {
 import { toast } from 'sonner';
 import { CreateMountingProposalDialog } from './CreateMountingProposalDialog';
 import { useObjects, useCounterparties } from '@/hooks';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { formatDate, formatCurrency } from '@/lib/utils';
 
 export function MountingProposalsList() {
@@ -52,7 +52,7 @@ export function MountingProposalsList() {
   // Загрузка МП
   const { data: mpData, isLoading } = useQuery({
     queryKey: ['mounting-proposals', objectFilter, counterpartyFilter, statusFilter, searchQuery, tkpFilter, page],
-    queryFn: () => api.getMountingProposals({
+    queryFn: () => api.proposals.getMountingProposals({
       object: objectFilter || undefined,
       counterparty: counterpartyFilter || undefined,
       status: statusFilter || undefined,
@@ -69,13 +69,13 @@ export function MountingProposalsList() {
   // Загрузка ТКП для фильтра
   const { data: tkpList } = useQuery({
     queryKey: ['technical-proposals'],
-    queryFn: () => api.getTechnicalProposals(),
+    queryFn: () => api.proposals.getTechnicalProposals(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   // Удаление МП
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteMountingProposal(id),
+    mutationFn: (id: number) => api.proposals.deleteMountingProposal(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mounting-proposals'] });
       toast.success('МП удалено');
@@ -87,7 +87,7 @@ export function MountingProposalsList() {
 
   // Создание версии
   const createVersionMutation = useMutation({
-    mutationFn: (id: number) => api.createMountingProposalVersion(id),
+    mutationFn: (id: number) => api.proposals.createMountingProposalVersion(id),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mounting-proposals'] });
       toast.success('Версия создана');
@@ -100,7 +100,7 @@ export function MountingProposalsList() {
 
   // Публикация в Telegram
   const publishToTelegramMutation = useMutation({
-    mutationFn: (id: number) => api.publishMountingProposalToTelegram(id),
+    mutationFn: (id: number) => api.proposals.publishMountingProposalToTelegram(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mounting-proposals'] });
       toast.success('МП опубликовано в Telegram');
@@ -181,7 +181,7 @@ export function MountingProposalsList() {
               onChange={(e) => setObjectFilter(e.target.value)}
             >
               <option value="">Все объекты</option>
-              {(Array.isArray(objects) ? objects : (objects as any)?.results ?? []).map((obj: any) => (
+              {(unwrapResults(objects)).map((obj) => (
                 <option key={obj.id} value={obj.id}>{obj.name}</option>
               ))}
             </select>
@@ -195,7 +195,7 @@ export function MountingProposalsList() {
               onChange={(e) => setCounterpartyFilter(e.target.value)}
             >
               <option value="">Все контрагенты</option>
-              {(Array.isArray(counterparties) ? counterparties : (counterparties as any)?.results ?? []).map((cp: any) => (
+              {(unwrapResults(counterparties)).map((cp) => (
                 <option key={cp.id} value={cp.id}>{cp.name}</option>
               ))}
             </select>

@@ -16,7 +16,7 @@ import {
   Download,
   X,
 } from 'lucide-react';
-import { api, FrameworkContractDetail as FCDetail } from '@/lib/api';
+import { api, FrameworkContractDetail as FCDetail, ContractListItem, PriceListList } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 
 type TabType = 'info' | 'price-lists' | 'contracts';
 
@@ -48,7 +48,7 @@ export function FrameworkContractDetail() {
   // Загрузка рамочного договора
   const { data: frameworkContract, isLoading } = useQuery({
     queryKey: ['framework-contract', id],
-    queryFn: () => api.getFrameworkContract(parseInt(id!)),
+    queryFn: () => api.contracts.getFrameworkContract(parseInt(id!)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
@@ -56,40 +56,38 @@ export function FrameworkContractDetail() {
   // Загрузка договоров под этот рамочный
   const { data: contracts } = useQuery({
     queryKey: ['framework-contract-contracts', id],
-    queryFn: () => api.getFrameworkContractContracts(parseInt(id!)),
+    queryFn: () => api.contracts.getFrameworkContractContracts(parseInt(id!)),
     enabled: !!id && activeTab === 'contracts',
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   // Удаление рамочного договора
   const deleteMutation = useMutation({
-    mutationFn: () => api.deleteFrameworkContract(parseInt(id!)),
+    mutationFn: () => api.contracts.deleteFrameworkContract(parseInt(id!)),
     onSuccess: () => {
       toast.success('Рамочный договор удалён');
       navigate('/contracts/framework-contracts');
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.error || error.message || 'Ошибка удаления';
-      toast.error(errorMessage);
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка удаления');
     },
   });
 
   // Активация договора
   const activateMutation = useMutation({
-    mutationFn: () => api.activateFrameworkContract(parseInt(id!)),
+    mutationFn: () => api.contracts.activateFrameworkContract(parseInt(id!)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['framework-contract', id] });
       toast.success('Рамочный договор активирован');
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.error || error.message;
-      toast.error(errorMessage);
+    onError: (error: Error) => {
+      toast.error(error.message || 'Ошибка активации');
     },
   });
 
   // Расторжение договора
   const terminateMutation = useMutation({
-    mutationFn: () => api.terminateFrameworkContract(parseInt(id!)),
+    mutationFn: () => api.contracts.terminateFrameworkContract(parseInt(id!)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['framework-contract', id] });
       toast.success('Рамочный договор расторгнут');
@@ -464,14 +462,14 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
   // Загрузка всех прайс-листов
   const { data: allPriceLists } = useQuery({
     queryKey: ['price-lists'],
-    queryFn: () => api.getPriceLists(),
+    queryFn: () => api.pricelists.getPriceLists(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   // Добавление прайс-листов
   const addPriceListsMutation = useMutation({
     mutationFn: (priceListIds: number[]) =>
-      api.addPriceListsToFrameworkContract(frameworkContract.id, priceListIds),
+      api.contracts.addPriceListsToFrameworkContract(frameworkContract.id, priceListIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['framework-contract', frameworkContract.id.toString()] });
       toast.success('Прайс-листы добавлены');
@@ -486,7 +484,7 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
   // Удаление прайс-листа
   const removePriceListMutation = useMutation({
     mutationFn: (priceListIds: number[]) =>
-      api.removePriceListsFromFrameworkContract(frameworkContract.id, priceListIds),
+      api.contracts.removePriceListsFromFrameworkContract(frameworkContract.id, priceListIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['framework-contract', frameworkContract.id.toString()] });
       toast.success('Прайс-лист удалён');
@@ -509,9 +507,10 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
   };
 
   // Фильтруем доступные для добавления прайс-листы
-  const availablePriceLists = (Array.isArray(allPriceLists) ? allPriceLists : (allPriceLists as any)?.results || []).filter(
-    (pl: any) => !frameworkContract.price_lists.includes(pl.id)
-  ) || [];
+  const allPriceListsArray: PriceListList[] = Array.isArray(allPriceLists) ? allPriceLists : [];
+  const availablePriceLists = allPriceListsArray.filter(
+    (pl) => !frameworkContract.price_lists.includes(pl.id)
+  );
 
   if (!frameworkContract.price_lists_details || frameworkContract.price_lists_details.length === 0) {
     return (
@@ -579,7 +578,7 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {frameworkContract.price_lists_details.map((priceList: any) => (
+          {frameworkContract.price_lists_details.map((priceList) => (
             <div
               key={priceList.id}
               className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
@@ -640,7 +639,7 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
 }
 
 // Вкладка "Договоры"
-function ContractsTab({ contracts }: { contracts: any[] }) {
+function ContractsTab({ contracts }: { contracts: ContractListItem[] }) {
   const navigate = useNavigate();
 
   const getStatusBadge = (status: string) => {
@@ -711,7 +710,7 @@ function AddPriceListsDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  availablePriceLists: any[];
+  availablePriceLists: PriceListList[];
   selectedPriceLists: number[];
   setSelectedPriceLists: (ids: number[]) => void;
   onAdd: () => void;

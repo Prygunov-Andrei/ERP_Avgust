@@ -1,17 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { Button } from './ui/button';
-import { Alert, AlertDescription } from './ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Calendar, AlertCircle, Sparkles, Clock } from 'lucide-react';
 import referencesService from '../services/referencesService';
 import NewsDiscoveryProgress from './NewsDiscoveryProgress';
 import { useNavigate } from '@/hooks/erp-router';
 import { useDiscovery } from '../hooks/useDiscovery';
-import { Checkbox } from './ui/checkbox';
+import { Checkbox } from '@/components/ui/checkbox';
 import searchConfigService, { SearchConfigurationListItem } from '../services/searchConfigService';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Input } from './ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 interface NewsDiscoveryDialogProps {
   open: boolean;
@@ -78,7 +78,7 @@ export default function NewsDiscoveryDialog({ open, onOpenChange, totalResources
         if (Array.isArray(list) && list.length > 0) {
           setSelectedConfigId(list[0].id);
         }
-      } catch (e: any) {
+      } catch (_e: unknown) {
         setConfigs([]);
         setSelectedConfigId(null);
         setConfigsError('Не удалось загрузить конфигурации поиска.');
@@ -102,7 +102,7 @@ export default function NewsDiscoveryDialog({ open, onOpenChange, totalResources
         }
 
         setSectionsCounts(counts);
-      } catch (e: any) {
+      } catch (_e: unknown) {
         setSectionsCounts({});
         setSectionsError('Не удалось загрузить список секций (регионов).');
       } finally {

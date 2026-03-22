@@ -5,14 +5,12 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Count
-from django.utils import timezone
 
 from core.version_mixin import VersioningMixin
 from .models import (
     FrontOfWorkItem,
     MountingCondition,
     TechnicalProposal,
-    TKPStatusHistory,
     TKPEstimateSection,
     TKPEstimateSubsection,
     TKPCharacteristic,
@@ -32,6 +30,14 @@ from .serializers import (
     MountingProposalDetailSerializer,
     TechnicalProposalAddEstimatesSerializer,
     TechnicalProposalRemoveEstimatesSerializer,
+)
+from .services import (
+    record_tkp_creation,
+    handle_tkp_status_change,
+    add_estimates_to_tkp,
+    remove_estimates_from_tkp,
+    create_mp_from_tkp,
+    mark_mp_telegram_published,
 )
 
 
@@ -86,10 +92,12 @@ class TechnicalProposalViewSet(VersioningMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         """Оптимизация: добавляем annotate для versions_count"""
         queryset = super().get_queryset()
-        if self.action == 'list':
-            queryset = queryset.annotate(annotated_versions_count=Count('child_versions'))
+        if self.action in ('list', 'retrieve'):
+            queryset = queryset.annotate(
+                annotated_versions_count=Count('child_versions'),
+            )
         return queryset
-    
+
     def get_serializer_class(self):
         if self.action == 'list':
             return TechnicalProposalListSerializer
@@ -98,35 +106,14 @@ class TechnicalProposalViewSet(VersioningMixin, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Автоматически устанавливаем created_by из request.user"""
         tkp = serializer.save(created_by=self.request.user)
-        TKPStatusHistory.objects.create(
-            tkp=tkp,
-            old_status='',
-            new_status=tkp.status,
-            changed_by=self.request.user,
-        )
+        record_tkp_creation(tkp, self.request.user)
 
     def perform_update(self, serializer):
         """Отслеживаем смену статуса и обновляем ответственных"""
         tkp = self.get_object()
         old_status = tkp.status
         instance = serializer.save()
-        new_status = instance.status
-
-        if old_status != new_status:
-            TKPStatusHistory.objects.create(
-                tkp=instance,
-                old_status=old_status,
-                new_status=new_status,
-                changed_by=self.request.user,
-            )
-            if new_status == TechnicalProposal.Status.CHECKING:
-                instance.checked_by = self.request.user
-                instance.checked_at = timezone.now()
-                instance.save(update_fields=['checked_by', 'checked_at'])
-            elif new_status == TechnicalProposal.Status.APPROVED:
-                instance.approved_by = self.request.user
-                instance.approved_at = timezone.now()
-                instance.save(update_fields=['approved_by', 'approved_at'])
+        handle_tkp_status_change(instance, old_status, self.request.user)
 
     @action(detail=True, methods=['post'], url_path='add-estimates')
     def add_estimates(self, request, pk=None):
@@ -134,38 +121,28 @@ class TechnicalProposalViewSet(VersioningMixin, viewsets.ModelViewSet):
         tkp = self.get_object()
         serializer = TechnicalProposalAddEstimatesSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        estimate_ids = serializer.validated_data['estimate_ids']
-        copy_data = serializer.validated_data.get('copy_data', True)
-        
-        from estimates.models import Estimate
-        estimates = Estimate.objects.filter(id__in=estimate_ids)
-        tkp.estimates.add(*estimates)
-        
-        if copy_data:
-            tkp.copy_data_from_estimates()
-        
+
+        result = add_estimates_to_tkp(
+            tkp,
+            serializer.validated_data['estimate_ids'],
+            copy_data=serializer.validated_data.get('copy_data', True),
+        )
         return Response({
-            'message': f'Добавлено смет: {len(estimates)}',
-            'estimates_count': tkp.estimates.count()
+            'message': f'Добавлено смет: {result["added_count"]}',
+            'estimates_count': result['estimates_count'],
         })
-    
+
     @action(detail=True, methods=['post'], url_path='remove-estimates')
     def remove_estimates(self, request, pk=None):
         """Удалить сметы из ТКП"""
         tkp = self.get_object()
         serializer = TechnicalProposalRemoveEstimatesSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        estimate_ids = serializer.validated_data['estimate_ids']
-        tkp.estimates.remove(*estimate_ids)
-        
-        # Очистить данные, связанные с удаленными сметами
-        tkp.copy_data_from_estimates()
-        
+
+        result = remove_estimates_from_tkp(tkp, serializer.validated_data['estimate_ids'])
         return Response({
-            'message': f'Удалено смет: {len(estimate_ids)}',
-            'estimates_count': tkp.estimates.count()
+            'message': f'Удалено смет: {result["removed_count"]}',
+            'estimates_count': result['estimates_count'],
         })
     
     @action(detail=True, methods=['post'], url_path='copy-from-estimates')
@@ -181,22 +158,7 @@ class TechnicalProposalViewSet(VersioningMixin, viewsets.ModelViewSet):
     def create_mp(self, request, pk=None):
         """Создать МП на основе ТКП"""
         tkp = self.get_object()
-        extra = {}
-        if request.data.get('counterparty'):
-            from accounting.models import Counterparty
-            extra['counterparty'] = Counterparty.objects.get(pk=request.data['counterparty'])
-        if request.data.get('total_amount'):
-            extra['total_amount'] = request.data['total_amount']
-        if request.data.get('man_hours'):
-            extra['man_hours'] = request.data['man_hours']
-        if request.data.get('notes'):
-            extra['notes'] = request.data['notes']
-        if request.data.get('mounting_estimates_ids'):
-            extra['mounting_estimates_ids'] = request.data['mounting_estimates_ids']
-        if request.data.get('conditions_ids'):
-            extra['conditions_ids'] = request.data['conditions_ids']
-
-        mp = MountingProposal.create_from_tkp(tkp, request.user, **extra)
+        mp = create_mp_from_tkp(tkp, request.user, request.data)
         serializer = MountingProposalDetailSerializer(mp, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
@@ -298,10 +260,10 @@ class MountingProposalViewSet(VersioningMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         """Оптимизация: добавляем annotate для versions_count"""
         queryset = super().get_queryset()
-        if self.action == 'list':
+        if self.action in ('list', 'retrieve'):
             queryset = queryset.annotate(annotated_versions_count=Count('child_versions'))
         return queryset
-    
+
     def get_serializer_class(self):
         if self.action == 'list':
             return MountingProposalListSerializer
@@ -317,9 +279,7 @@ class MountingProposalViewSet(VersioningMixin, viewsets.ModelViewSet):
     def mark_telegram_published(self, request, pk=None):
         """Отметить МП как опубликованное в Telegram"""
         mp = self.get_object()
-        mp.telegram_published = True
-        mp.telegram_published_at = timezone.now()
-        mp.save()
+        mark_mp_telegram_published(mp)
         serializer = self.get_serializer(mp)
         return Response(serializer.data)
     

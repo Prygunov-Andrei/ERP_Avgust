@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react';
 interface ProductFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: any) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<void>;
   product?: Product | null;
   categories: CategoryTreeNode[];
   mode: 'create' | 'edit';
@@ -105,14 +105,10 @@ export function ProductFormDialog({
     try {
       await onSave(formData);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Обработка ошибок валидации от API
-      if (error.response?.data) {
-        const apiErrors: Record<string, string> = {};
-        Object.entries(error.response.data).forEach(([key, value]) => {
-          apiErrors[key] = Array.isArray(value) ? value[0] : String(value);
-        });
-        setErrors(apiErrors);
+      if (error instanceof Error) {
+        setErrors({ general: error.message });
       }
     } finally {
       setIsSubmitting(false);

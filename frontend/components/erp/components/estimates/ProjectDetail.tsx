@@ -3,7 +3,7 @@ import { useParams, useNavigate } from '@/hooks/erp-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ProjectNote } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -38,26 +38,26 @@ export function ProjectDetail() {
 
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['project', id],
-    queryFn: () => api.getProjectDetail(Number(id)),
+    queryFn: () => api.estimates.getProjectDetail(Number(id)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: versions } = useQuery({
     queryKey: ['project-versions', id],
-    queryFn: () => api.getProjectVersions(Number(id)),
+    queryFn: () => api.estimates.getProjectVersions(Number(id)),
     enabled: !!id && isVersionHistoryOpen,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
-    queryFn: () => api.getCurrentUser(),
+    queryFn: () => api.auth.getCurrentUser(),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const primaryCheckMutation = useMutation({
-    mutationFn: () => api.primaryCheckProject(Number(id)),
+    mutationFn: () => api.estimates.primaryCheckProject(Number(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', id] });
       toast.success('Первичная проверка выполнена');
@@ -68,7 +68,7 @@ export function ProjectDetail() {
   });
 
   const secondaryCheckMutation = useMutation({
-    mutationFn: () => api.secondaryCheckProject(Number(id)),
+    mutationFn: () => api.estimates.secondaryCheckProject(Number(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', id] });
       toast.success('Вторичная проверка выполнена');
@@ -79,7 +79,7 @@ export function ProjectDetail() {
   });
 
   const approveProductionMutation = useMutation({
-    mutationFn: (file: File) => api.approveProduction(Number(id), file),
+    mutationFn: (file: File) => api.estimates.approveProduction(Number(id), file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', id] });
       setApprovalDialogOpen(false);
@@ -92,7 +92,7 @@ export function ProjectDetail() {
   });
 
   const createVersionMutation = useMutation({
-    mutationFn: () => api.createProjectVersion(Number(id)),
+    mutationFn: () => api.estimates.createProjectVersion(Number(id)),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Новая версия создана');
@@ -104,7 +104,7 @@ export function ProjectDetail() {
   });
 
   const createNoteMutation = useMutation({
-    mutationFn: (text: string) => api.createProjectNote({ project: Number(id), text }),
+    mutationFn: (text: string) => api.estimates.createProjectNote({ project: Number(id), text }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', id] });
       setNoteDialogOpen(false);
@@ -118,7 +118,7 @@ export function ProjectDetail() {
 
   const updateNoteMutation = useMutation({
     mutationFn: ({ noteId, text }: { noteId: number; text: string }) =>
-      api.updateProjectNote(noteId, { text }),
+      api.estimates.updateProjectNote(noteId, { text }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', id] });
       setEditingNote(null);
@@ -132,7 +132,7 @@ export function ProjectDetail() {
   });
 
   const deleteNoteMutation = useMutation({
-    mutationFn: (noteId: number) => api.deleteProjectNote(noteId),
+    mutationFn: (noteId: number) => api.estimates.deleteProjectNote(noteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', id] });
       toast.success('Замечание удалено');
@@ -493,7 +493,7 @@ export function ProjectDetail() {
                       </div>
                       <p className="text-gray-900 whitespace-pre-wrap">{note.text}</p>
                     </div>
-                    {!!(currentUser as any) && note.author.id === (currentUser as any).id && (
+                    {currentUser && typeof currentUser === 'object' && 'id' in (currentUser as Record<string, unknown>) && note.author.id === (currentUser as Record<string, unknown>).id ? (
                       <div className="flex items-center gap-2 ml-4">
                         <Button
                           variant="ghost"
@@ -510,7 +510,7 @@ export function ProjectDetail() {
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </Button>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               ))}

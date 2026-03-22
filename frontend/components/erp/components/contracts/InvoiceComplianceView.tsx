@@ -30,13 +30,13 @@ export const InvoiceComplianceView: React.FC<InvoiceComplianceViewProps> = ({
   const [result, setResult] = React.useState<InvoiceComplianceResult | null>(null);
 
   const checkMutation = useMutation({
-    mutationFn: () => api.checkInvoiceCompliance(invoiceId),
+    mutationFn: () => api.contracts.checkInvoiceCompliance(invoiceId),
     onSuccess: (data) => setResult(data),
     onError: (error) => toast.error(error instanceof Error ? error.message : 'Ошибка'),
   });
 
   const autoLinkMutation = useMutation({
-    mutationFn: () => api.autoLinkInvoice(invoiceId),
+    mutationFn: () => api.contracts.autoLinkInvoice(invoiceId),
     onSuccess: (data) => {
       setResult(data);
       toast.success('Авто-сопоставление выполнено');

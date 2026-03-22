@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
-} from './ui/alert-dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { Label } from './ui/label';
-import { Card } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import referencesService, { Resource } from '../services/referencesService';
 import { 
@@ -40,7 +40,7 @@ import {
   Trash2,
   Loader2
 } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from '@/components/common/ImageWithFallback';
 import ProviderSelection from './ProviderSelection';
 
 interface ResourceDetailDialogProps {
@@ -132,7 +132,7 @@ export default function ResourceDetailDialog({
       });
       
       setHasChanges(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading resource:', error);
       toast.error('Ошибка загрузки источника');
     } finally {
@@ -164,12 +164,13 @@ export default function ResourceDetailDialog({
       
       // Перезагрузка данных
       await loadResource();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving resource:', error);
-      
+
       // Обработка ошибок валидации
-      if (error.response?.data) {
-        const errors = error.response.data;
+      const axios = await import('axios');
+      if (axios.default.isAxiosError(error) && error.response?.data) {
+        const errors = error.response.data as Record<string, string | string[]>;
         Object.keys(errors).forEach(key => {
           const message = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
           toast.error(`${key}: ${message}`);
@@ -182,7 +183,7 @@ export default function ResourceDetailDialog({
     }
   };
 
-  const handleFieldChange = (field: string, value: any) => {
+  const handleFieldChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
@@ -286,11 +287,14 @@ export default function ResourceDetailDialog({
         });
       }, 60000);
       
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.detail 
-        || err.response?.data?.error 
-        || err.message 
-        || 'Неизвестная ошибка';
+    } catch (err: unknown) {
+      let errorMessage = 'Неизвестная ошибка';
+      const axios = await import('axios');
+      if (axios.default.isAxiosError(err)) {
+        errorMessage = err.response?.data?.detail || err.response?.data?.error || err.message;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
 
       setSearchStatus({
         isRunning: false,
@@ -315,7 +319,7 @@ export default function ResourceDetailDialog({
       if (onUpdate) {
         onUpdate();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting resource:', error);
       toast.error('Ошибка удаления источника');
     } finally {

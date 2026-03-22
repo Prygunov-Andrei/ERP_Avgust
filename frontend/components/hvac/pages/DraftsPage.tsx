@@ -2,20 +2,20 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from '@/hooks/erp-router';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { Checkbox } from '../components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import newsService, { News } from '../services/newsService';
 import referencesService from '../services/referencesService';
 import { toast } from 'sonner';
 import { Edit, Trash2, Send, FileText, RefreshCw, Clock, Sparkles, X } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { ImageWithFallback } from '@/components/common/ImageWithFallback';
 import { stripHtml, extractFirstImageFromHtml } from '../utils/htmlHelpers';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Progress } from '../components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 
 export default function DraftsPage() {
   const navigate = useNavigate();
@@ -194,7 +194,7 @@ export default function DraftsPage() {
   };
 
   const handleDateFilterChange = (value: string) => {
-    setDateFilter(value as any);
+    setDateFilter(value as typeof dateFilter);
     
     let filterDate: string | undefined;
     const now = new Date();

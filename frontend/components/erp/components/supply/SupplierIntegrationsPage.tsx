@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
-import type { SupplierIntegration, SupplierSyncStatus } from '@/types/supplier';
+import type { SupplierIntegration, SupplierSyncStatus, SupplierSyncLog } from '@/types/supplier';
 
 export function SupplierIntegrationsPage() {
   const navigate = useNavigate();
@@ -24,19 +24,20 @@ export function SupplierIntegrationsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const data = await (api as any).getSupplierIntegrations();
+      const data = await api.supply.getSupplierIntegrations();
       setIntegrations(data.results || []);
       // Загрузить статусы для каждой
       for (const integration of (data.results || [])) {
         try {
-          const status = await (api as any).getSupplierSyncStatus(integration.id);
+          const status = await api.supply.getSupplierSyncStatus(integration.id);
           setStatuses(prev => ({ ...prev, [integration.id]: status }));
         } catch {
           // ignore
         }
       }
-    } catch (err: any) {
-      toast.error(`Ошибка загрузки: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Ошибка загрузки: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -47,10 +48,11 @@ export function SupplierIntegrationsPage() {
   const handleSyncCatalog = async (id: number) => {
     try {
       setSyncingCatalog(id);
-      await (api as any).syncSupplierCatalog(id);
+      await api.supply.syncSupplierCatalog(id);
       toast.success('Импорт каталога запущен');
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(message);
     } finally {
       setSyncingCatalog(null);
     }
@@ -59,10 +61,11 @@ export function SupplierIntegrationsPage() {
   const handleSyncStock = async (id: number) => {
     try {
       setSyncingStock(id);
-      await (api as any).syncSupplierStock(id);
+      await api.supply.syncSupplierStock(id);
       toast.success('Синхронизация остатков запущена');
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(message);
     } finally {
       setSyncingStock(null);
     }
@@ -73,7 +76,7 @@ export function SupplierIntegrationsPage() {
     return new Date(date).toLocaleString('ru-RU');
   };
 
-  const getStatusBadge = (log: any | null) => {
+  const getStatusBadge = (log: SupplierSyncLog | null | undefined) => {
     if (!log) return <Badge variant="outline">Не выполнялась</Badge>;
     switch (log.status) {
       case 'success': return <Badge className="bg-green-100 text-green-700">Успешно</Badge>;
@@ -225,12 +228,13 @@ function CreateIntegrationDialog({ open, onOpenChange, onCreated }: {
     }
     try {
       setSaving(true);
-      await (api as any).createSupplierIntegration(form);
+      await api.supply.createSupplierIntegration({ ...form, provider: form.provider as 'breez' });
       toast.success('Поставщик добавлен');
       onCreated();
       setForm({ name: '', provider: 'breez', base_url: 'https://api.breez.ru/v1', auth_header: '' });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(message);
     } finally {
       setSaving(false);
     }

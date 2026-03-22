@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useCallback, ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
-import { kanbanApi, KanbanCard, KanbanColumn } from '@/lib/kanbanApi';
+import { api } from '@/lib/api';
+import type { KanbanCard, KanbanColumn } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -51,7 +52,7 @@ export const KanbanBoardPage = ({ boardKey, pageTitle, cardType, visibleColumnKe
 
   const boardQuery = useQuery({
     queryKey: ['kanban', 'board', boardKey],
-    queryFn: () => kanbanApi.getBoardByKey(boardKey),
+    queryFn: () => api.kanban.getBoardByKey(boardKey),
   });
 
   const boardId = boardQuery.data?.id || null;
@@ -59,18 +60,18 @@ export const KanbanBoardPage = ({ boardKey, pageTitle, cardType, visibleColumnKe
   const columnsQuery = useQuery({
     queryKey: ['kanban', 'columns', boardId],
     enabled: Boolean(boardId),
-    queryFn: () => kanbanApi.listColumns(boardId as string),
+    queryFn: () => api.kanban.listColumns(boardId as string),
   });
 
   const cardsQuery = useQuery({
     queryKey: ['kanban', 'cards', boardId, cardType],
     enabled: Boolean(boardId),
-    queryFn: () => kanbanApi.listCards(boardId as string, cardType),
+    queryFn: () => api.kanban.listCards(boardId as string, cardType),
   });
 
   const moveMutation = useMutation({
     mutationFn: ({ cardId, toColumnKey }: { cardId: string; toColumnKey: string }) =>
-      kanbanApi.moveCard(cardId, toColumnKey),
+      api.kanban.moveCard(cardId, toColumnKey),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['kanban', 'cards', boardId, cardType] });
     },
@@ -144,7 +145,7 @@ export const KanbanBoardPage = ({ boardKey, pageTitle, cardType, visibleColumnKe
           onSuccess: () => {
             toast.success('Карточка передана');
           },
-          onError: (err: any) => {
+          onError: (err: Error) => {
             toast.error(`Ошибка: ${err?.message || 'Не удалось переместить'}`);
           },
         },

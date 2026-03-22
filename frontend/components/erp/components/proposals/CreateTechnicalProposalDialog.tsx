@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useObjects, useLegalEntities } from '@/hooks';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 interface FrontOfWorkRow {
   front_item_id: number;
@@ -53,13 +53,13 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange }: CreateTech
   const { data: objectEstimates } = useQuery({
     queryKey: ['estimates', 'by-object', selectedObjectId],
     enabled: Boolean(selectedObjectId),
-    queryFn: () => api.getEstimates({ object: selectedObjectId }),
+    queryFn: () => api.estimates.getEstimates({ object: selectedObjectId }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
   });
 
   const { data: frontOfWorkItems, isLoading: isFrontLoading, isError: isFrontError } = useQuery({
     queryKey: ['front-of-work-items', 'active'],
-    queryFn: () => api.getFrontOfWorkItems({ is_active: true }),
+    queryFn: () => api.proposals.getFrontOfWorkItems({ is_active: true }),
     staleTime: CONSTANTS.REFERENCE_STALE_TIME_MS,
     enabled: open,
     retry: 1,
@@ -81,12 +81,12 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange }: CreateTech
 
   const saveMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      return api.createTechnicalProposal(data);
+      return api.proposals.createTechnicalProposal(data);
     },
     onSuccess: async (result) => {
       if (selectedEstimateIds.length > 0 && result?.id) {
         try {
-          await api.addEstimatesToTKP(result.id, selectedEstimateIds);
+          await api.proposals.addEstimatesToTKP(result.id, selectedEstimateIds);
         } catch {
           toast.error('ТКП создано, но не удалось привязать сметы');
         }
@@ -96,7 +96,7 @@ export function CreateTechnicalProposalDialog({ open, onOpenChange }: CreateTech
         const selectedRows = frontOfWorkRows.filter((r) => r.selected);
         for (const row of selectedRows) {
           try {
-            await api.createTKPFrontOfWork({
+            await api.proposals.createTKPFrontOfWork({
               tkp: result.id,
               front_item: row.front_item_id,
               when_text: row.when_text,

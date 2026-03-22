@@ -1,8 +1,8 @@
 # 🚀 Production Deployment - Quick Reference
 
 ## Server Info
-- **IP/Domain**: `SERVER_IP` / `PRODUCTION_DOMAIN` (текущий production: `72.56.111.111` / `avgust.prygunov.com`)
-- **SSH**: `ssh root@SERVER_IP` (пример: `ssh root@72.56.111.111`)
+- **IP/Domain**: `SERVER_IP` / `PRODUCTION_DOMAIN` (текущий production: `216.57.110.41` / `avgust.prygunov.com`)
+- **SSH**: `ssh root@SERVER_IP` (пример: `ssh root@216.57.110.41`)
 - **Password**: `<ROOT_PASSWORD>` (не хранить в репозитории)
 
 ## ⚡ Quick Deploy

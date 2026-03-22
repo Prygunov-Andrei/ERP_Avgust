@@ -65,40 +65,40 @@ export default function PortalRequestsPage() {
 
   const { data: requests, isLoading, refetch } = useQuery({
     queryKey: ['portal-requests', search, statusFilter],
-    queryFn: () => (api as any).getPortalRequests(params.toString()),
+    queryFn: () => api.supply.getPortalRequests(params.toString()),
     staleTime: 30_000,
   });
 
   const { data: stats } = useQuery({
     queryKey: ['portal-stats'],
-    queryFn: () => (api as any).getPortalStats(),
+    queryFn: () => api.supply.getPortalStats(),
     staleTime: 60_000,
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id: number) => (api as any).approvePortalRequest(id),
+    mutationFn: (id: number) => api.supply.approvePortalRequest(id),
     onSuccess: () => {
       toast.success('Смета подтверждена и отправлена клиенту');
       queryClient.invalidateQueries({ queryKey: ['portal-requests'] });
       setDetailOpen(false);
     },
-    onError: (err: any) => toast.error(err.message || 'Ошибка'),
+    onError: (err: Error) => toast.error(err.message || 'Ошибка'),
   });
 
   const rejectMutation = useMutation({
     mutationFn: ({ id, reason }: { id: number; reason: string }) =>
-      (api as any).rejectPortalRequest(id, reason),
+      api.supply.rejectPortalRequest(id, reason),
     onSuccess: () => {
       toast.success('Запрос отклонён');
       queryClient.invalidateQueries({ queryKey: ['portal-requests'] });
       setRejectOpen(false);
       setDetailOpen(false);
     },
-    onError: (err: any) => toast.error(err.message || 'Ошибка'),
+    onError: (err: Error) => toast.error(err.message || 'Ошибка'),
   });
 
   const openDetail = async (id: number) => {
-    const detail = await (api as any).getPortalRequestDetail(id);
+    const detail = await api.supply.getPortalRequestDetail(id);
     setSelectedRequest(detail);
     setDetailOpen(true);
   };
@@ -187,7 +187,7 @@ export default function PortalRequestsPage() {
               {isLoading && (
                 <tr><td colSpan={7} className="text-center p-8 text-muted-foreground">Загрузка...</td></tr>
               )}
-              {requests?.map((req: any) => (
+              {requests?.map((req) => (
                 <tr key={req.id} className="border-b hover:bg-muted/30 cursor-pointer" onClick={() => openDetail(req.id)}>
                   <td className="p-3">{req.id}</td>
                   <td className="p-3 font-medium">{req.project_name}</td>
@@ -201,16 +201,16 @@ export default function PortalRequestsPage() {
                     </Badge>
                   </td>
                   <td className="text-center p-3">
-                    {req.total_spec_items > 0 ? (
+                    {(req.total_spec_items ?? 0) > 0 ? (
                       <span>
                         <span className="text-green-600">{req.matched_exact}</span>
-                        {req.matched_analog > 0 && <span className="text-yellow-600"> / {req.matched_analog}</span>}
-                        {req.unmatched > 0 && <span className="text-red-600"> / {req.unmatched}</span>}
+                        {(req.matched_analog ?? 0) > 0 && <span className="text-yellow-600"> / {req.matched_analog}</span>}
+                        {(req.unmatched ?? 0) > 0 && <span className="text-red-600"> / {req.unmatched}</span>}
                       </span>
                     ) : '—'}
                   </td>
                   <td className="p-3 text-muted-foreground">
-                    {new Date(req.created_at).toLocaleDateString('ru-RU')}
+                    {req.created_at ? new Date(req.created_at).toLocaleDateString('ru-RU') : '—'}
                   </td>
                   <td className="text-center p-3">
                     <div className="flex justify-center gap-1">
@@ -301,7 +301,7 @@ export default function PortalRequestsPage() {
                   <div>
                     <h4 className="font-medium mb-2">Файлы</h4>
                     <div className="space-y-1 text-sm">
-                      {selectedRequest.files.map((f: any) => (
+                      {selectedRequest.files.map((f: { id: number; url: string; name: string; original_filename: string; parse_status: string; pages_total: number; pages_processed: number }) => (
                         <div key={f.id} className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground" />
                           <span>{f.original_filename}</span>
@@ -324,7 +324,7 @@ export default function PortalRequestsPage() {
                   <div>
                     <h4 className="font-medium mb-2">Заявки на звонок</h4>
                     <div className="space-y-1 text-sm">
-                      {selectedRequest.callbacks.map((cb: any) => (
+                      {selectedRequest.callbacks.map((cb: { id: number; phone: string; created_at: string; comment?: string; status?: string }) => (
                         <div key={cb.id} className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-muted-foreground" />
                           <span>{cb.phone}</span>

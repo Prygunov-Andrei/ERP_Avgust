@@ -20,7 +20,7 @@ export function SupplierCatalogPage() {
   const [categories, setCategories] = useState<SupplierCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
-  const [view, setView] = useState<'table' | 'cards'>(searchParams.get('view') as any || 'table');
+  const [view, setView] = useState<'table' | 'cards'>((searchParams.get('view') === 'cards' ? 'cards' : 'table'));
 
   const search = searchParams.get('search') || '';
   const brandFilter = searchParams.get('brand') || '';
@@ -45,11 +45,11 @@ export function SupplierCatalogPage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await (api as any).getSupplierProducts(buildParams());
+      const data = await api.supply.getSupplierProducts(buildParams());
       setProducts(data.results || []);
       setTotalCount(data.count || 0);
-    } catch (err: any) {
-      toast.error(`Ошибка загрузки: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Ошибка загрузки: ${(err instanceof Error ? err.message : String(err))}`);
     } finally {
       setLoading(false);
     }
@@ -58,8 +58,8 @@ export function SupplierCatalogPage() {
   const loadFilters = async () => {
     try {
       const [brandsData, catsData] = await Promise.all([
-        (api as any).getSupplierBrands('page_size=500'),
-        (api as any).getSupplierCategories('page_size=500'),
+        api.supply.getSupplierBrands('page_size=500'),
+        api.supply.getSupplierCategories('page_size=500'),
       ]);
       setBrands(brandsData.results || []);
       setCategories(catsData.results || []);

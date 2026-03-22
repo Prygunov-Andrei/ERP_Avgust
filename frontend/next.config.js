@@ -8,7 +8,6 @@ const nextConfig = {
   async rewrites() {
     const backendUrl = process.env.BACKEND_API_URL || 'http://backend:8000';
     const hvacUrl = process.env.HVAC_API_URL || 'http://hvac-backend:8001';
-    const kanbanUrl = process.env.KANBAN_API_URL || 'http://kanban-api:8010';
     const minioUrl = process.env.MINIO_URL || 'http://minio:9000';
 
     return [
@@ -18,8 +17,6 @@ const nextConfig = {
       { source: '/api/hvac/:path*', destination: `${hvacUrl}/api/hvac/:path*` },
       // Public portal API
       { source: '/api/public/:path*', destination: `${backendUrl}/api/public/:path*` },
-      // Kanban (merged into main backend — proxy kept for backwards compat during transition)
-      { source: '/kanban-api/:path*', destination: `${backendUrl}/kanban-api/:path*` },
       // Django admin
       { source: '/admin/:path*', destination: `${backendUrl}/admin/:path*` },
       { source: '/hvac-admin/:path*', destination: `${hvacUrl}/hvac-admin/:path*` },

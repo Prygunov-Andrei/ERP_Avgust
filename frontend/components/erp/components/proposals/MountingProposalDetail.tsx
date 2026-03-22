@@ -19,7 +19,7 @@ import {
   AlertCircle,
   ExternalLink,
 } from 'lucide-react';
-import { api, MountingProposalDetail as MPDetailType } from '@/lib/api';
+import { api, MountingProposalDetail as MPDetailType , unwrapResults, MountingProposalListItem, Counterparty} from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -38,7 +38,7 @@ import { toast } from 'sonner';
 import { CreateVersionDialog } from './CreateVersionDialog';
 import { formatDate, formatDateTime, formatCurrency, getStatusBadgeClass, getStatusLabel } from '@/lib/utils';
 import { useCounterparties } from '@/hooks';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 type TabType = 'info' | 'conditions';
 
@@ -73,25 +73,23 @@ export function MountingProposalDetail() {
 
   const { data: mp, isLoading } = useQuery({
     queryKey: ['mounting-proposal', id],
-    queryFn: () => api.getMountingProposal(parseInt(id!)),
+    queryFn: () => api.proposals.getMountingProposal(parseInt(id!)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: versions } = useQuery({
     queryKey: ['mounting-proposal-versions', id],
-    queryFn: () => api.getMountingProposalVersions(parseInt(id!)),
+    queryFn: () => api.proposals.getMountingProposalVersions(parseInt(id!)),
     enabled: !!id,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: counterpartiesData } = useCounterparties(undefined, { enabled: isEditing });
-  const counterparties = Array.isArray(counterpartiesData)
-    ? counterpartiesData
-    : (counterpartiesData as any)?.results ?? [];
+  const counterparties = unwrapResults(counterpartiesData);
 
   const updateMutation = useMutation({
-    mutationFn: (formData: FormData) => api.updateMountingProposal(parseInt(id!), formData),
+    mutationFn: (formData: FormData) => api.proposals.updateMountingProposal(parseInt(id!), formData),
     onSuccess: () => {
       toast.success('МП обновлено');
       queryClient.invalidateQueries({ queryKey: ['mounting-proposal', id] });
@@ -105,7 +103,7 @@ export function MountingProposalDetail() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => api.deleteMountingProposal(parseInt(id!)),
+    mutationFn: () => api.proposals.deleteMountingProposal(parseInt(id!)),
     onSuccess: () => {
       toast.success('МП удалено');
       navigate('/proposals/mounting-proposals');
@@ -116,7 +114,7 @@ export function MountingProposalDetail() {
   });
 
   const publishToTelegramMutation = useMutation({
-    mutationFn: () => api.publishMountingProposalToTelegram(parseInt(id!)),
+    mutationFn: () => api.proposals.publishMountingProposalToTelegram(parseInt(id!)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mounting-proposal', id] });
       queryClient.invalidateQueries({ queryKey: ['mounting-proposals'] });
@@ -379,11 +377,11 @@ export function MountingProposalDetail() {
 
 interface InfoTabProps {
   mp: MPDetailType;
-  versions?: any[];
+  versions?: MountingProposalListItem[];
   isEditing: boolean;
   editFormData: EditFormData | null;
   onFieldChange: (field: keyof EditFormData, value: string) => void;
-  counterparties: any[];
+  counterparties: Counterparty[];
 }
 
 function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counterparties }: InfoTabProps) {
@@ -416,7 +414,7 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
                 aria-label="Выбор исполнителя"
               >
                 <option value="">— Не указан —</option>
-                {counterparties.map((cp: any) => (
+                {counterparties.map((cp) => (
                   <option key={cp.id} value={cp.id}>{cp.name}</option>
                 ))}
               </select>
@@ -627,7 +625,7 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
             История версий ({versions.length})
           </h2>
           <div className="space-y-2">
-            {versions.map((version: any) => (
+            {versions.map((version) => (
               <div
                 key={version.id}
                 className={`p-3 rounded-lg border ${

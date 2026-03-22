@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { formatDate, formatAmount } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 const STATUS_LABELS: Record<InvoiceStatus, string> = {
   recognition: 'Распознавание',
@@ -85,7 +85,7 @@ export function InvoicesPage() {
 
   const { data: invoicesResponse, isLoading } = useQuery({
     queryKey: ['invoices', filters, searchQuery, currentPage, pageSize],
-    queryFn: () => (api as any).getInvoices(buildParams()),
+    queryFn: () => api.supply.getInvoices(buildParams()),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
@@ -95,7 +95,7 @@ export function InvoicesPage() {
 
   // Mutations
   const submitToRegistryMutation = useMutation({
-    mutationFn: (id: number) => (api as any).submitInvoiceToRegistry(id),
+    mutationFn: (id: number) => api.supply.submitInvoiceToRegistry(id),
     onSuccess: () => {
       toast.success('Счёт отправлен в реестр');
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
@@ -104,7 +104,7 @@ export function InvoicesPage() {
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id: number) => (api as any).approveInvoice(id),
+    mutationFn: (id: number) => api.supply.approveInvoice(id),
     onSuccess: () => {
       toast.success('Счёт одобрен');
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
@@ -114,7 +114,7 @@ export function InvoicesPage() {
 
   const rejectMutation = useMutation({
     mutationFn: ({ id, comment }: { id: number; comment: string }) =>
-      (api as any).rejectInvoice(id, comment),
+      api.supply.rejectInvoice(id, comment),
     onSuccess: () => {
       toast.success('Счёт отклонён');
       setRejectDialog({ open: false, invoiceId: null });
@@ -126,7 +126,7 @@ export function InvoicesPage() {
 
   const rescheduleMutation = useMutation({
     mutationFn: ({ id, newDate, comment }: { id: number; newDate: string; comment: string }) =>
-      (api as any).rescheduleInvoice(id, newDate, comment),
+      api.supply.rescheduleInvoice(id, newDate, comment),
     onSuccess: () => {
       toast.success('Счёт перенесён');
       setRescheduleDialog({ open: false, invoiceId: null });

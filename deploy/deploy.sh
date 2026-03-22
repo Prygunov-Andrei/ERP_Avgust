@@ -23,10 +23,30 @@ NC='\033[0m'
 echo -e "${GREEN}[1/9] Pulling latest code from GitHub...${NC}"
 git pull origin main
 
-# Проверка BANK_ENCRYPTION_KEY для банковского модуля
-if ! grep -q 'BANK_ENCRYPTION_KEY=.' .env 2>/dev/null; then
+# Проверка критических переменных окружения
+MISSING_SECRETS=0
+if ! grep -qE '^SECRET_KEY=.+' .env 2>/dev/null || grep -q 'django-insecure' .env 2>/dev/null; then
+    echo -e "${RED}ВНИМАНИЕ: SECRET_KEY не задан или содержит django-insecure! Это небезопасно для production.${NC}"
+    MISSING_SECRETS=1
+fi
+if ! grep -qE '^BANK_ENCRYPTION_KEY=.+' .env 2>/dev/null; then
     echo -e "${YELLOW}Внимание: BANK_ENCRYPTION_KEY не задан в .env. Добавьте его для работы банковского модуля.${NC}"
     echo "Сгенерировать: python3 -c \"from cryptography.fernet import Fernet; print('BANK_ENCRYPTION_KEY=' + Fernet.generate_key().decode())\""
+fi
+if ! grep -qE '^JWT_PRIVATE_KEY=.+' .env 2>/dev/null && ! grep -qE '^SIGNING_KEY=.+' .env 2>/dev/null; then
+    echo -e "${YELLOW}Внимание: JWT_PRIVATE_KEY / SIGNING_KEY не задан. JWT аутентификация может работать с дефолтным SECRET_KEY.${NC}"
+fi
+if grep -qE '^DEBUG=True' .env 2>/dev/null; then
+    echo -e "${RED}ВНИМАНИЕ: DEBUG=True в production! Это небезопасно.${NC}"
+    MISSING_SECRETS=1
+fi
+if [ "$MISSING_SECRETS" -eq 1 ]; then
+    echo -e "${YELLOW}Продолжить деплой? (y/N)${NC}"
+    read -r -t 10 REPLY || REPLY="y"
+    if [ "$REPLY" != "y" ] && [ "$REPLY" != "Y" ]; then
+        echo "Деплой отменён."
+        exit 1
+    fi
 fi
 
 echo -e "${GREEN}[2/9] Backing up database before deploy...${NC}"

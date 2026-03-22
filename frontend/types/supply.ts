@@ -125,6 +125,8 @@ export interface Invoice {
   approved_at: string | null;
   paid_at: string | null;
   is_overdue: boolean;
+  is_debt?: boolean;
+  number?: string;
   items: InvoiceItem[];
   events: InvoiceEvent[];
   created_at: string;

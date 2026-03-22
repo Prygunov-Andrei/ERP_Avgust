@@ -34,7 +34,7 @@ import { formatAmount } from '@/lib/utils';
 
 // ─── Статус-бейджи ──────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   draft: { label: 'Черновик', color: 'bg-gray-100 text-gray-700', icon: FileText },
   pending_approval: { label: 'На согласовании', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   approved: { label: 'Одобрено', color: 'bg-green-100 text-green-700', icon: Check },
@@ -67,7 +67,7 @@ export const BankPaymentOrders = () => {
 
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ['bank-payment-orders', filterStatus],
-    queryFn: () => api.getBankPaymentOrders({ status: filterStatus !== 'all' ? filterStatus : undefined }),
+    queryFn: () => api.banking.getBankPaymentOrders({ status: filterStatus !== 'all' ? filterStatus : undefined }),
   });
 
   const orders = ordersData?.results || [];
@@ -251,16 +251,16 @@ const CreatePaymentOrderForm = ({ onSuccess, initialData }: CreatePaymentOrderFo
 
   const { data: bankAccounts } = useQuery({
     queryKey: ['bank-accounts'],
-    queryFn: () => api.getBankAccounts(),
+    queryFn: () => api.banking.getBankAccounts(),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateBankPaymentOrderData) => api.createBankPaymentOrder(data),
+    mutationFn: (data: CreateBankPaymentOrderData) => api.banking.createBankPaymentOrder(data),
     onSuccess: () => {
       toast.success('Платёжное поручение создано');
       onSuccess();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Ошибка: ${error.message}`);
     },
   });
@@ -457,35 +457,35 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
 
   const { data: events, isLoading: eventsLoading } = useQuery({
     queryKey: ['bank-payment-order-events', order.id],
-    queryFn: () => api.getBankPaymentOrderEvents(order.id),
+    queryFn: () => api.banking.getBankPaymentOrderEvents(order.id),
   });
 
   const submitMutation = useMutation({
-    mutationFn: () => api.submitBankPaymentOrder(order.id),
+    mutationFn: () => api.banking.submitBankPaymentOrder(order.id),
     onSuccess: (data) => { onUpdate(data); toast.success('Отправлено на согласование'); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const approveMutation = useMutation({
-    mutationFn: () => api.approveBankPaymentOrder(order.id, { comment: approveComment }),
+    mutationFn: () => api.banking.approveBankPaymentOrder(order.id, { comment: approveComment }),
     onSuccess: (data) => { onUpdate(data); toast.success('Платёж одобрен'); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const rejectMutation = useMutation({
-    mutationFn: () => api.rejectBankPaymentOrder(order.id, rejectComment),
+    mutationFn: () => api.banking.rejectBankPaymentOrder(order.id, rejectComment),
     onSuccess: (data) => { onUpdate(data); toast.success('Платёж отклонён'); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const executeMutation = useMutation({
-    mutationFn: () => api.executeBankPaymentOrder(order.id),
+    mutationFn: () => api.banking.executeBankPaymentOrder(order.id),
     onSuccess: (data) => { onUpdate(data); toast.success('Отправлено в банк'); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const rescheduleMutation = useMutation({
-    mutationFn: () => api.rescheduleBankPaymentOrder(order.id, rescheduleDate, rescheduleComment),
+    mutationFn: () => api.banking.rescheduleBankPaymentOrder(order.id, rescheduleDate, rescheduleComment),
     onSuccess: (data) => {
       onUpdate(data);
       setIsRescheduleOpen(false);
@@ -493,7 +493,7 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
       setRescheduleComment('');
       toast.success('Дата оплаты перенесена');
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   return (
@@ -681,9 +681,9 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
                     {event.event_type === 'rescheduled' && event.old_value && event.new_value && (
                       <div className="flex items-center gap-2 mt-1 text-xs text-orange-700 bg-orange-50 px-2 py-1 rounded">
                         <CalendarDays className="w-3 h-3" />
-                        {event.old_value.payment_date}
+                        {String(event.old_value.payment_date)}
                         <ArrowRight className="w-3 h-3" />
-                        {event.new_value.payment_date}
+                        {String(event.new_value.payment_date)}
                       </div>
                     )}
 

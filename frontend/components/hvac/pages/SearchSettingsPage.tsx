@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 
-import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
   Settings, 
   Plus, 
@@ -29,7 +29,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/ui/table';
+} from '@/components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,14 +39,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../components/ui/alert-dialog';
+} from '@/components/ui/alert-dialog';
 
 export default function SearchSettingsPage() {
   const { user } = useAuth();
   const [activeConfig, setActiveConfig] = useState<SearchConfiguration | null>(null);
   const [configurations, setConfigurations] = useState<SearchConfigurationListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState<SearchConfiguration | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -73,9 +73,9 @@ export default function SearchSettingsPage() {
       
       setActiveConfig(active);
       setConfigurations(list);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading search configurations:', err);
-      setError(err);
+      setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ export default function SearchSettingsPage() {
       await searchConfigService.activateConfiguration(id);
       toast.success('Конфигурация активирована');
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error activating configuration:', err);
       toast.error('Ошибка активации конфигурации');
     }
@@ -97,7 +97,7 @@ export default function SearchSettingsPage() {
       await searchConfigService.duplicateConfiguration(id);
       toast.success('Конфигурация дублирована');
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error duplicating configuration:', err);
       toast.error('Ошибка дублирования конфигурации');
     }
@@ -113,7 +113,7 @@ export default function SearchSettingsPage() {
       setDeleteConfirmOpen(false);
       setConfigToDelete(null);
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting configuration:', err);
       toast.error('Ошибка удаления конфигурации');
     } finally {
@@ -126,7 +126,7 @@ export default function SearchSettingsPage() {
       const config = await searchConfigService.getConfiguration(id);
       setSelectedConfig(config);
       setFormDialogOpen(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading configuration:', err);
       toast.error('Ошибка загрузки конфигурации');
     }

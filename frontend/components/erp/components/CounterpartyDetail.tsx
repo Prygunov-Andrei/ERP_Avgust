@@ -51,7 +51,7 @@ export function CounterpartyDetail() {
   // Загрузка контрагента
   const { data: counterparty, isLoading, error } = useQuery({
     queryKey: ['counterparty', counterpartyId],
-    queryFn: () => api.getCounterparty(counterpartyId),
+    queryFn: () => api.core.getCounterparty(counterpartyId),
     enabled: !!counterpartyId,
   });
 
@@ -154,14 +154,14 @@ function MainTab({ counterparty }: { counterparty: Counterparty }) {
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<CreateCounterpartyData>) =>
-      api.updateCounterparty(counterparty.id, data),
+      api.core.updateCounterparty(counterparty.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['counterparty', counterparty.id] });
       queryClient.invalidateQueries({ queryKey: ['counterparties'] });
       setIsEditing(false);
       toast.success('Контрагент обновлен');
     },
-    onError: (e: any) => toast.error(`Ошибка: ${e?.message}`),
+    onError: (e: Error) => toast.error(`Ошибка: ${e?.message}`),
   });
 
   const handleSave = () => {
@@ -250,7 +250,7 @@ function MainTab({ counterparty }: { counterparty: Counterparty }) {
         </div>
         <div>
           <Label>Правовая форма</Label>
-          <Select value={formData.legal_form} onValueChange={(v: any) => setFormData({ ...formData, legal_form: v })}>
+          <Select value={formData.legal_form} onValueChange={(v: string) => setFormData({ ...formData, legal_form: v })}>
             <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="ooo">ООО</SelectItem>
@@ -262,7 +262,7 @@ function MainTab({ counterparty }: { counterparty: Counterparty }) {
         </div>
         <div>
           <Label>Тип</Label>
-          <Select value={formData.type} onValueChange={(v: any) => setFormData({ ...formData, type: v, vendor_subtype: v === 'customer' ? null : formData.vendor_subtype })}>
+          <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as CreateCounterpartyData['type'], vendor_subtype: v === 'customer' ? null : formData.vendor_subtype })}>
             <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="customer">Заказчик</SelectItem>
@@ -274,7 +274,7 @@ function MainTab({ counterparty }: { counterparty: Counterparty }) {
         {showVendorSubtype && (
           <div>
             <Label>Подтип</Label>
-            <Select value={formData.vendor_subtype || 'null'} onValueChange={(v: any) => setFormData({ ...formData, vendor_subtype: v === 'null' ? null : v })}>
+            <Select value={formData.vendor_subtype || 'null'} onValueChange={(v) => setFormData({ ...formData, vendor_subtype: v === 'null' ? null : v as CreateCounterpartyData['vendor_subtype'] })}>
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="null">Не указано</SelectItem>
@@ -316,26 +316,26 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
   // Статистика API
   const { data: stats } = useQuery({
     queryKey: ['fns-stats'],
-    queryFn: () => api.fnsGetStats(),
+    queryFn: () => api.core.fnsGetStats(),
     staleTime: 5 * 60_000,
   });
 
   // Список отчетов
   const { data: reports, isLoading: reportsLoading } = useQuery({
     queryKey: ['fns-reports', counterpartyId],
-    queryFn: () => api.fnsGetReports({ counterparty: counterpartyId }),
+    queryFn: () => api.core.fnsGetReports({ counterparty: counterpartyId }),
   });
 
   // Детали выбранного отчета
   const { data: reportDetail, isLoading: detailLoading } = useQuery({
     queryKey: ['fns-report', selectedReportId],
-    queryFn: () => api.fnsGetReport(selectedReportId!),
+    queryFn: () => api.core.fnsGetReport(selectedReportId!),
     enabled: !!selectedReportId,
   });
 
   // Создание отчетов
   const createMutation = useMutation({
-    mutationFn: (types: string[]) => api.fnsCreateReports(counterpartyId, types),
+    mutationFn: (types: string[]) => api.core.fnsCreateReports(counterpartyId, types),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['fns-reports', counterpartyId] });
       queryClient.invalidateQueries({ queryKey: ['fns-stats'] });
@@ -344,7 +344,7 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
         data.errors.forEach((e) => toast.error(`${e.report_type}: ${e.error}`));
       }
     },
-    onError: (e: any) => toast.error(`Ошибка: ${e?.message}`),
+    onError: (e: Error) => toast.error(`Ошибка: ${e?.message}`),
   });
 
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['check', 'egr']);
@@ -611,26 +611,30 @@ function ReportDetailView({ report }: { report: FNSReport }) {
   return (
     <div className="space-y-4">
       {/* Summary для check */}
-      {report.report_type === 'check' && report.summary && (
-        <div className="space-y-3">
-          {(report.summary as any).negative?.length > 0 && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="text-sm font-medium text-red-700 mb-2">Негативные факторы</div>
-              {((report.summary as any).negative as string[]).map((item, i) => (
-                <div key={i} className="text-xs text-red-600 mb-0.5">- {item}</div>
-              ))}
-            </div>
-          )}
-          {(report.summary as any).positive?.length > 0 && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="text-sm font-medium text-green-700 mb-2">Позитивные факторы</div>
-              {((report.summary as any).positive as string[]).map((item, i) => (
-                <div key={i} className="text-xs text-green-600 mb-0.5">+ {item}</div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {report.report_type === 'check' && report.summary && (() => {
+        const negative = Array.isArray(report.summary?.negative) ? report.summary.negative as string[] : [];
+        const positive = Array.isArray(report.summary?.positive) ? report.summary.positive as string[] : [];
+        return (
+          <div className="space-y-3">
+            {negative.length > 0 && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="text-sm font-medium text-red-700 mb-2">Негативные факторы</div>
+                {negative.map((item, i) => (
+                  <div key={i} className="text-xs text-red-600 mb-0.5">- {item}</div>
+                ))}
+              </div>
+            )}
+            {positive.length > 0 && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="text-sm font-medium text-green-700 mb-2">Позитивные факторы</div>
+                {positive.map((item, i) => (
+                  <div key={i} className="text-xs text-green-600 mb-0.5">+ {item}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* EGR structured data */}
       {report.report_type === 'egr' && report.data && (
@@ -663,42 +667,42 @@ function ReportDetailView({ report }: { report: FNSReport }) {
 }
 
 function EgrStructuredView({ data }: { data: Record<string, unknown> }) {
-  const items = (data as any).items || [];
+  const items = Array.isArray(data.items) ? data.items as Record<string, unknown>[] : [];
   if (items.length === 0) return <p className="text-sm text-gray-500">Нет данных ЕГРЮЛ</p>;
 
-  const company = items[0] || {};
+  const company = items[0] || {} as Record<string, unknown>;
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {company['НаимПолнЮЛ'] && (
+        {Boolean(company['НаимПолнЮЛ']) && (
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="text-xs text-gray-500 flex items-center gap-1"><Building2 className="w-3 h-3" /> Полное наименование</div>
-            <div className="text-sm mt-1">{company['НаимПолнЮЛ']}</div>
+            <div className="text-sm mt-1">{String(company['НаимПолнЮЛ'])}</div>
           </div>
         )}
-        {company['АдресПолн'] && (
+        {Boolean(company['АдресПолн']) && (
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="text-xs text-gray-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> Адрес</div>
-            <div className="text-sm mt-1">{company['АдресПолн']}</div>
+            <div className="text-sm mt-1">{String(company['АдресПолн'])}</div>
           </div>
         )}
-        {company['ДатаРег'] && (
+        {Boolean(company['ДатаРег']) && (
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3" /> Дата регистрации</div>
-            <div className="text-sm mt-1">{company['ДатаРег']}</div>
+            <div className="text-sm mt-1">{String(company['ДатаРег'])}</div>
           </div>
         )}
-        {company['Статус'] && (
+        {Boolean(company['Статус']) && (
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="text-xs text-gray-500 flex items-center gap-1"><Hash className="w-3 h-3" /> Статус</div>
-            <div className="text-sm mt-1">{company['Статус']}</div>
+            <div className="text-sm mt-1">{String(company['Статус'])}</div>
           </div>
         )}
-        {company['ОснВидДеят'] && (
+        {Boolean(company['ОснВидДеят']) && (
           <div className="p-3 bg-gray-50 rounded-lg md:col-span-2">
             <div className="text-xs text-gray-500">Основной вид деятельности</div>
-            <div className="text-sm mt-1">{company['ОснВидДеят']}</div>
+            <div className="text-sm mt-1">{String(company['ОснВидДеят'])}</div>
           </div>
         )}
       </div>
@@ -707,11 +711,11 @@ function EgrStructuredView({ data }: { data: Record<string, unknown> }) {
 }
 
 function BoStructuredView({ data }: { data: Record<string, unknown> }) {
-  const items = (data as any).items || [];
+  const items = Array.isArray(data.items) ? data.items as Record<string, unknown>[] : [];
   if (items.length === 0) return <p className="text-sm text-gray-500">Нет бухгалтерской отчетности</p>;
 
-  const company = items[0] || {};
-  const bo = company['БухОтworking'] || company['БухОтч'] || {};
+  const company = items[0] || {} as Record<string, unknown>;
+  const bo = (company['БухОтworking'] || company['БухОтч'] || {}) as Record<string, unknown>;
 
   // Попробуем извлечь данные по годам
   const years = Object.keys(bo).filter((k) => /^\d{4}$/.test(k)).sort().reverse();
@@ -744,7 +748,7 @@ function BoStructuredView({ data }: { data: Record<string, unknown> }) {
               <tr key={code} className="border-b last:border-0">
                 <td className="py-2 px-3 text-gray-700">{labels[code] || code}</td>
                 {years.map((y) => {
-                  const yearData = (bo as any)[y] || {};
+                  const yearData = (bo[y] || {}) as Record<string, unknown>;
                   const val = yearData[code];
                   return (
                     <td key={y} className="py-2 px-3 text-right font-mono text-gray-600">
@@ -797,13 +801,13 @@ function NotesTab({ counterparty }: { counterparty: Counterparty }) {
 
   const saveMutation = useMutation({
     mutationFn: (data: { notes: string }) =>
-      api.updateCounterparty(counterparty.id, data),
+      api.core.updateCounterparty(counterparty.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['counterparty', counterparty.id] });
       queryClient.invalidateQueries({ queryKey: ['counterparties'] });
       toast.success('Заметки сохранены');
     },
-    onError: (e: any) => toast.error(`Ошибка: ${e?.message}`),
+    onError: (e: Error) => toast.error(`Ошибка: ${e?.message}`),
   });
 
   const handleSave = () => {
@@ -851,9 +855,9 @@ function ContractsTab({ counterpartyId }: { counterpartyId: number }) {
   const { data: contracts, isLoading } = useQuery({
     queryKey: ['contracts', { counterparty: counterpartyId }],
     queryFn: async () => {
-      const response = await api.getContracts();
+      const response = await api.contracts.getContracts();
       const results = response?.results || [];
-      return results.filter((c: any) => c.counterparty === counterpartyId);
+      return results.filter((c) => c.counterparty === counterpartyId);
     },
   });
 
@@ -866,7 +870,7 @@ function ContractsTab({ counterpartyId }: { counterpartyId: number }) {
         <p className="text-sm text-gray-500">Нет договоров с этим контрагентом</p>
       ) : (
         <div className="space-y-2">
-          {contracts.map((contract: any) => (
+          {contracts.map((contract) => (
             <div
               key={contract.id}
               className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer"

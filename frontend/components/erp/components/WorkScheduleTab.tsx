@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { formatDate, formatAmount, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../constants';
+import { CONSTANTS } from '@/constants';
 
 interface WorkScheduleTabProps {
   contractId: number;
@@ -36,19 +36,19 @@ export function WorkScheduleTab({ contractId }: WorkScheduleTabProps) {
   // Получаем данные договора для валидации дат
   const { data: contract } = useQuery<ContractDetail>({
     queryKey: ['contract', contractId],
-    queryFn: () => api.getContractDetail(contractId),
+    queryFn: () => api.contracts.getContractDetail(contractId),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const { data: scheduleItems, isLoading } = useQuery({
     queryKey: ['work-schedule', contractId],
-    queryFn: () => api.getContractSchedule(contractId),
+    queryFn: () => api.contracts.getContractSchedule(contractId),
     enabled: !!contractId,
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
   });
 
   const createMutation = useMutation({
-    mutationFn: api.createWorkScheduleItem.bind(api),
+    mutationFn: api.contracts.createWorkScheduleItem.bind(api.contracts),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-schedule', contractId] });
       setIsDialogOpen(false);
@@ -62,7 +62,7 @@ export function WorkScheduleTab({ contractId }: WorkScheduleTabProps) {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<CreateWorkScheduleItemData> }) =>
-      api.updateWorkScheduleItem(id, data),
+      api.contracts.updateWorkScheduleItem(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-schedule', contractId] });
       setIsDialogOpen(false);
@@ -75,7 +75,7 @@ export function WorkScheduleTab({ contractId }: WorkScheduleTabProps) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.deleteWorkScheduleItem(id),
+    mutationFn: (id: number) => api.contracts.deleteWorkScheduleItem(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-schedule', contractId] });
       toast.success('Задача удалена');
@@ -333,7 +333,7 @@ function ScheduleItemForm({ contractId, contract, item, onSubmit, isLoading }: S
 
     onSubmit({
       ...formData,
-      ...(item && { status } as any), // Статус только при редактировании
+      ...(item && { status } as Partial<CreateWorkScheduleItemData>), // Статус только при редактировании
     });
   };
 

@@ -525,6 +525,67 @@ class InvoiceService:
         return count
 
     # =========================================================================
+    # Массовый импорт
+    # =========================================================================
+
+    SUPPORTED_EXTENSIONS = {
+        '.pdf', '.xlsx', '.xls', '.png', '.jpg', '.jpeg',
+    }
+
+    @staticmethod
+    def bulk_upload(files, user, estimate=None):
+        """
+        Массовая загрузка счетов.
+
+        Создаёт BulkImportSession, для каждого файла создаёт
+        Invoice(RECOGNITION) и ставит Celery task.
+
+        Returns:
+            (session, accepted_count)
+        """
+        from pathlib import Path
+        from payments.models import BulkImportSession
+        from supply.tasks import recognize_invoice, finalize_bulk_import
+
+        session = BulkImportSession.objects.create(
+            created_by=user,
+            total_files=len(files),
+        )
+
+        accepted = 0
+        for f in files:
+            ext = Path(f.name).suffix.lower()
+            if ext not in InvoiceService.SUPPORTED_EXTENSIONS:
+                continue
+
+            invoice = Invoice.objects.create(
+                source=Invoice.Source.BULK_IMPORT,
+                status=Invoice.Status.RECOGNITION,
+                invoice_type=Invoice.InvoiceType.SUPPLIER,
+                created_by=user,
+                bulk_session=session,
+                estimate=estimate,
+                description=f'Массовый импорт: {f.name}',
+            )
+            invoice.invoice_file.save(f.name, f, save=True)
+            recognize_invoice.delay(
+                invoice.id, auto_counterparty=True,
+            )
+            accepted += 1
+
+        # Обновить total_files на реальное количество принятых
+        session.total_files = accepted
+        session.save(update_fields=['total_files'])
+
+        # Финализация сессии с запасом по времени
+        finalize_bulk_import.apply_async(
+            args=[session.id],
+            countdown=accepted * 10 + 30,
+        )
+
+        return session, accepted
+
+    # =========================================================================
     # Вспомогательные методы
     # =========================================================================
 

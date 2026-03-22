@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { CreateTechnicalProposalDialog } from './CreateTechnicalProposalDialog';
 import { useObjects, useLegalEntities } from '@/hooks';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import { CONSTANTS } from '../../constants';
+import { CONSTANTS } from '@/constants';
 
 const getDueDateStyle = (dueDate: string | null): string => {
   if (!dueDate) return '';
@@ -50,7 +50,7 @@ export function TechnicalProposalsList() {
 
   const { data: tkpData, isLoading } = useQuery({
     queryKey: ['technical-proposals', { search: searchQuery, object: objectFilter, legal_entity: legalEntityFilter, status: statusFilter }],
-    queryFn: () => api.getTechnicalProposals({
+    queryFn: () => api.proposals.getTechnicalProposals({
       search: searchQuery || undefined,
       object: objectFilter ? parseInt(objectFilter) : undefined,
       legal_entity: legalEntityFilter ? parseInt(legalEntityFilter) : undefined,

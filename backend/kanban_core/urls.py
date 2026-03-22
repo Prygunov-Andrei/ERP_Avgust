@@ -4,10 +4,10 @@ from kanban_core.views import BoardViewSet, ColumnViewSet, CardViewSet, Attachme
 
 
 router = DefaultRouter()
-router.register(r'v1/boards', BoardViewSet, basename='kanban-board')
-router.register(r'v1/columns', ColumnViewSet, basename='kanban-column')
-router.register(r'v1/cards', CardViewSet, basename='kanban-card')
-router.register(r'v1/attachments', AttachmentViewSet, basename='kanban-attachment')
+router.register(r'boards', BoardViewSet, basename='kanban-board')
+router.register(r'columns', ColumnViewSet, basename='kanban-column')
+router.register(r'cards', CardViewSet, basename='kanban-card')
+router.register(r'attachments', AttachmentViewSet, basename='kanban-attachment')
 
 urlpatterns = router.urls
 

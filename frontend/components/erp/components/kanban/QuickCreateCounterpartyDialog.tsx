@@ -34,7 +34,7 @@ export const QuickCreateCounterpartyDialog = ({ open, onOpenChange, onCreated }:
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      return api.createCounterparty({
+      return api.core.createCounterparty({
         name: form.name.trim(),
         inn: form.inn.trim(),
         kpp: form.kpp.trim() || undefined,
@@ -50,7 +50,7 @@ export const QuickCreateCounterpartyDialog = ({ open, onOpenChange, onCreated }:
       onCreated(created);
       onOpenChange(false);
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       const detail = err?.message || 'Не удалось создать контрагента';
       toast.error(detail);
     },

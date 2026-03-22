@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { RefreshCw, TrendingUp, BookOpen, Calendar, BarChart3, Star } from 'lucide-react';
 import MetricCard from './MetricCard';
 import CategoryChart from './CategoryChart';
@@ -11,14 +11,14 @@ import ApiErrorBanner from '../ApiErrorBanner';
 export default function SourceStatisticsDashboard() {
   const [statistics, setStatistics] = useState<StatisticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
 
   const loadStatistics = async () => {
     setLoading(true);
     try {
       const data = await referencesService.getStatisticsSummary();
       setStatistics(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err);
     } finally {
       setLoading(false);

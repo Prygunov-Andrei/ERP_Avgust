@@ -2,19 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@/hooks/erp-router';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Checkbox } from '../components/ui/checkbox';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import RichTextEditor from '../components/RichTextEditor';
 import newsService, { NewsCreateData, NewsUpdateData } from '../services/newsService';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Send } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
-import { Alert, AlertDescription } from '../components/ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ExternalLink, Sparkles } from 'lucide-react';
+import axios from 'axios';
 import { getServerBaseUrl, getMediaUrl } from '../config/api';
 import { processImageUrls } from '../utils/htmlHelpers';
 
@@ -74,7 +75,7 @@ export default function NewsEditor() {
       date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
       setPubDate(date.toISOString().slice(0, 16));
       setSourceUrl(news.source_url);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load news:', error);
       toast.error('Не удалось загрузить новость');
       navigate('/hvac/news');
@@ -88,11 +89,11 @@ export default function NewsEditor() {
       const media = await newsService.uploadMedia(file);
       toast.success('Изображение загружено');
       return media.url;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to upload image:', error);
-      
-      if (error.response?.data?.file) {
-        throw new Error(error.response.data.file[0]);
+
+      if (axios.isAxiosError(error) && error.response?.data?.file) {
+        throw new Error((error.response.data as Record<string, string[]>).file[0]);
       }
       throw new Error('Не удалось загрузить изображение');
     }
@@ -137,11 +138,11 @@ export default function NewsEditor() {
         toast.success('Черновик создан');
         navigate(`/hvac/news/edit/${news.id}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save draft:', error);
-      
-      if (error.response?.data) {
-        const errors = error.response.data;
+
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errors = error.response.data as Record<string, string[]>;
         Object.keys(errors).forEach(key => {
           toast.error(`${key}: ${errors[key][0]}`);
         });
@@ -199,11 +200,11 @@ export default function NewsEditor() {
       }
       
       navigate('/hvac/news');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to publish news:', error);
-      
-      if (error.response?.data) {
-        const errors = error.response.data;
+
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errors = error.response.data as Record<string, string[]>;
         Object.keys(errors).forEach(key => {
           toast.error(`${key}: ${errors[key][0]}`);
         });
@@ -343,7 +344,7 @@ export default function NewsEditor() {
                 <Label htmlFor="source-language">Исходный язык</Label>
                 <Select
                   value={sourceLanguage}
-                  onValueChange={(value: any) => setSourceLanguage(value)}
+                  onValueChange={(value: string) => setSourceLanguage(value as typeof sourceLanguage)}
                 >
                   <SelectTrigger id="source-language" className="mt-1">
                     <SelectValue />
@@ -361,7 +362,7 @@ export default function NewsEditor() {
                 <Label htmlFor="status">Статус</Label>
                 <Select
                   value={status}
-                  onValueChange={(value: any) => setStatus(value)}
+                  onValueChange={(value: string) => setStatus(value as typeof status)}
                 >
                   <SelectTrigger id="status" className="mt-1">
                     <SelectValue />
