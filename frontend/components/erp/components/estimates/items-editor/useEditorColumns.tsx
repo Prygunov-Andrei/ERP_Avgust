@@ -49,7 +49,7 @@ export function useEditorColumns({
             if (row.original._isSection) {
               if (field === 'name') {
                 return (
-                  <span className="font-semibold text-blue-700 text-sm">
+                  <span className="font-semibold text-primary text-sm">
                     {getValue() as string}
                   </span>
                 );

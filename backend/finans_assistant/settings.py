@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = BASE_DIR.parent
 
 # Загрузка переменных из .env файла (если существует)
 load_dotenv(BASE_DIR / '.env')
@@ -39,6 +40,8 @@ SECRET_KEY = _secret_key
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    'backend',
+    'backend:8000',
 ]
 
 # Production domain from environment variable
@@ -91,6 +94,7 @@ if PORTAL_DOMAIN:
 # Application definition
 
 INSTALLED_APPS = [
+    'modeltranslation',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -121,6 +125,11 @@ INSTALLED_APPS = [
     'supply',
     'supplier_integrations',
     'api_public',
+    'hvac_bridge',
+    'references',
+    'news',
+    'feedback',
+    'section_feedback',
     # Kanban (бывший отдельный сервис, теперь часть основного бэкенда)
     'kanban_core',
     'kanban_commercial',
@@ -136,6 +145,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Раздача static файлов (production)
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -201,13 +211,29 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
 USE_TZ = True
+
+LANGUAGES = [
+    ('ru', 'Russian'),
+    ('en', 'English'),
+    ('de', 'German'),
+    ('pt', 'Portuguese'),
+]
+
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'ru'
+MODELTRANSLATION_FALLBACK_LANGUAGES = {
+    'default': ('ru', 'en'),
+    'ru': ('en',),
+    'en': ('ru',),
+    'de': ('en', 'ru'),
+    'pt': ('en', 'ru'),
+}
 
 
 # Static files (CSS, JavaScript, Images)
@@ -219,6 +245,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files (загружаемые пользователями)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+HVAC_MEDIA_URL = '/hvac-media/'
+HVAC_STATIC_URL = '/hvac-static/'
 
 # Разрешаем iframe с того же домена (для просмотра PDF счетов)
 X_FRAME_OPTIONS = 'SAMEORIGIN'
@@ -270,6 +298,10 @@ else:
     PORTAL_DOMAIN = os.environ.get('PORTAL_DOMAIN', '')
     if PORTAL_DOMAIN:
         CORS_ALLOWED_ORIGINS.append(f"https://{PORTAL_DOMAIN}")
+    CORS_ALLOWED_ORIGINS.extend([
+        'https://hvac-info.com',
+        'https://www.hvac-info.com',
+    ])
     # Dev-режим портала
     CORS_ALLOWED_ORIGINS.append("http://localhost:3002")
 CORS_ALLOW_CREDENTIALS = True
@@ -410,6 +442,20 @@ BITRIX_WEBHOOK_ENABLED = os.environ.get('BITRIX_WEBHOOK_ENABLED', 'true').lower(
 
 # Service-to-service (kanban -> ERP)
 ERP_SERVICE_TOKEN = os.environ.get('ERP_SERVICE_TOKEN', '').strip()
+
+# HVAC / portal discovery settings
+XAI_API_KEY = os.environ.get('XAI_API_KEY', os.environ.get('GROK_API_KEY', '')).strip()
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', os.environ.get('GOOGLE_AI_API_KEY', '')).strip()
+TRANSLATION_API_KEY = os.environ.get('TRANSLATION_API_KEY', os.environ.get('OPENAI_API_KEY', '')).strip()
+TRANSLATION_ENABLED = os.environ.get(
+    'TRANSLATION_ENABLED',
+    'true' if TRANSLATION_API_KEY else 'false',
+).lower() in ('1', 'true', 'yes', 'on')
+CAPTCHA_TYPE = os.environ.get('CAPTCHA_TYPE', 'hcaptcha').strip() or 'hcaptcha'
+HCAPTCHA_SECRET_KEY = os.environ.get('HCAPTCHA_SECRET_KEY', '').strip()
+RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '').strip()
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '').strip()
 
 # =============================================================================
 # MinIO / S3 Configuration (для медиа сервиса фиксации работ)

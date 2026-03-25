@@ -105,14 +105,14 @@ export function CounterpartySelector({
                         {suggestion.name}
                         {suggestion.short_name && ` (${suggestion.short_name})`}
                       </span>
-                      <Badge className="ml-2 bg-yellow-100 text-yellow-800 text-xs">
+                      <Badge className="ml-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400 text-xs">
                         Похоже {(suggestion.score * 100).toFixed(0)}%
                       </Badge>
                     </div>
                   </SelectItem>
                 ))}
-                <div className="px-2 py-1 border-t border-gray-200 my-1">
-                  <span className="text-xs text-gray-500">Другие контрагенты:</span>
+                <div className="px-2 py-1 border-t border-border my-1">
+                  <span className="text-xs text-muted-foreground">Другие контрагенты:</span>
                 </div>
               </>
             )}
@@ -126,9 +126,9 @@ export function CounterpartySelector({
             ))}
 
             {/* Опция создания нового */}
-            <div className="border-t border-gray-200 mt-1">
+            <div className="border-t border-border mt-1">
               <SelectItem value="create-new">
-                <div className="flex items-center gap-2 text-blue-600">
+                <div className="flex items-center gap-2 text-primary">
                   <PlusCircle className="w-4 h-4" />
                   <span>Создать нового контрагента</span>
                 </div>
@@ -139,10 +139,10 @@ export function CounterpartySelector({
 
         {/* Показываем данные из парсинга если контрагент не найден */}
         {parsedVendor && !value && (
-          <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
+          <div className="text-xs text-muted-foreground bg-muted p-2 rounded border border-border">
             <div className="font-medium mb-1">Данные из счёта:</div>
             <div>{parsedVendor.name}</div>
-            <div className="text-gray-500">
+            <div className="text-muted-foreground">
               ИНН: {parsedVendor.inn}
               {parsedVendor.kpp && ` • КПП: ${parsedVendor.kpp}`}
             </div>

@@ -218,14 +218,14 @@ export function EstimateDetail() {
   };
 
   if (isLoading) {
-    return (<div className="p-8"><div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 text-gray-400 animate-spin" /></div></div>);
+    return (<div className="p-8"><div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 text-muted-foreground animate-spin" /></div></div>);
   }
 
   if (!estimate) {
     return (
       <div className="p-8"><div className="text-center py-12">
-        <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">Смета не найдена</p>
+        <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">Смета не найдена</p>
         <Button variant="outline" onClick={() => navigate('/estimates/estimates')} className="mt-4"><ArrowLeft className="w-4 h-4 mr-2" />Вернуться к списку</Button>
       </div></div>
     );
@@ -239,10 +239,10 @@ export function EstimateDetail() {
           <Button variant="ghost" size="sm" onClick={() => navigate('/estimates/estimates')}><ArrowLeft className="w-4 h-4 mr-2" />Назад</Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold text-gray-900">{estimate.number}</h1>
-              <span className="text-sm text-gray-500">v{estimate.version_number}</span>
+              <h1 className="text-2xl font-semibold text-foreground">{estimate.number}</h1>
+              <span className="text-sm text-muted-foreground">v{estimate.version_number}</span>
             </div>
-            <p className="text-sm text-gray-500 mt-1">{estimate.name}</p>
+            <p className="text-sm text-muted-foreground mt-1">{estimate.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -257,7 +257,7 @@ export function EstimateDetail() {
               a.href = url; a.download = `Смета_${estimate?.number || id}.xlsx`; a.click(); URL.revokeObjectURL(url);
             } catch { toast.error('Ошибка экспорта'); }
           }}><Download className="w-4 h-4 mr-2" />Экспорт в Excel</Button>
-          <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200" onClick={() => { setDeleteConfirmName(''); setDeleteEstimateOpen(true); }}><Trash2 className="w-4 h-4 mr-2" />Удалить</Button>
+          <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-800" onClick={() => { setDeleteConfirmName(''); setDeleteEstimateOpen(true); }}><Trash2 className="w-4 h-4 mr-2" />Удалить</Button>
         </div>
       </div>
 
@@ -288,7 +288,7 @@ export function EstimateDetail() {
         </TabsContent>
 
         <TabsContent value="items" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-xl shadow-sm border border-border p-6">
             <EstimateItemsEditor estimateId={Number(id)} readOnly={estimate?.status === 'approved' || estimate?.status === 'agreed'} columnConfig={estimate?.column_config} onOpenColumnConfig={() => setColumnConfigOpen(true)} />
           </div>
         </TabsContent>
@@ -307,7 +307,7 @@ export function EstimateDetail() {
         </TabsContent>
 
         <TabsContent value="supplier-invoices" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-xl shadow-sm border border-border p-6">
             <EstimateSupplierInvoices estimateId={Number(id)} />
           </div>
         </TabsContent>

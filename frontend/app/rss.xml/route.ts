@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const HVAC_API = process.env.HVAC_API_URL || 'http://hvac-backend:8001';
+const BACKEND_API = (process.env.BACKEND_API_URL || 'http://backend:8000').replace(/\/$/, '');
 const SITE_URL = 'https://hvac-info.com';
 
 function escapeXml(str: string): string {
@@ -18,7 +18,7 @@ function stripHtml(html: string): string {
 
 export async function GET() {
   try {
-    const res = await fetch(`${HVAC_API}/api/hvac/news/?page_size=50`, {
+    const res = await fetch(`${BACKEND_API}/api/v1/hvac/public/news/?page_size=50`, {
       next: { revalidate: 300 },
     });
     const data = await res.json();

@@ -86,19 +86,10 @@ export default function ApiDiagnostics({ error, onSuccess }: ApiDiagnosticsProps
   };
 
   const handleSave = () => {
-    const urlToSave = selectedPreset === 'custom' ? customUrl : presets.find(p => p.id === selectedPreset)?.url || '';
-    
-    if (!urlToSave) {
-      setTestResult({ success: false, message: 'Введите URL для сохранения' });
-      return;
-    }
-
-    localStorage.setItem('api_base_url', urlToSave);
-    setTestResult({ success: true, message: 'URL сохранен! Перезагружаю...' });
-    
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+    setTestResult({
+      success: true,
+      message: 'Локальная подмена URL отключена: HVAC admin использует внутренний BFF-маршрут.',
+    });
   };
 
   return (
@@ -109,7 +100,7 @@ export default function ApiDiagnostics({ error, onSuccess }: ApiDiagnosticsProps
           <CardTitle>Проблема подключения к API</CardTitle>
         </div>
         <CardDescription>
-          Backend API недоступен. Проверьте, что Django сервер и ngrok туннель запущены.
+          HVAC admin использует внутренний BFF-маршрут. Проверьте доступность ERP backend и HVAC backend.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

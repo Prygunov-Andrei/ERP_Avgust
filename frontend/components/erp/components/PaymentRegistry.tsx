@@ -224,11 +224,11 @@ export function PaymentRegistry() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'planned': return 'bg-yellow-100 text-yellow-700';
-      case 'approved': return 'bg-blue-100 text-blue-700';
-      case 'paid': return 'bg-green-100 text-green-700';
-      case 'cancelled': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'planned': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400';
+      case 'approved': return 'bg-blue-100 dark:bg-blue-900/30 text-primary';
+      case 'paid': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+      case 'cancelled': return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -245,7 +245,7 @@ export function PaymentRegistry() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl mb-1">Реестр платежей</h1>
-          <p className="text-gray-500 text-sm">Согласование расходов · Всего: {totalCount}</p>
+          <p className="text-muted-foreground text-sm">Согласование расходов · Всего: {totalCount}</p>
         </div>
         {/* Кнопка "Создать" убрана - заявки создаются автоматически при создании expense платежей */}
       </div>
@@ -253,7 +253,7 @@ export function PaymentRegistry() {
       <Card className="p-6">
         {/* Фильтр по статусу */}
         <div className="mb-6 flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-gray-600 mr-2">Статус:</span>
+          <span className="text-sm text-muted-foreground mr-2">Статус:</span>
           <button
             onClick={() => {
               setStatusFilter('all');
@@ -261,8 +261,8 @@ export function PaymentRegistry() {
             }}
             className={`px-4 py-2 rounded-lg text-sm transition-all ${
               statusFilter === 'all'
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-primary/100 text-white shadow-md'
+                : 'bg-muted text-foreground hover:bg-muted'
             }`}
           >
             Все
@@ -274,8 +274,8 @@ export function PaymentRegistry() {
             }}
             className={`px-4 py-2 rounded-lg text-sm transition-all ${
               statusFilter === 'planned'
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                ? 'bg-primary/100 text-white shadow-md'
+                : 'bg-primary/10 text-primary hover:bg-blue-100'
             }`}
           >
             План
@@ -300,8 +300,8 @@ export function PaymentRegistry() {
             }}
             className={`px-4 py-2 rounded-lg text-sm transition-all ${
               statusFilter === 'paid'
-                ? 'bg-gray-600 text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-muted-foreground text-white shadow-md'
+                : 'bg-muted text-foreground hover:bg-muted'
             }`}
           >
             Оплачено
@@ -309,7 +309,7 @@ export function PaymentRegistry() {
         </div>
 
         {!payments || payments.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted-foreground">
             {statusFilter === 'all' 
               ? 'Платежных заявок пока нет. Создайте первую заявку.'
               : `Нет заявок со статусом "${getStatusLabel(statusFilter)}".`
@@ -319,30 +319,30 @@ export function PaymentRegistry() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Дата</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Договор</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Категория</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Сумма</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Статус</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Действия</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Дата</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Договор</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Категория</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Сумма</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Статус</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Действия</th>
                 </tr>
               </thead>
               <tbody>
                 {payments.map((payment) => (
-                  <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4 text-sm text-gray-600">{formatDate(payment.planned_date)}</td>
+                  <tr key={payment.id} className="border-b border-border hover:bg-muted transition-colors">
+                    <td className="py-3 px-4 text-sm text-muted-foreground">{formatDate(payment.planned_date)}</td>
                     <td className="py-3 px-4 text-sm">
                       {payment.contract_name ? (
                         <div>
                           <div className="font-medium">{payment.contract_name}</div>
-                          <div className="text-xs text-gray-500">{payment.contract_number}</div>
+                          <div className="text-xs text-muted-foreground">{payment.contract_number}</div>
                         </div>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{payment.category_name}</td>
+                    <td className="py-3 px-4 text-sm text-muted-foreground">{payment.category_name}</td>
                     <td className="py-3 px-4 text-sm font-medium">{formatAmount(payment.amount)} ₽</td>
                     <td className="py-3 px-4 text-sm">
                       <span className={`px-2 py-1 rounded text-xs ${getStatusColor(payment.status)}`}>
@@ -377,7 +377,7 @@ export function PaymentRegistry() {
                             <button
                               onClick={() => handlePayClick(payment.id)}
                               disabled={payMutation.isPending}
-                              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors disabled:opacity-50"
+                              className="flex items-center gap-2 text-primary hover:text-primary transition-colors disabled:opacity-50"
                               title="Оплатить"
                             >
                               <CreditCard className="w-4 h-4" />
@@ -396,7 +396,7 @@ export function PaymentRegistry() {
                         {(payment.status === 'paid' || payment.status === 'cancelled') && payment.payment_id && (
                           <button
                             onClick={() => window.location.href = `/payments`}
-                            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+                            className="flex items-center gap-2 text-primary hover:text-primary transition-colors"
                             title="Открыть платёж"
                           >
                             Открыть платёж
@@ -418,7 +418,7 @@ export function PaymentRegistry() {
                 <ChevronLeft className="w-4 h-4" />
                 Предыдущая
               </Button>
-              <div className="text-gray-500">
+              <div className="text-muted-foreground">
                 Страница {currentPage} из {totalPages}
               </div>
               <Button
@@ -436,10 +436,10 @@ export function PaymentRegistry() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-card rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold mb-4">Новый расход</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500">
+            <DialogDescription className="text-sm text-muted-foreground">
               Заполните форму для создания новой платежно заявки.
             </DialogDescription>
           </DialogHeader>
@@ -613,16 +613,16 @@ export function PaymentRegistry() {
 
       {/* Pay Dialog */}
       <Dialog open={isPayDialogOpen} onOpenChange={setIsPayDialogOpen}>
-        <DialogContent className="bg-white rounded-xl p-6 w-full max-w-md">
+        <DialogContent className="bg-card rounded-xl p-6 w-full max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold mb-4">Оплата</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500">
+            <DialogDescription className="text-sm text-muted-foreground">
               Выберите счет для списания средств.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <p className="text-gray-500 text-sm">Выберите счет для списания средств:</p>
+            <p className="text-muted-foreground text-sm">Выберите счет для списания средств:</p>
 
             <div>
               <Label htmlFor="pay_account_id">Счет списания *</Label>

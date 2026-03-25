@@ -21,8 +21,8 @@ type AutoMatchDialogProps = {
 type MatchRow = AutoMatchResult & { accepted: boolean; selectedOffer: AutoMatchOffer | null };
 
 const confidenceBadge = (value: number) => {
-  if (value >= 0.8) return <Badge className="bg-green-100 text-green-800">{Math.round(value * 100)}%</Badge>;
-  if (value >= 0.5) return <Badge className="bg-yellow-100 text-yellow-800">{Math.round(value * 100)}%</Badge>;
+  if (value >= 0.8) return <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">{Math.round(value * 100)}%</Badge>;
+  if (value >= 0.5) return <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400">{Math.round(value * 100)}%</Badge>;
   return <Badge variant="destructive">{Math.round(value * 100)}%</Badge>;
 };
 
@@ -130,7 +130,7 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
         <button
           onClick={() => handleToggle(row.index)}
           className={`w-6 h-6 rounded flex items-center justify-center ${
-            row.original.accepted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+            row.original.accepted ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-muted text-muted-foreground'
           }`}
           aria-label={row.original.accepted ? 'Отклонить' : 'Принять'}
         >
@@ -191,11 +191,11 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
       size: 60,
       cell: ({ row }) => {
         const count = row.original.all_offers?.length || 0;
-        if (count <= 1) return <span className="text-gray-400">{count}</span>;
+        if (count <= 1) return <span className="text-muted-foreground">{count}</span>;
         return (
           <button
             onClick={() => setExpandedRow(expandedRow === row.index ? null : row.index)}
-            className="text-blue-600 hover:underline text-sm flex items-center gap-0.5"
+            className="text-primary hover:underline text-sm flex items-center gap-0.5"
           >
             {count}
             {expandedRow === row.index
@@ -249,8 +249,8 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
                       onClick={() => toggleSupplier(s.id)}
                       className={`px-3 py-1.5 rounded-md text-sm border transition ${
                         selectedSupplierIds.includes(s.id)
-                          ? 'bg-blue-50 border-blue-300 text-blue-700'
-                          : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                          ? 'bg-primary/10 border-blue-300 text-primary'
+                          : 'bg-card border-border text-muted-foreground hover:bg-muted'
                       }`}
                     >
                       {s.name}
@@ -284,7 +284,7 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Badge variant="secondary">{results.length} строк</Badge>
-              <Badge className="bg-green-100 text-green-800">
+              <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
                 {results.filter((r) => r.accepted).length} принято
               </Badge>
               <Button size="sm" variant="outline" onClick={handleAcceptAll}>
@@ -303,7 +303,7 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
 
               {/* Расширенная строка с предложениями */}
               {expandedRow !== null && results[expandedRow]?.all_offers?.length > 1 && (
-                <div className="border rounded-lg p-3 bg-gray-50 mt-2">
+                <div className="border rounded-lg p-3 bg-muted mt-2">
                   <h4 className="text-sm font-medium mb-2">
                     Все предложения для &laquo;{results[expandedRow].name}&raquo;
                   </h4>
@@ -318,8 +318,8 @@ export const AutoMatchDialog: React.FC<AutoMatchDialogProps> = ({
                           onClick={() => handleSelectOffer(expandedRow, offer)}
                           className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm transition ${
                             isSelected
-                              ? 'bg-blue-50 border border-blue-300'
-                              : 'bg-white border border-gray-200 hover:bg-gray-50'
+                              ? 'bg-primary/10 border border-blue-300'
+                              : 'bg-card border border-border hover:bg-muted'
                           }`}
                         >
                           <div className="flex items-center gap-2">

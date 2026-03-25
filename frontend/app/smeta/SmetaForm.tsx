@@ -64,7 +64,7 @@ export function SmetaForm() {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 space-y-6">
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {error}
@@ -73,12 +73,12 @@ export function SmetaForm() {
 
       {/* File upload */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Файл сметы (Excel, PDF)
         </label>
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
+          className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
         >
           <input
             ref={fileInputRef}
@@ -88,16 +88,16 @@ export function SmetaForm() {
             className="hidden"
           />
           {file ? (
-            <p className="text-sm text-gray-900">{file.name} ({(file.size / 1024).toFixed(0)} KB)</p>
+            <p className="text-sm text-gray-900 dark:text-gray-100">{file.name} ({(file.size / 1024).toFixed(0)} KB)</p>
           ) : (
-            <p className="text-sm text-gray-500">Нажмите для выбора файла или перетащите сюда</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Нажмите для выбора файла или перетащите сюда</p>
           )}
         </div>
       </div>
 
       {/* Email */}
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Email для получения результата
         </label>
         <input
@@ -105,7 +105,7 @@ export function SmetaForm() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
           placeholder="your@email.com"
           required
         />
@@ -124,7 +124,7 @@ export function SmetaForm() {
       {step === 'verify' && (
         <>
           <div>
-            <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="otp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Код подтверждения (из email)
             </label>
             <input
@@ -132,7 +132,7 @@ export function SmetaForm() {
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               placeholder="123456"
               maxLength={6}
             />
@@ -150,7 +150,7 @@ export function SmetaForm() {
       {step === 'submitting' && (
         <div className="text-center py-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-2 text-sm text-gray-500">Отправляем смету...</p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Отправляем смету...</p>
         </div>
       )}
     </div>

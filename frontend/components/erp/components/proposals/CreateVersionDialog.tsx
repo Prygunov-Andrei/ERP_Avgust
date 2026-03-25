@@ -90,8 +90,8 @@ export function CreateVersionDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Информационный блок */}
-          <Alert className="bg-blue-50 border-blue-200">
-            <Info className="h-4 w-4 text-blue-600" />
+          <Alert className="bg-primary/10 border-primary/20">
+            <Info className="h-4 w-4 text-primary" />
             <AlertDescription className="text-sm text-blue-900">
               <p className="font-medium mb-2">Как работает нумерация версий:</p>
               <ul className="list-disc list-inside space-y-1 text-blue-800">
@@ -102,9 +102,9 @@ export function CreateVersionDialog({
           </Alert>
 
           {/* Текущая версия */}
-          <div className="bg-gray-50 p-3 rounded-md">
-            <p className="text-sm text-gray-600">Текущая версия: <span className="font-medium text-gray-900">v{currentVersionNumber}</span></p>
-            <p className="text-sm text-gray-600">Новая версия будет: <span className="font-medium text-gray-900">v{currentVersionNumber + 1}</span></p>
+          <div className="bg-muted p-3 rounded-md">
+            <p className="text-sm text-muted-foreground">Текущая версия: <span className="font-medium text-foreground">v{currentVersionNumber}</span></p>
+            <p className="text-sm text-muted-foreground">Новая версия будет: <span className="font-medium text-foreground">v{currentVersionNumber + 1}</span></p>
           </div>
 
           {/* Поле выбора даты */}
@@ -117,7 +117,7 @@ export function CreateVersionDialog({
               onChange={(e) => setSelectedDate(e.target.value)}
               className="w-full px-3 py-2 border rounded-md mt-1"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Оставьте без изменений для создания версии с той же датой
             </p>
           </div>

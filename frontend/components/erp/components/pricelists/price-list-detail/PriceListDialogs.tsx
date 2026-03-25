@@ -35,9 +35,9 @@ export function EditItemDialog({ open, onOpenChange, editingItem, formData, onFo
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           {editingItem && (
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-sm text-gray-700"><strong>{editingItem.work_item_detail.name}</strong></p>
-              <p className="text-xs text-gray-500 mt-1">Базовые значения: Часы = {editingItem.work_item_detail.hours}, Разряд = {editingItem.work_item_detail.grade}, Коэфф. = {editingItem.work_item_detail.coefficient}</p>
+            <div className="bg-muted rounded-lg p-3">
+              <p className="text-sm text-foreground"><strong>{editingItem.work_item_detail.name}</strong></p>
+              <p className="text-xs text-muted-foreground mt-1">Базовые значения: Часы = {editingItem.work_item_detail.hours}, Разряд = {editingItem.work_item_detail.grade}, Коэфф. = {editingItem.work_item_detail.coefficient}</p>
             </div>
           )}
           <div>
@@ -51,14 +51,14 @@ export function EditItemDialog({ open, onOpenChange, editingItem, formData, onFo
           <div>
             <Label htmlFor="grade_override" className="flex items-center gap-2">
               Переопределить разряд
-              <TooltipProvider><Tooltip><TooltipTrigger type="button"><Info className="w-3.5 h-3.5 text-gray-400" /></TooltipTrigger><TooltipContent className="max-w-xs"><p className="text-xs">Можно указать дробное значение (например, 2.5, 3.65) для работ, выполняемых несколькими монтажниками с разными разрядами. Оставьте пустым для использования разряда из работы.</p></TooltipContent></Tooltip></TooltipProvider>
+              <TooltipProvider><Tooltip><TooltipTrigger type="button"><Info className="w-3.5 h-3.5 text-muted-foreground" /></TooltipTrigger><TooltipContent className="max-w-xs"><p className="text-xs">Можно указать дробное значение (например, 2.5, 3.65) для работ, выполняемых несколькими монтажниками с разными разрядами. Оставьте пустым для использования разряда из работы.</p></TooltipContent></Tooltip></TooltipProvider>
             </Label>
             <Input id="grade_override" type="number" step="0.01" min="1.00" max="5.00" value={formData.grade_override || ''} onChange={(e) => {
               const value = e.target.value;
               if (value && (parseFloat(value) < 1 || parseFloat(value) > 5)) { toast.error('Разряд должен быть от 1.00 до 5.00'); return; }
               onFormChange({ ...formData, grade_override: value || null });
             }} placeholder="2.5, 3.65, 4.2" className="mt-1.5" />
-            <p className="text-xs text-gray-500 mt-1.5">Примеры: 2.5 (средний между 2 и 3), 3.65 (взвешенный 3 и 4)</p>
+            <p className="text-xs text-muted-foreground mt-1.5">Примеры: 2.5 (средний между 2 и 3), 3.65 (взвешенный 3 и 4)</p>
           </div>
           <div className="flex items-center gap-2">
             <Checkbox id="is_included" checked={formData.is_included} onCheckedChange={(checked) => onFormChange({ ...formData, is_included: checked as boolean })} />
@@ -100,16 +100,16 @@ export function CreateAgreementDialog({ open, onOpenChange, formData, onFormChan
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <Label htmlFor="counterparty">Контрагент *</Label>
-            <select id="counterparty" value={formData.counterparty} onChange={(e) => onFormChange({ ...formData, counterparty: Number(e.target.value) })} className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            <select id="counterparty" value={formData.counterparty} onChange={(e) => onFormChange({ ...formData, counterparty: Number(e.target.value) })} className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" required>
               <option value={0}>Выберите контрагента</option>
               {counterparties?.map((c) => (<option key={c.id} value={c.id}>{c.name} ({c.inn})</option>))}
             </select>
-            <p className="text-xs text-gray-500 mt-1.5">Только контрагенты типа "Поставщик" или "Исполнитель"</p>
+            <p className="text-xs text-muted-foreground mt-1.5">Только контрагенты типа "Поставщик" или "Исполнитель"</p>
           </div>
           <div><Label htmlFor="agreed_date">Дата согласования *</Label><Input id="agreed_date" type="date" value={formData.agreed_date} onChange={(e) => onFormChange({ ...formData, agreed_date: e.target.value })} required className="mt-1.5" /></div>
           <div>
             <Label htmlFor="notes">Примечания</Label>
-            <textarea id="notes" value={formData.notes} onChange={(e) => onFormChange({ ...formData, notes: e.target.value })} placeholder="Дополнительная информация о согласовании" rows={3} className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <textarea id="notes" value={formData.notes} onChange={(e) => onFormChange({ ...formData, notes: e.target.value })} placeholder="Дополнительная информация о согласовании" rows={3} className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => { onOpenChange(false); onReset(); }} disabled={isPending}>Отмена</Button>
@@ -150,13 +150,13 @@ export function EditPriceListDialog({ open, onOpenChange, formData, onFormChange
           <div><Label htmlFor="pl_name">Название</Label><Input id="pl_name" value={formData.name} onChange={(e) => onFormChange({ ...formData, name: e.target.value })} placeholder="Опциональное описание прайс-листа" className="mt-1.5" /></div>
           <div>
             <Label htmlFor="pl_status">Статус *</Label>
-            <select id="pl_status" value={formData.status} onChange={(e) => onFormChange({ ...formData, status: e.target.value as 'draft' | 'active' | 'archived' })} className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            <select id="pl_status" value={formData.status} onChange={(e) => onFormChange({ ...formData, status: e.target.value as 'draft' | 'active' | 'archived' })} className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring" required>
               <option value="draft">Черновик</option><option value="active">Активный</option><option value="archived">Архивный</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1.5">Черновик — редактируемый, Активный — используется в работе, Архивный — не используется</p>
+            <p className="text-xs text-muted-foreground mt-1.5">Черновик — редактируемый, Активный — используется в работе, Архивный — не используется</p>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">Часовые ставки по разрядам</h4>
+            <h4 className="font-medium text-foreground mb-3">Часовые ставки по разрядам</h4>
             <div className="grid grid-cols-5 gap-3">
               {[1, 2, 3, 4, 5].map((grade) => (
                 <div key={grade}>
@@ -197,7 +197,7 @@ export function CreateVersionDialog({ open, onOpenChange, priceList, onConfirm, 
           <DialogDescription>Создание новой версии прайс-листа</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
             <p className="text-sm text-blue-800 mb-2"><strong>Новая версия наследует все данные:</strong></p>
             <ul className="list-disc list-inside text-sm text-blue-800 space-y-1"><li>Все ставки по разрядам</li><li>Все позиции прайс-листа</li></ul>
           </div>

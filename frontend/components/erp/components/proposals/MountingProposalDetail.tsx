@@ -164,7 +164,7 @@ export function MountingProposalDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Загрузка...</div>
+        <div className="text-muted-foreground">Загрузка...</div>
       </div>
     );
   }
@@ -172,8 +172,8 @@ export function MountingProposalDetail() {
   if (!mp) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <AlertCircle className="w-12 h-12 text-gray-400 mb-4" />
-        <div className="text-gray-500">МП не найдено</div>
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <div className="text-muted-foreground">МП не найдено</div>
         <Button
           onClick={() => navigate('/proposals/mounting-proposals')}
           className="mt-4 bg-blue-600 text-white hover:bg-blue-700"
@@ -187,12 +187,12 @@ export function MountingProposalDetail() {
   return (
     <div className="space-y-6">
       {/* Хедер */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start gap-4">
             <Button
               onClick={() => navigate('/proposals/mounting-proposals')}
-              className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3"
+              className="bg-muted text-foreground hover:bg-muted px-3"
               aria-label="Вернуться к списку МП"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -207,17 +207,17 @@ export function MountingProposalDetail() {
                     aria-label="Название МП"
                   />
                 ) : (
-                  <h1 className="text-gray-900">{mp.name}</h1>
+                  <h1 className="text-foreground">{mp.name}</h1>
                 )}
                 <Badge className={getStatusBadgeClass(mp.status)}>{getStatusLabel(mp.status)}</Badge>
                 {mp.telegram_published && (
-                  <Badge className="bg-green-50 text-green-700 border border-green-200">
+                  <Badge className="bg-green-50 text-green-700 border border-green-200 dark:border-green-800">
                     <Send className="w-3 h-3 mr-1" />
                     Опубликовано в Telegram
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-4 text-gray-600">
+              <div className="flex items-center gap-4 text-muted-foreground">
                 <span>№ {mp.number}</span>
                 <span>Версия {mp.version_number}</span>
                 <span>от {formatDate(mp.date)}</span>
@@ -248,7 +248,7 @@ export function MountingProposalDetail() {
                 </Button>
                 <Button
                   onClick={handleCancelEditing}
-                  className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  className="bg-muted text-foreground hover:bg-muted"
                   aria-label="Отменить редактирование"
                 >
                   <X className="w-4 h-4 mr-2" />
@@ -286,13 +286,13 @@ export function MountingProposalDetail() {
         </div>
 
         {/* Вкладки */}
-        <div className="flex gap-1 border-b border-gray-200">
+        <div className="flex gap-1 border-b border-border">
           <button
             onClick={() => setActiveTab('info')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'info'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Основная информация
@@ -301,8 +301,8 @@ export function MountingProposalDetail() {
             onClick={() => setActiveTab('conditions')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'conditions'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Условия ({mp.conditions.length})
@@ -390,27 +390,27 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Основная информация */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-gray-900 mb-4 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-blue-600" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-foreground mb-4 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-primary" />
           Основная информация
         </h2>
         <div className="space-y-4">
           <div>
-            <Label className="text-gray-600">Объект</Label>
+            <Label className="text-muted-foreground">Объект</Label>
             <div className="mt-1 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-gray-400" />
-              <div className="text-gray-900">{mp.object_name}</div>
+              <Building2 className="w-4 h-4 text-muted-foreground" />
+              <div className="text-foreground">{mp.object_name}</div>
             </div>
           </div>
 
           <div>
-            <Label className="text-gray-600">Контрагент (Исполнитель)</Label>
+            <Label className="text-muted-foreground">Контрагент (Исполнитель)</Label>
             {isEditing && editFormData ? (
               <select
                 value={editFormData.counterparty}
                 onChange={(e) => onFieldChange('counterparty', e.target.value)}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 aria-label="Выбор исполнителя"
               >
                 <option value="">— Не указан —</option>
@@ -419,19 +419,19 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
                 ))}
               </select>
             ) : (
-              <div className="mt-1 text-gray-900">
-                {mp.counterparty_name ?? <span className="text-gray-400">—</span>}
+              <div className="mt-1 text-foreground">
+                {mp.counterparty_name ?? <span className="text-muted-foreground">—</span>}
               </div>
             )}
           </div>
 
           {mp.parent_tkp && (
             <div>
-              <Label className="text-gray-600">Связанное ТКП</Label>
+              <Label className="text-muted-foreground">Связанное ТКП</Label>
               <div className="mt-1">
                 <button
                   onClick={() => navigate(`/proposals/technical-proposals/${mp.parent_tkp}`)}
-                  className="text-blue-600 hover:underline flex items-center gap-2"
+                  className="text-primary hover:underline flex items-center gap-2"
                   aria-label={`Открыть ТКП ${mp.parent_tkp_number}`}
                 >
                   {mp.parent_tkp_number} - {mp.parent_tkp_name}
@@ -443,13 +443,13 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
 
           {mp.mounting_estimates && mp.mounting_estimates.length > 0 && (
             <div>
-              <Label className="text-gray-600">Монтажные сметы ({mp.mounting_estimates.length})</Label>
+              <Label className="text-muted-foreground">Монтажные сметы ({mp.mounting_estimates.length})</Label>
               <div className="mt-1 space-y-1">
                 {mp.mounting_estimates.map((meId: number) => (
                   <button
                     key={meId}
                     onClick={() => navigate(`/estimates/mounting-estimates/${meId}`)}
-                    className="text-blue-600 hover:underline flex items-center gap-2"
+                    className="text-primary hover:underline flex items-center gap-2"
                   >
                     <FileText className="w-4 h-4" />
                     Монтажная смета #{meId}
@@ -461,7 +461,7 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
           )}
 
           <div>
-            <Label className="text-gray-600">Дата МП</Label>
+            <Label className="text-muted-foreground">Дата МП</Label>
             {isEditing && editFormData ? (
               <Input
                 type="date"
@@ -472,19 +472,19 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
               />
             ) : (
               <div className="mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-900">{formatDate(mp.date)}</span>
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <span className="text-foreground">{formatDate(mp.date)}</span>
               </div>
             )}
           </div>
 
           <div>
-            <Label className="text-gray-600">Статус</Label>
+            <Label className="text-muted-foreground">Статус</Label>
             {isEditing && editFormData ? (
               <select
                 value={editFormData.status}
                 onChange={(e) => onFieldChange('status', e.target.value)}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 aria-label="Статус МП"
               >
                 {MP_STATUS_OPTIONS.map((opt) => (
@@ -495,33 +495,33 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
           </div>
 
           <div>
-            <Label className="text-gray-600">Примечания</Label>
+            <Label className="text-muted-foreground">Примечания</Label>
             {isEditing && editFormData ? (
               <textarea
                 value={editFormData.notes}
                 onChange={(e) => onFieldChange('notes', e.target.value)}
                 rows={3}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 aria-label="Примечания"
               />
             ) : (
               mp.notes ? (
-                <div className="mt-1 text-gray-900 whitespace-pre-wrap">{mp.notes}</div>
+                <div className="mt-1 text-foreground whitespace-pre-wrap">{mp.notes}</div>
               ) : (
-                <div className="mt-1 text-gray-400">—</div>
+                <div className="mt-1 text-muted-foreground">—</div>
               )
             )}
           </div>
 
           {mp.file_url && (
             <div>
-              <Label className="text-gray-600">Файл МП</Label>
+              <Label className="text-muted-foreground">Файл МП</Label>
               <div className="mt-1">
                 <a
                   href={mp.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline flex items-center gap-2"
+                  className="text-primary hover:underline flex items-center gap-2"
                 >
                   <FileText className="w-4 h-4" />
                   Открыть файл
@@ -533,14 +533,14 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
       </div>
 
       {/* Финансовая информация */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-foreground mb-4 flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-green-600" />
           Финансовая информация
         </h2>
         <div className="space-y-4">
           <div>
-            <Label className="text-gray-600">Общая сумма (₽)</Label>
+            <Label className="text-muted-foreground">Общая сумма (₽)</Label>
             {isEditing && editFormData ? (
               <Input
                 type="number"
@@ -551,14 +551,14 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
                 aria-label="Общая сумма"
               />
             ) : (
-              <div className="mt-1 bg-blue-50 rounded-lg p-4">
+              <div className="mt-1 bg-primary/10 rounded-lg p-4">
                 <div className="text-blue-900">{formatCurrency(mp.total_amount)}</div>
               </div>
             )}
           </div>
 
           <div>
-            <Label className="text-gray-600">Трудозатраты (чел/час)</Label>
+            <Label className="text-muted-foreground">Трудозатраты (чел/час)</Label>
             {isEditing && editFormData ? (
               <Input
                 type="number"
@@ -577,7 +577,7 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
                   </div>
                 </div>
               ) : (
-                <div className="mt-1 text-gray-400">—</div>
+                <div className="mt-1 text-muted-foreground">—</div>
               )
             )}
           </div>
@@ -585,29 +585,29 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
       </div>
 
       {/* Информация о создании */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-foreground mb-4 flex items-center gap-2">
           <User className="w-5 h-5 text-purple-600" />
           Информация о создании
         </h2>
         <div className="space-y-4">
           <div>
-            <Label className="text-gray-600">Создал</Label>
-            <div className="mt-1 text-gray-900">{mp.created_by_name}</div>
+            <Label className="text-muted-foreground">Создал</Label>
+            <div className="mt-1 text-foreground">{mp.created_by_name}</div>
           </div>
           <div>
-            <Label className="text-gray-600">Дата создания</Label>
-            <div className="mt-1 text-gray-900">{formatDateTime(mp.created_at)}</div>
+            <Label className="text-muted-foreground">Дата создания</Label>
+            <div className="mt-1 text-foreground">{formatDateTime(mp.created_at)}</div>
           </div>
           {mp.updated_at !== mp.created_at && (
             <div>
-              <Label className="text-gray-600">Последнее обновление</Label>
-              <div className="mt-1 text-gray-900">{formatDateTime(mp.updated_at)}</div>
+              <Label className="text-muted-foreground">Последнее обновление</Label>
+              <div className="mt-1 text-foreground">{formatDateTime(mp.updated_at)}</div>
             </div>
           )}
           {mp.telegram_published && mp.telegram_published_at && (
             <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-gray-600 mb-1 flex items-center gap-2">
+              <div className="text-muted-foreground mb-1 flex items-center gap-2">
                 <Send className="w-4 h-4 text-green-600" />
                 Опубликовано в Telegram
               </div>
@@ -619,8 +619,8 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
 
       {/* История версий */}
       {versions && versions.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h2 className="text-foreground mb-4 flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-orange-600" />
             История версий ({versions.length})
           </h2>
@@ -629,23 +629,23 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
               <div
                 key={version.id}
                 className={`p-3 rounded-lg border ${
-                  version.id === mp.id ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+                  version.id === mp.id ? 'bg-primary/10 border-primary/20' : 'bg-muted border-border'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-gray-900 flex items-center gap-2">
+                    <div className="text-foreground flex items-center gap-2">
                       Версия {version.version_number}
                       {version.telegram_published && (
                         <Send className="w-3 h-3 text-green-600" aria-label="Опубликовано в Telegram" />
                       )}
                     </div>
-                    <div className="text-gray-500">{formatDate(version.date)}</div>
+                    <div className="text-muted-foreground">{formatDate(version.date)}</div>
                   </div>
                   {version.id !== mp.id && (
                     <Button
                       onClick={() => navigate(`/proposals/mounting-proposals/${version.id}`)}
-                      className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      className="bg-muted text-foreground hover:bg-muted"
                       aria-label={`Открыть версию ${version.version_number}`}
                     >
                       Открыть
@@ -666,9 +666,9 @@ function InfoTab({ mp, versions, isEditing, editFormData, onFieldChange, counter
 function ConditionsTab({ mp }: { mp: MPDetailType }) {
   if (mp.conditions.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
-        <div className="text-center text-gray-500">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-12">
+        <div className="text-center text-muted-foreground">
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p>Условия не добавлены</p>
         </div>
       </div>
@@ -676,22 +676,22 @@ function ConditionsTab({ mp }: { mp: MPDetailType }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-gray-900 mb-4">Условия для МП</h2>
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+      <h2 className="text-foreground mb-4">Условия для МП</h2>
       <div className="space-y-4">
         {mp.conditions.map((condition, index) => (
           <div
             key={condition.id}
-            className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+            className="border border-border rounded-lg p-4 hover:border-blue-300 transition-colors"
           >
             <div className="flex items-start gap-3">
-              <div className="bg-blue-100 text-blue-700 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+              <div className="bg-blue-100 dark:bg-blue-900/30 text-primary rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
                 {index + 1}
               </div>
               <div className="flex-1">
-                <h3 className="text-gray-900 mb-1">{condition.name}</h3>
+                <h3 className="text-foreground mb-1">{condition.name}</h3>
                 {condition.description && (
-                  <p className="text-gray-600">{condition.description}</p>
+                  <p className="text-muted-foreground">{condition.description}</p>
                 )}
               </div>
             </div>

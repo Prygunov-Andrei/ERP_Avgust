@@ -33,8 +33,8 @@ export default function FeedbackPage() {
   return (
     <PublicLayout>
       <section className="max-w-xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Обратная связь</h1>
-        <p className="text-gray-600 mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Обратная связь</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
           Есть вопрос или предложение? Напишите нам.
         </p>
 
@@ -50,7 +50,7 @@ export default function FeedbackPage() {
               </div>
             )}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Имя</label>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Имя</label>
               <input
                 id="name"
                 type="text"
@@ -61,7 +61,7 @@ export default function FeedbackPage() {
               />
             </div>
             <div>
-              <label htmlFor="feedback-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label htmlFor="feedback-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input
                 id="feedback-email"
                 type="email"
@@ -72,7 +72,7 @@ export default function FeedbackPage() {
               />
             </div>
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">Сообщение</label>
+              <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Сообщение</label>
               <textarea
                 id="message"
                 value={message}

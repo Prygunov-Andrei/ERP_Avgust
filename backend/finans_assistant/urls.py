@@ -109,6 +109,7 @@ def health_check(request):
 urlpatterns = [
     path('api/v1/health/', health_check, name='health-check'),
     path('admin/', admin.site.urls),
+    path('hvac-admin/', include((admin.site.get_urls(), 'hvac_admin'), namespace='hvac_admin')),
     # OpenAPI/Swagger документация
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
@@ -135,6 +136,9 @@ urlpatterns = [
     path('api/v1/', include('banking.urls')),
     path('api/v1/', include('supply.urls')),
     path('api/v1/', include('supplier_integrations.urls')),
+    path('api/v1/', include('section_feedback.urls')),
+    path('api/v1/hvac/', include('hvac_bridge.urls')),
+    path('api/hvac/', include('hvac_bridge.public_urls')),
     # Kanban (объединён с основным бэкендом)
     path('api/v1/', include('kanban_files.urls')),
     path('api/v1/', include('kanban_core.urls')),
@@ -155,4 +159,6 @@ from django.views.static import serve as static_serve
 
 urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', static_serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^hvac-media/(?P<path>.*)$', static_serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^hvac-static/(?P<path>.*)$', static_serve, {'document_root': settings.STATIC_ROOT}),
 ]

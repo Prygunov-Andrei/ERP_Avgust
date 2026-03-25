@@ -16,10 +16,10 @@ type InvoiceComplianceViewProps = {
 };
 
 const STATUS_BADGES: Record<string, { label: string; color: string }> = {
-  matched: { label: 'Совпадает', color: 'bg-green-100 text-green-800' },
-  unmatched: { label: 'Не найдено', color: 'bg-red-100 text-red-800' },
-  exceeds: { label: 'Превышение', color: 'bg-orange-100 text-orange-800' },
-  analog_candidate: { label: 'Возможный аналог', color: 'bg-blue-100 text-blue-800' },
+  matched: { label: 'Совпадает', color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' },
+  unmatched: { label: 'Не найдено', color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' },
+  exceeds: { label: 'Превышение', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400' },
+  analog_candidate: { label: 'Возможный аналог', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
 };
 
 export const InvoiceComplianceView: React.FC<InvoiceComplianceViewProps> = ({
@@ -118,7 +118,7 @@ export const InvoiceComplianceView: React.FC<InvoiceComplianceViewProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Badge className="bg-green-100 text-green-800">{matchedCount} совпадений</Badge>
+        <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">{matchedCount} совпадений</Badge>
         {unmatchedCount > 0 && (
           <Badge variant="destructive">{unmatchedCount} не найдено</Badge>
         )}

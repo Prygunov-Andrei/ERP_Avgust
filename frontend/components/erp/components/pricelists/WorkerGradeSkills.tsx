@@ -150,8 +150,8 @@ export function WorkerGradeSkillsComponent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Навыки разрядов</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Навыки разрядов</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Описание навыков по разделам для каждого разряда
           </p>
         </div>
@@ -162,7 +162,7 @@ export function WorkerGradeSkillsComponent() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="filterGrade">Фильтр по разряду</Label>
@@ -172,7 +172,7 @@ export function WorkerGradeSkillsComponent() {
               onChange={(e) =>
                 setSelectedGrade(e.target.value ? Number(e.target.value) : undefined)
               }
-              className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Все разряды</option>
               {grades?.map((grade) => (
@@ -191,7 +191,7 @@ export function WorkerGradeSkillsComponent() {
               onChange={(e) =>
                 setSelectedSection(e.target.value ? Number(e.target.value) : undefined)
               }
-              className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Все разделы</option>
               {sections?.map((section) => (
@@ -207,9 +207,9 @@ export function WorkerGradeSkillsComponent() {
       {/* Cards */}
       <div className="space-y-4">
         {isLoading ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+          <div className="bg-card rounded-xl shadow-sm border border-border p-12">
             <div className="flex items-center justify-center">
-              <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+              <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
             </div>
           </div>
         ) : skills && skills.length > 0 ? (
@@ -219,19 +219,19 @@ export function WorkerGradeSkillsComponent() {
               open={openCards.has(skill.id)}
               onOpenChange={() => toggleCard(skill.id)}
             >
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
                 <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-muted transition-colors">
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">
+                      <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold text-sm">
                         {skill.grade_detail?.grade}
                       </span>
                       <div>
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-foreground">
                           {skill.grade_detail?.name}
                         </span>
-                        <span className="mx-2 text-gray-300">&middot;</span>
-                        <span className="text-sm text-gray-600">
+                        <span className="mx-2 text-muted-foreground">&middot;</span>
+                        <span className="text-sm text-muted-foreground">
                           {skill.section_detail?.name}
                         </span>
                       </div>
@@ -244,7 +244,7 @@ export function WorkerGradeSkillsComponent() {
                           e.stopPropagation();
                           handleOpenEdit(skill);
                         }}
-                        className="text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                        className="text-muted-foreground hover:text-primary hover:bg-primary/10"
                       >
                         <Edit2 className="w-4 h-4" />
                       </Button>
@@ -255,12 +255,12 @@ export function WorkerGradeSkillsComponent() {
                           e.stopPropagation();
                           handleDelete(skill);
                         }}
-                        className="text-gray-500 hover:text-red-600 hover:bg-red-50"
+                        className="text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 dark:bg-red-900/20"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                       <ChevronDown
-                        className={`w-5 h-5 text-gray-400 transition-transform ${
+                        className={`w-5 h-5 text-muted-foreground transition-transform ${
                           openCards.has(skill.id) ? 'rotate-180' : ''
                         }`}
                       />
@@ -268,7 +268,7 @@ export function WorkerGradeSkillsComponent() {
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="px-6 pb-6 border-t border-gray-100">
+                  <div className="px-6 pb-6 border-t border-border">
                     <article className="prose prose-sm prose-slate max-w-none pt-4">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {skill.description}
@@ -280,7 +280,7 @@ export function WorkerGradeSkillsComponent() {
             </Collapsible>
           ))
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center text-gray-500">
+          <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center text-muted-foreground">
             Навыки не найдены
           </div>
         )}
@@ -303,7 +303,7 @@ export function WorkerGradeSkillsComponent() {
                 id="grade"
                 value={formData.grade}
                 onChange={(e) => setFormData({ ...formData, grade: Number(e.target.value) })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 required
               >
                 <option value={0}>Выберите разряд</option>
@@ -323,7 +323,7 @@ export function WorkerGradeSkillsComponent() {
                 onChange={(e) =>
                   setFormData({ ...formData, section: Number(e.target.value) })
                 }
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 required
               >
                 <option value={0}>Выберите раздел</option>
@@ -344,7 +344,7 @@ export function WorkerGradeSkillsComponent() {
                 placeholder="Опишите навыки (поддерживается Markdown разметка)"
                 required
                 rows={12}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring font-mono text-sm"
               />
             </div>
 
@@ -390,7 +390,7 @@ export function WorkerGradeSkillsComponent() {
             </DialogDescription>
           </DialogHeader>
 
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Вы уверены, что хотите удалить навык{' '}
             <strong>{deletingSkill?.grade_detail?.name}</strong> для раздела{' '}
             <strong>{deletingSkill?.section_detail?.name}</strong>? Это действие нельзя отменить.

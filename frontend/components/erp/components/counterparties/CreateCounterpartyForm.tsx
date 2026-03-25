@@ -141,7 +141,7 @@ export function CreateCounterpartyForm({ onSubmit, isLoading, lockedType }: Crea
               <span className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${
                 quickCheck.summary.risk_level === 'low' ? 'bg-green-500' :
                 quickCheck.summary.risk_level === 'medium' ? 'bg-yellow-500' :
-                quickCheck.summary.risk_level === 'high' ? 'bg-red-500' : 'bg-gray-400'
+                quickCheck.summary.risk_level === 'high' ? 'bg-red-500' : 'bg-muted-foreground'
               }`} />
             )}
           </TabsTrigger>
@@ -190,7 +190,7 @@ export function CreateCounterpartyForm({ onSubmit, isLoading, lockedType }: Crea
           </div>
 
           {isEnriching && (
-            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg text-sm text-blue-600">
+            <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg text-sm text-primary">
               <Loader2 className="w-3 h-3 animate-spin" />
               Загрузка реквизитов из ЕГРЮЛ/ЕГРИП...
             </div>
@@ -293,19 +293,19 @@ export function CreateCounterpartyForm({ onSubmit, isLoading, lockedType }: Crea
 
         <TabsContent value="fns-check" className="mt-0">
           {isChecking ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Loader2 className="w-8 h-8 animate-spin mb-3" />
               <span className="text-sm">Проверка контрагента в ФНС...</span>
             </div>
           ) : quickCheck ? (
             <FNSCheckTabContent data={quickCheck} />
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <ShieldCheck className="w-10 h-10 mb-3 opacity-40" />
               <p className="text-sm text-center">
                 Введите ИНН на вкладке «Реквизиты» и нажмите
                 <br />
-                <span className="font-medium text-gray-600">«Проверить»</span> для загрузки данных из ФНС
+                <span className="font-medium text-muted-foreground">«Проверить»</span> для загрузки данных из ФНС
               </p>
             </div>
           )}

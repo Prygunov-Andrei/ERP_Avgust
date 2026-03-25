@@ -106,11 +106,11 @@ export function Projects() {
 
   const getStatusBadge = (status: boolean, label: string) => {
     return status ? (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700">
+      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
         ✓ {label}
       </span>
     ) : (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-600">
+      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-muted text-muted-foreground">
         ✗ {label}
       </span>
     );
@@ -121,8 +121,8 @@ export function Projects() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Проекты</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Проекты</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Управление проектной и рабочей документацией
           </p>
         </div>
@@ -133,11 +133,11 @@ export function Projects() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-4 space-y-4">
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 type="text"
                 placeholder="Поиск по шифру или названию..."
@@ -150,7 +150,7 @@ export function Projects() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? 'bg-gray-100' : ''}
+            className={showFilters ? 'bg-muted' : ''}
           >
             <Filter className="w-4 h-4 mr-2" />
             Фильтры
@@ -172,7 +172,7 @@ export function Projects() {
               <select
                 value={filters.object || ''}
                 onChange={(e) => setFilters({ ...filters, object: e.target.value ? Number(e.target.value) : undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все объекты</option>
                 {objects.map((obj) => (
@@ -186,7 +186,7 @@ export function Projects() {
               <select
                 value={filters.stage || ''}
                 onChange={(e) => setFilters({ ...filters, stage: e.target.value ? e.target.value as 'П' | 'РД' : undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все стадии</option>
                 <option value="П">Проектная документация (П)</option>
@@ -202,7 +202,7 @@ export function Projects() {
                     type="checkbox"
                     checked={filters.is_approved_for_production === true}
                     onChange={(e) => setFilters({ ...filters, is_approved_for_production: e.target.checked ? true : undefined })}
-                    className="rounded border-gray-300"
+                    className="rounded border-border"
                   />
                   <span className="text-sm">В производство</span>
                 </label>
@@ -211,7 +211,7 @@ export function Projects() {
                     type="checkbox"
                     checked={filters.primary_check_done === true}
                     onChange={(e) => setFilters({ ...filters, primary_check_done: e.target.checked ? true : undefined })}
-                    className="rounded border-gray-300"
+                    className="rounded border-border"
                   />
                   <span className="text-sm">Первичная проверка</span>
                 </label>
@@ -220,7 +220,7 @@ export function Projects() {
                     type="checkbox"
                     checked={filters.secondary_check_done === true}
                     onChange={(e) => setFilters({ ...filters, secondary_check_done: e.target.checked ? true : undefined })}
-                    className="rounded border-gray-300"
+                    className="rounded border-border"
                   />
                   <span className="text-sm">Вторичная проверка</span>
                 </label>
@@ -231,47 +231,47 @@ export function Projects() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
           </div>
         ) : projects && projects.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Шифр</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Название</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Объект</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Стадия</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Проверки</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Производство</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Версия</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Шифр</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Название</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Объект</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Дата</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Стадия</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Проверки</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Производство</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Версия</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {projects.map((project) => (
                   <tr
                     key={project.id}
                     onClick={() => navigate(`/estimates/projects/${project.id}`)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="hover:bg-muted cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <span className="font-medium text-gray-900">{project.cipher}</span>
+                      <span className="font-medium text-foreground">{project.cipher}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-gray-900">{project.name}</span>
+                      <span className="text-foreground">{project.name}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{project.object_name}</span>
+                      <span className="text-sm text-muted-foreground">{project.object_name}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{formatDate(project.date)}</span>
+                      <span className="text-sm text-muted-foreground">{formatDate(project.date)}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-700">
+                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 dark:bg-blue-900/30 text-primary">
                         {project.stage_display}
                       </span>
                     </td>
@@ -283,17 +283,17 @@ export function Projects() {
                     </td>
                     <td className="px-6 py-4">
                       {project.is_approved_for_production ? (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700">
+                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                           ✓ Разрешено
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-600">
+                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-muted text-muted-foreground">
                           ✗ Нет
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">v{project.version_number}</span>
+                      <span className="text-sm text-muted-foreground">v{project.version_number}</span>
                     </td>
                   </tr>
                 ))}
@@ -302,8 +302,8 @@ export function Projects() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Нет проектов</p>
+            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Нет проектов</p>
             <Button variant="outline" onClick={() => setCreateDialogOpen(true)} className="mt-4">
               <Plus className="w-4 h-4 mr-2" />
               Создать первый проект
@@ -368,7 +368,7 @@ export function Projects() {
                   id="stage"
                   value={formData.stage}
                   onChange={(e) => setFormData({ ...formData, stage: e.target.value as 'П' | 'РД' })}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
                   <option value="П">Проектная документация (П)</option>
@@ -382,7 +382,7 @@ export function Projects() {
                   id="object"
                   value={formData.object}
                   onChange={(e) => setFormData({ ...formData, object: Number(e.target.value) })}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
                   <option value={0}>Выберите объект</option>
@@ -402,7 +402,7 @@ export function Projects() {
                 required
                 className="mt-1.5"
               />
-              <p className="text-xs text-gray-500 mt-1.5">
+              <p className="text-xs text-muted-foreground mt-1.5">
                 Загрузите файл проектной документации (PDF, ZIP, DWG и др.)
               </p>
             </div>
@@ -415,7 +415,7 @@ export function Projects() {
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={3}
                 placeholder="Дополнительная информация о проекте"
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 

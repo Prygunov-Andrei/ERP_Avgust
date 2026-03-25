@@ -99,9 +99,9 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
     <div className="space-y-6">
       {/* Заголовок + фильтр по договорам */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-gray-900">Финансовый дашборд объекта</h2>
+        <h2 className="text-lg font-semibold text-foreground">Финансовый дашборд объекта</h2>
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-400" />
+          <Filter className="w-4 h-4 text-muted-foreground" />
           <Select value={selectedContractId} onValueChange={setSelectedContractId}>
             <SelectTrigger className="w-[280px]" aria-label="Фильтр по договору">
               <SelectValue placeholder="Все договоры" />
@@ -120,42 +120,42 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
 
       {/* Карточки: Дебет / Кредит / Сальдо */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 flex items-center gap-4">
+        <div className="bg-card border border-border rounded-xl p-6 flex items-center gap-4">
           <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
             <ArrowDownRight className="w-6 h-6 text-green-600" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Дебет (поступления)</p>
+            <p className="text-sm text-muted-foreground">Дебет (поступления)</p>
             <p className="text-2xl font-bold text-green-700">
               {cashFlowData.length > 0 ? formatCurrency(totals.debit) : '—'}
             </p>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 flex items-center gap-4">
+        <div className="bg-card border border-border rounded-xl p-6 flex items-center gap-4">
           <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
             <ArrowUpRight className="w-6 h-6 text-red-600" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Кредит (расходы)</p>
+            <p className="text-sm text-muted-foreground">Кредит (расходы)</p>
             <p className="text-2xl font-bold text-red-700">
               {cashFlowData.length > 0 ? formatCurrency(totals.credit) : '—'}
             </p>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-            <DollarSign className="w-6 h-6 text-blue-600" />
+        <div className="bg-card border border-border rounded-xl p-6 flex items-center gap-4">
+          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+            <DollarSign className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Сальдо</p>
+            <p className="text-sm text-muted-foreground">Сальдо</p>
             <p
               className={`text-2xl font-bold ${
                 cashFlowData.length === 0
-                  ? 'text-gray-300'
+                  ? 'text-muted-foreground'
                   : totals.balance >= 0
-                    ? 'text-blue-700'
+                    ? 'text-primary'
                     : 'text-red-700'
               }`}
             >
@@ -166,15 +166,15 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
       </div>
 
       {/* Таблица платежей «самолётик» — Дебет / Кредит */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <h3 className="text-base font-semibold text-gray-900 mb-4">
+      <div className="bg-card border border-border rounded-xl p-6">
+        <h3 className="text-base font-semibold text-foreground mb-4">
           Таблица платежей
         </h3>
 
         {cashFlowData.length === 0 ? (
-          <div className="border border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center">
-            <DollarSign className="w-10 h-10 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-400">
+          <div className="border border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center">
+            <DollarSign className="w-10 h-10 text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground">
               Нет данных для отображения. Привяжите договоры к объекту для формирования таблицы платежей.
             </p>
           </div>
@@ -182,15 +182,15 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Дата</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Дата</th>
                   <th className="text-right py-3 px-4 font-medium text-green-600">
                     Дебет (приход)
                   </th>
                   <th className="text-right py-3 px-4 font-medium text-red-600">
                     Кредит (расход)
                   </th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500">Сальдо</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">Сальдо</th>
                 </tr>
               </thead>
               <tbody>
@@ -201,9 +201,9 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
                   return (
                     <tr
                       key={idx}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                      className="border-b border-border hover:bg-muted transition-colors"
                     >
-                      <td className="py-3 px-4 text-gray-700">{row.date}</td>
+                      <td className="py-3 px-4 text-foreground">{row.date}</td>
                       <td className="py-3 px-4 text-right font-medium text-green-700">
                         {income > 0 ? formatCurrency(income) : ''}
                       </td>
@@ -212,7 +212,7 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
                       </td>
                       <td
                         className={`py-3 px-4 text-right font-medium ${
-                          net >= 0 ? 'text-blue-700' : 'text-red-700'
+                          net >= 0 ? 'text-primary' : 'text-red-700'
                         }`}
                       >
                         {formatCurrency(net)}
@@ -222,8 +222,8 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-gray-300 bg-gray-50 font-semibold">
-                  <td className="py-3 px-4 text-gray-700">Итого</td>
+                <tr className="border-t-2 border-border bg-muted font-semibold">
+                  <td className="py-3 px-4 text-foreground">Итого</td>
                   <td className="py-3 px-4 text-right text-green-700">
                     {formatCurrency(totals.debit)}
                   </td>
@@ -232,7 +232,7 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
                   </td>
                   <td
                     className={`py-3 px-4 text-right ${
-                      totals.balance >= 0 ? 'text-blue-700' : 'text-red-700'
+                      totals.balance >= 0 ? 'text-primary' : 'text-red-700'
                     }`}
                   >
                     {formatCurrency(totals.balance)}
@@ -245,9 +245,9 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
       </div>
 
       {/* Cash-flow график */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h3 className="text-base font-semibold text-gray-900">Cash-flow</h3>
+          <h3 className="text-base font-semibold text-foreground">Cash-flow</h3>
           <div className="flex items-center gap-2">
             <Button
               variant={chartType === 'line' ? 'default' : 'outline'}
@@ -297,9 +297,9 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
         </div>
 
         {cashFlowData.length === 0 ? (
-          <div className="border border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center">
-            <TrendingUp className="w-10 h-10 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-400">Нет данных для отображения</p>
+          <div className="border border-dashed border-border rounded-lg p-12 flex flex-col items-center justify-center">
+            <TrendingUp className="w-10 h-10 text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground">Нет данных для отображения</p>
           </div>
         ) : (
           <div className="h-96">
@@ -350,7 +350,7 @@ export function CashFlowTab({ objectId }: CashFlowTabProps) {
         )}
       </div>
 
-      <p className="text-xs text-gray-400 text-center">
+      <p className="text-xs text-muted-foreground text-center">
         Данные формируются на основе платежей по договорам, привязанным к объекту.
         Используйте фильтр по договорам для детализации.
       </p>

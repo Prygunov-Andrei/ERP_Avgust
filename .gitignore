@@ -56,6 +56,7 @@ dev-remote-db.sh
 # Misc
 *.bak
 *.tmp
+/backups/
 
 # Каталоги поставщиков (PDF большие, JSON коммитим)
 backend/catalog/data/suppliers/**/*.pdf
@@ -64,7 +65,3 @@ backend/catalog/data/suppliers/**/*.pdf
 реквизиты*
 docs/private/
 
-# hvac-backend
-hvac-backend/media/
-hvac-backend/staticfiles/
-hvac-backend/backups/

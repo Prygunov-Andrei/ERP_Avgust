@@ -34,14 +34,14 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  recognition: 'bg-purple-100 text-purple-800',
-  review: 'bg-yellow-100 text-yellow-800',
+  recognition: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
+  review: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400',
   verified: 'bg-teal-100 text-teal-800',
-  in_registry: 'bg-blue-100 text-blue-800',
-  approved: 'bg-green-100 text-green-800',
+  in_registry: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
+  approved: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
   sending: 'bg-indigo-100 text-indigo-800',
   paid: 'bg-emerald-100 text-emerald-800',
-  cancelled: 'bg-red-100 text-red-800',
+  cancelled: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400',
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -797,7 +797,7 @@ function EditableCell({
       type={type}
       step={type === 'number' ? '0.01' : undefined}
       className={`w-full px-2 py-1.5 text-sm border border-transparent rounded
-        hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+        hover:border-border focus:border-blue-500 focus:ring-1 focus:ring-ring
         focus:outline-none bg-transparent ${className}`}
       value={local}
       onChange={(e) => {

@@ -23,10 +23,10 @@ import { ArrowLeft, Loader2, FileSpreadsheet, Info, DollarSign, History, Users, 
 import { toast } from 'sonner';
 
 const STATUS_MAP = {
-  draft: { label: 'Черновик', color: 'bg-gray-100 text-gray-700' },
-  sent: { label: 'Отправлена', color: 'bg-blue-100 text-blue-700' },
-  approved: { label: 'Согласована', color: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Отклонена', color: 'bg-red-100 text-red-700' },
+  draft: { label: 'Черновик', color: 'bg-muted text-foreground' },
+  sent: { label: 'Отправлена', color: 'bg-blue-100 dark:bg-blue-900/30 text-primary' },
+  approved: { label: 'Согласована', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' },
+  rejected: { label: 'Отклонена', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' },
 };
 
 export function MountingEstimateDetail() {
@@ -146,7 +146,7 @@ export function MountingEstimateDetail() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
         </div>
       </div>
     );
@@ -156,8 +156,8 @@ export function MountingEstimateDetail() {
     return (
       <div className="p-8">
         <div className="text-center py-12">
-          <FileSpreadsheet className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Монтажная смета не найдена</p>
+          <FileSpreadsheet className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Монтажная смета не найдена</p>
           <Button variant="outline" onClick={() => navigate('/estimates/mounting-estimates')} className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Вернуться к списку
@@ -178,13 +178,13 @@ export function MountingEstimateDetail() {
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold text-gray-900">{mountingEstimate.number}</h1>
-              <span className="text-sm text-gray-500">v{mountingEstimate.version_number}</span>
+              <h1 className="text-2xl font-semibold text-foreground">{mountingEstimate.number}</h1>
+              <span className="text-sm text-muted-foreground">v{mountingEstimate.version_number}</span>
               <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-md ${STATUS_MAP[mountingEstimate.status as keyof typeof STATUS_MAP]?.color}`}>
                 {STATUS_MAP[mountingEstimate.status as keyof typeof STATUS_MAP]?.label}
               </span>
             </div>
-            <p className="text-sm text-gray-500 mt-1">{mountingEstimate.name}</p>
+            <p className="text-sm text-muted-foreground mt-1">{mountingEstimate.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -219,28 +219,28 @@ export function MountingEstimateDetail() {
 
         {/* Info Tab */}
         <TabsContent value="info" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Основная информация</h3>
+          <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+            <h3 className="font-semibold text-foreground mb-4">Основная информация</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-gray-500">Номер</div>
-                <div className="font-medium text-gray-900">{mountingEstimate.number}</div>
+                <div className="text-sm text-muted-foreground">Номер</div>
+                <div className="font-medium text-foreground">{mountingEstimate.number}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Название</div>
-                <div className="font-medium text-gray-900">{mountingEstimate.name}</div>
+                <div className="text-sm text-muted-foreground">Название</div>
+                <div className="font-medium text-foreground">{mountingEstimate.name}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Объект</div>
-                <div className="font-medium text-gray-900">{mountingEstimate.object_name}</div>
+                <div className="text-sm text-muted-foreground">Объект</div>
+                <div className="font-medium text-foreground">{mountingEstimate.object_name}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Статус</div>
+                <div className="text-sm text-muted-foreground">Статус</div>
                 <div>
                   <select
                     value={mountingEstimate.status}
                     onChange={(e) => updateStatusMutation.mutate(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     {Object.entries(STATUS_MAP).map(([key, { label }]) => (
                       <option key={key} value={key}>{label}</option>
@@ -249,29 +249,29 @@ export function MountingEstimateDetail() {
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Человеко-часы</div>
-                <div className="font-medium text-gray-900">{mountingEstimate.man_hours}</div>
+                <div className="text-sm text-muted-foreground">Человеко-часы</div>
+                <div className="font-medium text-foreground">{mountingEstimate.man_hours}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Создал</div>
-                <div className="font-medium text-gray-900">{mountingEstimate.created_by_username}</div>
+                <div className="text-sm text-muted-foreground">Создал</div>
+                <div className="font-medium text-foreground">{mountingEstimate.created_by_username}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Дата создания</div>
-                <div className="font-medium text-gray-900">{formatDate(mountingEstimate.created_at)}</div>
+                <div className="text-sm text-muted-foreground">Дата создания</div>
+                <div className="font-medium text-foreground">{formatDate(mountingEstimate.created_at)}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Последнее обновление</div>
-                <div className="font-medium text-gray-900">{formatDate(mountingEstimate.updated_at)}</div>
+                <div className="text-sm text-muted-foreground">Последнее обновление</div>
+                <div className="font-medium text-foreground">{formatDate(mountingEstimate.updated_at)}</div>
               </div>
             </div>
 
             {mountingEstimate.source_estimate && (
               <div className="mt-4 pt-4 border-t">
-                <div className="text-sm text-gray-500 mb-2">Исходная смета</div>
+                <div className="text-sm text-muted-foreground mb-2">Исходная смета</div>
                 <button
                   onClick={() => navigate(`/estimates/estimates/${mountingEstimate.source_estimate?.id}`)}
-                  className="text-blue-600 hover:underline font-medium"
+                  className="text-primary hover:underline font-medium"
                 >
                   {mountingEstimate.source_estimate.number} - {mountingEstimate.source_estimate.name}
                 </button>
@@ -280,7 +280,7 @@ export function MountingEstimateDetail() {
 
             {mountingEstimate.agreed_counterparty && (
               <div className="mt-4 pt-4 border-t">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                   <div className="flex items-start gap-3">
                     <Users className="w-5 h-5 text-green-600 mt-0.5" />
                     <div className="flex-1">
@@ -300,25 +300,25 @@ export function MountingEstimateDetail() {
 
           {/* Works Section */}
           {mountingEstimate.works && mountingEstimate.works.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Работы</h3>
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+              <h3 className="font-semibold text-foreground mb-4">Работы</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className="bg-muted border-b">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Название</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Количество</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Цена за ед.</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Итого</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Название</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Количество</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Цена за ед.</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Итого</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {mountingEstimate.works.map((work) => (
-                      <tr key={work.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-900">{work.name}</td>
-                        <td className="px-4 py-3 text-sm text-right text-gray-700">{work.quantity}</td>
-                        <td className="px-4 py-3 text-sm text-right text-gray-700">{formatCurrency(work.unit_price)}</td>
-                        <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">{formatCurrency(work.total_price)}</td>
+                      <tr key={work.id} className="hover:bg-muted">
+                        <td className="px-4 py-3 text-sm text-foreground">{work.name}</td>
+                        <td className="px-4 py-3 text-sm text-right text-foreground">{work.quantity}</td>
+                        <td className="px-4 py-3 text-sm text-right text-foreground">{formatCurrency(work.unit_price)}</td>
+                        <td className="px-4 py-3 text-sm text-right font-medium text-foreground">{formatCurrency(work.total_price)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -330,31 +330,31 @@ export function MountingEstimateDetail() {
 
         {/* Totals Tab */}
         <TabsContent value="totals" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-6">Итоги по монтажной смете</h3>
+          <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+            <h3 className="font-semibold text-foreground mb-6">Итоги по монтажной смете</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center py-4 border-b border-gray-300">
-                <span className="text-lg font-semibold text-gray-900">Итоговая сумма без НДС</span>
-                <span className="text-lg font-semibold text-gray-900">{formatCurrency(mountingEstimate.total_amount)}</span>
+              <div className="flex justify-between items-center py-4 border-b border-border">
+                <span className="text-lg font-semibold text-foreground">Итоговая сумма без НДС</span>
+                <span className="text-lg font-semibold text-foreground">{formatCurrency(mountingEstimate.total_amount)}</span>
               </div>
 
               {mountingEstimate.with_vat && (
                 <>
                   <div className="flex justify-between items-center py-3 border-b">
-                    <span className="text-gray-600">НДС ({mountingEstimate.vat_rate}%)</span>
-                    <span className="font-medium text-gray-900">{formatCurrency(mountingEstimate.vat_amount)}</span>
+                    <span className="text-muted-foreground">НДС ({mountingEstimate.vat_rate}%)</span>
+                    <span className="font-medium text-foreground">{formatCurrency(mountingEstimate.vat_amount)}</span>
                   </div>
-                  <div className="flex justify-between items-center py-4 bg-blue-50 rounded-lg px-4">
-                    <span className="text-xl font-semibold text-gray-900">Итого с НДС</span>
-                    <span className="text-xl font-semibold text-blue-600">{formatCurrency(mountingEstimate.total_with_vat)}</span>
+                  <div className="flex justify-between items-center py-4 bg-primary/10 rounded-lg px-4">
+                    <span className="text-xl font-semibold text-foreground">Итого с НДС</span>
+                    <span className="text-xl font-semibold text-primary">{formatCurrency(mountingEstimate.total_with_vat)}</span>
                   </div>
                 </>
               )}
 
               <div className="pt-4 border-t">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Человеко-часы</span>
-                  <span className="font-medium text-gray-900">{mountingEstimate.man_hours}</span>
+                  <span className="text-muted-foreground">Человеко-часы</span>
+                  <span className="font-medium text-foreground">{mountingEstimate.man_hours}</span>
                 </div>
               </div>
             </div>
@@ -449,7 +449,7 @@ export function MountingEstimateDetail() {
                 id="counterparty"
                 value={selectedCounterparty}
                 onChange={(e) => setSelectedCounterparty(Number(e.target.value))}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value={0}>Выберите исполнителя</option>
                 {counterparties?.filter(c => c.type === 'supplier' || c.type === 'both').map((cp) => (
@@ -458,7 +458,7 @@ export function MountingEstimateDetail() {
               </select>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-sm text-blue-800">
               <p>💡 После согласования статус автоматически изменится на "Согласована"</p>
             </div>
           </div>

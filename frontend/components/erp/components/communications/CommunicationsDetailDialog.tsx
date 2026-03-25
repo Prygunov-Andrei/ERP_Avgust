@@ -16,25 +16,25 @@ type CommunicationsDetailDialogProps = {
 const getTypeLabel = (type: string) => type === 'incoming' ? 'Входящее' : 'Исходящее';
 
 const getTypeBadge = (type: string) =>
-  type === 'incoming' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700';
+  type === 'incoming' ? 'bg-blue-100 dark:bg-blue-900/30 text-primary' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
 
 const getCategoryBadge = (category: string) => {
   switch (category) {
-    case 'уведомление': return 'bg-gray-100 text-gray-700';
-    case 'претензия': return 'bg-red-100 text-red-700';
-    case 'запрос': return 'bg-blue-100 text-blue-700';
-    case 'ответ': return 'bg-green-100 text-green-700';
-    default: return 'bg-gray-100 text-gray-700';
+    case 'уведомление': return 'bg-muted text-foreground';
+    case 'претензия': return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+    case 'запрос': return 'bg-blue-100 dark:bg-blue-900/30 text-primary';
+    case 'ответ': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+    default: return 'bg-muted text-foreground';
   }
 };
 
 const getStatusBadge = (status: string) => {
   switch (status) {
-    case 'новое': return 'bg-yellow-100 text-yellow-700';
-    case 'в работе': return 'bg-blue-100 text-blue-700';
-    case 'отвечено': return 'bg-green-100 text-green-700';
-    case 'закрыто': return 'bg-gray-100 text-gray-700';
-    default: return 'bg-gray-100 text-gray-700';
+    case 'новое': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400';
+    case 'в работе': return 'bg-blue-100 dark:bg-blue-900/30 text-primary';
+    case 'отвечено': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+    case 'закрыто': return 'bg-muted text-foreground';
+    default: return 'bg-muted text-foreground';
   }
 };
 
@@ -48,10 +48,10 @@ export function CommunicationsDetailDialog({
 
   return (
     <Dialog open={!!correspondence} onOpenChange={() => onClose()}>
-      <DialogContent className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold mb-4">Детали письма</DialogTitle>
-          <DialogDescription className="text-sm text-gray-500">
+          <DialogDescription className="text-sm text-muted-foreground">
             Подробная информация о письме
           </DialogDescription>
         </DialogHeader>
@@ -59,15 +59,15 @@ export function CommunicationsDetailDialog({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-gray-500">Дата</p>
+              <p className="text-xs text-muted-foreground">Дата</p>
               <p className="font-medium">{formatDate(correspondence.date)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Номер</p>
+              <p className="text-xs text-muted-foreground">Номер</p>
               <p className="font-medium">{correspondence.number}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Тип</p>
+              <p className="text-xs text-muted-foreground">Тип</p>
               <Badge className={getTypeBadge(correspondence.type)}>
                 {correspondence.type === 'incoming' ? (
                   <ArrowDownCircle className="w-3 h-3 mr-1 inline" />
@@ -78,18 +78,18 @@ export function CommunicationsDetailDialog({
               </Badge>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Категория</p>
+              <p className="text-xs text-muted-foreground">Категория</p>
               <Badge className={getCategoryBadge(correspondence.category)}>
                 {correspondence.category}
               </Badge>
             </div>
             <div className="col-span-2">
-              <p className="text-xs text-gray-500">Договор</p>
+              <p className="text-xs text-muted-foreground">Договор</p>
               <p className="font-medium">{correspondence.contract_name}</p>
-              <p className="text-xs text-gray-500">{correspondence.contract_number}</p>
+              <p className="text-xs text-muted-foreground">{correspondence.contract_number}</p>
             </div>
             <div className="col-span-2">
-              <p className="text-xs text-gray-500">Статус</p>
+              <p className="text-xs text-muted-foreground">Статус</p>
               <Badge className={getStatusBadge(correspondence.status)}>
                 {correspondence.status}
               </Badge>
@@ -97,22 +97,22 @@ export function CommunicationsDetailDialog({
           </div>
 
           <div className="border-t pt-4">
-            <p className="text-xs text-gray-500 mb-1">Тема</p>
+            <p className="text-xs text-muted-foreground mb-1">Тема</p>
             <p className="font-medium">{correspondence.subject}</p>
           </div>
 
           {correspondence.description && (
             <div className="border-t pt-4">
-              <p className="text-xs text-gray-500 mb-1">Описание</p>
+              <p className="text-xs text-muted-foreground mb-1">Описание</p>
               <p className="text-sm whitespace-pre-wrap">{correspondence.description}</p>
             </div>
           )}
 
           {correspondence.related_to && (
             <div className="border-t pt-4">
-              <p className="text-xs text-gray-500 mb-2">Связанное письмо</p>
+              <p className="text-xs text-muted-foreground mb-2">Связанное письмо</p>
               <div className="flex items-center gap-2">
-                <LinkIcon className="w-4 h-4 text-gray-400" />
+                <LinkIcon className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm font-medium">{correspondence.related_to_number}</span>
               </div>
             </div>
@@ -120,7 +120,7 @@ export function CommunicationsDetailDialog({
 
           {correspondence.file && (
             <div className="border-t pt-4">
-              <p className="text-xs text-gray-500 mb-2">Файл</p>
+              <p className="text-xs text-muted-foreground mb-2">Файл</p>
               <Button
                 variant="outline"
                 size="sm"
@@ -133,7 +133,7 @@ export function CommunicationsDetailDialog({
             </div>
           )}
 
-          <div className="border-t pt-4 text-xs text-gray-500">
+          <div className="border-t pt-4 text-xs text-muted-foreground">
             <p>Создано: {formatDate(correspondence.created_at)}</p>
             <p>Обновлено: {formatDate(correspondence.updated_at)}</p>
           </div>

@@ -77,7 +77,7 @@ export function GlobalSearch() {
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           type="text"
           placeholder="Поиск..."
@@ -96,14 +96,14 @@ export function GlobalSearch() {
 
       {/* Dropdown с результатами */}
       {isOpen && searchQuery.length >= 2 && (
-        <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+        <div className="absolute top-full mt-2 w-full bg-card border border-border rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
           {isLoading ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-muted-foreground">
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
               Поиск...
             </div>
           ) : !hasResults ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-muted-foreground">
               Ничего не найдено
             </div>
           ) : (
@@ -111,17 +111,17 @@ export function GlobalSearch() {
               {/* Контрагенты */}
               {counterparties && counterparties.length > 0 && (
                 <div className="mb-2">
-                  <div className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wide">
+                  <div className="px-4 py-2 text-xs text-muted-foreground uppercase tracking-wide">
                     Контрагенты
                   </div>
                   {counterparties.slice(0, 5).map((item) => (
                     <button
                       key={`counterparty-${item.id}`}
                       onClick={() => handleNavigate('/counterparties')}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-2 text-left hover:bg-muted transition-colors"
                     >
-                      <div className="text-sm text-gray-900">{item.name}</div>
-                      <div className="text-xs text-gray-500">{item.inn || 'Без ИНН'}</div>
+                      <div className="text-sm text-foreground">{item.name}</div>
+                      <div className="text-xs text-muted-foreground">{item.inn || 'Без ИНН'}</div>
                     </button>
                   ))}
                 </div>
@@ -130,17 +130,17 @@ export function GlobalSearch() {
               {/* Договоры */}
               {contracts?.results && contracts.results.length > 0 && (
                 <div className="mb-2">
-                  <div className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wide">
+                  <div className="px-4 py-2 text-xs text-muted-foreground uppercase tracking-wide">
                     Договоры
                   </div>
                   {contracts.results.slice(0, 5).map((item) => (
                     <button
                       key={`contract-${item.id}`}
                       onClick={() => handleNavigate(`/contracts/${item.id}`)}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-2 text-left hover:bg-muted transition-colors"
                     >
-                      <div className="text-sm text-gray-900">{item.contract_number}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-sm text-foreground">{item.contract_number}</div>
+                      <div className="text-xs text-muted-foreground">
                         {item.counterparty_display || 'Без контрагента'}
                       </div>
                     </button>
@@ -151,17 +151,17 @@ export function GlobalSearch() {
               {/* Объекты */}
               {objects && objects.length > 0 && (
                 <div className="mb-2">
-                  <div className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wide">
+                  <div className="px-4 py-2 text-xs text-muted-foreground uppercase tracking-wide">
                     Объекты
                   </div>
                   {objects.slice(0, 5).map((item) => (
                     <button
                       key={`object-${item.id}`}
                       onClick={() => handleNavigate(`/objects/${item.id}`)}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-2 text-left hover:bg-muted transition-colors"
                     >
-                      <div className="text-sm text-gray-900">{item.name}</div>
-                      <div className="text-xs text-gray-500">{item.address || 'Без адреса'}</div>
+                      <div className="text-sm text-foreground">{item.name}</div>
+                      <div className="text-xs text-muted-foreground">{item.address || 'Без адреса'}</div>
                     </button>
                   ))}
                 </div>
@@ -170,19 +170,19 @@ export function GlobalSearch() {
               {/* Платежи */}
               {payments?.results && payments.results.length > 0 && (
                 <div>
-                  <div className="px-4 py-2 text-xs text-gray-500 uppercase tracking-wide">
+                  <div className="px-4 py-2 text-xs text-muted-foreground uppercase tracking-wide">
                     Платежи
                   </div>
                   {payments.results.slice(0, 5).map((item) => (
                     <button
                       key={`payment-${item.id}`}
                       onClick={() => handleNavigate('/payments')}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-2 text-left hover:bg-muted transition-colors"
                     >
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-foreground">
                         {item.contract_display || `Платеж #${item.id}`}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {formatDate(item.payment_date)} • {formatAmount(item.amount)} ₽
                       </div>
                     </button>

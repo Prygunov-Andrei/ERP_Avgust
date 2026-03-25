@@ -12,9 +12,10 @@ import {
   createBankingService,
   createSupplyService,
   createKanbanService,
+  createSectionFeedbackService,
 } from './services';
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = '/api/erp';
 
 export class ApiClient {
   private baseUrl = API_BASE_URL;
@@ -35,6 +36,7 @@ export class ApiClient {
   readonly banking: ReturnType<typeof createBankingService>;
   readonly supply: ReturnType<typeof createSupplyService>;
   readonly kanban: ReturnType<typeof createKanbanService>;
+  readonly sectionFeedback: ReturnType<typeof createSectionFeedbackService>;
 
   constructor() {
     const boundRequest = this.request.bind(this);
@@ -51,6 +53,7 @@ export class ApiClient {
     this.banking = createBankingService(boundRequest);
     this.supply = createSupplyService(boundRequest);
     this.kanban = createKanbanService(boundRequest);
+    this.sectionFeedback = createSectionFeedbackService(boundRequest);
   }
 
   // ── Auth & Transport ─────────────────────────────────────────────

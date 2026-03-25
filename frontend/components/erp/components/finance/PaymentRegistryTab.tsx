@@ -31,9 +31,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  in_registry: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  sending: 'bg-orange-100 text-orange-800',
+  in_registry: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400',
+  approved: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
+  sending: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400',
   paid: 'bg-emerald-100 text-emerald-800',
 };
 
@@ -69,8 +69,8 @@ const getDueDateHighlight = (dueDate: string | null | undefined, status: string)
   const endOfWeek = new Date(today);
   endOfWeek.setDate(today.getDate() + (7 - today.getDay()));
 
-  if (due <= today) return 'bg-red-50';
-  if (due <= endOfWeek) return 'bg-yellow-50';
+  if (due <= today) return 'bg-red-50 dark:bg-red-900/20';
+  if (due <= endOfWeek) return 'bg-yellow-50 dark:bg-yellow-900/20';
   return '';
 };
 
@@ -198,7 +198,7 @@ export const PaymentRegistryTab = () => {
           return (
             <div
               key={acc.id}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-white shrink-0"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card shrink-0"
             >
               {isCash ? (
                 <Banknote className="h-4 w-4 text-green-600 shrink-0" />
@@ -206,8 +206,8 @@ export const PaymentRegistryTab = () => {
                 <Landmark className="h-4 w-4 text-blue-500 shrink-0" />
               )}
               <div className="min-w-0">
-                <p className="text-xs text-gray-500 truncate max-w-[120px]">{acc.name}</p>
-                <p className="text-sm font-semibold text-gray-900">{formatCurrency(bal)}</p>
+                <p className="text-xs text-muted-foreground truncate max-w-[120px]">{acc.name}</p>
+                <p className="text-sm font-semibold text-foreground">{formatCurrency(bal)}</p>
               </div>
             </div>
           );
@@ -222,23 +222,23 @@ export const PaymentRegistryTab = () => {
                 <Badge variant="outline" className={STATUS_COLORS[status] || ''}>
                   {STATUS_LABELS[status] || status}
                 </Badge>
-                <p className="text-lg font-bold text-gray-900 mt-1">{data.count}</p>
-                <p className="text-xs text-gray-500">{formatCurrency(data.amount)}</p>
+                <p className="text-lg font-bold text-foreground mt-1">{data.count}</p>
+                <p className="text-xs text-muted-foreground">{formatCurrency(data.amount)}</p>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
         {FILTER_TABS.map(({ value, label }) => (
           <button
             key={value}
             onClick={() => setStatusFilter(value)}
             className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
               statusFilter === value
-                ? 'bg-white text-gray-900 shadow-sm font-medium'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-card text-foreground shadow-sm font-medium'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
             aria-label={`Фильтр: ${label}`}
           >
@@ -254,14 +254,14 @@ export const PaymentRegistryTab = () => {
           ))}
         </div>
       ) : invoices.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
+        <div className="text-center py-12 text-muted-foreground">
           <p className="text-lg font-medium">Нет записей</p>
           <p className="text-sm">Счета с выбранным статусом не найдены</p>
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
+            <thead className="bg-muted text-muted-foreground">
               <tr>
                 <th className="text-left px-4 py-3 font-medium">Номер</th>
                 <th className="text-left px-4 py-3 font-medium">Контрагент</th>
@@ -280,10 +280,10 @@ export const PaymentRegistryTab = () => {
                 return (
                   <tr
                     key={invoice.id}
-                    className={`hover:bg-gray-50/50 transition-colors ${highlight}`}
+                    className={`hover:bg-muted/50 transition-colors ${highlight}`}
                   >
                     <td
-                      className="px-4 py-3 font-medium text-blue-600 cursor-pointer hover:underline"
+                      className="px-4 py-3 font-medium text-primary cursor-pointer hover:underline"
                       onClick={() => handleInvoiceClick(invoice.id)}
                       role="button"
                       tabIndex={0}
@@ -294,13 +294,13 @@ export const PaymentRegistryTab = () => {
                     >
                       {invoice.number || `#${invoice.id}`}
                     </td>
-                    <td className="px-4 py-3 text-gray-700 max-w-[180px] truncate">
+                    <td className="px-4 py-3 text-foreground max-w-[180px] truncate">
                       {invoice.counterparty_name || '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-700 max-w-[160px] truncate">
+                    <td className="px-4 py-3 text-foreground max-w-[160px] truncate">
                       {invoice.object_name || '—'}
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">
+                    <td className="px-4 py-3 text-right font-medium text-foreground">
                       {formatCurrency(invoice.amount_gross)}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -311,10 +311,10 @@ export const PaymentRegistryTab = () => {
                         {STATUS_LABELS[invoice.status] || invoice.status}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {formatDate(invoice.due_date)}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       {invoice.approved_by_name && (
                         <span>
                           {invoice.approved_by_name}
@@ -329,7 +329,7 @@ export const PaymentRegistryTab = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 px-2 text-green-700 border-green-300 hover:bg-green-50"
+                              className="h-7 px-2 text-green-700 border-green-300 hover:bg-green-50 dark:bg-green-900/20"
                               onClick={() => handleApprove(invoice.id)}
                               disabled={approveMutation.isPending}
                               aria-label="Согласовать"
@@ -343,7 +343,7 @@ export const PaymentRegistryTab = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 px-2 text-red-700 border-red-300 hover:bg-red-50"
+                              className="h-7 px-2 text-red-700 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 dark:bg-red-900/20"
                               onClick={() =>
                                 setActionDialog({ type: 'reject', invoiceId: invoice.id })
                               }
@@ -357,7 +357,7 @@ export const PaymentRegistryTab = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 px-2 text-gray-600"
+                            className="h-7 px-2 text-muted-foreground"
                             onClick={() =>
                               setActionDialog({ type: 'reschedule', invoiceId: invoice.id })
                             }

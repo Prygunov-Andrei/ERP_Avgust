@@ -186,7 +186,7 @@ export function CreateFrameworkContractForm() {
   if (isEditing && isLoadingContract) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -199,19 +199,19 @@ export function CreateFrameworkContractForm() {
   return (
     <div className="space-y-6">
       {/* Хедер */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-center gap-4 mb-6">
           <Button
             onClick={() => navigate('/contracts/framework-contracts')}
-            className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3"
+            className="bg-muted text-foreground hover:bg-muted px-3"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-gray-900">
+            <h1 className="text-foreground">
               {isEditing ? 'Редактировать рамочный договор' : 'Создать рамочный договор'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {isEditing ? 'Изменение данных рамочного договора' : 'Создание нового рамочного договора с поставщиком'}
             </p>
           </div>
@@ -221,8 +221,8 @@ export function CreateFrameworkContractForm() {
       {/* Форма */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Основная информация */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-gray-900 mb-4">Основная информация</h2>
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h2 className="text-foreground mb-4">Основная информация</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <Label htmlFor="name">Название *</Label>
@@ -253,7 +253,7 @@ export function CreateFrameworkContractForm() {
                 id="status"
                 value={formData.status}
                 onChange={(e) => handleChange('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="draft">Черновик</option>
                 <option value="active">Действующий</option>
@@ -282,7 +282,7 @@ export function CreateFrameworkContractForm() {
                 onChange={(e) => handleChange('valid_until', e.target.value)}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Должна быть &gt;= даты начала действия
               </p>
             </div>
@@ -290,8 +290,8 @@ export function CreateFrameworkContractForm() {
         </div>
 
         {/* Стороны */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-gray-900 mb-4">Стороны</h2>
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h2 className="text-foreground mb-4">Стороны</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="legal_entity">Наша компания *</Label>
@@ -299,7 +299,7 @@ export function CreateFrameworkContractForm() {
                 id="legal_entity"
                 value={formData.legal_entity}
                 onChange={(e) => handleChange('legal_entity', parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 required
               >
                 <option value="">Выберите компанию</option>
@@ -317,7 +317,7 @@ export function CreateFrameworkContractForm() {
                 id="counterparty"
                 value={formData.counterparty}
                 onChange={(e) => handleChange('counterparty', parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 required
               >
                 <option value="">Выберите контрагента</option>
@@ -327,7 +327,7 @@ export function CreateFrameworkContractForm() {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Только контрагенты типа "Поставщик" или "Универсальный"
               </p>
             </div>
@@ -335,12 +335,12 @@ export function CreateFrameworkContractForm() {
         </div>
 
         {/* Прайс-листы */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-gray-900 mb-4">Прайс-листы</h2>
-          <p className="text-gray-600 mb-4">Выберите согласованные прайс-листы</p>
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h2 className="text-foreground mb-4">Прайс-листы</h2>
+          <p className="text-muted-foreground mb-4">Выберите согласованные прайс-листы</p>
           
           {priceLists.length === 0 ? (
-            <div className="text-gray-500 text-center py-4">
+            <div className="text-muted-foreground text-center py-4">
               Нет доступных прайс-листов
             </div>
           ) : (
@@ -348,19 +348,19 @@ export function CreateFrameworkContractForm() {
               {priceLists.map((pl) => (
                 <label
                   key={pl.id}
-                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"
+                  className="flex items-center gap-3 p-3 border border-border rounded-md hover:bg-muted cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     checked={formData.price_lists.includes(pl.id)}
                     onChange={() => handlePriceListToggle(pl.id)}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-primary"
                   />
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-foreground">
                       {pl.number} - {pl.name}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-muted-foreground">
                       от {formatDate(pl.date)}
                     </div>
                   </div>
@@ -371,8 +371,8 @@ export function CreateFrameworkContractForm() {
         </div>
 
         {/* Файл и примечания */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-gray-900 mb-4">Документы и примечания</h2>
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h2 className="text-foreground mb-4">Документы и примечания</h2>
           <div className="space-y-4">
             <div>
               <Label htmlFor="file">Скан договора</Label>
@@ -385,11 +385,11 @@ export function CreateFrameworkContractForm() {
                   handleChange('file', file || null);
                 }}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Форматы: PDF, JPG, PNG
               </p>
               {isEditing && existingContract?.file && !formData.file && (
-                <p className="text-xs text-blue-600 mt-1">
+                <p className="text-xs text-primary mt-1">
                   Текущий файл:{' '}
                   <a
                     href={existingContract.file}
@@ -417,12 +417,12 @@ export function CreateFrameworkContractForm() {
         </div>
 
         {/* Кнопки действий */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           <div className="flex gap-3 justify-end">
             <Button
               type="button"
               onClick={() => navigate('/contracts/framework-contracts')}
-              className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+              className="bg-muted text-foreground hover:bg-muted"
               disabled={isLoading}
             >
               Отмена

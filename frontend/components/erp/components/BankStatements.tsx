@@ -155,7 +155,7 @@ export const BankStatements = () => {
 
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -172,31 +172,31 @@ export const BankStatements = () => {
             <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
           </div>
         ) : transactions.length === 0 ? (
-          <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-            <Landmark className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 mb-2">Нет транзакций</p>
-            <p className="text-sm text-gray-400">
+          <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+            <Landmark className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-2">Нет транзакций</p>
+            <p className="text-sm text-muted-foreground">
               Выберите банковский счёт и нажмите "Синхронизировать"
             </p>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Тип</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Сумма</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Контрагент</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Назначение</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Сверка</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Действия</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Дата</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Тип</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Сумма</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Контрагент</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Назначение</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Сверка</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Действия</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {transactions.map((tx: BankTransaction) => (
-                    <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={tx.id} className="hover:bg-muted transition-colors">
                       <td className="px-4 py-3 whitespace-nowrap text-sm">
                         {new Date(tx.date).toLocaleDateString('ru-RU')}
                       </td>
@@ -222,28 +222,28 @@ export const BankStatements = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                        <div className="text-sm font-medium text-foreground truncate max-w-[200px]">
                           {tx.counterparty_name || '—'}
                         </div>
                         {tx.counterparty_inn && (
-                          <div className="text-xs text-gray-500 font-mono">
+                          <div className="text-xs text-muted-foreground font-mono">
                             ИНН: {tx.counterparty_inn}
                           </div>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-sm text-gray-700 truncate max-w-[300px]" title={tx.purpose}>
+                        <div className="text-sm text-foreground truncate max-w-[300px]" title={tx.purpose}>
                           {tx.purpose || '—'}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
                         {tx.reconciled ? (
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:border-green-800">
                             <Check className="w-3 h-3 mr-1" />
                             Сверено
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 dark:border-yellow-800">
                             Не сверено
                           </Badge>
                         )}
@@ -266,7 +266,7 @@ export const BankStatements = () => {
               </table>
             </div>
 
-            <div className="px-4 py-3 border-t border-gray-200 text-sm text-gray-500">
+            <div className="px-4 py-3 border-t border-border text-sm text-muted-foreground">
               Показано {transactions.length} из {transactionsData?.count || 0} транзакций
             </div>
           </div>
@@ -283,10 +283,10 @@ export const BankStatements = () => {
             </DialogHeader>
             {reconcileDialogTx && (
               <div className="space-y-4 mt-4">
-                <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
-                  <div><span className="text-gray-500">Сумма:</span> {formatAmount(reconcileDialogTx.amount)}</div>
-                  <div><span className="text-gray-500">Контрагент:</span> {reconcileDialogTx.counterparty_name}</div>
-                  <div><span className="text-gray-500">Дата:</span> {new Date(reconcileDialogTx.date).toLocaleDateString('ru-RU')}</div>
+                <div className="bg-muted rounded-lg p-3 text-sm space-y-1">
+                  <div><span className="text-muted-foreground">Сумма:</span> {formatAmount(reconcileDialogTx.amount)}</div>
+                  <div><span className="text-muted-foreground">Контрагент:</span> {reconcileDialogTx.counterparty_name}</div>
+                  <div><span className="text-muted-foreground">Дата:</span> {new Date(reconcileDialogTx.date).toLocaleDateString('ru-RU')}</div>
                 </div>
                 <div>
                   <Label htmlFor="payment-id">ID платежа</Label>

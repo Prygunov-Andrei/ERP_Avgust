@@ -34,19 +34,19 @@ export function FrameworkContractsList() {
 
   const getStatusBadge = (status: string, isActive: boolean) => {
     if (status === 'draft') {
-      return <Badge className="bg-gray-100 text-gray-800">Черновик</Badge>;
+      return <Badge className="bg-muted text-foreground">Черновик</Badge>;
     } else if (status === 'active') {
       return isActive ? (
-        <Badge className="bg-green-100 text-green-800">Действующий</Badge>
+        <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Действующий</Badge>
       ) : (
-        <Badge className="bg-blue-100 text-blue-800">Неактивный</Badge>
+        <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">Неактивный</Badge>
       );
     } else if (status === 'expired') {
-      return <Badge className="bg-orange-100 text-orange-800">Истёк срок</Badge>;
+      return <Badge className="bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400">Истёк срок</Badge>;
     } else if (status === 'terminated') {
-      return <Badge className="bg-red-100 text-red-800">Расторгнут</Badge>;
+      return <Badge className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">Расторгнут</Badge>;
     }
-    return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+    return <Badge className="bg-muted text-foreground">{status}</Badge>;
   };
 
   const handleResetFilters = () => {
@@ -57,7 +57,7 @@ export function FrameworkContractsList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Загрузка...</div>
+        <div className="text-muted-foreground">Загрузка...</div>
       </div>
     );
   }
@@ -69,8 +69,8 @@ export function FrameworkContractsList() {
       {/* Хедер */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900">Рамочные договоры</h1>
-          <p className="text-gray-600">Управление рамочными договорами с поставщиками</p>
+          <h1 className="text-foreground">Рамочные договоры</h1>
+          <p className="text-muted-foreground">Управление рамочными договорами с поставщиками</p>
         </div>
         <Button
           onClick={() => navigate('/contracts/framework-contracts/create')}
@@ -82,10 +82,10 @@ export function FrameworkContractsList() {
       </div>
 
       {/* Поиск и фильтры */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-4 space-y-4">
         <div className="flex gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
               placeholder="Поиск по номеру и названию..."
               value={search}
@@ -96,7 +96,7 @@ export function FrameworkContractsList() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? 'bg-blue-50' : ''}
+            className={showFilters ? 'bg-primary/10' : ''}
           >
             <Filter className="w-4 h-4 mr-2" />
             Фильтры
@@ -157,40 +157,40 @@ export function FrameworkContractsList() {
       </div>
 
       {/* Таблица рамочных договоров */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
         {contracts.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted-foreground">
             Рамочные договоры не найдены
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-gray-600">Номер</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Название</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Исполнитель</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Компания</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Дата заключения</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Срок действия</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Статус</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Активен</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Договоров</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Номер</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Название</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Исполнитель</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Компания</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Дата заключения</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Срок действия</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Статус</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Активен</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Договоров</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {contracts.map((contract) => (
                   <tr
                     key={contract.id}
                     onClick={() => navigate(`/contracts/framework-contracts/${contract.id}`)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="hover:bg-muted cursor-pointer transition-colors"
                   >
-                    <td className="px-6 py-4 text-gray-900">{contract.number}</td>
-                    <td className="px-6 py-4 text-gray-900">{contract.name}</td>
-                    <td className="px-6 py-4 text-gray-600">{contract.counterparty_name}</td>
-                    <td className="px-6 py-4 text-gray-600">{contract.legal_entity_name}</td>
-                    <td className="px-6 py-4 text-gray-600">{formatDate(contract.date)}</td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-foreground">{contract.number}</td>
+                    <td className="px-6 py-4 text-foreground">{contract.name}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{contract.counterparty_name}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{contract.legal_entity_name}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{formatDate(contract.date)}</td>
+                    <td className="px-6 py-4 text-muted-foreground">
                       {formatDate(contract.valid_from)} - {formatDate(contract.valid_until)}
                     </td>
                     <td className="px-6 py-4">{getStatusBadge(contract.status, contract.is_active)}</td>
@@ -198,7 +198,7 @@ export function FrameworkContractsList() {
                       {contract.is_active ? (
                         <CheckCircle className="w-5 h-5 text-green-600" />
                       ) : (
-                        <XCircle className="w-5 h-5 text-gray-400" />
+                        <XCircle className="w-5 h-5 text-muted-foreground" />
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -215,7 +215,7 @@ export function FrameworkContractsList() {
       </div>
 
       {/* Счетчик */}
-      <div className="text-gray-600">
+      <div className="text-muted-foreground">
         Всего рамочных договоров: {contractsData?.count || 0}
       </div>
     </div>

@@ -182,7 +182,7 @@ export function ProjectDetail() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
         </div>
       </div>
     );
@@ -192,8 +192,8 @@ export function ProjectDetail() {
     return (
       <div className="p-8">
         <div className="text-center py-12">
-          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Проект не найден</p>
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Проект не найден</p>
           <Button variant="outline" onClick={() => navigate('/estimates/projects')} className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Вернуться к списку
@@ -214,18 +214,18 @@ export function ProjectDetail() {
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold text-gray-900">{project.cipher}</h1>
-              <span className="inline-flex px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-100 text-blue-700">
+              <h1 className="text-2xl font-semibold text-foreground">{project.cipher}</h1>
+              <span className="inline-flex px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-100 dark:bg-blue-900/30 text-primary">
                 {project.stage_display}
               </span>
-              <span className="text-sm text-gray-500">v{project.version_number}</span>
+              <span className="text-sm text-muted-foreground">v{project.version_number}</span>
               {!project.is_current && (
-                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-600">
+                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-muted text-muted-foreground">
                   Старая версия
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500 mt-1">{project.name}</p>
+            <p className="text-sm text-muted-foreground mt-1">{project.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -258,7 +258,7 @@ export function ProjectDetail() {
             <FileText className="w-4 h-4 mr-2" />
             Замечания
             {project.project_notes.length > 0 && (
-              <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+              <span className="ml-2 bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs">
                 {project.project_notes.length}
               </span>
             )}
@@ -267,39 +267,39 @@ export function ProjectDetail() {
 
         {/* Info Tab */}
         <TabsContent value="info" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Основная информация</h3>
+          <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+            <h3 className="font-semibold text-foreground mb-4">Основная информация</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-gray-500">Шифр</div>
-                <div className="font-medium text-gray-900">{project.cipher}</div>
+                <div className="text-sm text-muted-foreground">Шифр</div>
+                <div className="font-medium text-foreground">{project.cipher}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Название</div>
-                <div className="font-medium text-gray-900">{project.name}</div>
+                <div className="text-sm text-muted-foreground">Название</div>
+                <div className="font-medium text-foreground">{project.name}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Дата</div>
-                <div className="font-medium text-gray-900">{formatDate(project.date)}</div>
+                <div className="text-sm text-muted-foreground">Дата</div>
+                <div className="font-medium text-foreground">{formatDate(project.date)}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Стадия</div>
+                <div className="text-sm text-muted-foreground">Стадия</div>
                 <div>{project.stage_display}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Объект</div>
-                <div className="font-medium text-gray-900">{project.object_name}</div>
+                <div className="text-sm text-muted-foreground">Объект</div>
+                <div className="font-medium text-foreground">{project.object_name}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Версия</div>
-                <div className="font-medium text-gray-900">v{project.version_number}</div>
+                <div className="text-sm text-muted-foreground">Версия</div>
+                <div className="font-medium text-foreground">v{project.version_number}</div>
               </div>
             </div>
 
             {project.notes && (
               <div className="mt-4 pt-4 border-t">
-                <div className="text-sm text-gray-500 mb-2">Примечания</div>
-                <div className="text-gray-900 whitespace-pre-wrap">{project.notes}</div>
+                <div className="text-sm text-muted-foreground mb-2">Примечания</div>
+                <div className="text-foreground whitespace-pre-wrap">{project.notes}</div>
               </div>
             )}
 
@@ -320,31 +320,31 @@ export function ProjectDetail() {
         <TabsContent value="checks" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Primary Check */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Первичная проверка</h3>
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+              <h3 className="font-semibold text-foreground mb-4">Первичная проверка</h3>
               {project.primary_check_done ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-green-100 text-green-700">
+                    <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                       ✓ Выполнена
                     </span>
                   </div>
                   {project.primary_check_by_username && (
                     <div>
-                      <div className="text-sm text-gray-500">Кто проверил</div>
-                      <div className="font-medium text-gray-900">{project.primary_check_by_username}</div>
+                      <div className="text-sm text-muted-foreground">Кто проверил</div>
+                      <div className="font-medium text-foreground">{project.primary_check_by_username}</div>
                     </div>
                   )}
                   {project.primary_check_date && (
                     <div>
-                      <div className="text-sm text-gray-500">Дата проверки</div>
-                      <div className="font-medium text-gray-900">{formatDate(project.primary_check_date)}</div>
+                      <div className="text-sm text-muted-foreground">Дата проверки</div>
+                      <div className="font-medium text-foreground">{formatDate(project.primary_check_date)}</div>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600">
+                  <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-muted text-muted-foreground">
                     ✗ Не выполнена
                   </span>
                   <Button
@@ -369,31 +369,31 @@ export function ProjectDetail() {
             </div>
 
             {/* Secondary Check */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Вторичная проверка</h3>
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+              <h3 className="font-semibold text-foreground mb-4">Вторичная проверка</h3>
               {project.secondary_check_done ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-green-100 text-green-700">
+                    <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                       ✓ Выполнена
                     </span>
                   </div>
                   {project.secondary_check_by_username && (
                     <div>
-                      <div className="text-sm text-gray-500">Кто проверил</div>
-                      <div className="font-medium text-gray-900">{project.secondary_check_by_username}</div>
+                      <div className="text-sm text-muted-foreground">Кто проверил</div>
+                      <div className="font-medium text-foreground">{project.secondary_check_by_username}</div>
                     </div>
                   )}
                   {project.secondary_check_date && (
                     <div>
-                      <div className="text-sm text-gray-500">Дата проверки</div>
-                      <div className="font-medium text-gray-900">{formatDate(project.secondary_check_date)}</div>
+                      <div className="text-sm text-muted-foreground">Дата проверки</div>
+                      <div className="font-medium text-foreground">{formatDate(project.secondary_check_date)}</div>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600">
+                  <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-muted text-muted-foreground">
                     ✗ Не выполнена
                   </span>
                   <Button
@@ -421,19 +421,19 @@ export function ProjectDetail() {
 
         {/* Production Tab */}
         <TabsContent value="production" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Разрешение в производство</h3>
+          <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+            <h3 className="font-semibold text-foreground mb-4">Разрешение в производство</h3>
             {project.is_approved_for_production ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-green-100 text-green-700">
+                  <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                      Разрешено
                   </span>
                 </div>
                 {project.production_approval_date && (
                   <div>
-                    <div className="text-sm text-gray-500">Дата получения разрешения</div>
-                    <div className="font-medium text-gray-900">{formatDate(project.production_approval_date)}</div>
+                    <div className="text-sm text-muted-foreground">Дата получения разрешения</div>
+                    <div className="font-medium text-foreground">{formatDate(project.production_approval_date)}</div>
                   </div>
                 )}
                 {project.production_approval_file && (
@@ -451,7 +451,7 @@ export function ProjectDetail() {
               </div>
             ) : (
               <div className="space-y-4">
-                <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600">
+                <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-muted text-muted-foreground">
                   ✗ Не разрешено
                 </span>
                 <Button
@@ -482,16 +482,16 @@ export function ProjectDetail() {
           {project.project_notes.length > 0 ? (
             <div className="space-y-4">
               {project.project_notes.map((note) => (
-                <div key={note.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div key={note.id} className="bg-card rounded-xl shadow-sm border border-border p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="font-medium text-gray-900">{note.author.username}</span>
-                        <span className="text-sm text-gray-500">
+                        <span className="font-medium text-foreground">{note.author.username}</span>
+                        <span className="text-sm text-muted-foreground">
                           {formatDate(note.created_at)}
                         </span>
                       </div>
-                      <p className="text-gray-900 whitespace-pre-wrap">{note.text}</p>
+                      <p className="text-foreground whitespace-pre-wrap">{note.text}</p>
                     </div>
                     {currentUser && typeof currentUser === 'object' && 'id' in (currentUser as Record<string, unknown>) && note.author.id === (currentUser as Record<string, unknown>).id ? (
                       <div className="flex items-center gap-2 ml-4">
@@ -516,9 +516,9 @@ export function ProjectDetail() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Нет замечаний к проекту</p>
+            <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center">
+              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Нет замечаний к проекту</p>
             </div>
           )}
         </TabsContent>
@@ -587,7 +587,7 @@ export function ProjectDetail() {
                 onChange={(e) => setNoteText(e.target.value)}
                 rows={5}
                 placeholder="Введите текст замечания"
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
@@ -681,19 +681,19 @@ export function ProjectDetail() {
                     setVersionHistoryOpen(false);
                     navigate(`/estimates/projects/${version.id}`);
                   }}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted cursor-pointer transition-colors"
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">{version.cipher}</span>
-                      <span className="text-sm text-gray-500">v{version.version_number}</span>
+                      <span className="font-medium text-foreground">{version.cipher}</span>
+                      <span className="text-sm text-muted-foreground">v{version.version_number}</span>
                       {version.is_current && (
-                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-md bg-green-100 text-green-700">
+                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                           Актуальная
                         </span>
                       )}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className="text-sm text-muted-foreground mt-1">
                       {formatDate(version.date)}
                     </div>
                   </div>
@@ -703,7 +703,7 @@ export function ProjectDetail() {
                 </div>
               ))
             ) : (
-              <p className="text-center text-gray-500 py-8">Нет других версий</p>
+              <p className="text-center text-muted-foreground py-8">Нет других версий</p>
             )}
           </div>
         </DialogContent>

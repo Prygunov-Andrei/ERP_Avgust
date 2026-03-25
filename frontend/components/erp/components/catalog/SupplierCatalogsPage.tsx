@@ -13,14 +13,14 @@ import { api } from '@/lib/api';
 import type { SupplierCatalog, SupplierCatalogStatus } from '@/types/catalog';
 
 const STATUS_CONFIG: Record<SupplierCatalogStatus, { label: string; className: string }> = {
-  uploaded: { label: 'Загружен', className: 'bg-gray-100 text-gray-800' },
-  detecting_toc: { label: 'Определение оглавления', className: 'bg-blue-100 text-blue-800' },
+  uploaded: { label: 'Загружен', className: 'bg-muted text-foreground' },
+  detecting_toc: { label: 'Определение оглавления', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
   toc_ready: { label: 'Оглавление готово', className: 'bg-cyan-100 text-cyan-800' },
-  parsing: { label: 'Парсинг...', className: 'bg-blue-100 text-blue-800 animate-pulse' },
-  parsed: { label: 'Распарсен', className: 'bg-green-100 text-green-800' },
-  importing: { label: 'Импорт...', className: 'bg-blue-100 text-blue-800 animate-pulse' },
+  parsing: { label: 'Парсинг...', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 animate-pulse' },
+  parsed: { label: 'Распарсен', className: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' },
+  importing: { label: 'Импорт...', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 animate-pulse' },
   imported: { label: 'Импортирован', className: 'bg-emerald-100 text-emerald-800' },
-  error: { label: 'Ошибка', className: 'bg-red-100 text-red-800' },
+  error: { label: 'Ошибка', className: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' },
 };
 
 export function SupplierCatalogsPage() {
@@ -330,8 +330,8 @@ export function SupplierCatalogsPage() {
               <div
                 className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                   uploadFile
-                    ? 'border-green-300 bg-green-50'
-                    : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
+                    ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
+                    : 'border-border hover:border-blue-400 hover:bg-primary/10/50'
                 }`}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -359,11 +359,11 @@ export function SupplierCatalogsPage() {
                   </div>
                 ) : (
                   <div>
-                    <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600">
+                    <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
                       Перетащите PDF сюда или нажмите для выбора
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Поддерживается только формат PDF
                     </p>
                   </div>

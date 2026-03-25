@@ -111,32 +111,32 @@ export function WorkSections() {
   const renderTreeNode = (section: WorkSection, level: number = 0) => (
     <div key={section.id}>
       <div
-        className="hover:bg-gray-50 flex items-center border-b border-gray-200"
+        className="hover:bg-muted flex items-center border-b border-border"
         style={{ paddingLeft: `${level * 24 + 24}px` }}
       >
         <div className="py-4 pr-6 flex-1">
           <div className="flex items-center gap-3">
-            <span className="inline-flex px-2 py-1 text-xs font-mono font-medium rounded bg-gray-100 text-gray-700">
+            <span className="inline-flex px-2 py-1 text-xs font-mono font-medium rounded bg-muted text-foreground">
               {section.code}
             </span>
-            <span className="font-medium text-gray-900">{section.name}</span>
+            <span className="font-medium text-foreground">{section.name}</span>
           </div>
         </div>
         <div className="py-4 px-6">
           {section.parent_name && (
-            <span className="text-sm text-gray-500">{section.parent_name}</span>
+            <span className="text-sm text-muted-foreground">{section.parent_name}</span>
           )}
         </div>
         <div className="py-4 px-6">
-          <span className="text-sm text-gray-500">{section.sort_order}</span>
+          <span className="text-sm text-muted-foreground">{section.sort_order}</span>
         </div>
         <div className="py-4 px-6">
           {section.is_active ? (
-            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700">
+            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
               Активен
             </span>
           ) : (
-            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700">
+            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-muted text-foreground">
               Неактивен
             </span>
           )}
@@ -156,8 +156,8 @@ export function WorkSections() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Разделы работ</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Разделы работ</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Справочник разделов с поддержкой иерархии
           </p>
         </div>
@@ -168,10 +168,10 @@ export function WorkSections() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 max-w-md relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -179,13 +179,13 @@ export function WorkSections() {
               className="pl-10"
             />
           </div>
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
             <button
               onClick={() => setViewMode('list')}
               className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <List className="w-4 h-4" />
@@ -195,8 +195,8 @@ export function WorkSections() {
               onClick={() => setViewMode('tree')}
               className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 viewMode === 'tree'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Network className="w-4 h-4" />
@@ -207,32 +207,32 @@ export function WorkSections() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <div className="min-w-full">
-            <div className="bg-gray-50 border-b border-gray-200 flex items-center">
+            <div className="bg-muted border-b border-border flex items-center">
               <div className="px-6 py-3 flex-1">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Код / Название
                 </span>
               </div>
               <div className="px-6 py-3 w-48">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Родительский раздел
                 </span>
               </div>
               <div className="px-6 py-3 w-32">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Порядок
                 </span>
               </div>
               <div className="px-6 py-3 w-32">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Активен
                 </span>
               </div>
               <div className="px-6 py-3 w-24">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Действия
                 </span>
               </div>
@@ -240,7 +240,7 @@ export function WorkSections() {
 
             {isLoading ? (
               <div className="px-6 py-12 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
               </div>
             ) : sections && sections.length > 0 ? (
               viewMode === 'tree' ? (
@@ -249,31 +249,31 @@ export function WorkSections() {
                 sections.map((section) => (
                   <div
                     key={section.id}
-                    className="hover:bg-gray-50 flex items-center border-b border-gray-200"
+                    className="hover:bg-muted flex items-center border-b border-border"
                   >
                     <div className="px-6 py-4 flex-1">
                       <div className="flex items-center gap-3">
-                        <span className="inline-flex px-2 py-1 text-xs font-mono font-medium rounded bg-gray-100 text-gray-700">
+                        <span className="inline-flex px-2 py-1 text-xs font-mono font-medium rounded bg-muted text-foreground">
                           {section.code}
                         </span>
-                        <span className="font-medium text-gray-900">{section.name}</span>
+                        <span className="font-medium text-foreground">{section.name}</span>
                       </div>
                     </div>
                     <div className="px-6 py-4 w-48">
                       {section.parent_name && (
-                        <span className="text-sm text-gray-500">{section.parent_name}</span>
+                        <span className="text-sm text-muted-foreground">{section.parent_name}</span>
                       )}
                     </div>
                     <div className="px-6 py-4 w-32">
-                      <span className="text-sm text-gray-500">{section.sort_order}</span>
+                      <span className="text-sm text-muted-foreground">{section.sort_order}</span>
                     </div>
                     <div className="px-6 py-4 w-32">
                       {section.is_active ? (
-                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                           Активен
                         </span>
                       ) : (
-                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-muted text-foreground">
                           Неактивен
                         </span>
                       )}
@@ -291,7 +291,7 @@ export function WorkSections() {
                 ))
               )
             ) : (
-              <div className="px-6 py-12 text-center text-gray-500">
+              <div className="px-6 py-12 text-center text-muted-foreground">
                 Разделы не найдены
               </div>
             )}
@@ -322,7 +322,7 @@ export function WorkSections() {
                 required
                 className="mt-1.5"
               />
-              <p className="text-xs text-gray-500 mt-1.5">
+              <p className="text-xs text-muted-foreground mt-1.5">
                 Уникальный код раздела (например, VENT, COND)
               </p>
             </div>
@@ -350,7 +350,7 @@ export function WorkSections() {
                     parent: e.target.value ? Number(e.target.value) : null,
                   })
                 }
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Без родителя (корневой раздел)</option>
                 {allSections
@@ -374,7 +374,7 @@ export function WorkSections() {
                 }
                 className="mt-1.5"
               />
-              <p className="text-xs text-gray-500 mt-1.5">
+              <p className="text-xs text-muted-foreground mt-1.5">
                 Порядок отображения раздела (по умолчанию 0)
               </p>
             </div>

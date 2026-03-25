@@ -237,11 +237,11 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
     <div className="max-w-5xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Тип платежа - минималистичный переключатель iOS */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <Label className="text-base">Тип платежа</Label>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {formData.payment_type === 'income' 
                   ? 'Платёж будет проведён сразу' 
                   : 'Платёж будет отправлен на согласование в Реестр'}
@@ -250,10 +250,10 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
           </div>
           
           {/* iOS-style Segmented Control */}
-          <div className="relative bg-gray-100 rounded-xl p-1 flex">
+          <div className="relative bg-muted rounded-xl p-1 flex">
             {/* Animated slider background */}
             <div 
-              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm transition-all duration-300 ease-out ${
+              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-card rounded-lg shadow-sm transition-all duration-300 ease-out ${
                 formData.payment_type === 'income' ? 'left-1' : 'left-[calc(50%+4px-1px)]'
               }`}
             />
@@ -269,10 +269,10 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
               className="relative flex-1 py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 z-10"
             >
               <ArrowDownCircle className={`w-4 h-4 transition-colors duration-200 ${
-                formData.payment_type === 'income' ? 'text-green-600' : 'text-gray-400'
+                formData.payment_type === 'income' ? 'text-green-600' : 'text-muted-foreground'
               }`} />
               <span className={`text-sm transition-colors duration-200 ${
-                formData.payment_type === 'income' ? 'text-gray-900' : 'text-gray-500'
+                formData.payment_type === 'income' ? 'text-foreground' : 'text-muted-foreground'
               }`}>
                 Приход
               </span>
@@ -285,10 +285,10 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
               className="relative flex-1 py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 z-10"
             >
               <ArrowUpCircle className={`w-4 h-4 transition-colors duration-200 ${
-                formData.payment_type === 'expense' ? 'text-red-600' : 'text-gray-400'
+                formData.payment_type === 'expense' ? 'text-red-600' : 'text-muted-foreground'
               }`} />
               <span className={`text-sm transition-colors duration-200 ${
-                formData.payment_type === 'expense' ? 'text-gray-900' : 'text-gray-500'
+                formData.payment_type === 'expense' ? 'text-foreground' : 'text-muted-foreground'
               }`}>
                 Расход
               </span>
@@ -297,10 +297,10 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
         </div>
 
         {/* Документ */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-blue-600" />
+              <FileText className="w-5 h-5 text-primary" />
             </div>
             <Label className="text-base">Документ</Label>
           </div>
@@ -313,7 +313,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
             enableParsing={formData.payment_type === 'expense'}
           />
           {formData.scan_file && !parseData && (
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               Файл загружен: {formData.scan_file.name}
             </p>
           )}
@@ -321,8 +321,8 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
 
         {/* Информация о парсинге */}
         {parseData?.from_cache && (
-          <Alert className="border-blue-200 bg-blue-50 rounded-2xl">
-            <AlertCircle className="h-4 w-4 text-blue-600" />
+          <Alert className="border-primary/20 bg-primary/10 rounded-2xl">
+            <AlertCircle className="h-4 w-4 text-primary" />
             <AlertDescription className="text-blue-800 text-sm">
               Данные загружены из кеша (документ уже обрабатывался ранее)
             </AlertDescription>
@@ -331,9 +331,9 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
 
         {/* Контрагент для expense */}
         {formData.payment_type === 'expense' && parseData && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-purple-600" />
               </div>
               <Label className="text-base">Контрагент</Label>
@@ -350,7 +350,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
         )}
 
         {/* Основная информация */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
               <Receipt className="w-5 h-5 text-indigo-600" />
@@ -421,7 +421,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
             <div>
               <Label htmlFor="payment_date" className="text-sm mb-2 block">Дата платежа *</Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="payment_date"
                   type="date"
@@ -436,7 +436,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
         </div>
 
         {/* Суммы */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-emerald-600" />
@@ -457,7 +457,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
                 required
                 className="h-12"
               />
-              <p className="text-xs text-gray-500 mt-1.5">НДС 20% рассчитывается автоматически</p>
+              <p className="text-xs text-muted-foreground mt-1.5">НДС 20% рассчитывается автоматически</p>
             </div>
 
             <div>
@@ -470,7 +470,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
                 value={formData.amount_net}
                 onChange={(e) => setFormData({ ...formData, amount_net: e.target.value })}
                 readOnly
-                className="h-12 bg-gray-50"
+                className="h-12 bg-muted"
               />
             </div>
 
@@ -484,14 +484,14 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
                 value={formData.vat_amount}
                 onChange={(e) => setFormData({ ...formData, vat_amount: e.target.value })}
                 readOnly
-                className="h-12 bg-gray-50"
+                className="h-12 bg-muted"
               />
             </div>
           </div>
         </div>
 
         {/* Описание */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <Label htmlFor="description" className="text-sm mb-3 block">Описание</Label>
           <Textarea
             id="description"
@@ -505,7 +505,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
 
         {/* Отображение позиций товаров */}
         {invoiceItems.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
                 <Hash className="w-5 h-5 text-amber-600" />
@@ -517,25 +517,25 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
         )}
 
         {/* Внутренний перевод */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <div className="flex items-center gap-3 mb-4">
             <input
               id="is_internal_transfer"
               type="checkbox"
               checked={formData.is_internal_transfer}
               onChange={(e) => setFormData({ ...formData, is_internal_transfer: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              className="w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-ring"
             />
             <div>
               <Label htmlFor="is_internal_transfer" className="cursor-pointer text-sm">
                 Внутренний перевод
               </Label>
-              <p className="text-xs text-gray-500 mt-0.5">Перевод между своими счетами</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Перевод между своими счетами</p>
             </div>
           </div>
 
           {formData.is_internal_transfer && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-4 pt-4 border-t border-border">
               <Label htmlFor="internal_transfer_group" className="text-sm mb-2 block">Группа перевода</Label>
               <Input
                 id="internal_transfer_group"
@@ -545,7 +545,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
                 onChange={(e) => setFormData({ ...formData, internal_transfer_group: e.target.value })}
                 className="h-12"
               />
-              <p className="text-xs text-gray-500 mt-1.5">
+              <p className="text-xs text-muted-foreground mt-1.5">
                 Укажите одинаковую группу для связанных переводов
               </p>
             </div>
@@ -572,7 +572,7 @@ export function PaymentCreateForm({ onSuccess, onCancel }: PaymentCreateFormProp
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="flex-1 h-12 rounded-xl border-gray-200 hover:bg-gray-50"
+            className="flex-1 h-12 rounded-xl border-border hover:bg-muted"
             disabled={isSubmitting}
           >
             Отмена

@@ -55,14 +55,14 @@ export function ObjectSettingsTab({ objectId, objectName }: ObjectSettingsTabPro
     <div className="space-y-6">
       {/* Настройки журнала работ */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Настройки журнала работ</h2>
+        <h2 className="text-lg font-semibold text-foreground">Настройки журнала работ</h2>
         <InviteSection objectId={objectId} />
         <GeoSettingsSection objectId={objectId} />
         <SupergroupSection objectId={objectId} />
       </div>
 
       {/* Опасная зона */}
-      <div className="border border-red-200 bg-red-50/50 rounded-xl p-6">
+      <div className="border border-red-200 dark:border-red-800 bg-red-50/50 rounded-xl p-6">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
             <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -91,7 +91,7 @@ export function ObjectSettingsTab({ objectId, objectName }: ObjectSettingsTabPro
             <DialogTitle>Удаление объекта</DialogTitle>
             <DialogDescription>
               Для подтверждения удаления введите название объекта:{' '}
-              <strong className="text-gray-900">{objectName}</strong>
+              <strong className="text-foreground">{objectName}</strong>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">

@@ -35,18 +35,18 @@ import { formatAmount } from '@/lib/utils';
 // ─── Статус-бейджи ──────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  draft: { label: 'Черновик', color: 'bg-gray-100 text-gray-700', icon: FileText },
-  pending_approval: { label: 'На согласовании', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
-  approved: { label: 'Одобрено', color: 'bg-green-100 text-green-700', icon: Check },
-  sent_to_bank: { label: 'Отправлено в банк', color: 'bg-blue-100 text-blue-700', icon: Send },
-  pending_sign: { label: 'Ожидает подписи', color: 'bg-purple-100 text-purple-700', icon: Clock },
+  draft: { label: 'Черновик', color: 'bg-muted text-foreground', icon: FileText },
+  pending_approval: { label: 'На согласовании', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400', icon: Clock },
+  approved: { label: 'Одобрено', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400', icon: Check },
+  sent_to_bank: { label: 'Отправлено в банк', color: 'bg-blue-100 dark:bg-blue-900/30 text-primary', icon: Send },
+  pending_sign: { label: 'Ожидает подписи', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400', icon: Clock },
   executed: { label: 'Исполнено', color: 'bg-emerald-100 text-emerald-700', icon: Check },
-  rejected: { label: 'Отклонено', color: 'bg-red-100 text-red-700', icon: X },
-  failed: { label: 'Ошибка', color: 'bg-red-100 text-red-700', icon: AlertTriangle },
+  rejected: { label: 'Отклонено', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400', icon: X },
+  failed: { label: 'Ошибка', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400', icon: AlertTriangle },
 };
 
 const StatusBadge = ({ status }: { status: string }) => {
-  const config = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-700', icon: FileText };
+  const config = STATUS_CONFIG[status] || { label: status, color: 'bg-muted text-foreground', icon: FileText };
   const Icon = config.icon;
   return (
     <Badge variant="outline" className={`${config.color} border-0`}>
@@ -146,46 +146,46 @@ export const BankPaymentOrders = () => {
             <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
           </div>
         ) : orders.length === 0 ? (
-          <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 mb-2">Нет платёжных поручений</p>
+          <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-2">Нет платёжных поручений</p>
             <Button onClick={() => setIsCreateOpen(true)} variant="outline">
               <Plus className="w-4 h-4 mr-2" />
               Создать первое поручение
             </Button>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Получатель</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Сумма</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата оплаты</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Статус</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Создал</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Одобрил</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Получатель</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Сумма</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Дата оплаты</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Статус</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Создал</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Одобрил</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {orders.map((order: BankPaymentOrder) => (
                     <tr
                       key={order.id}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="hover:bg-muted transition-colors cursor-pointer"
                       onClick={() => setSelectedOrder(order)}
                       tabIndex={0}
                       role="button"
                       aria-label={`Открыть поручение ${order.id}`}
                       onKeyDown={(e) => e.key === 'Enter' && setSelectedOrder(order)}
                     >
-                      <td className="px-4 py-3 text-sm font-mono text-gray-500">{order.id}</td>
+                      <td className="px-4 py-3 text-sm font-mono text-muted-foreground">{order.id}</td>
                       <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                        <div className="text-sm font-medium text-foreground truncate max-w-[200px]">
                           {order.recipient_name}
                         </div>
-                        <div className="text-xs text-gray-500 font-mono">
+                        <div className="text-xs text-muted-foreground font-mono">
                           ИНН: {order.recipient_inn}
                         </div>
                       </td>
@@ -198,7 +198,7 @@ export const BankPaymentOrders = () => {
                         </div>
                         {order.reschedule_count > 0 && (
                           <div className="flex items-center gap-1 mt-0.5">
-                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-600 border-orange-200">
+                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-600 border-orange-200 dark:border-orange-800">
                               <CalendarDays className="w-3 h-3 mr-0.5" />
                               перенесено {order.reschedule_count}x
                             </Badge>
@@ -208,10 +208,10 @@ export const BankPaymentOrders = () => {
                       <td className="px-4 py-3 text-center">
                         <StatusBadge status={order.status} />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-4 py-3 text-sm text-foreground">
                         {order.created_by_username}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-4 py-3 text-sm text-foreground">
                         {order.approved_by_username || '—'}
                       </td>
                     </tr>
@@ -296,8 +296,8 @@ const CreatePaymentOrderForm = ({ onSuccess, initialData }: CreatePaymentOrderFo
           </Select>
         </div>
 
-        <div className="col-span-2 pt-3 border-t border-gray-200">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Реквизиты получателя</h4>
+        <div className="col-span-2 pt-3 border-t border-border">
+          <h4 className="text-sm font-medium text-foreground mb-3">Реквизиты получателя</h4>
         </div>
 
         <div className="col-span-2">
@@ -373,8 +373,8 @@ const CreatePaymentOrderForm = ({ onSuccess, initialData }: CreatePaymentOrderFo
           />
         </div>
 
-        <div className="col-span-2 pt-3 border-t border-gray-200">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Сумма и назначение</h4>
+        <div className="col-span-2 pt-3 border-t border-border">
+          <h4 className="text-sm font-medium text-foreground mb-3">Сумма и назначение</h4>
         </div>
 
         <div>
@@ -501,17 +501,17 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
       {/* Основная информация */}
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-gray-500">Получатель</span>
+          <span className="text-muted-foreground">Получатель</span>
           <div className="font-medium">{order.recipient_name}</div>
-          <div className="text-xs text-gray-500 font-mono">ИНН: {order.recipient_inn}</div>
+          <div className="text-xs text-muted-foreground font-mono">ИНН: {order.recipient_inn}</div>
         </div>
         <div>
-          <span className="text-gray-500">Сумма</span>
+          <span className="text-muted-foreground">Сумма</span>
           <div className="font-bold text-lg">{formatAmount(order.amount)}</div>
-          {order.vat_info && <div className="text-xs text-gray-500">{order.vat_info}</div>}
+          {order.vat_info && <div className="text-xs text-muted-foreground">{order.vat_info}</div>}
         </div>
         <div>
-          <span className="text-gray-500">Дата оплаты</span>
+          <span className="text-muted-foreground">Дата оплаты</span>
           <div className="font-medium">
             {new Date(order.payment_date).toLocaleDateString('ru-RU')}
           </div>
@@ -522,11 +522,11 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
           )}
         </div>
         <div>
-          <span className="text-gray-500">Статус</span>
+          <span className="text-muted-foreground">Статус</span>
           <div className="mt-1"><StatusBadge status={order.status} /></div>
         </div>
         <div className="col-span-2">
-          <span className="text-gray-500">Назначение</span>
+          <span className="text-muted-foreground">Назначение</span>
           <div className="font-medium mt-0.5">{order.purpose}</div>
         </div>
         {order.error_message && (
@@ -538,7 +538,7 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
       </div>
 
       {/* Действия */}
-      <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+      <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
         {order.status === 'draft' && (
           <Button
             onClick={() => submitMutation.mutate()}
@@ -594,8 +594,8 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
 
       {/* Диалог переноса даты */}
       {isRescheduleOpen && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-3">
-          <h4 className="font-medium text-orange-800 flex items-center gap-2">
+        <div className="bg-orange-50 border border-orange-200 dark:border-orange-800 rounded-lg p-4 space-y-3">
+          <h4 className="font-medium text-orange-800 dark:text-orange-400 flex items-center gap-2">
             <CalendarDays className="w-4 h-4" />
             Перенос даты оплаты
           </h4>
@@ -640,20 +640,20 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
       )}
 
       {/* Аудит-лог / Таймлайн */}
-      <div className="pt-3 border-t border-gray-200">
-        <h4 className="font-medium text-gray-700 flex items-center gap-2 mb-4">
+      <div className="pt-3 border-t border-border">
+        <h4 className="font-medium text-foreground flex items-center gap-2 mb-4">
           <History className="w-4 h-4" />
           История действий
         </h4>
 
         {eventsLoading ? (
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         ) : !events || events.length === 0 ? (
-          <p className="text-sm text-gray-500">Нет событий</p>
+          <p className="text-sm text-muted-foreground">Нет событий</p>
         ) : (
           <div className="relative pl-6">
             {/* Вертикальная линия */}
-            <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-gray-200" />
+            <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-muted" />
 
             <div className="space-y-4">
               {events.map((event: BankPaymentOrderEvent) => (
@@ -669,11 +669,11 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
 
                   <div className="text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">{event.event_type_display}</span>
+                      <span className="font-medium text-foreground">{event.event_type_display}</span>
                       {event.username && (
-                        <span className="text-gray-500">— {event.username}</span>
+                        <span className="text-muted-foreground">— {event.username}</span>
                       )}
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         {new Date(event.created_at).toLocaleString('ru-RU')}
                       </span>
                     </div>
@@ -688,7 +688,7 @@ const PaymentOrderDetail = ({ order, onUpdate }: PaymentOrderDetailProps) => {
                     )}
 
                     {event.comment && (
-                      <div className="mt-1 text-gray-600 bg-gray-50 px-2 py-1 rounded text-xs">
+                      <div className="mt-1 text-muted-foreground bg-muted px-2 py-1 rounded text-xs">
                         {event.comment}
                       </div>
                     )}

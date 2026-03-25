@@ -11,12 +11,12 @@ function MediaCard({ media }: { media: WorklogMedia }) {
   const isVisual = media.media_type === 'photo' || media.media_type === 'video';
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-      <div className="relative aspect-video bg-gray-100 flex items-center justify-center">
+    <div className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+      <div className="relative aspect-video bg-muted flex items-center justify-center">
         {isVisual && media.thumbnail_url ? (
           <img src={media.thumbnail_url} alt={media.text_content || 'Медиа'} className="w-full h-full object-cover" loading="lazy" />
         ) : (
-          <IconComponent className="w-10 h-10 text-gray-400" />
+          <IconComponent className="w-10 h-10 text-muted-foreground" />
         )}
         {media.media_type === 'video' && media.thumbnail_url && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -32,13 +32,13 @@ function MediaCard({ media }: { media: WorklogMedia }) {
         )}
       </div>
       <div className="p-3">
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
           <IconComponent className="w-3.5 h-3.5" />
           <span>{media.media_type === 'photo' ? 'Фото' : media.media_type === 'video' ? 'Видео' : media.media_type === 'voice' ? 'Голосовое' : media.media_type === 'text' ? 'Текст' : media.media_type}</span>
         </div>
-        <div className="text-sm text-gray-700 truncate">{media.author_name}</div>
-        {media.text_content && (<p className="text-xs text-gray-500 mt-1 line-clamp-2">{media.text_content}</p>)}
-        <div className="text-xs text-gray-400 mt-1">{formatDateTime(media.created_at)}</div>
+        <div className="text-sm text-foreground truncate">{media.author_name}</div>
+        {media.text_content && (<p className="text-xs text-muted-foreground mt-1 line-clamp-2">{media.text_content}</p>)}
+        <div className="text-xs text-muted-foreground mt-1">{formatDateTime(media.created_at)}</div>
       </div>
     </div>
   );
@@ -59,8 +59,8 @@ export function MediaSection({ data, isLoading, page, onPageChange, typeFilter, 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
-        <Filter className="w-4 h-4 text-gray-400" />
-        <select className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" value={typeFilter} onChange={(e) => { onTypeFilterChange(e.target.value); onPageChange(1); }} aria-label="Фильтр по типу медиа">
+        <Filter className="w-4 h-4 text-muted-foreground" />
+        <select className="border border-border rounded-lg px-3 py-1.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring" value={typeFilter} onChange={(e) => { onTypeFilterChange(e.target.value); onPageChange(1); }} aria-label="Фильтр по типу медиа">
           <option value="">Все типы</option>
           <option value="photo">Фото</option>
           <option value="video">Видео</option>
@@ -68,7 +68,7 @@ export function MediaSection({ data, isLoading, page, onPageChange, typeFilter, 
           <option value="text">Текст</option>
           <option value="document">Документы</option>
         </select>
-        <select className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" value={tagFilter} onChange={(e) => { onTagFilterChange(e.target.value); onPageChange(1); }} aria-label="Фильтр по тегу">
+        <select className="border border-border rounded-lg px-3 py-1.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring" value={tagFilter} onChange={(e) => { onTagFilterChange(e.target.value); onPageChange(1); }} aria-label="Фильтр по тегу">
           <option value="">Все теги</option>
           <option value="progress">Прогресс</option>
           <option value="problem">Проблема</option>
@@ -81,9 +81,9 @@ export function MediaSection({ data, isLoading, page, onPageChange, typeFilter, 
       {isLoading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
       ) : !data || data.results.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
-          <Image className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">Нет медиа{typeFilter || tagFilter ? ' с выбранными фильтрами' : ''}</p>
+        <div className="bg-card border border-border rounded-xl p-8 text-center">
+          <Image className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">Нет медиа{typeFilter || tagFilter ? ' с выбранными фильтрами' : ''}</p>
         </div>
       ) : (
         <>

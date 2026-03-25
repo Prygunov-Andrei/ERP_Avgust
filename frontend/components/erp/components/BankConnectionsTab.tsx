@@ -90,7 +90,7 @@ export const BankConnectionsTab = () => {
 
   if (error) {
     return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-xl">
+      <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">
         Ошибка загрузки: {(error as Error).message}
       </div>
     );
@@ -99,7 +99,7 @@ export const BankConnectionsTab = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           {connections?.length || 0} подключений
         </div>
         <Button onClick={() => setIsDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
@@ -160,10 +160,10 @@ export const BankConnectionsTab = () => {
       </AlertDialog>
 
       {!connections || connections.length === 0 ? (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-          <Landmark className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-2">Нет банковских подключений</p>
-          <p className="text-sm text-gray-400 mb-4">
+        <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+          <Landmark className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-2">Нет банковских подключений</p>
+          <p className="text-sm text-muted-foreground mb-4">
             Добавьте подключение к банку для работы с выписками и платежами
           </p>
           <Button onClick={() => setIsDialogOpen(true)} variant="outline">
@@ -176,17 +176,17 @@ export const BankConnectionsTab = () => {
           {connections.map((conn: BankConnection) => (
             <div
               key={conn.id}
-              className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+              className="bg-card border border-border rounded-xl p-6 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start gap-3 mb-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  conn.is_active ? 'bg-green-100' : 'bg-gray-100'
+                  conn.is_active ? 'bg-green-100' : 'bg-muted'
                 }`}>
-                  <Landmark className={`w-5 h-5 ${conn.is_active ? 'text-green-600' : 'text-gray-400'}`} />
+                  <Landmark className={`w-5 h-5 ${conn.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">{conn.name}</h3>
-                  <p className="text-sm text-gray-500">{conn.legal_entity_name}</p>
+                  <h3 className="font-semibold text-foreground truncate">{conn.name}</h3>
+                  <p className="text-sm text-muted-foreground">{conn.legal_entity_name}</p>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -216,29 +216,29 @@ export const BankConnectionsTab = () => {
 
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Провайдер</span>
-                  <span className="font-medium text-gray-700">{conn.provider_display}</span>
+                  <span className="text-muted-foreground">Провайдер</span>
+                  <span className="font-medium text-foreground">{conn.provider_display}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Режим платежей</span>
-                  <span className="font-medium text-gray-700">{conn.payment_mode_display}</span>
+                  <span className="text-muted-foreground">Режим платежей</span>
+                  <span className="font-medium text-foreground">{conn.payment_mode_display}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Статус</span>
+                  <span className="text-muted-foreground">Статус</span>
                   {conn.is_active ? (
                     <span className="flex items-center gap-1 text-green-600">
                       <Check className="w-3 h-3" /> Активно
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-gray-400">
+                    <span className="flex items-center gap-1 text-muted-foreground">
                       <X className="w-3 h-3" /> Неактивно
                     </span>
                   )}
                 </div>
                 {conn.last_sync_at && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Последняя синхронизация</span>
-                    <span className="text-gray-700">
+                    <span className="text-muted-foreground">Последняя синхронизация</span>
+                    <span className="text-foreground">
                       {new Date(conn.last_sync_at).toLocaleString('ru-RU')}
                     </span>
                   </div>
@@ -343,8 +343,8 @@ const BankConnectionForm = ({ connection, entities, onSubmit, isLoading }: BankC
           </Select>
         </div>
 
-        <div className="col-span-2 pt-4 border-t border-gray-200">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Учётные данные API</h4>
+        <div className="col-span-2 pt-4 border-t border-border">
+          <h4 className="text-sm font-medium text-foreground mb-3">Учётные данные API</h4>
         </div>
 
         <div>
@@ -362,7 +362,7 @@ const BankConnectionForm = ({ connection, entities, onSubmit, isLoading }: BankC
             autoComplete="off"
           />
           {connection && (
-            <p className="text-xs text-gray-500 mt-1">Оставьте пустым, чтобы не менять</p>
+            <p className="text-xs text-muted-foreground mt-1">Оставьте пустым, чтобы не менять</p>
           )}
         </div>
 

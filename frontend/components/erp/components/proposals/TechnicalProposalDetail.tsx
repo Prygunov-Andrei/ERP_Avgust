@@ -225,7 +225,7 @@ export function TechnicalProposalDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Загрузка...</div>
+        <div className="text-muted-foreground">Загрузка...</div>
       </div>
     );
   }
@@ -233,8 +233,8 @@ export function TechnicalProposalDetail() {
   if (!tkp) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <AlertCircle className="w-12 h-12 text-gray-400 mb-4" />
-        <div className="text-gray-500">ТКП не найдено</div>
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <div className="text-muted-foreground">ТКП не найдено</div>
         <Button
           onClick={() => navigate("/proposals/technical-proposals")}
           className="mt-4"
@@ -248,23 +248,23 @@ export function TechnicalProposalDetail() {
   return (
     <div className="space-y-6">
       {/* Хедер */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start gap-4">
             <Button
               onClick={() => navigate("/proposals/technical-proposals")}
-              className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3"
+              className="bg-muted text-foreground hover:bg-muted px-3"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-gray-900">{tkp.name}</h1>
+                <h1 className="text-foreground">{tkp.name}</h1>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="inline-flex items-center gap-1 cursor-pointer" aria-label="Сменить статус">
                       {getStatusBadge(tkp.status)}
-                      <ChevronDown className="w-3 h-3 text-gray-400" />
+                      <ChevronDown className="w-3 h-3 text-muted-foreground" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
@@ -281,12 +281,12 @@ export function TechnicalProposalDetail() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 {tkp.is_latest_version && (
-                  <Badge className="bg-blue-50 text-blue-700 border border-blue-200">
+                  <Badge className="bg-primary/10 text-primary border border-primary/20">
                     Актуальная версия
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-4 text-gray-600">
+              <div className="flex items-center gap-4 text-muted-foreground">
                 <span>№ {tkp.number}</span>
                 {tkp.outgoing_number && (
                   <span>Исх. № {tkp.outgoing_number}</span>
@@ -310,7 +310,7 @@ export function TechnicalProposalDetail() {
                 </Button>
                 <Button
                   onClick={handleCancelEditing}
-                  className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  className="bg-muted text-foreground hover:bg-muted"
                   disabled={updateMutation.isPending}
                 >
                   <X className="w-4 h-4 mr-2" />
@@ -357,13 +357,13 @@ export function TechnicalProposalDetail() {
         </div>
 
         {/* Вкладки */}
-        <div className="flex gap-1 border-b border-gray-200">
+        <div className="flex gap-1 border-b border-border">
           <button
             onClick={() => setActiveTab("info")}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === "info"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-600 hover:text-gray-900"
+                ? "border-b-2 border-blue-600 text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Основная информация
@@ -372,8 +372,8 @@ export function TechnicalProposalDetail() {
             onClick={() => setActiveTab("estimates")}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === "estimates"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-600 hover:text-gray-900"
+                ? "border-b-2 border-blue-600 text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Сметы ({tkp.estimates.length})
@@ -382,8 +382,8 @@ export function TechnicalProposalDetail() {
             onClick={() => setActiveTab("sections")}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === "sections"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-600 hover:text-gray-900"
+                ? "border-b-2 border-blue-600 text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Разделы ({tkp.estimate_sections.length})
@@ -392,8 +392,8 @@ export function TechnicalProposalDetail() {
             onClick={() => setActiveTab("characteristics")}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === "characteristics"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-600 hover:text-gray-900"
+                ? "border-b-2 border-blue-600 text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Характеристики ({tkp.characteristics.length})
@@ -402,8 +402,8 @@ export function TechnicalProposalDetail() {
             onClick={() => setActiveTab("front")}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === "front"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-600 hover:text-gray-900"
+                ? "border-b-2 border-blue-600 text-primary"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Фронт работ ({tkp.front_of_work.length})

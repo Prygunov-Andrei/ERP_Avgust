@@ -23,7 +23,7 @@ export function FNSIntegrationTab() {
 
   if (statsError) {
     return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-xl">
+      <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">
         Ошибка загрузки статистики: {(statsError as Error).message}
       </div>
     );
@@ -31,21 +31,21 @@ export function FNSIntegrationTab() {
 
   if (!stats?.is_configured) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
-        <ShieldCheck className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+      <div className="bg-card border border-border rounded-xl p-8 text-center">
+        <ShieldCheck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-semibold mb-2">API-FNS не настроен</h3>
-        <p className="text-sm text-gray-500 max-w-md mx-auto">
-          Для проверки контрагентов через ФНС добавьте переменную окружения <code className="bg-gray-100 px-1 rounded">FNS_API_KEY</code> в настройки сервера.
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          Для проверки контрагентов через ФНС добавьте переменную окружения <code className="bg-muted px-1 rounded">FNS_API_KEY</code> в настройки сервера.
         </p>
       </div>
     );
   }
 
-  const statusColor = stats.status === 'VIP' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600';
+  const statusColor = stats.status === 'VIP' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' : 'bg-muted text-muted-foreground';
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold">API-FNS (api-fns.ru)</h3>
           <Button
@@ -63,18 +63,18 @@ export function FNSIntegrationTab() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="text-xs text-gray-500 mb-1">Статус ключа</div>
+          <div className="p-4 bg-muted rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Статус ключа</div>
             <span className={`px-2 py-0.5 text-sm font-medium rounded ${statusColor}`}>
               {stats.status}
             </span>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="text-xs text-gray-500 mb-1">Дата начала</div>
+          <div className="p-4 bg-muted rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Дата начала</div>
             <div className="text-sm font-medium">{stats.start_date || '—'}</div>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="text-xs text-gray-500 mb-1">Дата окончания</div>
+          <div className="p-4 bg-muted rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">Дата окончания</div>
             <div className="text-sm font-medium">{stats.end_date || '—'}</div>
           </div>
         </div>
@@ -83,12 +83,12 @@ export function FNSIntegrationTab() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">Метод</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase w-24">Лимит</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase w-28">Использовано</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase w-24">Остаток</th>
-                  <th className="py-2 px-3 text-xs font-medium text-gray-500 uppercase w-48">Прогресс</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground uppercase">Метод</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground uppercase w-24">Лимит</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground uppercase w-28">Использовано</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground uppercase w-24">Остаток</th>
+                  <th className="py-2 px-3 text-xs font-medium text-muted-foreground uppercase w-48">Прогресс</th>
                 </tr>
               </thead>
               <tbody>
@@ -99,10 +99,10 @@ export function FNSIntegrationTab() {
                     : 'bg-red-500';
 
                   return (
-                    <tr key={method.name} className="border-b border-gray-100 last:border-0">
+                    <tr key={method.name} className="border-b border-border last:border-0">
                       <td className="py-2.5 px-3">
                         <div className="text-sm font-medium">{method.display_name}</div>
-                        <div className="text-xs text-gray-400">{method.name}</div>
+                        <div className="text-xs text-muted-foreground">{method.name}</div>
                       </td>
                       <td className="py-2.5 px-3 text-right text-sm font-mono">{method.limit}</td>
                       <td className="py-2.5 px-3 text-right text-sm font-mono">{method.used}</td>
@@ -111,13 +111,13 @@ export function FNSIntegrationTab() {
                       </td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${barColor}`}
                               style={{ width: `${Math.min(usagePercent, 100)}%` }}
                             />
                           </div>
-                          <span className="text-xs text-gray-400 w-10 text-right">
+                          <span className="text-xs text-muted-foreground w-10 text-right">
                             {Math.round(usagePercent)}%
                           </span>
                         </div>
@@ -129,16 +129,16 @@ export function FNSIntegrationTab() {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">Нет данных о лимитах</p>
+          <p className="text-sm text-muted-foreground">Нет данных о лимитах</p>
         )}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-3">Возможности интеграции</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <div className="font-medium text-blue-700 mb-1">Автозаполнение</div>
-            <div className="text-blue-600 text-xs">При создании контрагента — автоподстановка реквизитов по ИНН или названию</div>
+          <div className="p-3 bg-primary/10 rounded-lg">
+            <div className="font-medium text-primary mb-1">Автозаполнение</div>
+            <div className="text-primary text-xs">При создании контрагента — автоподстановка реквизитов по ИНН или названию</div>
           </div>
           <div className="p-3 bg-purple-50 rounded-lg">
             <div className="font-medium text-purple-700 mb-1">Проверка контрагента</div>
@@ -148,7 +148,7 @@ export function FNSIntegrationTab() {
             <div className="font-medium text-green-700 mb-1">Данные ЕГРЮЛ</div>
             <div className="text-green-600 text-xs">Полная выписка: директор, учредители, ОКВЭД, капитал, история изменений</div>
           </div>
-          <div className="p-3 bg-orange-50 rounded-lg">
+          <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
             <div className="font-medium text-orange-700 mb-1">Бухгалтерская отчетность</div>
             <div className="text-orange-600 text-xs">Баланс, P&L, выручка и прибыль по годам (с 2019 года)</div>
           </div>

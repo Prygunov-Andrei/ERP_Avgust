@@ -147,7 +147,7 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities
                     {(formData.supervisor_ids || []).map((sid) => {
                       const sup = allEmployees.find((e) => e.id === sid);
                       return sup ? (
-                        <span key={sid} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-sm px-2 py-1 rounded-full">
+                        <span key={sid} className="inline-flex items-center gap-1 bg-primary/10 text-primary text-sm px-2 py-1 rounded-full">
                           {sup.full_name}
                           <button type="button" onClick={() => handleFieldChange('supervisor_ids', (formData.supervisor_ids || []).filter((id) => id !== sid))} className="hover:text-red-500" aria-label={`Убрать руководителя ${sup.full_name}`} tabIndex={0}><X className="w-3 h-3" /></button>
                         </span>
@@ -184,7 +184,7 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities
             {/* Bank Tab */}
             <TabsContent value="bank" className="mt-0">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2"><Landmark className="w-5 h-5 text-blue-600" />Банковские реквизиты</h3>
+                <h3 className="text-lg font-semibold flex items-center gap-2"><Landmark className="w-5 h-5 text-primary" />Банковские реквизиты</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2"><Label>Наименование банка</Label><Input value={formData.bank_name || ''} onChange={(e) => handleFieldChange('bank_name', e.target.value)} placeholder="ПАО Сбербанк" /></div>
                   <div><Label>БИК</Label><Input value={formData.bank_bik || ''} onChange={(e) => handleFieldChange('bank_bik', e.target.value)} placeholder="044525225" maxLength={9} /></div>
@@ -198,16 +198,16 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities
             {/* Access Tab */}
             <TabsContent value="access" className="mt-0">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-blue-600" />Разграничение доступа по разделам ERP</h3>
-                <p className="text-sm text-gray-500">Настройте уровень доступа сотрудника к каждому разделу и подразделу системы. При изменении уровня раздела все подразделы обновятся каскадно.</p>
+                <h3 className="text-lg font-semibold flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-primary" />Разграничение доступа по разделам ERP</h3>
+                <p className="text-sm text-muted-foreground">Настройте уровень доступа сотрудника к каждому разделу и подразделу системы. При изменении уровня раздела все подразделы обновятся каскадно.</p>
                 <div className="border rounded-xl overflow-hidden">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-muted">
                       <tr>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Раздел</th>
-                        <th className="text-center px-4 py-3 font-medium text-gray-600 w-28"><span className="flex items-center justify-center gap-1"><BadgeMinus className="w-4 h-4 text-gray-400" /> Нет</span></th>
-                        <th className="text-center px-4 py-3 font-medium text-gray-600 w-28"><span className="flex items-center justify-center gap-1"><Search className="w-4 h-4 text-blue-500" /> Чтение</span></th>
-                        <th className="text-center px-4 py-3 font-medium text-gray-600 w-28"><span className="flex items-center justify-center gap-1"><Pencil className="w-4 h-4 text-green-500" /> Редакт.</span></th>
+                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">Раздел</th>
+                        <th className="text-center px-4 py-3 font-medium text-muted-foreground w-28"><span className="flex items-center justify-center gap-1"><BadgeMinus className="w-4 h-4 text-muted-foreground" /> Нет</span></th>
+                        <th className="text-center px-4 py-3 font-medium text-muted-foreground w-28"><span className="flex items-center justify-center gap-1"><Search className="w-4 h-4 text-blue-500" /> Чтение</span></th>
+                        <th className="text-center px-4 py-3 font-medium text-muted-foreground w-28"><span className="flex items-center justify-center gap-1"><Pencil className="w-4 h-4 text-green-500" /> Редакт.</span></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -223,7 +223,7 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities
                         };
                         return (
                           <Fragment key={section.code}>
-                            <tr className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <tr className={idx % 2 === 0 ? 'bg-card' : 'bg-muted'}>
                               <td className="px-4 py-3 font-semibold">{section.label}</td>
                               {(['none', 'read', 'edit'] as ERPPermissionLevel[]).map((level) => (
                                 <td key={level} className="text-center px-4 py-3">
@@ -235,8 +235,8 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities
                               const childKey = `${section.code}.${child.code}`;
                               const childLevel = formData.erp_permissions?.[childKey] || sectionLevel;
                               return (
-                                <tr key={childKey} className="bg-white/50">
-                                  <td className="pl-10 pr-4 py-2 text-gray-600"><span className="text-gray-300 mr-2">L</span>{child.label}</td>
+                                <tr key={childKey} className="bg-card/50">
+                                  <td className="pl-10 pr-4 py-2 text-muted-foreground"><span className="text-muted-foreground mr-2">L</span>{child.label}</td>
                                   {(['none', 'read', 'edit'] as ERPPermissionLevel[]).map((level) => (
                                     <td key={level} className="text-center px-4 py-2">
                                       <input type="radio" name={`perm-${childKey}`} checked={childLevel === level} onChange={() => handlePermissionChange(childKey, level)} className="w-4 h-4 cursor-pointer accent-blue-500" aria-label={`${child.label}: ${level}`} />
@@ -258,15 +258,15 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, legalEntities
             {isEdit && (
               <TabsContent value="counterparty" className="mt-0">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2"><Link2 className="w-5 h-5 text-blue-600" />Привязка к контрагенту</h3>
-                  <p className="text-sm text-gray-500">Для выплаты зарплаты сотруднику необходимо привязать его к контрагенту.</p>
+                  <h3 className="text-lg font-semibold flex items-center gap-2"><Link2 className="w-5 h-5 text-primary" />Привязка к контрагенту</h3>
+                  <p className="text-sm text-muted-foreground">Для выплаты зарплаты сотруднику необходимо привязать его к контрагенту.</p>
                   {employee.counterparty ? (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
                       <div className="flex items-center gap-2">
                         <BadgeCheck className="w-5 h-5 text-green-600" />
                         <span className="font-medium">Привязан к контрагенту:</span>
-                        <span className="text-blue-600">{employee.counterparty_name}</span>
-                        <span className="text-gray-400">(ID: {employee.counterparty})</span>
+                        <span className="text-primary">{employee.counterparty_name}</span>
+                        <span className="text-muted-foreground">(ID: {employee.counterparty})</span>
                       </div>
                     </div>
                   ) : (

@@ -14,10 +14,10 @@ export default async function BrandsPage() {
   return (
     <PublicLayout>
       <section>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="mb-2 text-3xl font-bold text-foreground">
           Бренды HVAC-оборудования
         </h1>
-        <p className="text-gray-500 mb-8">
+        <p className="mb-8 text-muted-foreground">
           {data.length} брендов в каталоге
         </p>
 
@@ -25,18 +25,18 @@ export default async function BrandsPage() {
           {data.map((brand) => (
             <article
               key={brand.id}
-              className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow"
+              className="rounded-lg border border-border bg-card p-5 text-card-foreground transition-shadow hover:shadow-md"
             >
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-card-foreground">
                 {brand.name}
               </h2>
               {brand.manufacturer && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {brand.manufacturer.name}
                 </p>
               )}
               {brand.description && (
-                <p className="mt-2 text-sm text-gray-600 line-clamp-3">
+                <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
                   {brand.description}
                 </p>
               )}

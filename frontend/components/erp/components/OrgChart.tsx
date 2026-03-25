@@ -90,8 +90,8 @@ const EmployeeNode = ({ data }: { data: EmployeeNodeData }) => {
       className={`
         px-4 py-3 rounded-xl border-2 shadow-sm min-w-[200px]
         ${data.isActive
-          ? 'bg-white border-blue-300 hover:border-blue-500'
-          : 'bg-gray-100 border-gray-300 opacity-60'}
+          ? 'bg-card border-blue-300 hover:border-blue-500'
+          : 'bg-muted border-border opacity-60'}
         transition-colors
       `}
     >
@@ -99,10 +99,10 @@ const EmployeeNode = ({ data }: { data: EmployeeNodeData }) => {
       <div className="flex items-center gap-2">
         <UserCircle className="w-8 h-8 text-blue-500 flex-shrink-0" />
         <div className="min-w-0">
-          <p className="font-semibold text-sm text-gray-900 truncate">{data.label}</p>
-          <p className="text-xs text-gray-500 truncate">{data.position || 'Без должности'}</p>
+          <p className="font-semibold text-sm text-foreground truncate">{data.label}</p>
+          <p className="text-xs text-muted-foreground truncate">{data.position || 'Без должности'}</p>
           {data.legalEntities.length > 0 && (
-            <p className="text-[10px] text-blue-600 truncate mt-0.5">
+            <p className="text-[10px] text-primary truncate mt-0.5">
               {data.legalEntities.join(', ')}
             </p>
           )}
@@ -168,14 +168,14 @@ export function OrgChart() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!orgData || orgData.nodes.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-muted-foreground">
         <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
         <p className="text-lg font-medium">Нет данных для отображения</p>
         <p className="text-sm">Добавьте сотрудников и настройте иерархию подчинения</p>
@@ -199,7 +199,7 @@ export function OrgChart() {
             ))}
           </SelectContent>
         </Select>
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-muted-foreground">
           {orgData.nodes.length} сотрудников, {orgData.edges.length} связей
         </span>
       </div>

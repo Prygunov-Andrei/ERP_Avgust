@@ -11,14 +11,7 @@ COPY . .
 
 # Переменные для сборки
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV HVAC_API_URL=http://hvac-backend:8001
 ENV BACKEND_API_URL=http://backend:8000
-
-# Service Token для доступа к hvac-backend
-# ARG передаётся из docker-compose build args
-ARG ERP_SERVICE_TOKEN=""
-# Next.js встраивает NEXT_PUBLIC_* при build в JS-бандл
-RUN echo "NEXT_PUBLIC_HVAC_SERVICE_TOKEN=${ERP_SERVICE_TOKEN}" > .env.local && cat .env.local
 
 # Сборка
 RUN npm run build

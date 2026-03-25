@@ -92,14 +92,14 @@ export const MarkdownPage = ({ filePath }: MarkdownPageProps) => {
             },
             table: ({ children, ...props }) => (
               <div className="overflow-x-auto">
-                <table className="border-collapse border border-gray-300" {...props}>{children}</table>
+                <table className="border-collapse border border-border" {...props}>{children}</table>
               </div>
             ),
             th: ({ children, ...props }) => (
-              <th className="border border-gray-300 bg-gray-50 px-4 py-2 text-left font-medium" {...props}>{children}</th>
+              <th className="border border-border bg-muted px-4 py-2 text-left font-medium" {...props}>{children}</th>
             ),
             td: ({ children, ...props }) => (
-              <td className="border border-gray-300 px-4 py-2" {...props}>{children}</td>
+              <td className="border border-border px-4 py-2" {...props}>{children}</td>
             ),
           }}
         >
@@ -109,7 +109,7 @@ export const MarkdownPage = ({ filePath }: MarkdownPageProps) => {
 
       {toc.length > 3 && (
         <nav className="hidden lg:block w-64 shrink-0 sticky top-6 self-start" aria-label="Оглавление">
-          <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1">
+          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1">
             <FileText className="w-4 h-4" />
             Содержание
           </h4>
@@ -118,7 +118,7 @@ export const MarkdownPage = ({ filePath }: MarkdownPageProps) => {
               <li key={entry.id} style={{ paddingLeft: `${(entry.level - 1) * 12}px` }}>
                 <a
                   href={`#${entry.id}`}
-                  className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors py-0.5"
+                  className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors py-0.5"
                 >
                   <ChevronRight className="w-3 h-3 shrink-0" />
                   <span className="truncate">{entry.text}</span>

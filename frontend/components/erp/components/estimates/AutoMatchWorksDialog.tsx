@@ -18,19 +18,19 @@ type AutoMatchWorksDialogProps = {
 type MatchRow = WorkMatchResult & { accepted: boolean };
 
 const confidenceBadge = (value: number) => {
-  if (value >= 0.8) return <Badge className="bg-green-100 text-green-800">{Math.round(value * 100)}%</Badge>;
-  if (value >= 0.6) return <Badge className="bg-yellow-100 text-yellow-800">{Math.round(value * 100)}%</Badge>;
+  if (value >= 0.8) return <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">{Math.round(value * 100)}%</Badge>;
+  if (value >= 0.6) return <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400">{Math.round(value * 100)}%</Badge>;
   return <Badge variant="destructive">{Math.round(value * 100)}%</Badge>;
 };
 
 const sourceBadge = (source: string) => {
   switch (source) {
     case 'history':
-      return <Badge className="bg-green-100 text-green-800">история</Badge>;
+      return <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">история</Badge>;
     case 'rule':
-      return <Badge className="bg-yellow-100 text-yellow-800">правило</Badge>;
+      return <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400">правило</Badge>;
     case 'llm':
-      return <Badge className="bg-orange-100 text-orange-800">LLM</Badge>;
+      return <Badge className="bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400">LLM</Badge>;
     default:
       return <Badge variant="secondary">{source}</Badge>;
   }
@@ -106,7 +106,7 @@ export const AutoMatchWorksDialog: React.FC<AutoMatchWorksDialogProps> = ({
         <button
           onClick={() => handleToggle(row.index)}
           className={`w-6 h-6 rounded flex items-center justify-center ${
-            row.original.accepted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+            row.original.accepted ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-muted text-muted-foreground'
           }`}
           aria-label={row.original.accepted ? 'Отклонить' : 'Принять'}
         >
@@ -190,7 +190,7 @@ export const AutoMatchWorksDialog: React.FC<AutoMatchWorksDialogProps> = ({
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Badge variant="secondary">{results.length} строк</Badge>
-              <Badge className="bg-green-100 text-green-800">
+              <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
                 {results.filter((r) => r.accepted).length} принято
               </Badge>
               <Button size="sm" variant="outline" onClick={handleAcceptGood}>

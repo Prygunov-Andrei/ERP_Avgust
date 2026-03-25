@@ -42,11 +42,11 @@ export function ContractsList() {
 
   const getStatusBadge = (status: string) => {
     const config = {
-      planned: { label: 'Планируется', className: 'bg-gray-100 text-gray-800' },
-      active: { label: 'В работе', className: 'bg-green-100 text-green-800' },
-      completed: { label: 'Завершён', className: 'bg-blue-100 text-blue-800' },
-      suspended: { label: 'Приостановлен', className: 'bg-orange-100 text-orange-800' },
-      terminated: { label: 'Расторгнут', className: 'bg-red-100 text-red-800' },
+      planned: { label: 'Планируется', className: 'bg-muted text-foreground' },
+      active: { label: 'В работе', className: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' },
+      completed: { label: 'Завершён', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
+      suspended: { label: 'Приостановлен', className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400' },
+      terminated: { label: 'Расторгнут', className: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' },
     };
     const item = config[status as keyof typeof config] || config.planned;
     return <Badge className={item.className}>{item.label}</Badge>;
@@ -54,9 +54,9 @@ export function ContractsList() {
 
   const getTypeBadge = (type: string) => {
     return type === 'income' ? (
-      <Badge className="bg-green-100 text-green-800">Доходный</Badge>
+      <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Доходный</Badge>
     ) : (
-      <Badge className="bg-red-100 text-red-800">Расходный</Badge>
+      <Badge className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">Расходный</Badge>
     );
   };
 
@@ -68,7 +68,7 @@ export function ContractsList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Загрузка...</div>
+        <div className="text-muted-foreground">Загрузка...</div>
       </div>
     );
   }
@@ -78,8 +78,8 @@ export function ContractsList() {
       {/* Хедер */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900">Договоры</h1>
-          <p className="text-gray-600">Управление доходными и расходными договорами</p>
+          <h1 className="text-foreground">Договоры</h1>
+          <p className="text-muted-foreground">Управление доходными и расходными договорами</p>
         </div>
         <Button
           onClick={() => setIsCreateDialogOpen(true)}
@@ -91,10 +91,10 @@ export function ContractsList() {
       </div>
 
       {/* Поиск и фильтры */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-4 space-y-4">
         <div className="flex gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
               placeholder="Поиск по номеру, названию, контрагенту, объекту..."
               value={search}
@@ -105,7 +105,7 @@ export function ContractsList() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? 'bg-blue-50' : ''}
+            className={showFilters ? 'bg-primary/10' : ''}
           >
             <Filter className="w-4 h-4 mr-2" />
             Фильтры
@@ -205,45 +205,45 @@ export function ContractsList() {
       </div>
 
       {/* Таблица договоров */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
         {contracts.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted-foreground">
             Договоры не найдены
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-gray-600">Номер</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Название</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Объект</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Тип</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Контрагент</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Компания</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Сумма</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Статус</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Дата</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Номер</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Название</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Объект</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Тип</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Контрагент</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Компания</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Сумма</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Статус</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Дата</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {contracts.map((contract) => (
                   <tr
                     key={contract.id}
                     onClick={() => navigate(`/contracts/${contract.id}`)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="hover:bg-muted cursor-pointer transition-colors"
                   >
-                    <td className="px-6 py-4 text-gray-900">{contract.number}</td>
-                    <td className="px-6 py-4 text-gray-900">{contract.name}</td>
-                    <td className="px-6 py-4 text-gray-600">{contract.object_name}</td>
+                    <td className="px-6 py-4 text-foreground">{contract.number}</td>
+                    <td className="px-6 py-4 text-foreground">{contract.name}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{contract.object_name}</td>
                     <td className="px-6 py-4">{getTypeBadge(contract.contract_type)}</td>
-                    <td className="px-6 py-4 text-gray-600">{contract.counterparty_name}</td>
-                    <td className="px-6 py-4 text-gray-600">{contract.legal_entity_name}</td>
-                    <td className="px-6 py-4 text-gray-900">
+                    <td className="px-6 py-4 text-muted-foreground">{contract.counterparty_name}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{contract.legal_entity_name}</td>
+                    <td className="px-6 py-4 text-foreground">
                       {formatCurrency(contract.total_amount, contract.currency)}
                     </td>
                     <td className="px-6 py-4">{getStatusBadge(contract.status)}</td>
-                    <td className="px-6 py-4 text-gray-600">{formatDate(contract.contract_date)}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{formatDate(contract.contract_date)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -253,7 +253,7 @@ export function ContractsList() {
       </div>
 
       {/* Счетчик */}
-      <div className="text-gray-600">
+      <div className="text-muted-foreground">
         Всего договоров: {contractsData?.count || 0}
       </div>
 

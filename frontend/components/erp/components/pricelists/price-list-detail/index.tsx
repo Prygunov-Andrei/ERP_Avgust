@@ -71,7 +71,7 @@ export function PriceListDetail() {
   const handleCreateAgreement = (e: React.FormEvent) => { e.preventDefault(); if (!agreementFormData.counterparty) { toast.error('Выберите контрагента'); return; } createAgreementMutation.mutate(agreementFormData); };
 
   const getStatusBadge = (status: string, statusDisplay: string) => {
-    const badges = { draft: 'bg-gray-100 text-gray-700', active: 'bg-green-100 text-green-700', archived: 'bg-gray-100 text-gray-500' };
+    const badges = { draft: 'bg-muted text-foreground', active: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400', archived: 'bg-muted text-muted-foreground' };
     return (<span className={`inline-flex px-3 py-1.5 text-sm font-medium rounded-lg ${badges[status as keyof typeof badges] || badges.draft}`}>{statusDisplay}</span>);
   };
   const getTotalIncluded = () => { if (!priceList) return '0.00'; return priceList.items.filter((item) => item.is_included).reduce((sum, item) => sum + parseFloat(item.calculated_cost), 0).toFixed(2); };
@@ -91,9 +91,9 @@ export function PriceListDetail() {
     } catch (error) { toast.error(error instanceof Error ? error.message : 'Ошибка при экспорте'); }
   };
 
-  if (isLoading) { return (<div className="p-8"><div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 text-gray-400 animate-spin" /></div></div>); }
+  if (isLoading) { return (<div className="p-8"><div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 text-muted-foreground animate-spin" /></div></div>); }
   if (error || !priceList) {
-    return (<div className="p-8"><div className="text-center py-12"><FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" /><p className="text-gray-500">Прайс-лист не найден</p><Button variant="outline" onClick={() => navigate('/price-lists')} className="mt-4"><ArrowLeft className="w-4 h-4 mr-2" />Вернуться к списку</Button></div></div>);
+    return (<div className="p-8"><div className="text-center py-12"><FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Прайс-лист не найден</p><Button variant="outline" onClick={() => navigate('/price-lists')} className="mt-4"><ArrowLeft className="w-4 h-4 mr-2" />Вернуться к списку</Button></div></div>);
   }
 
   return (
@@ -104,11 +104,11 @@ export function PriceListDetail() {
           <Button variant="ghost" size="sm" onClick={() => navigate('/price-lists')}><ArrowLeft className="w-4 h-4 mr-2" />Назад</Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold text-gray-900">{priceList.number}</h1>
+              <h1 className="text-2xl font-semibold text-foreground">{priceList.number}</h1>
               {getStatusBadge(priceList.status, priceList.status_display)}
-              <span className="text-sm text-gray-500">v{priceList.version_number}</span>
+              <span className="text-sm text-muted-foreground">v{priceList.version_number}</span>
             </div>
-            {priceList.name && (<p className="text-sm text-gray-500 mt-1">{priceList.name}</p>)}
+            {priceList.name && (<p className="text-sm text-muted-foreground mt-1">{priceList.name}</p>)}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -124,17 +124,17 @@ export function PriceListDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <div className="flex gap-6">
           {([
             { key: 'items' as Tab, label: 'Позиции', icon: FileText, count: priceList.items.length },
             { key: 'agreements' as Tab, label: 'Согласования', icon: Users, count: priceList.agreements.length },
             { key: 'info' as Tab, label: 'Информация', icon: Calendar, count: undefined as number | undefined },
           ]).map(({ key, label, icon: Icon, count }) => (
-            <button key={key} onClick={() => setActiveTab(key)} className={`pb-3 px-1 border-b-2 transition-colors ${activeTab === key ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}>
+            <button key={key} onClick={() => setActiveTab(key)} className={`pb-3 px-1 border-b-2 transition-colors ${activeTab === key ? 'border-blue-600 text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
               <div className="flex items-center gap-2">
                 <Icon className="w-4 h-4" /><span>{label}</span>
-                {count !== undefined && (<span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{count}</span>)}
+                {count !== undefined && (<span className="bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs">{count}</span>)}
               </div>
             </button>
           ))}

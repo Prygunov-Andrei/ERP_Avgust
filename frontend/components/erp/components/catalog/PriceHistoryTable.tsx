@@ -17,7 +17,7 @@ export function PriceHistoryTable({ prices, isLoading }: PriceHistoryTableProps)
 
   if (!prices || prices.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-muted-foreground">
         История цен отсутствует
       </div>
     );
@@ -43,7 +43,7 @@ export function PriceHistoryTable({ prices, isLoading }: PriceHistoryTableProps)
         </thead>
         <tbody>
           {sortedPrices.map((price) => (
-            <tr key={price.id} className="border-b hover:bg-gray-50">
+            <tr key={price.id} className="border-b hover:bg-muted">
               <td className="py-3 px-4">
                 {formatDate(price.invoice_date)}
               </td>
@@ -60,24 +60,24 @@ export function PriceHistoryTable({ prices, isLoading }: PriceHistoryTableProps)
                 {price.invoice ? (
                   <a
                     href={`/erp/supply/invoices/${price.invoice}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {price.invoice_number || `#${price.invoice}`}
                   </a>
                 ) : (
-                  price.invoice_number || <span className="text-gray-400">—</span>
+                  price.invoice_number || <span className="text-muted-foreground">—</span>
                 )}
               </td>
               <td className="py-3 px-4">
                 {price.payment ? (
                   <a
                     href={`/payments/${price.payment}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     Платёж #{price.payment}
                   </a>
                 ) : (
-                  <span className="text-gray-400">—</span>
+                  <span className="text-muted-foreground">—</span>
                 )}
               </td>
             </tr>

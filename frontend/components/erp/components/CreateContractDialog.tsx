@@ -185,7 +185,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
     <form onSubmit={handleSubmit} className="space-y-6 mt-4">
       {/* Предупреждения об ошибках загрузки */}
       {(legalEntitiesError || objectsError || counterpartiesError) && (
-        <Card className="p-4 bg-red-50 border-red-200">
+        <Card className="p-4 bg-red-50 border-red-200 dark:border-red-800">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
             <div className="text-sm text-red-800">
@@ -225,7 +225,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
                     </SelectItem>
                   ))
                 ) : (
-                  <div className="px-2 py-1.5 text-sm text-gray-500">Нет доступных объектов</div>
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">Нет доступных объектов</div>
                 )}
               </SelectContent>
             </Select>
@@ -341,7 +341,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
                     </SelectItem>
                   ))
                 ) : (
-                  <div className="px-2 py-1.5 text-sm text-gray-500">Нет доступных компаний</div>
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">Нет доступных компаний</div>
                 )}
               </SelectContent>
             </Select>
@@ -365,7 +365,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
                     </SelectItem>
                   ))
                 ) : (
-                  <div className="px-2 py-1.5 text-sm text-gray-500">
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
                     {formData.contract_type === 'income' ? 'Нет заказчиков' : 'Нет поставщиков'}
                   </div>
                 )}
@@ -462,7 +462,7 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
           </div>
 
           {selectedFrameworkContract && (
-            <Card className="p-4 bg-blue-50 border-blue-200">
+            <Card className="p-4 bg-primary/10 border-primary/20">
               <div className="text-sm">
                 <div className="font-semibold text-blue-900 mb-2">Информация о рамочном договоре</div>
                 <div className="space-y-1 text-blue-800">
@@ -635,10 +635,10 @@ export function CreateContractDialog({ contractId, onSuccess }: CreateContractDi
 
       {/* Предупреждение */}
       {formData.status === 'active' && (
-        <Card className="p-4 bg-yellow-50 border-yellow-200">
+        <Card className="p-4 bg-yellow-50 border-yellow-200 dark:border-yellow-800">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
-            <div className="text-sm text-yellow-800">
+            <div className="text-sm text-yellow-800 dark:text-yellow-400">
               <strong>Внимание:</strong> При сохранении со статусом "В работе" требуется:
               <ul className="list-disc ml-5 mt-1">
                 {formData.contract_type === 'income' && <li>ТКП со статусом "Утверждено"</li>}

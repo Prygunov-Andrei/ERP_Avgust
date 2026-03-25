@@ -208,14 +208,14 @@ export function ProductFormDialog({
           {/* Тип */}
           <div>
             <Label>Тип</Label>
-            <div className="flex gap-1 mt-2 p-1 bg-gray-100 rounded-lg">
+            <div className="flex gap-1 mt-2 p-1 bg-muted rounded-lg">
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, is_service: false })}
                 className={`flex-1 py-2 px-4 rounded-md transition-all ${
                   !formData.is_service
-                    ? 'bg-white shadow-sm text-gray-900'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-card shadow-sm text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Товар
@@ -225,8 +225,8 @@ export function ProductFormDialog({
                 onClick={() => setFormData({ ...formData, is_service: true })}
                 className={`flex-1 py-2 px-4 rounded-md transition-all ${
                   formData.is_service
-                    ? 'bg-white shadow-sm text-gray-900'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-card shadow-sm text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Услуга

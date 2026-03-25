@@ -119,11 +119,11 @@ export function ActsTab({ contractId }: ActsTabProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'draft': return 'bg-gray-100 text-gray-700';
-      case 'agreed': return 'bg-blue-100 text-blue-700';
-      case 'signed': return 'bg-green-100 text-green-700';
-      case 'cancelled': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'draft': return 'bg-muted text-foreground';
+      case 'agreed': return 'bg-blue-100 dark:bg-blue-900/30 text-primary';
+      case 'signed': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+      case 'cancelled': return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -174,80 +174,80 @@ export function ActsTab({ contractId }: ActsTabProps) {
       </div>
 
       {!acts || acts.length === 0 ? (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Нет актов</p>
+        <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-4">Нет актов</p>
           <Button onClick={() => setIsDialogOpen(true)} variant="outline">
             <Plus className="w-4 h-4 mr-2" />
             Создать первый акт
           </Button>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Номер
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Дата
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Период работ
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Сумма с НДС
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Сумма без НДС
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     НДС
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Статус
                   </th>
                   {acts.some((act) => act.unpaid_amount) && (
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Не оплачено
                     </th>
                   )}
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-10">
                     Действия
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {acts.map((act) => (
-                  <tr key={act.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={act.id} className="hover:bg-muted transition-colors">
                     <td className="px-4 py-2.5">
-                      <div className="text-sm font-medium text-gray-900">{act.number}</div>
+                      <div className="text-sm font-medium text-foreground">{act.number}</div>
                       {act.description && (
-                        <div className="text-xs text-gray-500 truncate max-w-xs">{act.description}</div>
+                        <div className="text-xs text-muted-foreground truncate max-w-xs">{act.description}</div>
                       )}
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
-                      <div className="text-xs text-gray-500">{formatDate(act.date)}</div>
+                      <div className="text-xs text-muted-foreground">{formatDate(act.date)}</div>
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
                       {act.period_start && act.period_end ? (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {formatDate(act.period_start)} — {formatDate(act.period_end)}
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{formatAmount(act.amount_gross)} ₽</div>
+                      <div className="text-sm font-medium text-foreground">{formatAmount(act.amount_gross)} ₽</div>
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">{formatAmount(act.amount_net)} ₽</div>
+                      <div className="text-sm text-muted-foreground">{formatAmount(act.amount_net)} ₽</div>
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">{formatAmount(act.vat_amount)} ₽</div>
+                      <div className="text-sm text-muted-foreground">{formatAmount(act.vat_amount)} ₽</div>
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
                       <span className={`px-2 py-0.5 text-xs font-medium rounded ${getStatusColor(act.status)}`}>
@@ -261,7 +261,7 @@ export function ActsTab({ contractId }: ActsTabProps) {
                             {formatAmount(act.unpaid_amount)} ₽
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400">—</span>
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </td>
                     )}
@@ -471,7 +471,7 @@ function ActForm({ contractId, act, onSubmit, isLoading }: ActFormProps) {
           className="mt-1.5"
           required
         />
-        <p className="text-xs text-gray-500 mt-1">Сумма без НДС и НДС рассчитаются автоматически</p>
+        <p className="text-xs text-muted-foreground mt-1">Сумма без НДС и НДС рассчитаются автоматически</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

@@ -105,8 +105,7 @@ $PYTHON manage.py migrate --no-input
 echo "  Настройка LLM-провайдеров..."
 $PYTHON manage.py setup_providers
 
-echo "  Kanban..."
-DJANGO_SETTINGS_MODULE=kanban_service.settings $PYTHON manage.py migrate --no-input
+# Kanban миграции теперь часть основного бэкенда (finans_assistant)
 
 cd "$ROOT_DIR"
 
@@ -139,10 +138,7 @@ $CELERY -A finans_assistant beat -l info --schedule=/tmp/celerybeat-erp &
 echo $! >> "$PIDFILE"
 echo "  Celery ERP beat    → PID $!"
 
-# Celery Kanban beat (периодические задачи)
-$CELERY -A kanban_service beat -l info --schedule=/tmp/celerybeat-kanban &
-echo $! >> "$PIDFILE"
-echo "  Celery Kanban beat → PID $!"
+# Kanban beat теперь часть finans_assistant (celery ERP beat выше)
 
 # Vite dev server (порт 3000)
 cd "$ROOT_DIR/frontend"

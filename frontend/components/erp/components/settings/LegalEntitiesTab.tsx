@@ -85,7 +85,7 @@ export function LegalEntitiesTab() {
 
   if (error) {
     return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-xl">
+      <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">
         Ошибка загрузки: {(error as Error).message}
       </div>
     );
@@ -94,7 +94,7 @@ export function LegalEntitiesTab() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           {entities?.length || 0} {entities?.length === 1 ? 'компания' : 'компаний'}
         </div>
         <Button onClick={() => setIsDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
@@ -153,9 +153,9 @@ export function LegalEntitiesTab() {
       </AlertDialog>
 
       {!entities || entities.length === 0 ? (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-          <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Нет юридических лиц</p>
+        <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+          <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-4">Нет юридических лиц</p>
           <Button onClick={() => setIsDialogOpen(true)} variant="outline">
             <Plus className="w-4 h-4 mr-2" />
             Добавить первую компанию
@@ -166,16 +166,16 @@ export function LegalEntitiesTab() {
           {entities.map((entity: LegalEntity) => (
             <div
               key={entity.id}
-              className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+              className="bg-card border border-border rounded-xl p-6 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">{entity.name}</h3>
+                  <h3 className="font-semibold text-foreground truncate">{entity.name}</h3>
                   {entity.short_name && (
-                    <p className="text-sm text-gray-500">{entity.short_name}</p>
+                    <p className="text-sm text-muted-foreground">{entity.short_name}</p>
                   )}
                 </div>
                 <DropdownMenu>
@@ -201,25 +201,25 @@ export function LegalEntitiesTab() {
               </div>
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="text-gray-500">ИНН:</span>{' '}
-                  <span className="text-gray-900 font-mono">{entity.inn}</span>
+                  <span className="text-muted-foreground">ИНН:</span>{' '}
+                  <span className="text-foreground font-mono">{entity.inn}</span>
                 </div>
                 {entity.kpp && (
                   <div>
-                    <span className="text-gray-500">КПП:</span>{' '}
-                    <span className="text-gray-900 font-mono">{entity.kpp}</span>
+                    <span className="text-muted-foreground">КПП:</span>{' '}
+                    <span className="text-foreground font-mono">{entity.kpp}</span>
                   </div>
                 )}
                 {entity.ogrn && (
                   <div>
-                    <span className="text-gray-500">ОГРН:</span>{' '}
-                    <span className="text-gray-900 font-mono">{entity.ogrn}</span>
+                    <span className="text-muted-foreground">ОГРН:</span>{' '}
+                    <span className="text-foreground font-mono">{entity.ogrn}</span>
                   </div>
                 )}
               </div>
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <div className="text-xs text-gray-500">Система налогообложения</div>
-                <div className="text-sm font-medium text-gray-700 mt-1">
+              <div className="mt-3 pt-3 border-t border-border">
+                <div className="text-xs text-muted-foreground">Система налогообложения</div>
+                <div className="text-sm font-medium text-foreground mt-1">
                   {getTaxSystemName(entity.tax_system)}
                 </div>
               </div>

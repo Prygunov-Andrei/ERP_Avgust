@@ -165,12 +165,12 @@ export function FrontOfWorkItems() {
       </div>
 
       {/* Фильтры */}
-      <div className="bg-white p-4 rounded-lg border space-y-4">
+      <div className="bg-card p-4 rounded-lg border space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label>Поиск по названию</Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Введите название..."
                 value={searchQuery}
@@ -227,29 +227,29 @@ export function FrontOfWorkItems() {
       </div>
 
       {/* Таблица */}
-      <div className="bg-white rounded-lg border overflow-hidden">
+      <div className="bg-card rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-muted border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Название</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Категория</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Порядок</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">По умолч.</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Активен</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Действия</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Название</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Категория</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Порядок</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">По умолч.</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Активен</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {isLoading ? (
                 <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     Загрузка...
                   </td>
                 </tr>
               ) : items && items.length > 0 ? (
                 items.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
+                  <tr key={item.id} className="hover:bg-muted">
                     <td className="px-4 py-3">
                       <div className="max-w-md">
                         {item.name}
@@ -259,22 +259,22 @@ export function FrontOfWorkItems() {
                       {item.category ? (
                         <Badge variant="secondary">{item.category}</Badge>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{item.sort_order}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{item.sort_order}</td>
                     <td className="px-4 py-3">
                       {item.is_default ? (
-                        <Badge variant="default" className="bg-blue-100 text-blue-800">Да</Badge>
+                        <Badge variant="default" className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">Да</Badge>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
                       {item.is_active ? (
-                        <Badge variant="default" className="bg-green-100 text-green-800">Да</Badge>
+                        <Badge variant="default" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Да</Badge>
                       ) : (
-                        <Badge variant="secondary" className="bg-gray-100 text-gray-800">Нет</Badge>
+                        <Badge variant="secondary" className="bg-muted text-foreground">Нет</Badge>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -290,7 +290,7 @@ export function FrontOfWorkItems() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(item.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 dark:bg-red-900/20"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -300,7 +300,7 @@ export function FrontOfWorkItems() {
                 ))
               ) : (
                 <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     Нет данных
                   </td>
                 </tr>
@@ -331,7 +331,7 @@ export function FrontOfWorkItems() {
                 rows={3}
                 required
               />
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 {formData.name.length} / 500 символов
               </div>
             </div>

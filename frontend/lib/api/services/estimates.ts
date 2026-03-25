@@ -8,7 +8,7 @@ import type {
   PaginatedResponse, ProjectDetail, ProjectList, ProjectNote, WorkMatchResult,
 } from '../types';
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = '/api/erp';
 
 export function createEstimatesService(request: RequestFn) {
   return {

@@ -31,10 +31,10 @@ const STATUS_ICONS: Record<SupplyRequestStatus, React.ReactNode> = {
 };
 
 const STATUS_COLORS: Record<SupplyRequestStatus, string> = {
-  received: 'bg-blue-100 text-blue-800',
-  processing: 'bg-yellow-100 text-yellow-800',
-  completed: 'bg-green-100 text-green-800',
-  error: 'bg-red-100 text-red-800',
+  received: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
+  processing: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400',
+  completed: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
+  error: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400',
 };
 
 export function SupplyRequestsPage() {

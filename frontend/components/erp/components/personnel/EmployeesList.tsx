@@ -52,7 +52,7 @@ export function EmployeesList() {
     <div>
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Поиск по ФИО..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={filterLegalEntity} onValueChange={setFilterLegalEntity}>
@@ -74,9 +74,9 @@ export function EmployeesList() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
+        <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
       ) : employees.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-muted-foreground">
           <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p className="text-lg font-medium">Нет сотрудников</p>
           <p className="text-sm">Добавьте первого сотрудника</p>
@@ -84,18 +84,18 @@ export function EmployeesList() {
       ) : (
         <div className="grid gap-3">
           {employees.map((emp) => (
-            <div key={emp.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+            <div key={emp.id} className="bg-card border border-border rounded-xl p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"><UserCircle className="w-6 h-6 text-blue-600" /></div>
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"><UserCircle className="w-6 h-6 text-primary" /></div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900 truncate">{emp.full_name}</h3>
-                      {!emp.is_active && (<span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Уволен</span>)}
+                      <h3 className="font-semibold text-foreground truncate">{emp.full_name}</h3>
+                      {!emp.is_active && (<span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full">Уволен</span>)}
                     </div>
-                    <p className="text-sm text-gray-500 truncate">{emp.current_position || 'Должность не указана'}</p>
+                    <p className="text-sm text-muted-foreground truncate">{emp.current_position || 'Должность не указана'}</p>
                   </div>
-                  <div className="hidden md:flex items-center gap-4 text-sm text-gray-500">
+                  <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
                     {emp.current_legal_entities?.length > 0 && (
                       <div className="flex items-center gap-1"><Building2 className="w-4 h-4" /><span>{emp.current_legal_entities.map((le) => le.short_name).join(', ')}</span></div>
                     )}

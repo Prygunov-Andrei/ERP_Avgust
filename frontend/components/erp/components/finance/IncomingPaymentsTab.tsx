@@ -239,10 +239,10 @@ export const IncomingPaymentsTab = () => {
           <div className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">
-                  Всего записей: <span className="font-medium text-gray-900">{records.length}</span>
+                <p className="text-sm text-muted-foreground">
+                  Всего записей: <span className="font-medium text-foreground">{records.length}</span>
                   {' | '}
-                  Сумма: <span className="font-medium text-gray-900">{formatCurrency(totalIncome)}</span>
+                  Сумма: <span className="font-medium text-foreground">{formatCurrency(totalIncome)}</span>
                 </p>
               </div>
               <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
@@ -258,7 +258,7 @@ export const IncomingPaymentsTab = () => {
                 ))}
               </div>
             ) : records.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-muted-foreground">
                 <Inbox className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p className="text-lg font-medium">Нет записей</p>
                 <p className="text-sm">Создайте первую запись о входящем платеже</p>
@@ -266,7 +266,7 @@ export const IncomingPaymentsTab = () => {
             ) : (
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-600">
+                  <thead className="bg-muted text-muted-foreground">
                     <tr>
                       <th className="text-left px-4 py-3 font-medium">Тип</th>
                       <th className="text-left px-4 py-3 font-medium">Дата</th>
@@ -278,23 +278,23 @@ export const IncomingPaymentsTab = () => {
                   </thead>
                   <tbody className="divide-y">
                     {records.map((record) => (
-                      <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={record.id} className="hover:bg-muted transition-colors">
                         <td className="px-4 py-3">
                           <Badge variant="outline">
                             {INCOME_TYPE_LABELS[record.income_type] || record.income_type}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{formatDate(record.payment_date)}</td>
-                        <td className="px-4 py-3 text-gray-700 max-w-[180px] truncate">
+                        <td className="px-4 py-3 text-muted-foreground">{formatDate(record.payment_date)}</td>
+                        <td className="px-4 py-3 text-foreground max-w-[180px] truncate">
                           {record.counterparty_name || '—'}
                         </td>
-                        <td className="px-4 py-3 text-right font-medium text-gray-900">
+                        <td className="px-4 py-3 text-right font-medium text-foreground">
                           {formatCurrency(record.amount)}
                         </td>
-                        <td className="px-4 py-3 text-gray-700 max-w-[160px] truncate">
+                        <td className="px-4 py-3 text-foreground max-w-[160px] truncate">
                           {record.object_name || '—'}
                         </td>
-                        <td className="px-4 py-3 text-gray-500 max-w-[200px] truncate">
+                        <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate">
                           {record.description || '—'}
                         </td>
                       </tr>
@@ -310,18 +310,18 @@ export const IncomingPaymentsTab = () => {
           <div className="mt-4">
             <Card>
               <CardContent className="pt-6 text-center space-y-3">
-                <FileText className="h-12 w-12 mx-auto text-gray-300" />
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
                 <div>
-                  <p className="font-medium text-gray-700">Автоматический импорт из банковской выписки</p>
-                  <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
+                  <p className="font-medium text-foreground">Автоматический импорт из банковской выписки</p>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
                     При получении банковской выписки входящие платежи формируются автоматически.
                     LLM подбирает подходящий Объект и Договор из базы данных.
                     Оператор может скорректировать привязку.
                   </p>
                 </div>
-                <div className="border rounded-lg p-8 bg-gray-50 mt-4">
-                  <Inbox className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                  <p className="text-sm text-gray-400">Нет импортированных платежей</p>
+                <div className="border rounded-lg p-8 bg-muted mt-4">
+                  <Inbox className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">Нет импортированных платежей</p>
                 </div>
               </CardContent>
             </Card>
@@ -333,11 +333,11 @@ export const IncomingPaymentsTab = () => {
         <div className="mt-6">
           <div className="flex items-center gap-2 mb-3">
             <Banknote className="h-5 w-5 text-green-600" />
-            <h3 className="text-base font-semibold text-gray-900">Кассовый журнал</h3>
+            <h3 className="text-base font-semibold text-foreground">Кассовый журнал</h3>
           </div>
           <div className="border rounded-lg overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
+              <thead className="bg-muted text-muted-foreground">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium">Дата</th>
                   <th className="text-left px-4 py-3 font-medium">Тип</th>
@@ -348,20 +348,20 @@ export const IncomingPaymentsTab = () => {
               </thead>
               <tbody className="divide-y">
                 {cashRecords.map((record) => (
-                  <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-600">{formatDate(record.payment_date)}</td>
+                  <tr key={record.id} className="hover:bg-muted transition-colors">
+                    <td className="px-4 py-3 text-muted-foreground">{formatDate(record.payment_date)}</td>
                     <td className="px-4 py-3">
                       <Badge variant="outline">
                         {INCOME_TYPE_LABELS[record.income_type] || record.income_type}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-gray-700 max-w-[180px] truncate">
+                    <td className="px-4 py-3 text-foreground max-w-[180px] truncate">
                       {record.counterparty_name || '—'}
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">
+                    <td className="px-4 py-3 text-right font-medium text-foreground">
                       {formatCurrency(record.amount)}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 max-w-[200px] truncate">
+                    <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate">
                       {record.description || '—'}
                     </td>
                   </tr>

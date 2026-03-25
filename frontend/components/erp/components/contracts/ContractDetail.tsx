@@ -90,11 +90,11 @@ export function ContractDetail() {
 
   const getStatusBadge = (status: string) => {
     const config = {
-      planned: { label: 'Планируется', className: 'bg-gray-100 text-gray-800' },
-      active: { label: 'В работе', className: 'bg-green-100 text-green-800' },
-      completed: { label: 'Завершён', className: 'bg-blue-100 text-blue-800' },
-      suspended: { label: 'Приостановлен', className: 'bg-orange-100 text-orange-800' },
-      terminated: { label: 'Расторгнут', className: 'bg-red-100 text-red-800' },
+      planned: { label: 'Планируется', className: 'bg-muted text-foreground' },
+      active: { label: 'В работе', className: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' },
+      completed: { label: 'Завершён', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
+      suspended: { label: 'Приостановлен', className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400' },
+      terminated: { label: 'Расторгнут', className: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' },
     };
     const item = config[status as keyof typeof config] || config.planned;
     return <Badge className={item.className}>{item.label}</Badge>;
@@ -102,9 +102,9 @@ export function ContractDetail() {
 
   const getTypeBadge = (type: string) => {
     return type === 'income' ? (
-      <Badge className="bg-green-100 text-green-800">Доходный</Badge>
+      <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Доходный</Badge>
     ) : (
-      <Badge className="bg-red-100 text-red-800">Расходный</Badge>
+      <Badge className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">Расходный</Badge>
     );
   };
 
@@ -112,7 +112,7 @@ export function ContractDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Загрузка...</div>
+        <div className="text-muted-foreground">Загрузка...</div>
       </div>
     );
   }
@@ -120,7 +120,7 @@ export function ContractDetail() {
   if (!contract) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <div className="text-gray-500">Договор не найден</div>
+        <div className="text-muted-foreground">Договор не найден</div>
         <Button onClick={() => navigate('/contracts')} className="mt-4">
           Вернуться к списку
         </Button>
@@ -131,28 +131,28 @@ export function ContractDetail() {
   const balanceColor = balance ? (
     parseFloat(balance.balance) > 0 ? 'text-green-600' : 
     parseFloat(balance.balance) < 0 ? 'text-red-600' : 
-    'text-gray-600'
-  ) : 'text-gray-600';
+    'text-muted-foreground'
+  ) : 'text-muted-foreground';
 
   return (
     <div className="space-y-6">
       {/* Хедер */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start gap-4">
             <Button
               onClick={() => navigate('/contracts')}
-              className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3"
+              className="bg-muted text-foreground hover:bg-muted px-3"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-gray-900">{contract.name}</h1>
+                <h1 className="text-foreground">{contract.name}</h1>
                 {getStatusBadge(contract.status)}
                 {getTypeBadge(contract.contract_type)}
               </div>
-              <div className="flex items-center gap-4 text-gray-600">
+              <div className="flex items-center gap-4 text-muted-foreground">
                 <span>№ {contract.number}</span>
                 <span>от {formatDate(contract.contract_date)}</span>
               </div>
@@ -178,43 +178,43 @@ export function ContractDetail() {
 
         {/* Панель информации */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="text-gray-600 mb-1">Объект</div>
-            <div className="text-gray-900">{contract.object_name}</div>
+          <div className="bg-muted rounded-lg p-4">
+            <div className="text-muted-foreground mb-1">Объект</div>
+            <div className="text-foreground">{contract.object_name}</div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="text-gray-600 mb-1">Контрагент</div>
-            <div className="text-gray-900">{contract.counterparty_name}</div>
+          <div className="bg-muted rounded-lg p-4">
+            <div className="text-muted-foreground mb-1">Контрагент</div>
+            <div className="text-foreground">{contract.counterparty_name}</div>
           </div>
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="text-gray-600 mb-1">Сумма договора</div>
+          <div className="bg-primary/10 rounded-lg p-4">
+            <div className="text-muted-foreground mb-1">Сумма договора</div>
             <div className="text-blue-900">{formatCurrency(contract.total_amount, contract.currency)}</div>
           </div>
           {balance && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-gray-600 mb-1">Баланс</div>
+            <div className="bg-muted rounded-lg p-4">
+              <div className="text-muted-foreground mb-1">Баланс</div>
               <div className={balanceColor}>{formatCurrency(balance.balance, (balance as { balance: string; currency?: string }).currency)}</div>
             </div>
           )}
           {margin && contract.contract_type === 'income' && (
             <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-gray-600 mb-1">Маржа</div>
+              <div className="text-muted-foreground mb-1">Маржа</div>
               <div className="text-green-900">
                 {formatCurrency(margin.margin, contract.currency)} ({parseFloat(margin.margin_percent).toFixed(2)}%)
               </div>
             </div>
           )}
           {contract.start_date && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-gray-600 mb-1">Срок работ</div>
-              <div className="text-gray-900">
+            <div className="bg-muted rounded-lg p-4">
+              <div className="text-muted-foreground mb-1">Срок работ</div>
+              <div className="text-foreground">
                 {formatDate(contract.start_date)} - {contract.end_date ? formatDate(contract.end_date) : 'не указано'}
               </div>
             </div>
           )}
           {contract.framework_contract_details && (
             <div className="bg-purple-50 rounded-lg p-4">
-              <div className="text-gray-600 mb-1">Рамочный договор</div>
+              <div className="text-muted-foreground mb-1">Рамочный договор</div>
               <div
                 onClick={() => navigate(`/contracts/framework-contracts/${contract.framework_contract}`)}
                 className="text-purple-900 cursor-pointer hover:underline"
@@ -226,13 +226,13 @@ export function ContractDetail() {
         </div>
 
         {/* Вкладки */}
-        <div className="flex gap-1 border-b border-gray-200">
+        <div className="flex gap-1 border-b border-border">
           <button
             onClick={() => setActiveTab('info')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'info'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Основное
@@ -241,8 +241,8 @@ export function ContractDetail() {
             onClick={() => setActiveTab('amendments')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'amendments'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Доп. соглашения
@@ -251,8 +251,8 @@ export function ContractDetail() {
             onClick={() => setActiveTab('schedule')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'schedule'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             График работ
@@ -261,8 +261,8 @@ export function ContractDetail() {
             onClick={() => setActiveTab('acts')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'acts'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Акты
@@ -271,8 +271,8 @@ export function ContractDetail() {
             onClick={() => setActiveTab('cashflow')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'cashflow'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Cash-flow
@@ -281,8 +281,8 @@ export function ContractDetail() {
             onClick={() => setActiveTab('text')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'text'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Текст договора
@@ -340,8 +340,8 @@ export function ContractDetail() {
 
 function ContractTextEditorTab({ contractId }: { contractId: number }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-gray-900 mb-4">Текст договора</h2>
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+      <h2 className="text-foreground mb-4">Текст договора</h2>
       <ContractTextEditor contractId={contractId} />
     </div>
   );
@@ -350,70 +350,70 @@ function ContractTextEditorTab({ contractId }: { contractId: number }) {
 function InfoTab({ contract }: { contract: ContractDetailType }) {
   const navigate = useNavigate();
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-gray-900 mb-4">Основная информация</h2>
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+      <h2 className="text-foreground mb-4">Основная информация</h2>
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <div className="text-gray-600">Номер</div>
-          <div className="text-gray-900 mt-1">{contract.number}</div>
+          <div className="text-muted-foreground">Номер</div>
+          <div className="text-foreground mt-1">{contract.number}</div>
         </div>
         <div>
-          <div className="text-gray-600">Название</div>
-          <div className="text-gray-900 mt-1">{contract.name}</div>
+          <div className="text-muted-foreground">Название</div>
+          <div className="text-foreground mt-1">{contract.name}</div>
         </div>
         <div>
-          <div className="text-gray-600">Дата заключения</div>
-          <div className="text-gray-900 mt-1">{formatDate(contract.contract_date)}</div>
+          <div className="text-muted-foreground">Дата заключения</div>
+          <div className="text-foreground mt-1">{formatDate(contract.contract_date)}</div>
         </div>
         <div>
-          <div className="text-gray-600">Компания</div>
-          <div className="text-gray-900 mt-1">{contract.legal_entity_name}</div>
+          <div className="text-muted-foreground">Компания</div>
+          <div className="text-foreground mt-1">{contract.legal_entity_name}</div>
         </div>
         <div>
-          <div className="text-gray-600">Контрагент</div>
-          <div className="text-gray-900 mt-1">{contract.counterparty_name}</div>
+          <div className="text-muted-foreground">Контрагент</div>
+          <div className="text-foreground mt-1">{contract.counterparty_name}</div>
         </div>
         <div>
-          <div className="text-gray-600">Объект</div>
+          <div className="text-muted-foreground">Объект</div>
           <div
             onClick={() => contract.object_id && navigate(`/objects/${contract.object_id}`)}
-            className={contract.object_id ? 'text-blue-600 cursor-pointer hover:underline mt-1' : 'text-gray-900 mt-1'}
+            className={contract.object_id ? 'text-primary cursor-pointer hover:underline mt-1' : 'text-foreground mt-1'}
           >
             {contract.object_name}
           </div>
         </div>
         {contract.technical_proposal_number && (
           <div>
-            <div className="text-gray-600">ТКП</div>
-            <div className="text-gray-900 mt-1">{contract.technical_proposal_number}</div>
+            <div className="text-muted-foreground">ТКП</div>
+            <div className="text-foreground mt-1">{contract.technical_proposal_number}</div>
           </div>
         )}
         {contract.mounting_proposal_number && (
           <div>
-            <div className="text-gray-600">МП</div>
-            <div className="text-gray-900 mt-1">{contract.mounting_proposal_number}</div>
+            <div className="text-muted-foreground">МП</div>
+            <div className="text-foreground mt-1">{contract.mounting_proposal_number}</div>
           </div>
         )}
         {contract.responsible_manager_name && (
           <div>
-            <div className="text-gray-600">Начальник участка</div>
-            <div className="text-gray-900 mt-1">{contract.responsible_manager_name}</div>
+            <div className="text-muted-foreground">Начальник участка</div>
+            <div className="text-foreground mt-1">{contract.responsible_manager_name}</div>
           </div>
         )}
         {contract.responsible_engineer_name && (
           <div>
-            <div className="text-gray-600">Ответственный инженер</div>
-            <div className="text-gray-900 mt-1">{contract.responsible_engineer_name}</div>
+            <div className="text-muted-foreground">Ответственный инженер</div>
+            <div className="text-foreground mt-1">{contract.responsible_engineer_name}</div>
           </div>
         )}
         {contract.file && (
           <div>
-            <div className="text-gray-600">Файл договора</div>
+            <div className="text-muted-foreground">Файл договора</div>
             <a
               href={contract.file}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline flex items-center gap-2 mt-1"
+              className="text-primary hover:underline flex items-center gap-2 mt-1"
             >
               <FileText className="w-4 h-4" />
               Открыть файл
@@ -422,8 +422,8 @@ function InfoTab({ contract }: { contract: ContractDetailType }) {
         )}
         {contract.notes && (
           <div className="col-span-2">
-            <div className="text-gray-600">Примечания</div>
-            <div className="text-gray-900 mt-1 whitespace-pre-wrap">{contract.notes}</div>
+            <div className="text-muted-foreground">Примечания</div>
+            <div className="text-foreground mt-1 whitespace-pre-wrap">{contract.notes}</div>
           </div>
         )}
       </div>
@@ -454,7 +454,7 @@ function CashFlowTab({ contractId }: { contractId: number }) {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
         </div>
@@ -463,17 +463,17 @@ function CashFlowTab({ contractId }: { contractId: number }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-gray-900 mb-6">Cash-flow по периодам</h2>
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+      <h2 className="text-foreground mb-6">Cash-flow по периодам</h2>
 
       {/* Фильтры */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div>
-          <label className="block text-gray-600 mb-2">Период</label>
+          <label className="block text-muted-foreground mb-2">Период</label>
           <select
             value={periodType}
             onChange={(e) => setPeriodType(e.target.value as 'month' | 'week' | 'day')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="month">Месяц</option>
             <option value="week">Неделя</option>
@@ -481,29 +481,29 @@ function CashFlowTab({ contractId }: { contractId: number }) {
           </select>
         </div>
         <div>
-          <label className="block text-gray-600 mb-2">Дата начала</label>
+          <label className="block text-muted-foreground mb-2">Дата начала</label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <div>
-          <label className="block text-gray-600 mb-2">Дата окончания</label>
+          <label className="block text-muted-foreground mb-2">Дата окончания</label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <div>
-          <label className="block text-gray-600 mb-2">Тип графика</label>
+          <label className="block text-muted-foreground mb-2">Тип графика</label>
           <select
             value={chartType}
             onChange={(e) => setChartType(e.target.value as 'line' | 'bar')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="line">Линейный</option>
             <option value="bar">Столбчатый</option>
@@ -513,8 +513,8 @@ function CashFlowTab({ contractId }: { contractId: number }) {
 
       {/* График */}
       {cashFlowData.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <div className="text-center py-12 text-muted-foreground">
+          <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p>Нет данных для отображения</p>
           <p className="text-sm mt-2">Выберите период или измените фильтры</p>
         </div>
@@ -572,24 +572,24 @@ function CashFlowTab({ contractId }: { contractId: number }) {
           <div className="mt-8 overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 text-gray-600">Период</th>
-                  <th className="text-right py-3 text-gray-600">Приход</th>
-                  <th className="text-right py-3 text-gray-600">Расход</th>
-                  <th className="text-right py-3 text-gray-600">Баланс</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 text-muted-foreground">Период</th>
+                  <th className="text-right py-3 text-muted-foreground">Приход</th>
+                  <th className="text-right py-3 text-muted-foreground">Расход</th>
+                  <th className="text-right py-3 text-muted-foreground">Баланс</th>
                 </tr>
               </thead>
               <tbody>
                 {cashFlowData.map((row: CashFlowPeriodRow, index: number) => (
-                  <tr key={index} className="border-b border-gray-100">
-                    <td className="py-3 text-gray-900">{row.period}</td>
+                  <tr key={index} className="border-b border-border">
+                    <td className="py-3 text-foreground">{row.period}</td>
                     <td className="py-3 text-right text-green-600">
                       {formatAmount(row.income || 0)}
                     </td>
                     <td className="py-3 text-right text-red-600">
                       {formatAmount(row.expense || 0)}
                     </td>
-                    <td className="py-3 text-right text-blue-600">
+                    <td className="py-3 text-right text-primary">
                       {formatAmount(row.balance || 0)}
                     </td>
                   </tr>

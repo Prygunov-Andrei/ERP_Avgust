@@ -19,7 +19,7 @@ const getDueDateStyle = (dueDate: string | null): string => {
   today.setHours(0, 0, 0, 0);
   due.setHours(0, 0, 0, 0);
   const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return 'bg-red-50';
+  if (diffDays < 0) return 'bg-red-50 dark:bg-red-900/20';
   if (diffDays <= 3) return 'bg-orange-50';
   return '';
 };
@@ -32,10 +32,10 @@ const getDueDateBadge = (dueDate: string | null) => {
   due.setHours(0, 0, 0, 0);
   const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) {
-    return <Badge className="bg-red-100 text-red-800 ml-1 text-[10px]">просрочено</Badge>;
+    return <Badge className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 ml-1 text-[10px]">просрочено</Badge>;
   }
   if (diffDays <= 3) {
-    return <Badge className="bg-orange-100 text-orange-800 ml-1 text-[10px]">{diffDays === 0 ? 'сегодня' : `${diffDays} дн.`}</Badge>;
+    return <Badge className="bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400 ml-1 text-[10px]">{diffDays === 0 ? 'сегодня' : `${diffDays} дн.`}</Badge>;
   }
   return null;
 };
@@ -64,11 +64,11 @@ export function TechnicalProposalsList() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      draft: { label: 'Черновик', className: 'bg-gray-100 text-gray-800' },
-      in_progress: { label: 'В работе', className: 'bg-blue-100 text-blue-800' },
-      checking: { label: 'На проверке', className: 'bg-yellow-100 text-yellow-800' },
-      approved: { label: 'Утверждено', className: 'bg-green-100 text-green-800' },
-      sent: { label: 'Отправлено', className: 'bg-purple-100 text-purple-800' },
+      draft: { label: 'Черновик', className: 'bg-muted text-foreground' },
+      in_progress: { label: 'В работе', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
+      checking: { label: 'На проверке', className: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400' },
+      approved: { label: 'Утверждено', className: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' },
+      sent: { label: 'Отправлено', className: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
     return <Badge className={config.className}>{config.label}</Badge>;
@@ -90,12 +90,12 @@ export function TechnicalProposalsList() {
         </Button>
       </div>
 
-      <div className="bg-white p-4 rounded-lg border space-y-4">
+      <div className="bg-card p-4 rounded-lg border space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <Label>Поиск</Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Номер или название..."
                 value={searchQuery}
@@ -166,26 +166,26 @@ export function TechnicalProposalsList() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border overflow-hidden">
+      <div className="bg-card rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-muted border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Номер</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Название</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Создано</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата выдачи</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Объект</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Компания</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Сумма</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Версия</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Номер</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Название</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Создано</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Дата выдачи</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Объект</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Компания</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Статус</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Сумма</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Версия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {isLoading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                     Загрузка...
                   </td>
                 </tr>
@@ -193,7 +193,7 @@ export function TechnicalProposalsList() {
                 tkpList.map((tkp) => (
                   <tr
                     key={tkp.id}
-                    className={`hover:bg-gray-100 cursor-pointer transition-colors ${getDueDateStyle(tkp.due_date)}`}
+                    className={`hover:bg-muted cursor-pointer transition-colors ${getDueDateStyle(tkp.due_date)}`}
                     onClick={() => handleRowClick(tkp)}
                     role="link"
                     tabIndex={0}
@@ -201,12 +201,12 @@ export function TechnicalProposalsList() {
                     onKeyDown={(e) => { if (e.key === 'Enter') handleRowClick(tkp); }}
                   >
                     <td className="px-4 py-3">
-                      <span className="text-blue-600 font-medium">{tkp.number}</span>
+                      <span className="text-primary font-medium">{tkp.number}</span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="max-w-xs truncate">{tkp.name}</div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-sm">{formatDate(tkp.created_at)}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-sm">{formatDate(tkp.created_at)}</td>
                     <td className="px-4 py-3 text-sm">
                       {tkp.due_date ? (
                         <span className="flex items-center gap-1">
@@ -214,27 +214,27 @@ export function TechnicalProposalsList() {
                           {getDueDateBadge(tkp.due_date)}
                         </span>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="max-w-xs truncate text-gray-600">{tkp.object_name}</div>
+                      <div className="max-w-xs truncate text-muted-foreground">{tkp.object_name}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="max-w-xs truncate text-gray-600">{tkp.legal_entity_name}</div>
+                      <div className="max-w-xs truncate text-muted-foreground">{tkp.legal_entity_name}</div>
                     </td>
                     <td className="px-4 py-3">{getStatusBadge(tkp.status)}</td>
                     <td className="px-4 py-3 text-right font-medium">
                       {formatCurrency(tkp.total_amount)}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className="text-sm text-gray-600">v{tkp.version_number}</span>
+                      <span className="text-sm text-muted-foreground">v{tkp.version_number}</span>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                     Нет данных
                   </td>
                 </tr>
@@ -244,8 +244,8 @@ export function TechnicalProposalsList() {
         </div>
 
         {tkpData && tkpData.count > 0 && (
-          <div className="px-4 py-3 border-t bg-gray-50">
-            <div className="text-sm text-gray-600">
+          <div className="px-4 py-3 border-t bg-muted">
+            <div className="text-sm text-muted-foreground">
               Всего: {tkpData.count} ТКП
             </div>
           </div>

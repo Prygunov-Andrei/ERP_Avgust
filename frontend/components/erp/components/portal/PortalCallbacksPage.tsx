@@ -22,10 +22,10 @@ const CALLBACK_STATUS_LABELS: Record<string, string> = {
 };
 
 const CALLBACK_STATUS_COLORS: Record<string, string> = {
-  new: 'bg-blue-100 text-blue-800',
-  in_progress: 'bg-yellow-100 text-yellow-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-800',
+  new: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
+  in_progress: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400',
+  completed: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
+  cancelled: 'bg-muted text-foreground',
 };
 
 export default function PortalCallbacksPage() {

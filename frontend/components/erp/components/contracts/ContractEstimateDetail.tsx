@@ -20,9 +20,9 @@ import { ArrowLeft, Loader2, Download, Upload, Copy, Scissors, CheckCircle, File
 import { toast } from 'sonner';
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  draft: { label: 'Черновик', color: 'bg-gray-100 text-gray-800' },
-  agreed: { label: 'Согласована', color: 'bg-blue-100 text-blue-800' },
-  signed: { label: 'Подписана', color: 'bg-green-100 text-green-800' },
+  draft: { label: 'Черновик', color: 'bg-muted text-foreground' },
+  agreed: { label: 'Согласована', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
+  signed: { label: 'Подписана', color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' },
 };
 
 export const ContractEstimateDetail: React.FC = () => {
@@ -186,15 +186,15 @@ export const ContractEstimateDetail: React.FC = () => {
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-card rounded-lg border p-4">
           <div className="text-sm text-muted-foreground">Материалы</div>
           <div className="text-xl font-bold">{formatCurrency(totals.materials)}</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-card rounded-lg border p-4">
           <div className="text-sm text-muted-foreground">Работы</div>
           <div className="text-xl font-bold">{formatCurrency(totals.works)}</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-card rounded-lg border p-4">
           <div className="text-sm text-muted-foreground">Всего</div>
           <div className="text-2xl font-bold text-primary">{formatCurrency(totals.total)}</div>
         </div>

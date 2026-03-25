@@ -20,17 +20,17 @@ function getStatusBadge(status: string, statusDisplay: string) {
   const base = 'text-xs';
   switch (status) {
     case 'uploaded':
-      return <Badge variant="outline" className={`${base} bg-gray-100 text-gray-700 border-gray-300`}>{statusDisplay}</Badge>;
+      return <Badge variant="outline" className={`${base} bg-muted text-foreground border-border`}>{statusDisplay}</Badge>;
     case 'detecting_toc':
-      return <Badge className={`${base} bg-blue-100 text-blue-700 border-blue-300 animate-pulse`}>{statusDisplay}</Badge>;
+      return <Badge className={`${base} bg-blue-100 dark:bg-blue-900/30 text-primary border-blue-300 animate-pulse`}>{statusDisplay}</Badge>;
     case 'toc_ready':
       return <Badge className={`${base} bg-cyan-100 text-cyan-700 border-cyan-300`}>{statusDisplay}</Badge>;
     case 'parsing':
-      return <Badge className={`${base} bg-blue-100 text-blue-700 border-blue-300 animate-pulse`}>{statusDisplay}</Badge>;
+      return <Badge className={`${base} bg-blue-100 dark:bg-blue-900/30 text-primary border-blue-300 animate-pulse`}>{statusDisplay}</Badge>;
     case 'parsed':
-      return <Badge className={`${base} bg-green-100 text-green-700 border-green-300`}>{statusDisplay}</Badge>;
+      return <Badge className={`${base} bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-300`}>{statusDisplay}</Badge>;
     case 'importing':
-      return <Badge className={`${base} bg-blue-100 text-blue-700 border-blue-300 animate-pulse`}>{statusDisplay}</Badge>;
+      return <Badge className={`${base} bg-blue-100 dark:bg-blue-900/30 text-primary border-blue-300 animate-pulse`}>{statusDisplay}</Badge>;
     case 'imported':
       return <Badge className={`${base} bg-emerald-100 text-emerald-700 border-emerald-300`}>{statusDisplay}</Badge>;
     case 'error':
@@ -303,7 +303,7 @@ export function SupplierCatalogDetail() {
 
       {/* Ошибки */}
       {(catalog.error_message || (catalog.errors && catalog.errors.length > 0)) && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-red-700 text-base flex items-center gap-2">
               <XCircle className="w-5 h-5" />
@@ -504,11 +504,11 @@ export function SupplierCatalogDetail() {
                       </TableCell>
                       <TableCell>
                         {section.is_new_category ? (
-                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 text-xs">
+                          <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-300 text-xs">
                             Будет создана
                           </Badge>
                         ) : (
-                          <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">
+                          <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-300 text-xs">
                             Существует
                           </Badge>
                         )}

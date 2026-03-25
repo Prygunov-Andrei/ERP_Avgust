@@ -131,17 +131,17 @@ export function CreateMountingProposalFromTKPDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+      <div className="bg-card rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+        <div className="p-6 border-b border-border flex items-center justify-between">
           <div>
-            <h2 className="text-gray-900">Создать МП из ТКП</h2>
-            <p className="text-gray-600">
+            <h2 className="text-foreground">Создать МП из ТКП</h2>
+            <p className="text-muted-foreground">
               ТКП № {tkpNumber}: {tkpName}
             </p>
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-muted-foreground hover:text-muted-foreground"
             aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
@@ -159,7 +159,7 @@ export function CreateMountingProposalFromTKPDialog({
                 value={formData.counterparty}
                 onChange={(e) => setFormData({ ...formData, counterparty: e.target.value })}
                 required
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Выберите исполнителя</option>
                 {counterparties?.map((c: Counterparty) => (
@@ -173,11 +173,11 @@ export function CreateMountingProposalFromTKPDialog({
             <div>
               <Label>Монтажные сметы</Label>
               {mountingEstimates && mountingEstimates.length > 0 ? (
-                <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border border-border rounded-lg p-3">
                   {mountingEstimates.map((est) => (
                     <label
                       key={est.id}
-                      className="flex items-start gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                      className="flex items-start gap-2 cursor-pointer hover:bg-muted p-2 rounded"
                     >
                       <input
                         type="checkbox"
@@ -186,8 +186,8 @@ export function CreateMountingProposalFromTKPDialog({
                         className="mt-1"
                       />
                       <div>
-                        <div className="text-gray-900">{est.number} - {est.name}</div>
-                        <div className="text-gray-500">
+                        <div className="text-foreground">{est.number} - {est.name}</div>
+                        <div className="text-muted-foreground">
                           {Number(est.total_amount).toLocaleString('ru-RU')} ₽
                         </div>
                       </div>
@@ -195,7 +195,7 @@ export function CreateMountingProposalFromTKPDialog({
                   ))}
                 </div>
               ) : (
-                <p className="mt-1 text-gray-500">Нет доступных монтажных смет</p>
+                <p className="mt-1 text-muted-foreground">Нет доступных монтажных смет</p>
               )}
             </div>
 
@@ -231,7 +231,7 @@ export function CreateMountingProposalFromTKPDialog({
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={3}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Дополнительные примечания..."
               />
             </div>
@@ -239,14 +239,14 @@ export function CreateMountingProposalFromTKPDialog({
             {conditions && conditions.length > 0 && (
               <div>
                 <Label>Условия для МП</Label>
-                <p className="text-sm text-gray-500 mb-1">
+                <p className="text-sm text-muted-foreground mb-1">
                   Условия «по умолчанию» выбраны автоматически
                 </p>
-                <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border border-border rounded-lg p-3">
                   {conditions.map((condition: MountingCondition) => (
                     <label
                       key={condition.id}
-                      className="flex items-start gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                      className="flex items-start gap-2 cursor-pointer hover:bg-muted p-2 rounded"
                     >
                       <input
                         type="checkbox"
@@ -255,9 +255,9 @@ export function CreateMountingProposalFromTKPDialog({
                         className="mt-1"
                       />
                       <div>
-                        <div className="text-gray-900">{condition.name}</div>
+                        <div className="text-foreground">{condition.name}</div>
                         {condition.description && (
-                          <div className="text-gray-500">{condition.description}</div>
+                          <div className="text-muted-foreground">{condition.description}</div>
                         )}
                       </div>
                     </label>
@@ -268,11 +268,11 @@ export function CreateMountingProposalFromTKPDialog({
           </div>
         </form>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end gap-2">
+        <div className="p-6 border-t border-border flex justify-end gap-2">
           <Button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+            className="bg-muted text-foreground hover:bg-muted"
           >
             Отмена
           </Button>

@@ -135,10 +135,10 @@ export function InvoiceUploader({ onParsed, onError, onFileSelected, disabled = 
         className={`
           relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
           transition-all duration-200
-          ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50'}
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-400 hover:bg-blue-50'}
-          ${state === 'success' ? 'border-green-500 bg-green-50' : ''}
-          ${state === 'error' ? 'border-red-500 bg-red-50' : ''}
+          ${isDragOver ? 'border-blue-500 bg-primary/10' : 'border-border bg-muted'}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-400 hover:bg-primary/10'}
+          ${state === 'success' ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : ''}
+          ${state === 'error' ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : ''}
         `}
       >
         <input
@@ -153,12 +153,12 @@ export function InvoiceUploader({ onParsed, onError, onFileSelected, disabled = 
         {/* Idle State */}
         {state === 'idle' && (
           <div className="space-y-3">
-            <Upload className="w-12 h-12 mx-auto text-gray-400" />
+            <Upload className="w-12 h-12 mx-auto text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium text-foreground">
                 Перетащите PDF-счёт сюда или нажмите для выбора
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {enableParsing ? 'PDF файл с автоматическим извлечением данных' : 'PDF файл документа'}
               </p>
             </div>
@@ -170,8 +170,8 @@ export function InvoiceUploader({ onParsed, onError, onFileSelected, disabled = 
           <div className="space-y-3">
             <Loader2 className="w-12 h-12 mx-auto text-blue-500 animate-spin" />
             <div>
-              <p className="text-sm font-medium text-gray-700">Загрузка файла...</p>
-              <p className="text-xs text-gray-500 mt-1">{fileName}</p>
+              <p className="text-sm font-medium text-foreground">Загрузка файла...</p>
+              <p className="text-xs text-muted-foreground mt-1">{fileName}</p>
             </div>
           </div>
         )}
@@ -181,8 +181,8 @@ export function InvoiceUploader({ onParsed, onError, onFileSelected, disabled = 
           <div className="space-y-3">
             <Loader2 className="w-12 h-12 mx-auto text-blue-500 animate-spin" />
             <div>
-              <p className="text-sm font-medium text-blue-600">Анализируем счёт...</p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-sm font-medium text-primary">Анализируем счёт...</p>
+              <p className="text-xs text-muted-foreground mt-1">
                 Извлекаем данные о контрагенте, суммах и товарах
               </p>
             </div>
@@ -197,7 +197,7 @@ export function InvoiceUploader({ onParsed, onError, onFileSelected, disabled = 
               <p className="text-sm font-medium text-green-700">
                 {enableParsing ? 'Счёт успешно обработан!' : 'Документ успешно загружен!'}
               </p>
-              <p className="text-xs text-gray-500 mt-1">{fileName}</p>
+              <p className="text-xs text-muted-foreground mt-1">{fileName}</p>
             </div>
             <Button
               type="button"
@@ -220,7 +220,7 @@ export function InvoiceUploader({ onParsed, onError, onFileSelected, disabled = 
             <AlertCircle className="w-12 h-12 mx-auto text-red-500" />
             <div>
               <p className="text-sm font-medium text-red-700">Ошибка обработки файла</p>
-              <p className="text-xs text-gray-500 mt-1">{fileName}</p>
+              <p className="text-xs text-muted-foreground mt-1">{fileName}</p>
             </div>
             <Button
               type="button"
@@ -248,9 +248,9 @@ export function InvoiceUploader({ onParsed, onError, onFileSelected, disabled = 
 
       {/* Warnings */}
       {state === 'success' && warnings.length > 0 && (
-        <Alert className="border-yellow-500 bg-yellow-50">
+        <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
           <AlertCircle className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-800">
+          <AlertDescription className="text-yellow-800 dark:text-yellow-400">
             <div className="font-medium mb-1">⚠️ Обратите внимание:</div>
             <ul className="list-disc list-inside space-y-1 text-sm">
               {warnings.map((warning, index) => (

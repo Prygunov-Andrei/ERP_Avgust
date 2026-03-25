@@ -11,21 +11,18 @@ const apiClient = axios.create({
   withCredentials: false,
 });
 
-
-// Service Token для авторизации на hvac-backend из ERP
-const HVAC_SERVICE_TOKEN = typeof process !== 'undefined'
-  ? (process.env?.NEXT_PUBLIC_HVAC_SERVICE_TOKEN || '')
-  : '';
-
-// Request interceptor — ServiceToken + язык
+// Request interceptor — ERP JWT + язык.
+// Сам сервисный токен добавляется только на сервере в BFF-маршруте.
 apiClient.interceptors.request.use(
   (config) => {
-    // ServiceToken для авторизации (staff-level доступ к hvac-backend)
-    if (HVAC_SERVICE_TOKEN) {
-      config.headers.Authorization = `ServiceToken ${HVAC_SERVICE_TOKEN}`;
+    const accessToken = typeof localStorage !== 'undefined'
+      ? localStorage.getItem('access_token')
+      : null;
+
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
-    // Язык
     const language = typeof localStorage !== 'undefined'
       ? (localStorage.getItem('language') || 'ru')
       : 'ru';

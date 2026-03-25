@@ -25,16 +25,16 @@ function ShiftRow({ shift, onActivate, onClose }: {
 
   return (
     <>
-      <tr className="hover:bg-gray-50">
-        <td className="px-6 py-4 text-sm font-medium text-gray-900">{formatDate(shift.date)}</td>
-        <td className="px-6 py-4 text-sm text-gray-700">{SHIFT_TYPE_LABELS[shift.shift_type] || shift.shift_type}</td>
-        <td className="px-6 py-4 text-sm text-gray-500 font-mono">{shift.start_time?.slice(0, 5)} — {shift.end_time?.slice(0, 5)}</td>
-        <td className="px-6 py-4 text-sm text-gray-700">{shift.contract_number ? `${shift.contract_number}` : '—'}</td>
-        <td className="px-6 py-4 text-sm text-gray-700">{shift.contractor_name || '—'}</td>
-        <td className="px-6 py-4 text-sm text-center text-gray-700">{shift.registrations_count}</td>
-        <td className="px-6 py-4 text-sm text-center text-gray-700">{shift.teams_count}</td>
+      <tr className="hover:bg-muted">
+        <td className="px-6 py-4 text-sm font-medium text-foreground">{formatDate(shift.date)}</td>
+        <td className="px-6 py-4 text-sm text-foreground">{SHIFT_TYPE_LABELS[shift.shift_type] || shift.shift_type}</td>
+        <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{shift.start_time?.slice(0, 5)} — {shift.end_time?.slice(0, 5)}</td>
+        <td className="px-6 py-4 text-sm text-foreground">{shift.contract_number ? `${shift.contract_number}` : '—'}</td>
+        <td className="px-6 py-4 text-sm text-foreground">{shift.contractor_name || '—'}</td>
+        <td className="px-6 py-4 text-sm text-center text-foreground">{shift.registrations_count}</td>
+        <td className="px-6 py-4 text-sm text-center text-foreground">{shift.teams_count}</td>
         <td className="px-6 py-4">
-          <Badge className={cn('text-xs', SHIFT_STATUS_STYLES[shift.status] || 'bg-gray-100 text-gray-600')}>
+          <Badge className={cn('text-xs', SHIFT_STATUS_STYLES[shift.status] || 'bg-muted text-muted-foreground')}>
             {shift.status === 'active' ? 'Активна' : shift.status === 'scheduled' ? 'Запланирована' : 'Закрыта'}
           </Badge>
         </td>
@@ -42,17 +42,17 @@ function ShiftRow({ shift, onActivate, onClose }: {
           <td className="px-6 py-4">
             <div className="flex items-center gap-2">
               {shift.status === 'active' && shift.qr_token && (
-                <Button size="sm" variant="outline" onClick={() => setQrOpen(true)} className="text-blue-600 border-blue-300 hover:bg-blue-50" aria-label="Показать QR-код смены" tabIndex={0}>
+                <Button size="sm" variant="outline" onClick={() => setQrOpen(true)} className="text-primary border-blue-300 hover:bg-primary/10" aria-label="Показать QR-код смены" tabIndex={0}>
                   <QrCode className="w-3.5 h-3.5 mr-1" /> QR
                 </Button>
               )}
               {shift.status === 'scheduled' && onActivate && (
-                <Button size="sm" variant="outline" onClick={() => onActivate(shift.id)} className="text-green-600 border-green-300 hover:bg-green-50" aria-label="Активировать смену" tabIndex={0}>
+                <Button size="sm" variant="outline" onClick={() => onActivate(shift.id)} className="text-green-600 border-green-300 hover:bg-green-50 dark:bg-green-900/20" aria-label="Активировать смену" tabIndex={0}>
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Активировать
                 </Button>
               )}
               {shift.status === 'active' && onClose && (
-                <Button size="sm" variant="outline" onClick={() => onClose(shift.id)} className="text-red-600 border-red-300 hover:bg-red-50" aria-label="Закрыть смену" tabIndex={0}>
+                <Button size="sm" variant="outline" onClick={() => onClose(shift.id)} className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 dark:bg-red-900/20" aria-label="Закрыть смену" tabIndex={0}>
                   <XCircle className="w-3.5 h-3.5 mr-1" /> Закрыть
                 </Button>
               )}
@@ -68,11 +68,11 @@ function ShiftRow({ shift, onActivate, onClose }: {
             <DialogDescription>Покажите этот QR-код монтажникам для регистрации на смену</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
               <QRCodeSVG value={qrValue} size={256} level="M" includeMargin />
             </div>
-            <div className="text-center text-sm text-gray-500 space-y-1">
-              <p className="font-medium text-gray-700">{formatDate(shift.date)} · {SHIFT_TYPE_LABELS[shift.shift_type] || shift.shift_type}</p>
+            <div className="text-center text-sm text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">{formatDate(shift.date)} · {SHIFT_TYPE_LABELS[shift.shift_type] || shift.shift_type}</p>
               <p>{shift.start_time?.slice(0, 5)} — {shift.end_time?.slice(0, 5)}</p>
               {shift.contractor_name && <p>{shift.contractor_name}</p>}
               {shift.contract_number && <p>Договор: {shift.contract_number}</p>}
@@ -141,8 +141,8 @@ export function ShiftsSection({ objectId, data, isLoading, page, onPageChange, s
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <select className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" value={statusFilter} onChange={(e) => { onStatusFilterChange(e.target.value); onPageChange(1); }} aria-label="Фильтр по статусу">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          <select className="border border-border rounded-lg px-3 py-1.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-ring" value={statusFilter} onChange={(e) => { onStatusFilterChange(e.target.value); onPageChange(1); }} aria-label="Фильтр по статусу">
             <option value="">Все статусы</option>
             <option value="active">Активные</option>
             <option value="scheduled">Запланированные</option>
@@ -155,28 +155,28 @@ export function ShiftsSection({ objectId, data, isLoading, page, onPageChange, s
       {isLoading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
       ) : !data || data.results.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
-          <Clock className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">Нет смен{statusFilter ? ' с выбранным фильтром' : ''}</p>
+        <div className="bg-card border border-border rounded-xl p-8 text-center">
+          <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">Нет смен{statusFilter ? ' с выбранным фильтром' : ''}</p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Тип</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Время</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Договор</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Контрагент</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Регистрации</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Звенья</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Действия</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Дата</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Тип</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Время</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Договор</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Контрагент</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Регистрации</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Звенья</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Статус</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Действия</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {data.results.map((shift) => (
                   <ShiftRow key={shift.id} shift={shift} onActivate={(id) => activateMutation.mutate(id)} onClose={(id) => closeMutation.mutate(id)} />
                 ))}

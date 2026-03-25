@@ -50,7 +50,7 @@ export const ErrorDisplay = ({
         {onRetry && (
           <button
             onClick={onRetry}
-            className="text-blue-600 hover:underline ml-2"
+            className="text-primary hover:underline ml-2"
           >
             Повторить
           </button>
@@ -72,7 +72,7 @@ export const ErrorDisplay = ({
                 variant="outline"
                 size="sm"
                 onClick={onRetry}
-                className="mt-3 bg-white hover:bg-gray-50"
+                className="mt-3 bg-card hover:bg-muted"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Повторить попытку

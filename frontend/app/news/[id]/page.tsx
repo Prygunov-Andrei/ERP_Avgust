@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { PublicLayout } from '@/components/public/PublicLayout';
 import { getNewsById } from '@/lib/hvac-api';
-import { formatDate, stripHtml, truncate } from '@/lib/utils';
+import { formatDate, getNewsPrimaryImageUrl, stripHtml, truncate } from '@/lib/utils';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const news = await getNewsById(Number(id));
     const description = truncate(stripHtml(news.body || ''), 160);
-    const imageUrl = news.media?.[0]?.file;
+    const imageUrl = getNewsPrimaryImageUrl(news);
 
     return {
       title: news.title,
@@ -43,7 +43,7 @@ export default async function NewsDetailPage({ params }: Props) {
     notFound();
   }
 
-  const imageUrl = news.media?.[0]?.file;
+  const imageUrl = getNewsPrimaryImageUrl(news);
 
   return (
     <PublicLayout>
@@ -76,15 +76,15 @@ export default async function NewsDetailPage({ params }: Props) {
 
       <article className="max-w-3xl mx-auto">
         {/* Breadcrumb */}
-        <nav className="mb-6 text-sm text-gray-500">
+        <nav className="mb-6 text-sm text-gray-500 dark:text-gray-400">
           <Link href="/" className="hover:text-blue-600">Новости</Link>
           <span className="mx-2">/</span>
-          <span className="text-gray-900">{truncate(news.title, 50)}</span>
+          <span className="text-gray-900 dark:text-gray-100">{truncate(news.title, 50)}</span>
         </nav>
 
         {/* Header */}
         <header className="mb-8">
-          <time dateTime={news.pub_date} className="text-sm text-gray-500">
+          <time dateTime={news.pub_date} className="text-sm text-gray-500 dark:text-gray-400">
             {formatDate(news.pub_date)}
           </time>
           {news.manufacturer && (
@@ -92,7 +92,7 @@ export default async function NewsDetailPage({ params }: Props) {
               {news.manufacturer.name}
             </span>
           )}
-          <h1 className="mt-3 text-3xl font-bold text-gray-900 leading-tight">
+          <h1 className="mt-3 text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
             {news.title}
           </h1>
         </header>
@@ -117,7 +117,7 @@ export default async function NewsDetailPage({ params }: Props) {
         {/* Source */}
         {news.source_url && (
           <footer className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Источник:{' '}
               <a
                 href={news.source_url}

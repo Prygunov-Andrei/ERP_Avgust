@@ -61,20 +61,20 @@ export function ObjectCustomerTab({ objectId }: ObjectCustomerTabProps) {
       </TabsList>
 
       <TabsContent value="estimates">
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-6">
           <ObjectEstimatesList objectId={objectId} contractType="income" />
         </div>
       </TabsContent>
 
       {PLACEHOLDER_TABS.map((tab) => (
         <TabsContent key={tab.value} value={tab.value}>
-          <div className="bg-white border border-gray-200 rounded-xl p-8">
+          <div className="bg-card border border-border rounded-xl p-8">
             <div className="flex flex-col items-center justify-center text-center">
-              <tab.icon className="w-12 h-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <tab.icon className="w-12 h-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 {tab.title}
               </h3>
-              <p className="text-sm text-gray-500 max-w-md">
+              <p className="text-sm text-muted-foreground max-w-md">
                 {tab.description}
               </p>
             </div>
@@ -83,19 +83,19 @@ export function ObjectCustomerTab({ objectId }: ObjectCustomerTabProps) {
       ))}
 
       <TabsContent value="contracts">
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-6">
           <ObjectContractsList objectId={objectId} contractType="income" />
         </div>
       </TabsContent>
 
       <TabsContent value="acts">
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-6">
           <ObjectActsList objectId={objectId} contractType="income" />
         </div>
       </TabsContent>
 
       <TabsContent value="reconciliations">
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-6">
           <ObjectReconciliation objectId={objectId} contractType="income" />
         </div>
       </TabsContent>

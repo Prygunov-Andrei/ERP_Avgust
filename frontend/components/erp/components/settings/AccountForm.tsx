@@ -80,7 +80,7 @@ export function AccountForm({ account, entities, onSubmit, isLoading }: AccountF
             </SelectTrigger>
             <SelectContent>
               {entities.length === 0 ? (
-                <div className="p-2 text-sm text-gray-500">Нет доступных компаний</div>
+                <div className="p-2 text-sm text-muted-foreground">Нет доступных компаний</div>
               ) : (
                 entities.map((entity) => (
                   <SelectItem key={entity.id} value={entity.id.toString()}>
@@ -162,7 +162,7 @@ export function AccountForm({ account, entities, onSubmit, isLoading }: AccountF
             required={!account}
           />
           {account && (
-            <p className="text-xs text-gray-500 mt-1">Номер счета нельзя изменить</p>
+            <p className="text-xs text-muted-foreground mt-1">Номер счета нельзя изменить</p>
           )}
         </div>
 

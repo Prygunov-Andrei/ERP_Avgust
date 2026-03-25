@@ -38,10 +38,10 @@ export default async function ManufacturersPage() {
       />
 
       <section>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="mb-2 text-3xl font-bold text-foreground">
           Производители HVAC-оборудования
         </h1>
-        <p className="text-gray-500 mb-8">
+        <p className="mb-8 text-muted-foreground">
           {data.length} производителей в каталоге
         </p>
 
@@ -49,7 +49,7 @@ export default async function ManufacturersPage() {
           {data.map((manufacturer) => (
             <article
               key={manufacturer.id}
-              className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow"
+              className="rounded-lg border border-border bg-card p-5 text-card-foreground transition-shadow hover:shadow-md"
             >
               <div className="flex items-start gap-4">
                 {manufacturer.logo && (
@@ -61,18 +61,18 @@ export default async function ManufacturersPage() {
                   />
                 )}
                 <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-card-foreground">
                     {manufacturer.name}
                   </h2>
                   {manufacturer.country && (
-                    <p className="text-sm text-gray-500">{manufacturer.country}</p>
+                    <p className="text-sm text-muted-foreground">{manufacturer.country}</p>
                   )}
                   {manufacturer.description && (
-                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
                       {manufacturer.description}
                     </p>
                   )}
-                  <div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
+                  <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                     {manufacturer.news_count > 0 && (
                       <span>{manufacturer.news_count} новостей</span>
                     )}
@@ -84,7 +84,7 @@ export default async function ManufacturersPage() {
                         href={manufacturer.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="text-primary hover:underline"
                       >
                         Сайт
                       </a>

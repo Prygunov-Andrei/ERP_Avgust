@@ -186,8 +186,8 @@ export function CatalogCategories() {
     return (
       <div key={node.id}>
         <div
-          className={`flex items-center gap-2 py-2 px-3 cursor-pointer hover:bg-gray-100 rounded ${
-            isSelected ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+          className={`flex items-center gap-2 py-2 px-3 cursor-pointer hover:bg-muted rounded ${
+            isSelected ? 'bg-primary/10 border-l-4 border-blue-600' : ''
           }`}
           style={{ paddingLeft: `${level * 20 + 12}px` }}
           onClick={() => {
@@ -213,7 +213,7 @@ export function CatalogCategories() {
             <div className="w-6" />
           )}
           <span className="flex-1">{node.name}</span>
-          <span className="text-xs text-gray-500">{node.code}</span>
+          <span className="text-xs text-muted-foreground">{node.code}</span>
         </div>
 
         {isExpanded && hasChildren && (
@@ -228,17 +228,17 @@ export function CatalogCategories() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b bg-white">
+      <div className="flex items-center justify-between p-6 border-b bg-card">
         <div>
           <h1 className="text-2xl">Категории</h1>
-          <p className="text-gray-500 mt-1">Иерархия категорий каталога</p>
+          <p className="text-muted-foreground mt-1">Иерархия категорий каталога</p>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Левая панель - дерево */}
-        <div className="w-1/3 border-r bg-white overflow-y-auto">
+        <div className="w-1/3 border-r bg-card overflow-y-auto">
           <div className="p-4">
             <Button
               onClick={() => {
@@ -261,7 +261,7 @@ export function CatalogCategories() {
             ) : categoryTree && categoryTree.length > 0 ? (
               categoryTree.map((node) => renderTreeNode(node))
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 Категории не найдены
               </div>
             )}
@@ -269,7 +269,7 @@ export function CatalogCategories() {
         </div>
 
         {/* Правая панель - форма */}
-        <div className="flex-1 bg-gray-50 overflow-y-auto">
+        <div className="flex-1 bg-muted overflow-y-auto">
           {(selectedCategoryId || isCreating) ? (
             <form onSubmit={handleSubmit} className="p-6 space-y-6 max-w-2xl">
               <div>
@@ -397,7 +397,7 @@ export function CatalogCategories() {
                     variant="outline"
                     onClick={handleDelete}
                     disabled={deleteMutation.isPending}
-                    className="text-red-600 hover:bg-red-50"
+                    className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 dark:bg-red-900/20"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Удалить
@@ -418,7 +418,7 @@ export function CatalogCategories() {
               </div>
             </form>
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               Выберите категорию для редактирования или создайте новую
             </div>
           )}

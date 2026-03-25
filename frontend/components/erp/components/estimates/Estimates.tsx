@@ -12,13 +12,13 @@ import { Plus, Search, FileText, Loader2, Filter, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STATUS_MAP = {
-  draft: { label: 'Черновик', color: 'bg-gray-100 text-gray-700' },
-  in_progress: { label: 'В работе', color: 'bg-blue-100 text-blue-700' },
-  checking: { label: 'На проверке', color: 'bg-yellow-100 text-yellow-700' },
-  approved: { label: 'Утверждена', color: 'bg-green-100 text-green-700' },
-  sent: { label: 'Отправлена Заказчику', color: 'bg-blue-100 text-blue-700' },
-  agreed: { label: 'Согласована Заказчиком', color: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Отклонена', color: 'bg-red-100 text-red-700' },
+  draft: { label: 'Черновик', color: 'bg-muted text-foreground' },
+  in_progress: { label: 'В работе', color: 'bg-blue-100 dark:bg-blue-900/30 text-primary' },
+  checking: { label: 'На проверке', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' },
+  approved: { label: 'Утверждена', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' },
+  sent: { label: 'Отправлена Заказчику', color: 'bg-blue-100 dark:bg-blue-900/30 text-primary' },
+  agreed: { label: 'Согласована Заказчиком', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' },
+  rejected: { label: 'Отклонена', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' },
 };
 
 export function Estimates() {
@@ -137,8 +137,8 @@ export function Estimates() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Сметы</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Сметы</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Управление сметами с разделами и характеристиками
           </p>
         </div>
@@ -149,11 +149,11 @@ export function Estimates() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-4 space-y-4">
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 type="text"
                 placeholder="Поиск по номеру или названию..."
@@ -166,7 +166,7 @@ export function Estimates() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? 'bg-gray-100' : ''}
+            className={showFilters ? 'bg-muted' : ''}
           >
             <Filter className="w-4 h-4 mr-2" />
             Фильтры
@@ -187,7 +187,7 @@ export function Estimates() {
               <select
                 value={filters.object || ''}
                 onChange={(e) => setFilters({ ...filters, object: e.target.value ? Number(e.target.value) : undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все объекты</option>
                 {objects.map((obj) => (
@@ -201,7 +201,7 @@ export function Estimates() {
               <select
                 value={filters.legal_entity || ''}
                 onChange={(e) => setFilters({ ...filters, legal_entity: e.target.value ? Number(e.target.value) : undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все компании</option>
                 {legalEntities?.map((le) => (
@@ -215,7 +215,7 @@ export function Estimates() {
               <select
                 value={filters.status || ''}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value || undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все статусы</option>
                 {Object.entries(STATUS_MAP).map(([key, { label }]) => (
@@ -231,7 +231,7 @@ export function Estimates() {
                   type="checkbox"
                   checked={filters.approved_by_customer === true}
                   onChange={(e) => setFilters({ ...filters, approved_by_customer: e.target.checked ? true : undefined })}
-                  className="rounded border-gray-300"
+                  className="rounded border-border"
                 />
                 <span className="text-sm">Согласовано Заказчиком</span>
               </label>
@@ -241,44 +241,44 @@ export function Estimates() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
           </div>
         ) : estimates && estimates.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Номер</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Название</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Объект</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Компания</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">С НДС</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Согласовано</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Версия</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Номер</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Название</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Объект</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Компания</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Статус</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">С НДС</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Согласовано</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Версия</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {estimates.map((estimate) => (
                   <tr
                     key={estimate.id}
                     onClick={() => navigate(`/estimates/estimates/${estimate.id}`)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="hover:bg-muted cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <span className="font-medium text-gray-900">{estimate.number}</span>
+                      <span className="font-medium text-foreground">{estimate.number}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-gray-900">{estimate.name}</span>
+                      <span className="text-foreground">{estimate.name}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{estimate.object_name}</span>
+                      <span className="text-sm text-muted-foreground">{estimate.object_name}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{estimate.legal_entity_name}</span>
+                      <span className="text-sm text-muted-foreground">{estimate.legal_entity_name}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${STATUS_MAP[estimate.status as keyof typeof STATUS_MAP]?.color}`}>
@@ -289,22 +289,22 @@ export function Estimates() {
                       {estimate.with_vat ? (
                         <span className="text-sm text-green-600">✓ Да</span>
                       ) : (
-                        <span className="text-sm text-gray-500">✗ Нет</span>
+                        <span className="text-sm text-muted-foreground">✗ Нет</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {estimate.approved_by_customer ? (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700">
+                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                           ✓ Да
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-600">
+                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-muted text-muted-foreground">
                           ✗ Нет
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">v{estimate.version_number}</span>
+                      <span className="text-sm text-muted-foreground">v{estimate.version_number}</span>
                     </td>
                   </tr>
                 ))}
@@ -313,8 +313,8 @@ export function Estimates() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Нет смет</p>
+            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Нет смет</p>
             <Button variant="outline" onClick={() => setCreateDialogOpen(true)} className="mt-4">
               <Plus className="w-4 h-4 mr-2" />
               Создать первую смету
@@ -341,7 +341,7 @@ export function Estimates() {
                   id="object"
                   value={formData.object}
                   onChange={(e) => setFormData({ ...formData, object: Number(e.target.value) })}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
                   <option value={0}>Выберите объект</option>
@@ -360,7 +360,7 @@ export function Estimates() {
                   id="legal_entity"
                   value={formData.legal_entity}
                   onChange={(e) => handleLegalEntityChange(Number(e.target.value))}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
                   <option value={0}>Выберите компанию</option>
@@ -390,7 +390,7 @@ export function Estimates() {
                     type="checkbox"
                     checked={formData.with_vat}
                     onChange={(e) => setFormData({ ...formData, with_vat: e.target.checked })}
-                    className="rounded border-gray-300"
+                    className="rounded border-border"
                   />
                   <span>С НДС</span>
                 </Label>
@@ -421,14 +421,14 @@ export function Estimates() {
                   const selected = Array.from(e.target.selectedOptions).map(o => Number(o.value));
                   setFormData({ ...formData, projects: selected });
                 }}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 size={3}
               >
                 {projects?.map((p) => (
                   <option key={p.id} value={p.id}>{p.cipher} - {p.name}</option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">Удерживайте Ctrl для множественного выбора</p>
+              <p className="text-xs text-muted-foreground mt-1">Удерживайте Ctrl для множественного выбора</p>
             </div>
 
             <DialogFooter>

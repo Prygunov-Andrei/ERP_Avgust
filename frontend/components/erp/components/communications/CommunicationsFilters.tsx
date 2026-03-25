@@ -34,13 +34,13 @@ export function CommunicationsFilters({
   return (
     <Card className="p-6 mb-6">
       <div className="flex items-center gap-2 mb-4">
-        <Filter className="w-5 h-5 text-gray-500" />
+        <Filter className="w-5 h-5 text-muted-foreground" />
         <h3 className="text-sm">Фильтры</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <div>
-          <Label className="text-xs text-gray-600">Договор</Label>
+          <Label className="text-xs text-muted-foreground">Договор</Label>
           <Select
             value={filters.contract}
             onValueChange={(value) => onFiltersChange({ ...filters, contract: value })}
@@ -60,7 +60,7 @@ export function CommunicationsFilters({
         </div>
 
         <div>
-          <Label className="text-xs text-gray-600">Тип</Label>
+          <Label className="text-xs text-muted-foreground">Тип</Label>
           <Select
             value={filters.type}
             onValueChange={(value) => onFiltersChange({ ...filters, type: value })}
@@ -77,7 +77,7 @@ export function CommunicationsFilters({
         </div>
 
         <div>
-          <Label className="text-xs text-gray-600">Категория</Label>
+          <Label className="text-xs text-muted-foreground">Категория</Label>
           <Select
             value={filters.category}
             onValueChange={(value) => onFiltersChange({ ...filters, category: value })}
@@ -97,7 +97,7 @@ export function CommunicationsFilters({
         </div>
 
         <div>
-          <Label className="text-xs text-gray-600">Статус</Label>
+          <Label className="text-xs text-muted-foreground">Статус</Label>
           <Select
             value={filters.status}
             onValueChange={(value) => onFiltersChange({ ...filters, status: value })}
@@ -116,9 +116,9 @@ export function CommunicationsFilters({
         </div>
 
         <div>
-          <Label className="text-xs text-gray-600">Поиск</Label>
+          <Label className="text-xs text-muted-foreground">Поиск</Label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Поиск..."
               value={searchQuery}

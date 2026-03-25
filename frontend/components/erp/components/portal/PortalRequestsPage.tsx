@@ -39,14 +39,14 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  uploaded: 'bg-gray-100 text-gray-800',
-  parsing: 'bg-blue-100 text-blue-800',
+  uploaded: 'bg-muted text-foreground',
+  parsing: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
   matching: 'bg-indigo-100 text-indigo-800',
-  review: 'bg-yellow-100 text-yellow-800',
-  rfq_sent: 'bg-purple-100 text-purple-800',
-  ready: 'bg-green-100 text-green-800',
+  review: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400',
+  rfq_sent: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
+  ready: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
   delivered: 'bg-green-200 text-green-900',
-  error: 'bg-red-100 text-red-800',
+  error: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400',
 };
 
 export default function PortalRequestsPage() {
@@ -283,7 +283,7 @@ export default function PortalRequestsPage() {
                   {selectedRequest.estimate_number && (
                     <div className="col-span-2">
                       <span className="text-muted-foreground">Смета: </span>
-                      <a href={`/estimates/estimates`} className="text-blue-600 hover:underline">
+                      <a href={`/estimates/estimates`} className="text-primary hover:underline">
                         {selectedRequest.estimate_number}
                       </a>
                     </div>

@@ -16,7 +16,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/v1/auth/login/', {
+      const res = await fetch('/api/portal/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -45,19 +45,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/40 text-foreground">
       <div className="w-full max-w-md p-8">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="rounded-2xl border border-border bg-card p-8 text-card-foreground shadow-xl">
           {/* Logo */}
           <div className="text-center mb-8">
             <img src="/logo.png" alt="Август" className="h-16 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900">Вход в систему</h1>
-            <p className="text-sm text-gray-500 mt-1">Финансовая система</p>
+            <h1 className="text-2xl font-bold text-card-foreground">Вход в систему</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Финансовая система</p>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/20 dark:text-red-300">
               {error}
             </div>
           )}
@@ -65,7 +65,7 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="username" className="mb-1 block text-sm font-medium text-muted-foreground">
                 Имя пользователя
               </label>
               <input
@@ -73,7 +73,7 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none transition focus:border-transparent focus:ring-2 focus:ring-blue-500"
                 placeholder="admin"
                 required
                 autoFocus
@@ -81,7 +81,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="mb-1 block text-sm font-medium text-muted-foreground">
                 Пароль
               </label>
               <input
@@ -89,7 +89,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none transition focus:border-transparent focus:ring-2 focus:ring-blue-500"
                 placeholder="••••••"
                 required
               />
@@ -106,7 +106,7 @@ export default function LoginPage() {
 
           {/* Back link */}
           <div className="mt-6 text-center">
-            <a href="/" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">
+            <a href="/" className="text-sm text-muted-foreground transition-colors hover:text-primary">
               &larr; Вернуться на главную
             </a>
           </div>

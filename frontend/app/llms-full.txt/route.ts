@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const HVAC_API = process.env.HVAC_API_URL || 'http://hvac-backend:8001';
+const BACKEND_API = (process.env.BACKEND_API_URL || 'http://backend:8000').replace(/\/$/, '');
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
@@ -9,13 +9,13 @@ function stripHtml(html: string): string {
 export async function GET() {
   try {
     // Получаем все опубликованные новости
-    const newsRes = await fetch(`${HVAC_API}/api/hvac/news/?page_size=1000`, {
+    const newsRes = await fetch(`${BACKEND_API}/api/v1/hvac/public/news/?page_size=1000`, {
       next: { revalidate: 3600 },
     });
     const newsData = await newsRes.json();
 
     // Получаем производителей
-    const mfgRes = await fetch(`${HVAC_API}/api/hvac/references/manufacturers/?page_size=1000`, {
+    const mfgRes = await fetch(`${BACKEND_API}/api/v1/hvac/public/references/manufacturers/?page_size=1000`, {
       next: { revalidate: 3600 },
     });
     const mfgData = await mfgRes.json();

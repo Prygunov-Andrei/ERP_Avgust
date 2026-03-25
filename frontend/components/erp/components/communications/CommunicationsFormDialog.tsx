@@ -56,10 +56,10 @@ export function CommunicationsFormDialog({
 }: CommunicationsFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold mb-4">{title}</DialogTitle>
-          <DialogDescription className="text-sm text-gray-500">{dialogDescription}</DialogDescription>
+          <DialogDescription className="text-sm text-muted-foreground">{dialogDescription}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4">
@@ -201,7 +201,7 @@ export function CommunicationsFormDialog({
               }}
             />
             {existingFileUrl && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Текущий файл: <a href={existingFileUrl} target="_blank" className="text-blue-500 underline">Скачать</a>
               </p>
             )}

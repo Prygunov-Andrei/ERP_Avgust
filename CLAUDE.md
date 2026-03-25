@@ -4,8 +4,7 @@
 
 Monorepo with 5 services:
 - `frontend/` — Next.js 16, единая точка входа (ERP + HVAC портал)
-- `backend/` — Django 5 + DRF, ERP API (26 Django apps, включая kanban_*)
-- `hvac-backend/` — Django, HVAC API (отдельная БД hvac_db)
+- `backend/` — Django 5 + DRF, единый ERP + HVAC API контур
 - `bot/` — Telegram бот (aiogram 3.x)
 - `mini-app/` — Vite React, мобильный worklog (независимый API client — intentional, не шарить с frontend)
 
@@ -18,7 +17,6 @@ Monorepo with 5 services:
 
 ### Sensitive Files (handle with care)
 - `backend/finans_assistant/settings.py` — secrets, JWT keys, S3 config
-- `hvac-backend/config/settings.py` — HVAC secrets
 - `bot/services/db.py` — прямой asyncpg доступ к ERP DB (оптимизирован: retry, timeout, cache)
 - `backend/api_public/migrations/0001_initial.py` — hardcoded defaults
 - `.env`, `.env.example` — credentials
@@ -35,13 +33,16 @@ cd frontend && npx tsc --noEmit && npm test
 # Bot tests
 cd bot && pytest
 
-# HVAC tests
-cd hvac-backend && pytest
-
 # Full stack
 ./dev-local.sh    # start
 ./dev-stop.sh     # stop
 ```
+
+### Media-файлы при локальной разработке
+- БД подключена к проду (SSH-туннель), но медиа-файлы новостей (HVAC) физически на прод-сервере
+- `frontend/.env.local` содержит `PROD_MEDIA_URL=http://216.57.110.41` — Next.js проксирует `/media/news/`, `/hvac-media/`, `/hvac-static/` на прод
+- Остальные медиа (`/media/product_images/`, `/media/projects/` и т.д.) берутся с локального backend
+- **На продакшне** `PROD_MEDIA_URL` **НЕ задаётся** — всё идёт через `BACKEND_API_URL` (по умолчанию `http://backend:8000`)
 
 ## Code Patterns
 
@@ -67,9 +68,9 @@ cd hvac-backend && pytest
 ### Known Tech Debt
 - `finans_assistant` — внутреннее имя Django project (переименование нецелесообразно, 200+ миграций)
 - `bot/services/db.py` — прямой SQL к ERP DB (изолирован, миграция на API — отдельный проект)
-- `hvac-backend` discovery_service.py — threading вместо Celery (планируется миграция на Celery/отдельный worker)
+- HVAC discovery_service.py — threading вместо Celery (планируется миграция на Celery/отдельный worker)
 
 ## Deploy
 - Production: 216.57.110.41, `/opt/finans_assistant`
 - Deploy docs: `deploy/README.md`, `deploy/QUICKSTART.md`
-- CI: `.github/workflows/ci.yml` — 4 jobs (frontend, backend, bot, hvac-backend)
+- CI: `.github/workflows/ci.yml` — frontend, backend, bot, mini-app

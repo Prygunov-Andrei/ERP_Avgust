@@ -69,13 +69,13 @@ export default function RequestStatusPage() {
   const status = statusLabels[data?.status || ''] || statusLabels.pending;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Статус заявки</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-8">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Статус заявки</h1>
 
         <div className="space-y-4">
           <div>
-            <span className="text-sm text-gray-500">Статус</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Статус</span>
             <div className="mt-1">
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${status.color}`}>
                 {status.label}
@@ -85,15 +85,15 @@ export default function RequestStatusPage() {
 
           {data?.file_name && (
             <div>
-              <span className="text-sm text-gray-500">Файл</span>
-              <p className="text-sm text-gray-900">{data.file_name}</p>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Файл</span>
+              <p className="text-sm text-gray-900 dark:text-gray-100">{data.file_name}</p>
             </div>
           )}
 
           {data?.email && (
             <div>
-              <span className="text-sm text-gray-500">Email</span>
-              <p className="text-sm text-gray-900">{data.email}</p>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Email</span>
+              <p className="text-sm text-gray-900 dark:text-gray-100">{data.email}</p>
             </div>
           )}
 
@@ -108,7 +108,7 @@ export default function RequestStatusPage() {
         </div>
 
         <div className="mt-8 text-center">
-          <Link href="/smeta" className="text-sm text-gray-500 hover:text-blue-600">
+          <Link href="/smeta" className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600">
             &larr; Отправить ещё одну смету
           </Link>
         </div>

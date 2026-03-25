@@ -301,7 +301,7 @@ const referencesService = {
     const token = localStorage.getItem('access_token');
     const language = localStorage.getItem('language') || 'ru';
     
-    const url = `${API_CONFIG.BASE_URL.replace('/api/hvac', '')}/hvac-admin/references/newsresource/discover-news-info/`;
+    const url = `${API_CONFIG.ADMIN_BASE_URL}/references/newsresource/discover-news-info/`;
     
     try {
       const response = await axios.get(url, {
@@ -353,7 +353,7 @@ const referencesService = {
     const token = localStorage.getItem('access_token');
     const language = localStorage.getItem('language') || 'ru';
     
-    const url = `${API_CONFIG.BASE_URL.replace('/api/hvac', '')}/hvac-admin/references/newsresource/discover-news/`;
+    const url = `${API_CONFIG.ADMIN_BASE_URL}/references/newsresource/discover-news/`;
     
     // Создаем FormData для отправки параметров запуска
     const formData = new FormData();
@@ -386,7 +386,7 @@ const referencesService = {
     const token = localStorage.getItem('access_token');
     const language = localStorage.getItem('language') || 'ru';
     
-    const url = `${API_CONFIG.BASE_URL.replace('/api/hvac', '')}/hvac-admin/references/newsresource/discover-news-status/`;
+    const url = `${API_CONFIG.ADMIN_BASE_URL}/references/newsresource/discover-news-status/`;
     
     const response = await axios.get(url, {
       headers: {
@@ -418,7 +418,7 @@ const referencesService = {
     const token = localStorage.getItem('access_token');
     const language = localStorage.getItem('language') || 'ru';
     
-    const url = `${API_CONFIG.BASE_URL.replace('/api/hvac', '')}/hvac-admin/references/manufacturer/discover-manufacturers-info/`;
+    const url = `${API_CONFIG.ADMIN_BASE_URL}/references/manufacturer/discover-manufacturers-info/`;
     
     const response = await axios.get(url, {
       headers: {
@@ -438,7 +438,7 @@ const referencesService = {
     const token = localStorage.getItem('access_token');
     const language = localStorage.getItem('language') || 'ru';
     
-    const url = `${API_CONFIG.BASE_URL.replace('/api/hvac', '')}/hvac-admin/references/manufacturer/discover-manufacturers-news/`;
+    const url = `${API_CONFIG.ADMIN_BASE_URL}/references/manufacturer/discover-manufacturers-news/`;
     
     const formData = new FormData();
     if (params?.lastSearchDate) {
@@ -462,7 +462,7 @@ const referencesService = {
     const token = localStorage.getItem('access_token');
     const language = localStorage.getItem('language') || 'ru';
     
-    const url = `${API_CONFIG.BASE_URL.replace('/api/hvac', '')}/hvac-admin/references/manufacturer/discover-manufacturers-status/`;
+    const url = `${API_CONFIG.ADMIN_BASE_URL}/references/manufacturer/discover-manufacturers-status/`;
     
     const response = await axios.get(url, {
       headers: {

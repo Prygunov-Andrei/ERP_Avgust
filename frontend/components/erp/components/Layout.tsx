@@ -7,7 +7,7 @@ import {
   Package, CheckSquare, Landmark, Receipt,
   Truck, CalendarClock, TrendingUp, BarChart3, ShoppingCart, Link2,
   ExternalLink, HardHat, Search, BookOpen, HelpCircle,
-  Calendar, PieChart, Wallet, Scale, Megaphone, Calculator, Globe, Phone
+  Calendar, PieChart, Wallet, Scale, Megaphone, Calculator, Globe, Phone, MessageSquareText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -21,6 +21,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationBadge } from './NotificationBadge';
+import { ThemeSwitcher } from '@/components/public/ThemeSwitcher';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 const logo = '/logo.png';
@@ -46,7 +47,17 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   // 1. ПУНКТ УПРАВЛЕНИЯ
-  { id: 'dashboard', label: 'Пункт управления', icon: <Home className="w-5 h-5" />, path: '/dashboard', section: 'dashboard' },
+  {
+    id: 'dashboard',
+    label: 'Пункт управления',
+    icon: <Home className="w-5 h-5" />,
+    path: '/dashboard',
+    section: 'dashboard',
+    children: [
+      { id: 'dashboard-main', label: 'Дашборд', icon: <Home className="w-4 h-4" />, path: '/dashboard', section: 'dashboard' },
+      { id: 'dashboard-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/dashboard/instructions' },
+    ],
+  },
 
   // 2. КОММЕРЧЕСКИЕ ПРЕДЛОЖЕНИЯ
   {
@@ -66,7 +77,17 @@ const menuItems: MenuItem[] = [
   },
 
   // 3. ОБЪЕКТЫ
-  { id: 'objects', label: 'Объекты', icon: <Building2 className="w-5 h-5" />, path: '/objects', section: 'objects' },
+  {
+    id: 'objects',
+    label: 'Объекты',
+    icon: <Building2 className="w-5 h-5" />,
+    path: '/objects',
+    section: 'objects',
+    children: [
+      { id: 'objects-list', label: 'Список объектов', icon: <Building2 className="w-4 h-4" />, path: '/objects', section: 'objects' },
+      { id: 'objects-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/objects/instructions' },
+    ],
+  },
 
   // 4. ФИНАНСЫ
   {
@@ -122,6 +143,7 @@ const menuItems: MenuItem[] = [
       { id: 'supply-moderation', label: 'Модерация товаров', icon: <CheckSquare className="w-4 h-4" />, path: '/catalog/moderation', section: 'supply.moderation', isShortcut: true, shortcutSection: 'goods.moderation' },
       { id: 'warehouse', label: 'Склад: Остатки', icon: <Package className="w-4 h-4" />, path: '/warehouse', section: 'supply.warehouse' },
       { id: 'supply-counterparties', label: 'Поставщики', icon: <Users className="w-4 h-4" />, path: '/counterparties', section: 'settings.counterparties', isShortcut: true, shortcutSection: 'settings.counterparties' },
+      { id: 'supply-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/supply/instructions' },
     ],
   },
 
@@ -144,6 +166,7 @@ const menuItems: MenuItem[] = [
       { id: 'goods-price-lists', label: 'Прайс-листы', icon: <List className="w-4 h-4" />, path: '/price-lists', section: 'goods.pricelists' },
       { id: 'goods-worker-grades', label: 'Разряды монтажников', icon: <Users className="w-4 h-4" />, path: '/worker-grades', section: 'goods.grades' },
       { id: 'goods-worker-grade-skills', label: 'Навыки разрядов', icon: <FileText className="w-4 h-4" />, path: '/worker-grade-skills', section: 'goods.grades' },
+      { id: 'goods-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/goods/instructions' },
     ],
   },
 
@@ -160,6 +183,7 @@ const menuItems: MenuItem[] = [
       { id: 'pto-executive', label: 'Исполнительная документация', icon: <FileText className="w-4 h-4" />, path: '/pto/executive-docs', section: 'pto.executive' },
       { id: 'pto-samples', label: 'Образцы документов', icon: <FileText className="w-4 h-4" />, path: '/pto/samples', section: 'pto.samples' },
       { id: 'pto-knowledge', label: 'Руководящие документы', icon: <BookOpen className="w-4 h-4" />, path: '/pto/knowledge-base', section: 'pto.knowledge' },
+      { id: 'pto-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/pto/instructions' },
     ],
   },
 
@@ -175,6 +199,7 @@ const menuItems: MenuItem[] = [
       { id: 'marketing-potential-customers', label: 'Потенциальные заказчики', icon: <Users className="w-4 h-4" />, path: '/marketing/potential-customers', section: 'marketing.potential_customers' },
       { id: 'marketing-objects-list', label: 'Объекты', icon: <Building2 className="w-4 h-4" />, path: '/marketing/objects-list', isShortcut: true, shortcutSection: 'objects' },
       { id: 'marketing-executors', label: 'Поиск Исполнителей', icon: <Search className="w-4 h-4" />, path: '/marketing/executors', section: 'marketing.executors' },
+      { id: 'marketing-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/marketing/instructions' },
     ],
   },
 
@@ -209,7 +234,17 @@ const menuItems: MenuItem[] = [
   },
 
   // 11. ПЕРЕПИСКА
-  { id: 'communications', label: 'Переписка', icon: <Mail className="w-5 h-5" />, path: '/communications', section: 'communications' },
+  {
+    id: 'communications',
+    label: 'Переписка',
+    icon: <Mail className="w-5 h-5" />,
+    path: '/communications',
+    section: 'communications',
+    children: [
+      { id: 'communications-list', label: 'Корреспонденция', icon: <Mail className="w-4 h-4" />, path: '/communications', section: 'communications' },
+      { id: 'communications-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/communications/instructions' },
+    ],
+  },
 
   // 10. СПРАВОЧНИКИ И НАСТРОЙКИ
   {
@@ -226,11 +261,22 @@ const menuItems: MenuItem[] = [
       { id: 'ref-supplier-integrations', label: 'Интеграции поставщиков', icon: <Link2 className="w-4 h-4" />, path: '/settings/integrations', section: 'supply.integrations' },
       { id: 'ref-bitrix-settings', label: 'Настройки Битрикс24', icon: <Link2 className="w-4 h-4" />, path: '/settings/bitrix', section: 'settings.bitrix' },
       { id: 'ref-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/settings/instructions' },
+      { id: 'ref-feedback', label: 'Замечания сотрудников', icon: <MessageSquareText className="w-4 h-4" />, path: '/feedback' },
     ],
   },
 
   // 11. СПРАВКА
-  { id: 'help', label: 'Справка', icon: <HelpCircle className="w-5 h-5" />, path: '/help', section: 'help' },
+  {
+    id: 'help',
+    label: 'Справка',
+    icon: <HelpCircle className="w-5 h-5" />,
+    path: '/help',
+    section: 'help',
+    children: [
+      { id: 'help-index', label: 'Справка', icon: <HelpCircle className="w-4 h-4" />, path: '/help', section: 'help' },
+      { id: 'help-instructions', label: 'Инструкции', icon: <BookOpen className="w-4 h-4" />, path: '/help/instructions' },
+    ],
+  },
 
 ];
 
@@ -301,6 +347,18 @@ const pageTitles: Record<string, string> = {
   settings: 'Настройки',
   'settings/instructions': 'Инструкции',
   'settings/llm': 'Настройки LLM',
+  // Инструкции (замечания)
+  'objects/instructions': 'Инструкции — Объекты',
+  'supply/instructions': 'Инструкции — Снабжение',
+  'goods/instructions': 'Инструкции — Товары и услуги',
+  'pto/instructions': 'Инструкции — ПТО',
+  'marketing/instructions': 'Инструкции — Маркетинг',
+  'communications/instructions': 'Инструкции — Переписка',
+  'help/instructions': 'Инструкции — Справка',
+  'dashboard/instructions': 'Инструкции — Пункт управления',
+  'finance/instructions': 'Инструкции — Финансы',
+  'contracts/instructions': 'Инструкции — Договоры',
+  feedback: 'Замечания сотрудников',
   // 11. Справка
   help: 'Справка',
   payments: 'Платежи',
@@ -447,26 +505,26 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-muted/30">
       {/* Sidebar */}
       <aside
-        className={`relative bg-white border-r border-gray-200 flex flex-col ${
+        className={`relative bg-background border-r border-border flex flex-col ${
           isSidebarOpen ? '' : 'w-20'
         }`}
         ref={sidebarRef}
         style={{ width: isSidebarOpen ? sidebarWidth : 64 }}
       >
         {/* Header with Logo */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
             <button
               onClick={() => navigate(homePath)}
               className="flex items-center gap-3 hover:opacity-70 transition-opacity"
             >
               {isSidebarOpen ? (
-                <img src={logo} alt="Август" className="h-10" />
+                <img src={logo} alt="Август" className="h-10 dark:invert dark:hue-rotate-180" />
               ) : (
-                <img src={logo} alt="Август" className="h-10" />
+                <img src={logo} alt="Август" className="h-10 dark:invert dark:hue-rotate-180" />
               )}
             </button>
             <Button
@@ -488,7 +546,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
               if (!isSidebarOpen) return null;
               return (
                 <div key={item.id} className="py-2">
-                  <div className="border-t border-gray-200" />
+                  <div className="border-t border-border" />
                 </div>
               );
             }
@@ -515,8 +573,8 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-foreground hover:bg-accent'
                   }`}
                 >
                   <div className="flex-shrink-0">
@@ -539,7 +597,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                       return (
                         <div key={child.id}>
                         {child.subGroupLabel && (
-                          <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                          <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                             {child.subGroupLabel}
                           </div>
                         )}
@@ -547,8 +605,8 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                           onClick={() => navigate(child.path)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                             isChildActive
-                              ? 'bg-blue-50 text-blue-600'
-                              : 'text-gray-700 hover:bg-gray-50'
+                              ? 'bg-primary/10 text-primary'
+                              : 'text-foreground hover:bg-accent'
                           }`}
                         >
                           <div className="flex-shrink-0">
@@ -558,7 +616,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                             <span className="truncate flex items-center gap-1">
                               {child.label}
                               {child.isShortcut && (
-                                <ExternalLink className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                <ExternalLink className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
                               )}
                             </span>
                           )}
@@ -574,22 +632,22 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
         </nav>
 
         {/* User section */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-border">
           {isSidebarOpen ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-full flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 transition-colors">
+                <button className="w-full flex items-center gap-3 hover:bg-accent rounded-lg p-2 transition-colors">
                   <Avatar className="w-10 h-10">
                     {user?.photo_url && <AvatarImage src={user.photo_url} alt={user.username} />}
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
                       {getUserInitials(user?.username)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 text-left">
-                    <div className="text-sm font-medium text-gray-900 truncate">
+                    <div className="text-sm font-medium text-foreground truncate">
                       {user?.username || 'Пользоватеь'}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       Администратор
                     </div>
                   </div>
@@ -616,7 +674,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                 <button className="w-full flex justify-center">
                   <Avatar className="w-10 h-10">
                     {user?.photo_url && <AvatarImage src={user.photo_url} alt={user?.username} />}
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
                       {getUserInitials(user?.username)}
                     </AvatarFallback>
                   </Avatar>
@@ -640,7 +698,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
         {isSidebarOpen && (
           <div
             className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize transition-colors ${
-              isResizing ? 'bg-blue-500' : 'bg-transparent hover:bg-blue-400'
+              isResizing ? 'bg-primary' : 'bg-transparent hover:bg-primary/60'
             }`}
             onMouseDown={handleMouseDown}
             style={{
@@ -653,13 +711,13 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header with Breadcrumbs and Search */}
-        <header className="bg-white border-b border-gray-200 px-8 py-4">
+        <header className="bg-background border-b border-border px-8 py-4">
           <div className="flex items-center justify-between gap-6">
             {/* Breadcrumbs */}
-            <div className="flex items-center text-sm text-gray-500">
+            <div className="flex items-center text-sm text-muted-foreground">
               <button 
                 onClick={() => navigate(homePath)}
-                className="hover:text-gray-700 transition-colors"
+                className="hover:text-foreground transition-colors"
               >
                 Главная
               </button>
@@ -674,11 +732,11 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                         <span className="flex items-center">
                           <ChevronRight className="w-4 h-4 mx-2" />
                           {menuGroupPaths.has(parent.path) ? (
-                            <span className="text-gray-600">{parent.label}</span>
+                            <span className="text-muted-foreground">{parent.label}</span>
                           ) : (
                             <button
                               onClick={() => navigate(parent.path)}
-                              className="hover:text-gray-700 transition-colors"
+                              className="hover:text-foreground transition-colors"
                             >
                               {parent.label}
                             </button>
@@ -686,7 +744,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                         </span>
                       )}
                       <ChevronRight className="w-4 h-4 mx-2" />
-                      <span className="text-gray-900 font-medium">{exactTitle}</span>
+                      <span className="text-foreground font-medium">{exactTitle}</span>
                     </>
                   );
                 }
@@ -717,7 +775,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                   return (
                     <>
                       <ChevronRight className="w-4 h-4 mx-2" />
-                      <span className="text-gray-900 font-medium">{fullPath}</span>
+                      <span className="text-foreground font-medium">{fullPath}</span>
                     </>
                   );
                 }
@@ -727,20 +785,23 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
                     {crumb.path && !menuGroupPaths.has(crumb.path) ? (
                       <button
                         onClick={() => navigate(crumb.path)}
-                        className="hover:text-gray-700 transition-colors"
+                        className="hover:text-foreground transition-colors"
                       >
                         {crumb.label}
                       </button>
                     ) : (
-                      <span className={crumb.path ? 'text-gray-600' : 'text-gray-900 font-medium'}>{crumb.label}</span>
+                      <span className={crumb.path ? 'text-muted-foreground' : 'text-foreground font-medium'}>{crumb.label}</span>
                     )}
                   </span>
                 ));
               })()}
             </div>
 
-            {/* Global Search */}
-            <GlobalSearch />
+            {/* Search + Theme */}
+            <div className="flex items-center gap-2">
+              <GlobalSearch />
+              <ThemeSwitcher />
+            </div>
           </div>
         </header>
 

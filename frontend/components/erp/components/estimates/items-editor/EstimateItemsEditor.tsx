@@ -52,7 +52,7 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
             return (
               <button
                 onClick={() => state.demoteMutation.mutate(sectionId!)}
-                className="p-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                className="p-1 rounded bg-blue-100 dark:bg-blue-900/30 text-primary hover:bg-blue-200 transition-colors"
                 title="Снять раздел"
                 disabled={state.demoteMutation.isPending}
               >
@@ -64,7 +64,7 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
           return (
             <button
               onClick={() => state.promoteMutation.mutate(row.original.id)}
-              className="p-1 rounded text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              className="p-1 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
               title="Назначить разделом"
               disabled={state.promoteMutation.isPending}
             >
@@ -97,7 +97,7 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
             <div className="flex flex-col gap-0">
               <button
                 onClick={() => state.moveMutation.mutate({ itemId, direction: 'up' })}
-                className="p-0.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-20 disabled:cursor-default"
+                className="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-20 disabled:cursor-default"
                 title="Переместить вверх"
                 disabled={isFirst || state.moveMutation.isPending}
               >
@@ -105,7 +105,7 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
               </button>
               <button
                 onClick={() => state.moveMutation.mutate({ itemId, direction: 'down' })}
-                className="p-0.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-20 disabled:cursor-default"
+                className="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-20 disabled:cursor-default"
                 title="Переместить вниз"
                 disabled={isLast || state.moveMutation.isPending}
               >
@@ -189,9 +189,9 @@ export const EstimateItemsEditor: React.FC<EstimateItemsEditorProps> = ({
         rowClassName={(row) => {
           const original = row.original as TableRow;
           if (original._isSection) {
-            return 'bg-blue-50 font-semibold';
+            return 'bg-primary/10 font-semibold';
           }
-          return original.is_analog ? 'bg-amber-50' : undefined;
+          return original.is_analog ? 'bg-amber-50 dark:bg-amber-900/20' : undefined;
         }}
         estimatedRowHeight={40}
         footerContent={

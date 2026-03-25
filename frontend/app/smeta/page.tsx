@@ -28,10 +28,10 @@ export default function SmetaPage() {
       />
 
       <section className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
           Оценка сметы
         </h1>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
           Загрузите смету в формате Excel или PDF. Мы автоматически оценим стоимость работ
           и материалов по актуальным рыночным ценам.
         </p>

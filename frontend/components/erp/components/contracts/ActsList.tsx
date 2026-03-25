@@ -32,10 +32,10 @@ export function ActsList() {
 
   const getStatusBadge = (status: string) => {
     const config = {
-      draft: { label: 'Черновик', className: 'bg-gray-100 text-gray-800' },
-      agreed: { label: 'Согласован', className: 'bg-yellow-100 text-yellow-800' },
-      signed: { label: 'Подписан', className: 'bg-green-100 text-green-800' },
-      cancelled: { label: 'Отменен', className: 'bg-red-100 text-red-800' },
+      draft: { label: 'Черновик', className: 'bg-muted text-foreground' },
+      agreed: { label: 'Согласован', className: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400' },
+      signed: { label: 'Подписан', className: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' },
+      cancelled: { label: 'Отменен', className: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' },
     };
     const item = config[status as keyof typeof config] || config.draft;
     return <Badge className={item.className}>{item.label}</Badge>;
@@ -59,7 +59,7 @@ export function ActsList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Загрузка...</div>
+        <div className="text-muted-foreground">Загрузка...</div>
       </div>
     );
   }
@@ -71,8 +71,8 @@ export function ActsList() {
       {/* Хедер */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900">Акты выполненных работ</h1>
-          <p className="text-gray-600">Управление актами выполненных работ по договорам</p>
+          <h1 className="text-foreground">Акты выполненных работ</h1>
+          <p className="text-muted-foreground">Управление актами выполненных работ по договорам</p>
         </div>
         <Button
           onClick={() => navigate('/contracts/acts/create')}
@@ -84,10 +84,10 @@ export function ActsList() {
       </div>
 
       {/* Поиск и фильтры */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-4 space-y-4">
         <div className="flex gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
               placeholder="Поиск по номеру и описанию..."
               value={search}
@@ -98,7 +98,7 @@ export function ActsList() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? 'bg-blue-50' : ''}
+            className={showFilters ? 'bg-primary/10' : ''}
           >
             <Filter className="w-4 h-4 mr-2" />
             Фильтры
@@ -148,64 +148,64 @@ export function ActsList() {
       </div>
 
       {/* Таблица актов */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
         {acts.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted-foreground">
             Акты не найдены
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-gray-600">Номер</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Договор</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Дата</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Срок оплаты</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Период работ</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Сумма с НДС</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Сумма без НДС</th>
-                  <th className="px-6 py-3 text-left text-gray-600">НДС</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Статус</th>
-                  <th className="px-6 py-3 text-left text-gray-600">Неоплачено</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Номер</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Договор</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Дата</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Срок оплаты</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Период работ</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Сумма с НДС</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Сумма без НДС</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">НДС</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Статус</th>
+                  <th className="px-6 py-3 text-left text-muted-foreground">Неоплачено</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {acts.map((act) => {
                   const overdue = isOverdue(act);
                   return (
                     <tr
                       key={act.id}
                       onClick={() => navigate(`/contracts/acts/${act.id}`)}
-                      className={`hover:bg-gray-50 cursor-pointer transition-colors ${
-                        overdue ? 'border-l-4 border-red-500 bg-red-50' : ''
+                      className={`hover:bg-muted cursor-pointer transition-colors ${
+                        overdue ? 'border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20' : ''
                       }`}
                     >
-                      <td className="px-6 py-4 text-gray-900">{act.number}</td>
-                      <td className="px-6 py-4 text-gray-600">{act.contract_number}</td>
-                      <td className="px-6 py-4 text-gray-600">{formatDate(act.date)}</td>
+                      <td className="px-6 py-4 text-foreground">{act.number}</td>
+                      <td className="px-6 py-4 text-muted-foreground">{act.contract_number}</td>
+                      <td className="px-6 py-4 text-muted-foreground">{formatDate(act.date)}</td>
                       <td className="px-6 py-4">
                         {act.due_date ? (
                           <div className="flex items-center gap-2">
-                            <span className={overdue ? 'text-red-600 font-medium' : 'text-gray-600'}>
+                            <span className={overdue ? 'text-red-600 font-medium' : 'text-muted-foreground'}>
                               {formatDate(act.due_date)}
                             </span>
                             {overdue && (
-                              <Badge className="bg-red-100 text-red-800">Просрочен</Badge>
+                              <Badge className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">Просрочен</Badge>
                             )}
                           </div>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-gray-600">
+                      <td className="px-6 py-4 text-muted-foreground">
                         {act.period_start && act.period_end
                           ? `${formatDate(act.period_start)} - ${formatDate(act.period_end)}`
                           : '-'}
                       </td>
-                      <td className="px-6 py-4 text-gray-900">{formatCurrency(act.amount_gross)}</td>
-                      <td className="px-6 py-4 text-gray-600">{formatCurrency(act.amount_net)}</td>
-                      <td className="px-6 py-4 text-gray-600">{formatCurrency(act.vat_amount)}</td>
+                      <td className="px-6 py-4 text-foreground">{formatCurrency(act.amount_gross)}</td>
+                      <td className="px-6 py-4 text-muted-foreground">{formatCurrency(act.amount_net)}</td>
+                      <td className="px-6 py-4 text-muted-foreground">{formatCurrency(act.vat_amount)}</td>
                       <td className="px-6 py-4">{getStatusBadge(act.status)}</td>
                       <td className="px-6 py-4">
                         {parseFloat(act.unpaid_amount || '0') > 0 ? (
@@ -224,7 +224,7 @@ export function ActsList() {
       </div>
 
       {/* Счетчик */}
-      <div className="text-gray-600">
+      <div className="text-muted-foreground">
         Всего актов: {acts.length}
       </div>
     </div>

@@ -230,13 +230,13 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
 
   return (
     <>
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-start gap-5">
           {/* Avatar / Photo */}
           <button
             type="button"
             onClick={handlePhotoClick}
-            className="relative group w-20 h-20 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200 hover:border-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="relative group w-20 h-20 rounded-full overflow-hidden flex-shrink-0 border-2 border-border hover:border-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             aria-label="Загрузить фото объекта"
           >
             {object.photo ? (
@@ -247,7 +247,7 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
               />
             ) : (
               <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-                <Building2 className="w-9 h-9 text-blue-600" />
+                <Building2 className="w-9 h-9 text-primary" />
               </div>
             )}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
@@ -287,7 +287,7 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
                 />
               ) : (
                 <h1
-                  className="text-2xl font-semibold text-gray-900 cursor-pointer hover:text-blue-700 transition-colors truncate"
+                  className="text-2xl font-semibold text-foreground cursor-pointer hover:text-primary transition-colors truncate"
                   onClick={() => setEditingField('name')}
                 >
                   {object.name}
@@ -295,7 +295,7 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
               )}
               {editingField !== 'name' && hoveredField === 'name' && (
                 <Pencil
-                  className="w-4 h-4 text-gray-400 cursor-pointer flex-shrink-0"
+                  className="w-4 h-4 text-muted-foreground cursor-pointer flex-shrink-0"
                   onClick={() => setEditingField('name')}
                 />
               )}
@@ -308,7 +308,7 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
               onMouseEnter={() => setHoveredField('address')}
               onMouseLeave={() => setHoveredField(null)}
             >
-              <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               {editingField === 'address' ? (
                 <Input
                   autoFocus
@@ -322,7 +322,7 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
                 />
               ) : (
                 <span
-                  className="text-sm text-gray-600 cursor-pointer hover:text-blue-600 transition-colors truncate"
+                  className="text-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors truncate"
                   onClick={() => setEditingField('address')}
                 >
                   {object.address || 'Добавить адрес'}
@@ -330,7 +330,7 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
               )}
               {editingField !== 'address' && hoveredField === 'address' && (
                 <Pencil
-                  className="w-3.5 h-3.5 text-gray-400 cursor-pointer flex-shrink-0"
+                  className="w-3.5 h-3.5 text-muted-foreground cursor-pointer flex-shrink-0"
                   onClick={() => setEditingField('address')}
                 />
               )}
@@ -361,7 +361,7 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
                           className={cn(
                             'w-2 h-2 rounded-full',
                             opt.value === 'planned' && 'bg-purple-500',
-                            opt.value === 'in_progress' && 'bg-blue-500',
+                            opt.value === 'in_progress' && 'bg-primary/100',
                             opt.value === 'completed' && 'bg-green-500',
                             opt.value === 'suspended' && 'bg-orange-500'
                           )}
@@ -379,17 +379,17 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
 
         {/* Description */}
         <div
-          className="mt-4 pt-4 border-t border-gray-100"
+          className="mt-4 pt-4 border-t border-border"
           onMouseEnter={() => setHoveredField('description')}
           onMouseLeave={() => setHoveredField(null)}
         >
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Описание
             </span>
             {editingField !== 'description' && hoveredField === 'description' && (
               <Pencil
-                className="w-3 h-3 text-gray-400 cursor-pointer"
+                className="w-3 h-3 text-muted-foreground cursor-pointer"
                 onClick={() => setEditingField('description')}
               />
             )}
@@ -443,30 +443,30 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
             </div>
           ) : (
             <p
-              className="text-sm text-gray-700 cursor-pointer hover:text-blue-600 transition-colors whitespace-pre-wrap"
+              className="text-sm text-foreground cursor-pointer hover:text-primary transition-colors whitespace-pre-wrap"
               onClick={() => setEditingField('description')}
             >
               {object.description || (
-                <span className="text-gray-400 italic">Нажмите, чтобы добавить описание</span>
+                <span className="text-muted-foreground italic">Нажмите, чтобы добавить описание</span>
               )}
             </p>
           )}
         </div>
 
         {/* Info grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4 pt-4 border-t border-gray-100">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4 pt-4 border-t border-border">
           {/* Start date — editable */}
           <div
             className="group cursor-pointer"
             onClick={() => handleDateClick('start_date')}
           >
-            <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+            <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
               Дата начала
-              <Pencil className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Pencil className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                 {formatDate(object.start_date)}
               </span>
               {renderFieldIndicator('start_date')}
@@ -478,13 +478,13 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
             className="group cursor-pointer"
             onClick={() => handleDateClick('end_date')}
           >
-            <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+            <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
               Дата окончания
-              <Pencil className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Pencil className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                 {formatDate(object.end_date)}
               </span>
               {renderFieldIndicator('end_date')}
@@ -493,24 +493,24 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
 
           {/* Contracts count — read-only */}
           <div>
-            <div className="text-xs text-gray-500 mb-1">Договоров</div>
-            <div className="text-sm font-medium text-gray-900">
+            <div className="text-xs text-muted-foreground mb-1">Договоров</div>
+            <div className="text-sm font-medium text-foreground">
               {object.contracts_count ?? 0}
             </div>
           </div>
 
           {/* Created at — read-only */}
           <div>
-            <div className="text-xs text-gray-500 mb-1">Создан</div>
-            <div className="text-sm font-medium text-gray-900">
+            <div className="text-xs text-muted-foreground mb-1">Создан</div>
+            <div className="text-sm font-medium text-foreground">
               {formatDateTime(object.created_at)}
             </div>
           </div>
 
           {/* Updated at — read-only */}
           <div>
-            <div className="text-xs text-gray-500 mb-1">Обновлён</div>
-            <div className="text-sm font-medium text-gray-900">
+            <div className="text-xs text-muted-foreground mb-1">Обновлён</div>
+            <div className="text-sm font-medium text-foreground">
               {formatDateTime(object.updated_at)}
             </div>
           </div>
@@ -532,7 +532,7 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
             <Badge className={cn('text-sm', getStatusBadgeClass(object.status))}>
               {getStatusLabel(object.status)}
             </Badge>
-            <span className="text-gray-400">&rarr;</span>
+            <span className="text-muted-foreground">&rarr;</span>
             {pendingStatus && (
               <Badge className={cn('text-sm', getStatusBadgeClass(pendingStatus))}>
                 {getStatusLabel(pendingStatus)}
@@ -581,7 +581,7 @@ export function ObjectHeader({ object, objectId }: ObjectHeaderProps) {
               className="w-full"
             />
             {pendingDateField && object[pendingDateField] && (
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Текущее значение: {formatDate(object[pendingDateField])}
               </p>
             )}

@@ -146,13 +146,13 @@ export function CounterpartyDedup({ onBack }: { onBack: () => void }) {
         )}
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl">
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">
             Ошибка: {(error as Error).message}
           </div>
         )}
 
         {!isLoading && groups.length === 0 && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-8 text-center">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-8 text-center">
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
             <p className="text-green-700 text-lg">Дубликатов не найдено</p>
           </div>
@@ -245,13 +245,13 @@ function DuplicateGroupCard({
   fnsResults: FnsValidation;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-muted px-4 py-3 border-b border-border flex items-center justify-between">
         <div>
-          <span className="font-medium text-gray-900">
+          <span className="font-medium text-foreground">
             «{group.normalized_name}»
           </span>
-          <span className="ml-3 text-sm text-gray-500">
+          <span className="ml-3 text-sm text-muted-foreground">
             {group.counterparties.length} записей
             {group.similarity < 1 && ` • похожесть: ${Math.round(group.similarity * 100)}%`}
           </span>
@@ -284,7 +284,7 @@ function DuplicateGroupCard({
       </div>
 
       <table className="w-full">
-        <thead className="text-xs text-gray-500 uppercase bg-gray-50/50">
+        <thead className="text-xs text-muted-foreground uppercase bg-muted/50">
           <tr>
             <th className="px-3 py-2 text-center w-16">
               <span className="text-green-600">Оставить</span>
@@ -300,7 +300,7 @@ function DuplicateGroupCard({
             <th className="px-4 py-2 text-center w-20">Цены</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-border">
           {group.counterparties.map((cp) => {
             const fns = fnsResults[cp.inn];
             const isKeep = keepId === cp.id;
@@ -309,7 +309,7 @@ function DuplicateGroupCard({
             return (
               <tr
                 key={cp.id}
-                className={`${isKeep ? 'bg-green-50' : isRemove ? 'bg-red-50' : ''} hover:bg-gray-50`}
+                className={`${isKeep ? 'bg-green-50 dark:bg-green-900/20' : isRemove ? 'bg-red-50 dark:bg-red-900/20' : ''} hover:bg-muted`}
               >
                 <td className="px-3 py-2 text-center">
                   <button
@@ -317,7 +317,7 @@ function DuplicateGroupCard({
                     className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-colors mx-auto ${
                       isKeep
                         ? 'border-green-500 bg-green-500 text-white'
-                        : 'border-gray-300 hover:border-green-400'
+                        : 'border-border hover:border-green-400'
                     }`}
                   >
                     {isKeep && <CheckCircle2 className="w-4 h-4" />}
@@ -335,11 +335,11 @@ function DuplicateGroupCard({
                   )}
                 </td>
                 <td className="px-4 py-2">
-                  <div className={`text-sm font-medium ${isRemove ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{cp.name}</div>
-                  {cp.short_name && <div className="text-xs text-gray-500">{cp.short_name}</div>}
+                  <div className={`text-sm font-medium ${isRemove ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{cp.name}</div>
+                  {cp.short_name && <div className="text-xs text-muted-foreground">{cp.short_name}</div>}
                 </td>
                 <td className="px-4 py-2">
-                  <span className={`font-mono text-sm ${isRemove ? 'text-gray-400' : 'text-gray-700'}`}>{cp.inn}</span>
+                  <span className={`font-mono text-sm ${isRemove ? 'text-muted-foreground' : 'text-foreground'}`}>{cp.inn}</span>
                 </td>
                 <td className="px-4 py-2">
                   {fns ? (
@@ -350,7 +350,7 @@ function DuplicateGroupCard({
                           Найден в ФНС
                         </div>
                         {fns.fns_name && (
-                          <div className="text-xs text-gray-500 mt-0.5 truncate max-w-[240px]" title={fns.fns_name}>
+                          <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-[240px]" title={fns.fns_name}>
                             {fns.fns_name}
                           </div>
                         )}
@@ -369,21 +369,21 @@ function DuplicateGroupCard({
                       </div>
                     )
                   ) : (
-                    <span className="text-xs text-gray-400">—</span>
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </td>
                 <td className="px-4 py-2 text-center">
-                  <span className={`text-sm ${cp._relations?.invoices_count ? 'font-medium text-gray-900' : 'text-gray-400'}`}>
+                  <span className={`text-sm ${cp._relations?.invoices_count ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                     {cp._relations?.invoices_count || 0}
                   </span>
                 </td>
                 <td className="px-4 py-2 text-center">
-                  <span className={`text-sm ${cp._relations?.contracts_count ? 'font-medium text-gray-900' : 'text-gray-400'}`}>
+                  <span className={`text-sm ${cp._relations?.contracts_count ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                     {cp._relations?.contracts_count || 0}
                   </span>
                 </td>
                 <td className="px-4 py-2 text-center">
-                  <span className={`text-sm ${cp._relations?.price_history_count ? 'font-medium text-gray-900' : 'text-gray-400'}`}>
+                  <span className={`text-sm ${cp._relations?.price_history_count ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                     {cp._relations?.price_history_count || 0}
                   </span>
                 </td>

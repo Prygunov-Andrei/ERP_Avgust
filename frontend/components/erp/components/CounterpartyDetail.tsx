@@ -70,7 +70,7 @@ export function CounterpartyDetail() {
           <Button variant="ghost" onClick={() => navigate('/counterparties')} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" /> Назад
           </Button>
-          <div className="bg-red-50 text-red-600 p-6 rounded-xl">
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-6 rounded-xl">
             {error ? `Ошибка: ${(error as Error).message}` : 'Контрагент не найден'}
           </div>
         </div>
@@ -88,7 +88,7 @@ export function CounterpartyDetail() {
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-semibold">{counterparty.name}</h1>
-            <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+            <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
               <span className="font-mono">ИНН: {counterparty.inn}</span>
               {counterparty.kpp && <span className="font-mono">КПП: {counterparty.kpp}</span>}
               {counterparty.ogrn && <span className="font-mono">ОГРН: {counterparty.ogrn}</span>}
@@ -184,7 +184,7 @@ function MainTab({ counterparty }: { counterparty: Counterparty }) {
 
   if (!isEditing) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold">Реквизиты</h2>
           <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
@@ -216,7 +216,7 @@ function MainTab({ counterparty }: { counterparty: Counterparty }) {
   // Режим редактирования
   const showVendorSubtype = formData.type === 'vendor' || formData.type === 'both';
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6">
+    <div className="bg-card border border-border rounded-xl p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">Редактирование</h2>
         <div className="flex gap-2">
@@ -301,7 +301,7 @@ function MainTab({ counterparty }: { counterparty: Counterparty }) {
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <div className="text-xs text-gray-500 mb-0.5">{label}</div>
+      <div className="text-xs text-muted-foreground mb-0.5">{label}</div>
       <div className={`text-sm ${mono ? 'font-mono' : ''}`}>{value}</div>
     </div>
   );
@@ -367,7 +367,7 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
       )}
 
       {/* Кнопка запуска проверки */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4">Запустить проверку</h3>
         <div className="flex flex-wrap gap-3 mb-4">
           {[
@@ -381,8 +381,8 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
               onClick={() => handleToggleType(id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition-colors ${
                 selectedTypes.includes(id)
-                  ? 'bg-blue-50 border-blue-300 text-blue-700'
-                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? 'bg-primary/10 border-blue-300 text-primary'
+                  : 'bg-card border-border text-muted-foreground hover:bg-muted'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -405,7 +405,7 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
 
       {/* Результаты check */}
       {checkReports.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4">Проверка контрагента</h3>
           {checkReports.map((report) => (
             <CheckReportCard key={report.id} report={report} onViewDetail={() => setSelectedReportId(report.id)} />
@@ -415,7 +415,7 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
 
       {/* Результаты egr */}
       {egrReports.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4">Данные ЕГРЮЛ/ЕГРИП</h3>
           {egrReports.map((report) => (
             <EgrReportCard key={report.id} report={report} onViewDetail={() => setSelectedReportId(report.id)} />
@@ -425,7 +425,7 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
 
       {/* Результаты bo — Бухгалтерская отчетность */}
       {boReports.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-card border border-border rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-green-500" /> Бухгалтерская отчетность
           </h3>
@@ -433,7 +433,7 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
             {boReports.map((report) => (
               <div
                 key={report.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer"
+                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted cursor-pointer"
                 onClick={() => setSelectedReportId(report.id)}
                 tabIndex={0}
                 role="button"
@@ -444,7 +444,7 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
                   <BarChart3 className="w-5 h-5 text-green-500" />
                   <div>
                     <div className="text-sm font-medium">Бухгалтерская отчетность</div>
-                    <div className="text-xs text-gray-500">{new Date(report.report_date).toLocaleString('ru-RU')}</div>
+                    <div className="text-xs text-muted-foreground">{new Date(report.report_date).toLocaleString('ru-RU')}</div>
                   </div>
                 </div>
                 <Button variant="ghost" size="sm" className="text-xs" onClick={(e) => { e.stopPropagation(); setSelectedReportId(report.id); }}>
@@ -457,18 +457,18 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
       )}
 
       {/* История всех отчетов */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4">История отчетов</h3>
         {reportsLoading ? (
-          <div className="flex items-center gap-2 text-gray-500"><Loader2 className="w-4 h-4 animate-spin" /> Загрузка...</div>
+          <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Загрузка...</div>
         ) : !reports || reports.length === 0 ? (
-          <p className="text-sm text-gray-500">Отчетов пока нет. Нажмите «Сформировать отчеты» выше.</p>
+          <p className="text-sm text-muted-foreground">Отчетов пока нет. Нажмите «Сформировать отчеты» выше.</p>
         ) : (
           <div className="space-y-2">
             {reports.map((report) => (
               <div
                 key={report.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted cursor-pointer transition-colors"
                 onClick={() => setSelectedReportId(report.id)}
                 tabIndex={0}
                 role="button"
@@ -479,7 +479,7 @@ function FNSCheckTab({ counterpartyId, inn }: { counterpartyId: number; inn: str
                   <ReportTypeIcon type={report.report_type} />
                   <div>
                     <div className="text-sm font-medium">{report.report_type_display}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {new Date(report.report_date).toLocaleString('ru-RU')}
                       {report.requested_by_username && ` — ${report.requested_by_username}`}
                     </div>
@@ -522,15 +522,15 @@ function ReportTypeIcon({ type }: { type: string }) {
   if (type === 'check') return <ShieldCheck className="w-5 h-5 text-blue-500" />;
   if (type === 'egr') return <FileText className="w-5 h-5 text-purple-500" />;
   if (type === 'bo') return <BarChart3 className="w-5 h-5 text-green-500" />;
-  return <FileText className="w-5 h-5 text-gray-400" />;
+  return <FileText className="w-5 h-5 text-muted-foreground" />;
 }
 
 function RiskBadge({ summary }: { summary: Record<string, unknown> }) {
   const risk = (summary.risk_level as string) || 'unknown';
-  const cls = risk === 'low' ? 'bg-green-100 text-green-700'
-    : risk === 'medium' ? 'bg-yellow-100 text-yellow-700'
-    : risk === 'high' ? 'bg-red-100 text-red-700'
-    : 'bg-gray-100 text-gray-500';
+  const cls = risk === 'low' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+    : risk === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+    : risk === 'high' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+    : 'bg-muted text-muted-foreground';
   const label = risk === 'low' ? 'Низкий риск'
     : risk === 'medium' ? 'Средний риск'
     : risk === 'high' ? 'Высокий риск'
@@ -548,7 +548,7 @@ function CheckReportCard({ report, onViewDetail }: { report: FNSReportListItem; 
   return (
     <div className="mb-4 last:mb-0">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-muted-foreground">
           {new Date(report.report_date).toLocaleString('ru-RU')}
         </div>
         <Button variant="ghost" size="sm" onClick={onViewDetail} className="text-xs">
@@ -557,7 +557,7 @@ function CheckReportCard({ report, onViewDetail }: { report: FNSReportListItem; 
       </div>
 
       {negative.length > 0 && (
-        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-3 p-3 bg-red-50 border border-red-200 dark:border-red-800 rounded-lg">
           <div className="flex items-center gap-1.5 text-red-700 text-sm font-medium mb-2">
             <XCircle className="w-4 h-4" /> Негативные факторы ({negative.length})
           </div>
@@ -570,7 +570,7 @@ function CheckReportCard({ report, onViewDetail }: { report: FNSReportListItem; 
       )}
 
       {positive.length > 0 && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+        <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
           <div className="flex items-center gap-1.5 text-green-700 text-sm font-medium mb-2">
             <CheckCircle2 className="w-4 h-4" /> Позитивные факторы ({positive.length})
           </div>
@@ -583,7 +583,7 @@ function CheckReportCard({ report, onViewDetail }: { report: FNSReportListItem; 
       )}
 
       {negative.length === 0 && positive.length === 0 && (
-        <p className="text-sm text-gray-500">Нет данных для отображения</p>
+        <p className="text-sm text-muted-foreground">Нет данных для отображения</p>
       )}
     </div>
   );
@@ -617,7 +617,7 @@ function ReportDetailView({ report }: { report: FNSReport }) {
         return (
           <div className="space-y-3">
             {negative.length > 0 && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="p-3 bg-red-50 border border-red-200 dark:border-red-800 rounded-lg">
                 <div className="text-sm font-medium text-red-700 mb-2">Негативные факторы</div>
                 {negative.map((item, i) => (
                   <div key={i} className="text-xs text-red-600 mb-0.5">- {item}</div>
@@ -625,7 +625,7 @@ function ReportDetailView({ report }: { report: FNSReport }) {
               </div>
             )}
             {positive.length > 0 && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                 <div className="text-sm font-medium text-green-700 mb-2">Позитивные факторы</div>
                 {positive.map((item, i) => (
                   <div key={i} className="text-xs text-green-600 mb-0.5">+ {item}</div>
@@ -647,17 +647,17 @@ function ReportDetailView({ report }: { report: FNSReport }) {
       )}
 
       {/* Raw JSON */}
-      <div className="border border-gray-200 rounded-lg">
+      <div className="border border-border rounded-lg">
         <button
           type="button"
-          className="w-full flex items-center justify-between p-3 text-sm text-gray-600 hover:bg-gray-50"
+          className="w-full flex items-center justify-between p-3 text-sm text-muted-foreground hover:bg-muted"
           onClick={() => setIsRawExpanded(!isRawExpanded)}
         >
           <span>Исходный JSON</span>
           {isRawExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
         {isRawExpanded && (
-          <pre className="p-3 bg-gray-50 text-xs overflow-x-auto max-h-96 border-t">
+          <pre className="p-3 bg-muted text-xs overflow-x-auto max-h-96 border-t">
             {JSON.stringify(report.data, null, 2)}
           </pre>
         )}
@@ -668,7 +668,7 @@ function ReportDetailView({ report }: { report: FNSReport }) {
 
 function EgrStructuredView({ data }: { data: Record<string, unknown> }) {
   const items = Array.isArray(data.items) ? data.items as Record<string, unknown>[] : [];
-  if (items.length === 0) return <p className="text-sm text-gray-500">Нет данных ЕГРЮЛ</p>;
+  if (items.length === 0) return <p className="text-sm text-muted-foreground">Нет данных ЕГРЮЛ</p>;
 
   const company = items[0] || {} as Record<string, unknown>;
 
@@ -676,32 +676,32 @@ function EgrStructuredView({ data }: { data: Record<string, unknown> }) {
     <div className="space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {Boolean(company['НаимПолнЮЛ']) && (
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="text-xs text-gray-500 flex items-center gap-1"><Building2 className="w-3 h-3" /> Полное наименование</div>
+          <div className="p-3 bg-muted rounded-lg">
+            <div className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="w-3 h-3" /> Полное наименование</div>
             <div className="text-sm mt-1">{String(company['НаимПолнЮЛ'])}</div>
           </div>
         )}
         {Boolean(company['АдресПолн']) && (
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="text-xs text-gray-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> Адрес</div>
+          <div className="p-3 bg-muted rounded-lg">
+            <div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> Адрес</div>
             <div className="text-sm mt-1">{String(company['АдресПолн'])}</div>
           </div>
         )}
         {Boolean(company['ДатаРег']) && (
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3" /> Дата регистрации</div>
+          <div className="p-3 bg-muted rounded-lg">
+            <div className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> Дата регистрации</div>
             <div className="text-sm mt-1">{String(company['ДатаРег'])}</div>
           </div>
         )}
         {Boolean(company['Статус']) && (
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="text-xs text-gray-500 flex items-center gap-1"><Hash className="w-3 h-3" /> Статус</div>
+          <div className="p-3 bg-muted rounded-lg">
+            <div className="text-xs text-muted-foreground flex items-center gap-1"><Hash className="w-3 h-3" /> Статус</div>
             <div className="text-sm mt-1">{String(company['Статус'])}</div>
           </div>
         )}
         {Boolean(company['ОснВидДеят']) && (
-          <div className="p-3 bg-gray-50 rounded-lg md:col-span-2">
-            <div className="text-xs text-gray-500">Основной вид деятельности</div>
+          <div className="p-3 bg-muted rounded-lg md:col-span-2">
+            <div className="text-xs text-muted-foreground">Основной вид деятельности</div>
             <div className="text-sm mt-1">{String(company['ОснВидДеят'])}</div>
           </div>
         )}
@@ -712,7 +712,7 @@ function EgrStructuredView({ data }: { data: Record<string, unknown> }) {
 
 function BoStructuredView({ data }: { data: Record<string, unknown> }) {
   const items = Array.isArray(data.items) ? data.items as Record<string, unknown>[] : [];
-  if (items.length === 0) return <p className="text-sm text-gray-500">Нет бухгалтерской отчетности</p>;
+  if (items.length === 0) return <p className="text-sm text-muted-foreground">Нет бухгалтерской отчетности</p>;
 
   const company = items[0] || {} as Record<string, unknown>;
   const bo = (company['БухОтworking'] || company['БухОтч'] || {}) as Record<string, unknown>;
@@ -721,7 +721,7 @@ function BoStructuredView({ data }: { data: Record<string, unknown> }) {
   const years = Object.keys(bo).filter((k) => /^\d{4}$/.test(k)).sort().reverse();
 
   if (years.length === 0) {
-    return <p className="text-sm text-gray-500">Данные бухгалтерской отчетности не найдены в ответе</p>;
+    return <p className="text-sm text-muted-foreground">Данные бухгалтерской отчетности не найдены в ответе</p>;
   }
 
   return (
@@ -729,9 +729,9 @@ function BoStructuredView({ data }: { data: Record<string, unknown> }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b">
-            <th className="text-left py-2 px-3 text-xs text-gray-500">Показатель</th>
+            <th className="text-left py-2 px-3 text-xs text-muted-foreground">Показатель</th>
             {years.map((y) => (
-              <th key={y} className="text-right py-2 px-3 text-xs text-gray-500">{y}</th>
+              <th key={y} className="text-right py-2 px-3 text-xs text-muted-foreground">{y}</th>
             ))}
           </tr>
         </thead>
@@ -746,12 +746,12 @@ function BoStructuredView({ data }: { data: Record<string, unknown> }) {
             };
             return (
               <tr key={code} className="border-b last:border-0">
-                <td className="py-2 px-3 text-gray-700">{labels[code] || code}</td>
+                <td className="py-2 px-3 text-foreground">{labels[code] || code}</td>
                 {years.map((y) => {
                   const yearData = (bo[y] || {}) as Record<string, unknown>;
                   const val = yearData[code];
                   return (
-                    <td key={y} className="py-2 px-3 text-right font-mono text-gray-600">
+                    <td key={y} className="py-2 px-3 text-right font-mono text-muted-foreground">
                       {val !== undefined ? Number(val).toLocaleString('ru-RU') : '—'}
                     </td>
                   );
@@ -775,9 +775,9 @@ function FNSStatsBadge({ stats }: { stats: FNSStats }) {
   if (keyMethods.length === 0) return null;
 
   const minRatio = Math.min(...keyMethods.map((m) => m.limit > 0 ? m.remaining / m.limit : 1));
-  const badgeColor = minRatio > 0.5 ? 'bg-green-50 border-green-200 text-green-700'
-    : minRatio > 0.1 ? 'bg-yellow-50 border-yellow-200 text-yellow-700'
-    : 'bg-red-50 border-red-200 text-red-700';
+  const badgeColor = minRatio > 0.5 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700'
+    : minRatio > 0.1 ? 'bg-yellow-50 border-yellow-200 dark:border-yellow-800 text-yellow-700'
+    : 'bg-red-50 border-red-200 dark:border-red-800 text-red-700';
 
   return (
     <div className={`flex flex-wrap items-center gap-3 px-4 py-2 rounded-lg border text-xs ${badgeColor}`}>
@@ -815,7 +815,7 @@ function NotesTab({ counterparty }: { counterparty: Counterparty }) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6">
+    <div className="bg-card border border-border rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <StickyNote className="w-5 h-5 text-amber-500" /> Заметки
@@ -862,18 +862,18 @@ function ContractsTab({ counterpartyId }: { counterpartyId: number }) {
   });
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6">
+    <div className="bg-card border border-border rounded-xl p-6">
       <h3 className="text-lg font-semibold mb-4">Договоры</h3>
       {isLoading ? (
-        <div className="flex items-center gap-2 text-gray-500"><Loader2 className="w-4 h-4 animate-spin" /> Загрузка...</div>
+        <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Загрузка...</div>
       ) : !contracts || contracts.length === 0 ? (
-        <p className="text-sm text-gray-500">Нет договоров с этим контрагентом</p>
+        <p className="text-sm text-muted-foreground">Нет договоров с этим контрагентом</p>
       ) : (
         <div className="space-y-2">
           {contracts.map((contract) => (
             <div
               key={contract.id}
-              className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer"
+              className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted cursor-pointer"
               onClick={() => navigate(`/contracts/${contract.id}`)}
               tabIndex={0}
               role="button"
@@ -882,9 +882,9 @@ function ContractsTab({ counterpartyId }: { counterpartyId: number }) {
             >
               <div>
                 <div className="text-sm font-medium">{contract.number || `Договор #${contract.id}`}</div>
-                <div className="text-xs text-gray-500">{contract.name || contract.subject || ''}</div>
+                <div className="text-xs text-muted-foreground">{contract.name || contract.subject || ''}</div>
               </div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-muted-foreground">
                 {contract.date && new Date(contract.date).toLocaleDateString('ru-RU')}
               </div>
             </div>

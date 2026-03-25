@@ -44,7 +44,8 @@ frontend/
 
 - **Main client** (`ApiClient`): singleton with JWT token refresh, base URL `/api/v1`
 - **Extensions**: prototype augmentation pattern — domain methods added in separate files (`extensions.ts`, `kanban-extensions.ts`)
-- **HVAC client**: standalone functions (no auth), server-side only with ISR caching
+- **HVAC public client**: standalone functions in `@/lib/hvac-api`, server-side only with ISR caching
+- **HVAC admin client**: browser requests идут только через внутренний BFF `/api/hvac-admin/...`, который проксирует их в unified backend namespace `/api/v1/hvac/admin/...`; сервисный токен хранится только на backend и не попадает в клиентский bundle
 
 ## ERP Component Structure
 

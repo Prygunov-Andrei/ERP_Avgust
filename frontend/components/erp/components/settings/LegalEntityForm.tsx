@@ -154,14 +154,14 @@ export function LegalEntityForm({ entity, onSubmit, isLoading }: LegalEntityForm
                   </SelectItem>
                 ))
               ) : (
-                <div className="p-2 text-sm text-gray-500">Нет доступных систем</div>
+                <div className="p-2 text-sm text-muted-foreground">Нет доступных систем</div>
               )}
             </SelectContent>
           </Select>
         </div>
 
-        <div className="col-span-2 pt-4 border-t border-gray-200">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Информация о директоре (для документов)</h4>
+        <div className="col-span-2 pt-4 border-t border-border">
+          <h4 className="text-sm font-medium text-foreground mb-3">Информация о директоре (для документов)</h4>
         </div>
 
         <div className="col-span-2">

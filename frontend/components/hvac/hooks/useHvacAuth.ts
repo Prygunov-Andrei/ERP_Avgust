@@ -1,9 +1,9 @@
 /**
  * Адаптер авторизации для hvac-admin страниц.
- * Вместо hvac-info AuthContext используем ERP-авторизацию.
- * Все hvac-admin страницы уже внутри ERP ProtectedRoute,
- * поэтому пользователь всегда авторизован.
+ * HVAC admin теперь использует реального ERP-пользователя, а не заглушку.
  */
+
+import { useERPAuth } from '@/hooks/useERPAuth';
 
 export interface HvacUser {
   id: number;
@@ -14,22 +14,24 @@ export interface HvacUser {
 }
 
 export function useHvacAuth() {
-  // В ERP все пользователи авторизованы (ProtectedRoute)
-  // Для hvac-admin is_staff = true (доступ контролируется через ERP permissions)
-  const user: HvacUser = {
-    id: 1,
-    email: '',
-    first_name: 'ERP',
-    last_name: 'User',
-    is_staff: true,
-  };
+  const { user: erpUser, isAuthenticated, isLoading, handleLogout } = useERPAuth();
+
+  const hvacUser = erpUser
+    ? ({
+        id: Number(erpUser.id ?? 0),
+        email: String(erpUser.email ?? ''),
+        first_name: String(erpUser.first_name ?? ''),
+        last_name: String(erpUser.last_name ?? ''),
+        is_staff: Boolean(erpUser.is_staff || erpUser.is_superuser),
+      } satisfies HvacUser)
+    : null;
 
   return {
-    user,
-    isAuthenticated: true,
-    isLoading: false,
+    user: hvacUser,
+    isAuthenticated,
+    isLoading,
     login: async () => {},
-    logout: () => {},
+    logout: handleLogout,
     refreshUser: async () => {},
   };
 }

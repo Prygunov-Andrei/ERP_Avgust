@@ -105,10 +105,10 @@ export function WorkScheduleTab({ contractId }: WorkScheduleTabProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-gray-100 text-gray-700';
-      case 'in_progress': return 'bg-blue-100 text-blue-700';
-      case 'done': return 'bg-green-100 text-green-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'pending': return 'bg-muted text-foreground';
+      case 'in_progress': return 'bg-blue-100 dark:bg-blue-900/30 text-primary';
+      case 'done': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -165,60 +165,60 @@ export function WorkScheduleTab({ contractId }: WorkScheduleTabProps) {
       </div>
 
       {!sortedItems || sortedItems.length === 0 ? (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-          <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Нет задач в графике</p>
+        <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+          <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-4">Нет задач в графике</p>
           <Button onClick={() => setIsDialogOpen(true)} variant="outline">
             <Plus className="w-4 h-4 mr-2" />
             Добавить первую задачу
           </Button>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Наименование работ
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Начало
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Окончание
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Рабочих
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Статус
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-10">
                     Действия
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {sortedItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={item.id} className="hover:bg-muted transition-colors">
                     <td className="px-4 py-2.5">
-                      <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                      <div className="text-sm font-medium text-foreground">{item.name}</div>
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Calendar className="w-3 h-3" />
                         {formatDate(item.start_date)}
                       </div>
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Calendar className="w-3 h-3" />
                         {formatDate(item.end_date)}
                       </div>
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="w-4 h-4" />
                         {item.workers_count}
                       </div>
@@ -416,7 +416,7 @@ function ScheduleItemForm({ contractId, contract, item, onSubmit, isLoading }: S
       )}
 
       {contract && (contract.start_date || contract.end_date) && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-sm text-blue-800">
           <strong>Сроки договора:</strong>
           {contract.start_date && ` с ${formatDate(contract.start_date)}`}
           {contract.end_date && ` по ${formatDate(contract.end_date)}`}

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 const SITE_URL = 'https://hvac-info.com';
-const HVAC_API = process.env.HVAC_API_URL || 'http://hvac-backend:8001';
+const BACKEND_API = (process.env.BACKEND_API_URL || 'http://backend:8000').replace(/\/$/, '');
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [
@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     // Новости
-    const newsRes = await fetch(`${HVAC_API}/api/hvac/news/?page_size=1000`, {
+    const newsRes = await fetch(`${BACKEND_API}/api/v1/hvac/public/news/?page_size=1000`, {
       next: { revalidate: 3600 },
     });
     if (newsRes.ok) {
@@ -31,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // Производители
-    const mfgRes = await fetch(`${HVAC_API}/api/hvac/references/manufacturers/?page_size=1000`, {
+    const mfgRes = await fetch(`${BACKEND_API}/api/v1/hvac/public/references/manufacturers/?page_size=1000`, {
       next: { revalidate: 3600 },
     });
     if (mfgRes.ok) {

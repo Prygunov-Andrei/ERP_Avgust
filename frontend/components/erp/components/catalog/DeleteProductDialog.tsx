@@ -48,7 +48,7 @@ export function DeleteProductDialog({
         </DialogHeader>
 
         <div className="py-2">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             При удалении товара будут также удалены все связанные алиасы (синонимы).
           </p>
         </div>

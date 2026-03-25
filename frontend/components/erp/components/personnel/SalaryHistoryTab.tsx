@@ -34,22 +34,22 @@ export function SalaryHistoryTab({ employee }: SalaryHistoryTabProps) {
         <Button size="sm" onClick={() => setShowSalaryForm(!showSalaryForm)} className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-1" />Добавить</Button>
       </div>
 
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-        <p className="text-sm text-gray-500 mb-1">Текущий оклад</p>
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-primary/20 rounded-xl p-4">
+        <p className="text-sm text-muted-foreground mb-1">Текущий оклад</p>
         <div className="flex gap-6">
           <div>
-            <p className="text-2xl font-bold text-gray-900">{Number(employee.salary_full).toLocaleString('ru-RU')} P</p>
-            <p className="text-xs text-gray-500">Полный</p>
+            <p className="text-2xl font-bold text-foreground">{Number(employee.salary_full).toLocaleString('ru-RU')} P</p>
+            <p className="text-xs text-muted-foreground">Полный</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-600">{Number(employee.salary_official).toLocaleString('ru-RU')} P</p>
-            <p className="text-xs text-gray-500">Официальный</p>
+            <p className="text-2xl font-bold text-muted-foreground">{Number(employee.salary_official).toLocaleString('ru-RU')} P</p>
+            <p className="text-xs text-muted-foreground">Официальный</p>
           </div>
         </div>
       </div>
 
       {showSalaryForm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+        <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Оклад полный (P) *</Label><Input type="number" value={newSalary.salary_full || ''} onChange={(e) => setNewSalary((p) => ({ ...p, salary_full: Number(e.target.value) }))} /></div>
             <div><Label>Оклад официальный (P) *</Label><Input type="number" value={newSalary.salary_official || ''} onChange={(e) => setNewSalary((p) => ({ ...p, salary_official: Number(e.target.value) }))} /></div>
@@ -68,21 +68,21 @@ export function SalaryHistoryTab({ employee }: SalaryHistoryTabProps) {
       {employee.salary_history.length > 0 && (
         <div className="border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-muted">
               <tr>
-                <th className="text-left px-4 py-2 font-medium text-gray-600">Дата</th>
-                <th className="text-right px-4 py-2 font-medium text-gray-600">Полный</th>
-                <th className="text-right px-4 py-2 font-medium text-gray-600">Официальный</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-600">Причина</th>
+                <th className="text-left px-4 py-2 font-medium text-muted-foreground">Дата</th>
+                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Полный</th>
+                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Официальный</th>
+                <th className="text-left px-4 py-2 font-medium text-muted-foreground">Причина</th>
               </tr>
             </thead>
             <tbody>
               {employee.salary_history.map((sh, idx) => (
-                <tr key={sh.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <tr key={sh.id} className={idx % 2 === 0 ? 'bg-card' : 'bg-muted'}>
                   <td className="px-4 py-2">{new Date(sh.effective_date).toLocaleDateString('ru-RU')}</td>
                   <td className="px-4 py-2 text-right font-mono">{Number(sh.salary_full).toLocaleString('ru-RU')} P</td>
                   <td className="px-4 py-2 text-right font-mono">{Number(sh.salary_official).toLocaleString('ru-RU')} P</td>
-                  <td className="px-4 py-2 text-gray-500">{sh.reason || '—'}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{sh.reason || '—'}</td>
                 </tr>
               ))}
             </tbody>

@@ -14,17 +14,17 @@ export function SummaryCard({
   label,
   value,
   extra,
-  extraColor = 'text-gray-500',
+  extraColor = 'text-muted-foreground',
 }: SummaryCardProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
+    <div className="bg-card border border-border rounded-xl p-4">
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-blue-50 rounded-lg">
-          <Icon className="w-5 h-5 text-blue-600" />
+        <div className="p-2 bg-primary/10 rounded-lg">
+          <Icon className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <div className="text-2xl font-bold text-gray-900">{value}</div>
-          <div className="text-sm text-gray-500">{label}</div>
+          <div className="text-2xl font-bold text-foreground">{value}</div>
+          <div className="text-sm text-muted-foreground">{label}</div>
           {extra && <div className={cn('text-xs mt-0.5', extraColor)}>{extra}</div>}
         </div>
       </div>

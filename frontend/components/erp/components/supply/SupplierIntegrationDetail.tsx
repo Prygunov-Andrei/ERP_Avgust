@@ -134,10 +134,10 @@ export function SupplierIntegrationDetail() {
 
   const getStatusBadge = (s: string) => {
     switch (s) {
-      case 'success': return <Badge className="bg-green-100 text-green-700">Успешно</Badge>;
-      case 'partial': return <Badge className="bg-yellow-100 text-yellow-700">Частично</Badge>;
+      case 'success': return <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">Успешно</Badge>;
+      case 'partial': return <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">Частично</Badge>;
       case 'failed': return <Badge variant="destructive">Ошибка</Badge>;
-      case 'started': return <Badge className="bg-blue-100 text-blue-700">В процессе</Badge>;
+      case 'started': return <Badge className="bg-blue-100 dark:bg-blue-900/30 text-primary">В процессе</Badge>;
       default: return <Badge variant="outline">{s}</Badge>;
     }
   };

@@ -34,32 +34,32 @@ export function EstimateInfoTab({
 }: EstimateInfoTabProps) {
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Основная информация</h3>
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+        <h3 className="font-semibold text-foreground mb-4">Основная информация</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <div className="text-sm text-gray-500">Номер</div>
-            <div className="font-medium text-gray-900">{estimate.number}</div>
+            <div className="text-sm text-muted-foreground">Номер</div>
+            <div className="font-medium text-foreground">{estimate.number}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">Название</div>
-            <div className="font-medium text-gray-900">{estimate.name}</div>
+            <div className="text-sm text-muted-foreground">Название</div>
+            <div className="font-medium text-foreground">{estimate.name}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">Объект</div>
-            <div className="font-medium text-gray-900">{estimate.object_name}</div>
+            <div className="text-sm text-muted-foreground">Объект</div>
+            <div className="font-medium text-foreground">{estimate.object_name}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">Компания</div>
-            <div className="font-medium text-gray-900">{estimate.legal_entity_name}</div>
+            <div className="text-sm text-muted-foreground">Компания</div>
+            <div className="font-medium text-foreground">{estimate.legal_entity_name}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">Статус</div>
+            <div className="text-sm text-muted-foreground">Статус</div>
             <div>
               <select
                 value={estimate.status}
                 onChange={(e) => updateStatusMutation.mutate(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 {Object.entries(STATUS_MAP).map(([key, label]) => (
                   <option key={key} value={key}>{label}</option>
@@ -68,20 +68,20 @@ export function EstimateInfoTab({
             </div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">С НДС</div>
-            <div className="font-medium text-gray-900">
+            <div className="text-sm text-muted-foreground">С НДС</div>
+            <div className="font-medium text-foreground">
               {estimate.with_vat ? `Да (${estimate.vat_rate}%)` : 'Нет'}
             </div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">Создал</div>
-            <div className="font-medium text-gray-900">{estimate.created_by_username}</div>
+            <div className="text-sm text-muted-foreground">Создал</div>
+            <div className="font-medium text-foreground">{estimate.created_by_username}</div>
           </div>
         </div>
 
         {estimate.projects.length > 0 && (
           <div className="mt-4 pt-4 border-t">
-            <div className="text-sm text-gray-500 mb-2">Проекты-основания</div>
+            <div className="text-sm text-muted-foreground mb-2">Проекты-основания</div>
             <div className="space-y-1">
               {estimate.projects.map((project: { id: number; cipher: string; name: string; file?: string }) => (
                 <div key={project.id} className="text-sm">
@@ -89,13 +89,13 @@ export function EstimateInfoTab({
                     <a
                       href={project.file}
                       download
-                      className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                      className="text-primary hover:underline inline-flex items-center gap-1"
                     >
                       <FileText className="w-3.5 h-3.5" />
                       {project.cipher} - {project.name}
                     </a>
                   ) : (
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {project.cipher} - {project.name} (файл отсутствует)
                     </span>
                   )}
@@ -107,11 +107,11 @@ export function EstimateInfoTab({
       </div>
 
       {/* Editable parameters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6" key={estimate.updated_at}>
-        <h3 className="font-semibold text-gray-900 mb-4">Параметры сметы</h3>
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6" key={estimate.updated_at}>
+        <h3 className="font-semibold text-foreground mb-4">Параметры сметы</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="detail-man-hours" className="text-sm text-gray-500">Человеко-часы</Label>
+            <Label htmlFor="detail-man-hours" className="text-sm text-muted-foreground">Человеко-часы</Label>
             <div className="flex items-center gap-2 mt-1">
               <Input
                 id="detail-man-hours"
@@ -131,7 +131,7 @@ export function EstimateInfoTab({
             </div>
           </div>
           <div>
-            <Label htmlFor="detail-price-list" className="text-sm text-gray-500">Прайс-лист для расчёта</Label>
+            <Label htmlFor="detail-price-list" className="text-sm text-muted-foreground">Прайс-лист для расчёта</Label>
             <select
               id="detail-price-list"
               defaultValue={estimate.price_list || ''}
@@ -139,7 +139,7 @@ export function EstimateInfoTab({
                 const value = e.target.value ? Number(e.target.value) : null;
                 updateFieldMutation.mutate({ price_list: value });
               }}
-              className="mt-1 w-full max-w-[300px] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="mt-1 w-full max-w-[300px] px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
             >
               <option value="">Не выбрано</option>
               {priceLists?.map((pl) => (
@@ -151,7 +151,7 @@ export function EstimateInfoTab({
 
         <div className="mt-4 pt-4 border-t">
           <div className="flex items-center gap-2">
-            <Label className="text-sm text-gray-500">Курсы валют</Label>
+            <Label className="text-sm text-muted-foreground">Курсы валют</Label>
             <Button
               variant="ghost"
               size="sm"
@@ -165,7 +165,7 @@ export function EstimateInfoTab({
           </div>
           <div className="grid grid-cols-3 gap-3 mt-1 max-w-[500px]">
             <div>
-              <Label htmlFor="detail-usd" className="text-xs text-gray-400">USD</Label>
+              <Label htmlFor="detail-usd" className="text-xs text-muted-foreground">USD</Label>
               <Input
                 id="detail-usd"
                 type="number"
@@ -184,7 +184,7 @@ export function EstimateInfoTab({
               />
             </div>
             <div>
-              <Label htmlFor="detail-eur" className="text-xs text-gray-400">EUR</Label>
+              <Label htmlFor="detail-eur" className="text-xs text-muted-foreground">EUR</Label>
               <Input
                 id="detail-eur"
                 type="number"
@@ -203,7 +203,7 @@ export function EstimateInfoTab({
               />
             </div>
             <div>
-              <Label htmlFor="detail-cny" className="text-xs text-gray-400">CNY</Label>
+              <Label htmlFor="detail-cny" className="text-xs text-muted-foreground">CNY</Label>
               <Input
                 id="detail-cny"
                 type="number"

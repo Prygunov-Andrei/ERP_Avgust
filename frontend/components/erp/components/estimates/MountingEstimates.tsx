@@ -13,10 +13,10 @@ import { Plus, Search, FileSpreadsheet, Loader2, Filter, X } from 'lucide-react'
 import { toast } from 'sonner';
 
 const STATUS_MAP = {
-  draft: { label: 'Черновик', color: 'bg-gray-100 text-gray-700' },
-  sent: { label: 'Отправлена', color: 'bg-blue-100 text-blue-700' },
-  approved: { label: 'Согласована', color: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Отклонена', color: 'bg-red-100 text-red-700' },
+  draft: { label: 'Черновик', color: 'bg-muted text-foreground' },
+  sent: { label: 'Отправлена', color: 'bg-blue-100 dark:bg-blue-900/30 text-primary' },
+  approved: { label: 'Согласована', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' },
+  rejected: { label: 'Отклонена', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' },
 };
 
 export function MountingEstimates() {
@@ -141,8 +141,8 @@ export function MountingEstimates() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Монтажные сметы</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Монтажные сметы</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Упрощённые сметы для работы с Исполнителями
           </p>
         </div>
@@ -159,11 +159,11 @@ export function MountingEstimates() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-4 space-y-4">
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 type="text"
                 placeholder="Поиск по номеру или названию..."
@@ -176,7 +176,7 @@ export function MountingEstimates() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? 'bg-gray-100' : ''}
+            className={showFilters ? 'bg-muted' : ''}
           >
             <Filter className="w-4 h-4 mr-2" />
             Фильтры
@@ -197,7 +197,7 @@ export function MountingEstimates() {
               <select
                 value={filters.object || ''}
                 onChange={(e) => setFilters({ ...filters, object: e.target.value ? Number(e.target.value) : undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все объекты</option>
                 {objects.map((obj) => (
@@ -211,7 +211,7 @@ export function MountingEstimates() {
               <select
                 value={filters.source_estimate || ''}
                 onChange={(e) => setFilters({ ...filters, source_estimate: e.target.value ? Number(e.target.value) : undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все сметы</option>
                 {estimates?.map((est) => (
@@ -225,7 +225,7 @@ export function MountingEstimates() {
               <select
                 value={filters.status || ''}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value || undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все статусы</option>
                 {Object.entries(STATUS_MAP).map(([key, { label }]) => (
@@ -239,7 +239,7 @@ export function MountingEstimates() {
               <select
                 value={filters.agreed_counterparty || ''}
                 onChange={(e) => setFilters({ ...filters, agreed_counterparty: e.target.value ? Number(e.target.value) : undefined })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все исполнители</option>
                 {counterparties?.filter(c => c.type === 'supplier' || c.type === 'both').map((cp) => (
@@ -252,51 +252,51 @@ export function MountingEstimates() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+            <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
           </div>
         ) : mountingEstimates && mountingEstimates.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Номер</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Название</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Объект</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Исходная смета</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Сумма</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Согласовано с</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Версия</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Номер</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Название</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Объект</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Исходная смета</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Сумма</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Статус</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Согласовано с</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Версия</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {mountingEstimates.map((me) => (
                   <tr
                     key={me.id}
                     onClick={() => navigate(`/estimates/mounting-estimates/${me.id}`)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="hover:bg-muted cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <span className="font-medium text-gray-900">{me.number}</span>
+                      <span className="font-medium text-foreground">{me.number}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-gray-900">{me.name}</span>
+                      <span className="text-foreground">{me.name}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{me.object_name}</span>
+                      <span className="text-sm text-muted-foreground">{me.object_name}</span>
                     </td>
                     <td className="px-6 py-4">
                       {me.source_estimate ? (
-                        <span className="text-sm text-blue-600">{me.source_estimate.number}</span>
+                        <span className="text-sm text-primary">{me.source_estimate.number}</span>
                       ) : (
-                        <span className="text-sm text-gray-400">—</span>
+                        <span className="text-sm text-muted-foreground">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="font-medium text-gray-900">{formatCurrency(me.total_amount)}</span>
+                      <span className="font-medium text-foreground">{formatCurrency(me.total_amount)}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${STATUS_MAP[me.status as keyof typeof STATUS_MAP]?.color}`}>
@@ -305,15 +305,15 @@ export function MountingEstimates() {
                     </td>
                     <td className="px-6 py-4">
                       {me.agreed_date ? (
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                           {formatDate(me.agreed_date)}
                         </span>
                       ) : (
-                        <span className="text-sm text-gray-400">—</span>
+                        <span className="text-sm text-muted-foreground">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">v{me.version_number}</span>
+                      <span className="text-sm text-muted-foreground">v{me.version_number}</span>
                     </td>
                   </tr>
                 ))}
@@ -322,8 +322,8 @@ export function MountingEstimates() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <FileSpreadsheet className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Нет монтажных смет</p>
+            <FileSpreadsheet className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Нет монтажных смет</p>
             <div className="flex gap-2 justify-center mt-4">
               <Button variant="outline" onClick={() => setCreateFromEstimateOpen(true)}>
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
@@ -368,7 +368,7 @@ export function MountingEstimates() {
                   id="object"
                   value={formData.object}
                   onChange={(e) => setFormData({ ...formData, object: Number(e.target.value) })}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
                   <option value={0}>Выберите объект</option>
@@ -384,7 +384,7 @@ export function MountingEstimates() {
                   id="source_estimate"
                   value={formData.source_estimate || ''}
                   onChange={(e) => setFormData({ ...formData, source_estimate: e.target.value ? Number(e.target.value) : undefined })}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="">Не выбрано</option>
                   {estimates?.map((est) => (
@@ -427,7 +427,7 @@ export function MountingEstimates() {
                 id="status"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'sent' | 'approved' | 'rejected' })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 {Object.entries(STATUS_MAP).map(([key, { label }]) => (
                   <option key={key} value={key}>{label}</option>
@@ -471,7 +471,7 @@ export function MountingEstimates() {
                 id="select_estimate"
                 value={selectedEstimateForCreation}
                 onChange={(e) => setSelectedEstimateForCreation(Number(e.target.value))}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value={0}>��ыберите смету</option>
                 {estimates?.map((est) => (
@@ -480,7 +480,7 @@ export function MountingEstimates() {
               </select>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-sm text-blue-800">
               <p>💡 Монтажная смета будет создана на основе работ (закупка) из выбранной сметы.</p>
             </div>
           </div>

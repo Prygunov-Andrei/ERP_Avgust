@@ -35,25 +35,25 @@ export function EstimateSectionsTab({
       {sections.length > 0 ? (
         <Accordion type="multiple" className="space-y-4">
           {sections.map((section) => (
-            <AccordionItem key={section.id} value={`section-${section.id}`} className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <AccordionItem key={section.id} value={`section-${section.id}`} className="bg-card rounded-xl shadow-sm border border-border">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex items-center justify-between w-full pr-4">
                   <div className="flex items-center gap-4">
-                    <span className="font-semibold text-gray-900">{section.name}</span>
+                    <span className="font-semibold text-foreground">{section.name}</span>
                   </div>
                   <div className="flex items-center gap-6 text-sm">
                     <div className="text-right">
-                      <div className="text-gray-500">Продажа</div>
-                      <div className="font-medium text-gray-900">{formatCurrency(section.total_sale)}</div>
+                      <div className="text-muted-foreground">Продажа</div>
+                      <div className="font-medium text-foreground">{formatCurrency(section.total_sale)}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-gray-500">Закупка</div>
-                      <div className="font-medium text-gray-900">{formatCurrency(section.total_purchase)}</div>
+                      <div className="text-muted-foreground">Закупка</div>
+                      <div className="font-medium text-foreground">{formatCurrency(section.total_purchase)}</div>
                     </div>
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-muted rounded-lg transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
                           onEditSection(section);
@@ -63,7 +63,7 @@ export function EstimateSectionsTab({
                       </button>
                       <button
                         type="button"
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-muted rounded-lg transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
                           onDeleteSection(section.id);
@@ -89,28 +89,28 @@ export function EstimateSectionsTab({
                   {section.subsections.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full">
-                        <thead className="bg-gray-50 border-b">
+                        <thead className="bg-muted border-b">
                           <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Название</th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Материалы (продажа)</th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Работы (продажа)</th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Материалы (закупка)</th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Работы (закупка)</th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Итого продажа</th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Итого закупка</th>
-                            <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">Действия</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Название</th>
+                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Материалы (продажа)</th>
+                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Работы (продажа)</th>
+                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Материалы (закупка)</th>
+                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Работы (закупка)</th>
+                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Итого продажа</th>
+                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Итого закупка</th>
+                            <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Действия</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y">
                           {section.subsections.map((subsection) => (
-                            <tr key={subsection.id} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 text-sm text-gray-900">{subsection.name}</td>
-                              <td className="px-4 py-3 text-sm text-right text-gray-700">{formatCurrency(subsection.materials_sale)}</td>
-                              <td className="px-4 py-3 text-sm text-right text-gray-700">{formatCurrency(subsection.works_sale)}</td>
-                              <td className="px-4 py-3 text-sm text-right text-gray-700">{formatCurrency(subsection.materials_purchase)}</td>
-                              <td className="px-4 py-3 text-sm text-right text-gray-700">{formatCurrency(subsection.works_purchase)}</td>
-                              <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">{formatCurrency(subsection.total_sale)}</td>
-                              <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">{formatCurrency(subsection.total_purchase)}</td>
+                            <tr key={subsection.id} className="hover:bg-muted">
+                              <td className="px-4 py-3 text-sm text-foreground">{subsection.name}</td>
+                              <td className="px-4 py-3 text-sm text-right text-foreground">{formatCurrency(subsection.materials_sale)}</td>
+                              <td className="px-4 py-3 text-sm text-right text-foreground">{formatCurrency(subsection.works_sale)}</td>
+                              <td className="px-4 py-3 text-sm text-right text-foreground">{formatCurrency(subsection.materials_purchase)}</td>
+                              <td className="px-4 py-3 text-sm text-right text-foreground">{formatCurrency(subsection.works_purchase)}</td>
+                              <td className="px-4 py-3 text-sm text-right font-medium text-foreground">{formatCurrency(subsection.total_sale)}</td>
+                              <td className="px-4 py-3 text-sm text-right font-medium text-foreground">{formatCurrency(subsection.total_purchase)}</td>
                               <td className="px-4 py-3 text-center">
                                 <div className="flex justify-center gap-2">
                                   <Button
@@ -135,7 +135,7 @@ export function EstimateSectionsTab({
                       </table>
                     </div>
                   ) : (
-                    <p className="text-center text-gray-500 py-4 text-sm">Нет подразделов</p>
+                    <p className="text-center text-muted-foreground py-4 text-sm">Нет подразделов</p>
                   )}
                 </div>
               </AccordionContent>
@@ -143,9 +143,9 @@ export function EstimateSectionsTab({
           ))}
         </Accordion>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Нет разделов</p>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center">
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Нет разделов</p>
         </div>
       )}
     </div>

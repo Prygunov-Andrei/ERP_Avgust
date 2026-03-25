@@ -103,8 +103,8 @@ export function WorkerGrades() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Разряды монтажников</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Разряды монтажников</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Справочник разрядов с базовыми ставками
           </p>
         </div>
@@ -115,7 +115,7 @@ export function WorkerGrades() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-4">
         <div className="flex items-center gap-2">
           <Checkbox
             id="showOnlyActive"
@@ -129,59 +129,59 @@ export function WorkerGrades() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-muted border-b border-border">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Разряд
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Название
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Ставка (руб/ч)
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Активен
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Действия
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12">
                   <div className="flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                    <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                   </div>
                 </td>
               </tr>
             ) : grades && grades.length > 0 ? (
               grades.map((grade) => (
-                <tr key={grade.id} className="hover:bg-gray-50">
+                <tr key={grade.id} className="hover:bg-muted">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-semibold">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold">
                       {grade.grade}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{grade.name}</div>
+                    <div className="font-medium text-foreground">{grade.name}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-foreground">
                       {formatCurrency(grade.default_hourly_rate)}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     {grade.is_active ? (
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700">
+                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                         Активен
                       </span>
                     ) : (
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700">
+                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-muted text-foreground">
                         Неактивен
                       </span>
                     )}
@@ -199,7 +199,7 @@ export function WorkerGrades() {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                   Разряды не найдены
                 </td>
               </tr>
@@ -227,7 +227,7 @@ export function WorkerGrades() {
                 id="grade"
                 value={formData.grade}
                 onChange={(e) => setFormData({ ...formData, grade: Number(e.target.value) })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 required
               >
                 <option value={1}>1</option>

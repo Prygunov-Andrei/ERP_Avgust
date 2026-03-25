@@ -108,7 +108,7 @@ export function AccountsTab() {
 
   if (error) {
     return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-xl">
+      <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">
         Ошибка загрузки: {(error as Error).message}
       </div>
     );
@@ -117,7 +117,7 @@ export function AccountsTab() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           {accounts?.length || 0} {accounts?.length === 1 ? 'счет' : 'счетов'}
         </div>
         <Button onClick={() => setIsDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
@@ -178,101 +178,101 @@ export function AccountsTab() {
       </AlertDialog>
 
       {!accounts || accounts.length === 0 ? (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-          <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Нет счетов</p>
+        <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+          <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-4">Нет счетов</p>
           <Button onClick={() => setIsDialogOpen(true)} variant="outline">
             <Plus className="w-4 h-4 mr-2" />
             Добавить первый счет
           </Button>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Юрлицо
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Название
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Тип
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Банк
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Номер
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Валюта
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Внутр.
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Банк
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Δ
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Активен
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Действия
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {accounts.map((account: Account) => (
                   <tr
                     key={account.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => navigate(`/settings/accounts/${account.id}`)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{account.legal_entity_name || '—'}</div>
+                      <div className="text-sm text-foreground">{account.legal_entity_name || '—'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{account.name}</div>
+                      <div className="text-sm font-medium text-foreground">{account.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-primary rounded">
                         {getAccountTypeLabel(account.account_type)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-700">{account.bank_name || '—'}</div>
+                      <div className="text-sm text-foreground">{account.bank_name || '—'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-700 font-mono">
+                      <div className="text-sm text-foreground font-mono">
                         {account.account_number || account.number || '—'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                      <span className="px-2 py-1 text-xs font-medium bg-muted text-foreground rounded">
                         {account.currency}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-bold text-gray-900">
+                      <div className="text-sm font-bold text-foreground">
                         {formatAmount(account.current_balance || account.initial_balance || account.balance)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-bold text-gray-900">
+                      <div className="text-sm font-bold text-foreground">
                         {account.bank_balance_latest ? formatAmount(account.bank_balance_latest) : '—'}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {account.bank_balance_date ? account.bank_balance_date : ''}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-bold text-gray-900">
+                      <div className="text-sm font-bold text-foreground">
                         {account.bank_delta ? formatAmount(account.bank_delta) : '—'}
                       </div>
                     </td>
@@ -280,7 +280,7 @@ export function AccountsTab() {
                       {account.is_active !== false ? (
                         <Check className="w-5 h-5 text-green-600 mx-auto" />
                       ) : (
-                        <X className="w-5 h-5 text-gray-400 mx-auto" />
+                        <X className="w-5 h-5 text-muted-foreground mx-auto" />
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>

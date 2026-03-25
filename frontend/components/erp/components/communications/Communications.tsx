@@ -173,7 +173,7 @@ export function Communications() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl mb-1">Переписка</h1>
-          <p className="text-gray-500 text-sm">Управление корреспонденцией · Всего: {correspondence?.length || 0}</p>
+          <p className="text-muted-foreground text-sm">Управление корреспонденцией · Всего: {correspondence?.length || 0}</p>
         </div>
         <Button
           onClick={() => { resetForm(); setIsCreateDialogOpen(true); }}
@@ -195,32 +195,32 @@ export function Communications() {
       {/* List table */}
       <Card className="p-6">
         {!correspondence || correspondence.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted-foreground">
             Писем не найдено. Создайте первое письмо.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Дата</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Номер</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Тип</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Категория</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Договор</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Тема</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Статус</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Действия</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Дата</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Номер</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Тип</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Категория</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Договор</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Тема</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Статус</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Действия</th>
                 </tr>
               </thead>
               <tbody>
                 {correspondence.map((corr) => (
                   <tr
                     key={corr.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="border-b border-border hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => setSelectedCorrespondence(corr)}
                   >
-                    <td className="py-3 px-4 text-sm text-gray-600">{formatDate(corr.date)}</td>
+                    <td className="py-3 px-4 text-sm text-muted-foreground">{formatDate(corr.date)}</td>
                     <td className="py-3 px-4 text-sm font-medium">{corr.number}</td>
                     <td className="py-3 px-4 text-sm">
                       <Badge className={getTypeBadge(corr.type)}>
@@ -238,10 +238,10 @@ export function Communications() {
                     <td className="py-3 px-4 text-sm">
                       <div>
                         <div className="font-medium">{corr.contract_name}</div>
-                        <div className="text-xs text-gray-500">{corr.contract_number}</div>
+                        <div className="text-xs text-muted-foreground">{corr.contract_number}</div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{corr.subject}</td>
+                    <td className="py-3 px-4 text-sm text-muted-foreground">{corr.subject}</td>
                     <td className="py-3 px-4 text-sm">
                       <Badge className={getStatusBadge(corr.status)}>{corr.status}</Badge>
                     </td>

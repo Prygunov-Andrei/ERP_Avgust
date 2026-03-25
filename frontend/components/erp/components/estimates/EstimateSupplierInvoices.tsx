@@ -15,11 +15,11 @@ type EstimateSupplierInvoicesProps = {
 const statusBadge = (status: string) => {
   switch (status) {
     case 'recognition':
-      return <Badge className="bg-purple-100 text-purple-800">Распознавание</Badge>;
+      return <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">Распознавание</Badge>;
     case 'review':
-      return <Badge className="bg-yellow-100 text-yellow-800">На проверке</Badge>;
+      return <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400">На проверке</Badge>;
     case 'verified':
-      return <Badge className="bg-green-100 text-green-800">Проверен</Badge>;
+      return <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Проверен</Badge>;
     case 'cancelled':
       return <Badge variant="destructive">Отменён</Badge>;
     default:
@@ -64,17 +64,17 @@ export const EstimateSupplierInvoices = ({ estimateId }: EstimateSupplierInvoice
             <>
               <Badge variant="secondary">{stats.total} счетов</Badge>
               {stats.recognition > 0 && (
-                <Badge className="bg-purple-100 text-purple-800">
+                <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
                   {stats.recognition} распознаётся
                 </Badge>
               )}
               {stats.review > 0 && (
-                <Badge className="bg-yellow-100 text-yellow-800">
+                <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400">
                   {stats.review} на проверке
                 </Badge>
               )}
               {stats.verified > 0 && (
-                <Badge className="bg-green-100 text-green-800">
+                <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
                   {stats.verified} проверено
                 </Badge>
               )}

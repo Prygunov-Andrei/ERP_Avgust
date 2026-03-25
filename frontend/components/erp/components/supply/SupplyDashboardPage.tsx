@@ -52,7 +52,7 @@ export function SupplyDashboardPage() {
           title="Всего в реестре"
           value={formatAmount(registry_summary.total_amount)}
           subtitle={`${registry_summary.total_count} счетов`}
-          icon={<Wallet className="w-5 h-5 text-blue-600" />}
+          icon={<Wallet className="w-5 h-5 text-primary" />}
           color="blue"
         />
         <SummaryCard
@@ -212,11 +212,11 @@ interface SummaryCardProps {
 
 function SummaryCard({ title, value, subtitle, icon, color }: SummaryCardProps) {
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 border-blue-200',
-    red: 'bg-red-50 border-red-200',
+    blue: 'bg-primary/10 border-primary/20',
+    red: 'bg-red-50 border-red-200 dark:border-red-800',
     amber: 'bg-amber-50 border-amber-200',
     purple: 'bg-purple-50 border-purple-200',
-    green: 'bg-green-50 border-green-200',
+    green: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
   };
 
   return (

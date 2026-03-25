@@ -80,11 +80,11 @@ export function CatalogProducts() {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800';
-      case 'verified': return 'bg-green-100 text-green-800';
-      case 'merged': return 'bg-gray-100 text-gray-800';
-      case 'archived': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'new': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400';
+      case 'verified': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400';
+      case 'merged': return 'bg-muted text-foreground';
+      case 'archived': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -139,7 +139,7 @@ export function CatalogProducts() {
           className={`flex items-center gap-1 py-1.5 px-2 cursor-pointer rounded-md text-sm transition-colors ${
             isSelected
               ? 'bg-blue-100 text-blue-900 font-medium'
-              : 'hover:bg-gray-100 text-gray-700'
+              : 'hover:bg-muted text-foreground'
           }`}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => handleCategoryClick(node.id)}
@@ -147,7 +147,7 @@ export function CatalogProducts() {
           {hasChildren ? (
             <button
               onClick={(e) => toggleExpand(node.id, e)}
-              className="p-0.5 rounded hover:bg-gray-200"
+              className="p-0.5 rounded hover:bg-muted"
             >
               {isExpanded ? (
                 <ChevronDown className="w-3.5 h-3.5" />
@@ -161,7 +161,7 @@ export function CatalogProducts() {
           <span className="flex-1 truncate">{node.name}</span>
           {node.total_count > 0 && (
             <span className={`text-xs tabular-nums ${
-              isSelected ? 'text-blue-600' : 'text-gray-400'
+              isSelected ? 'text-primary' : 'text-muted-foreground'
             }`}>
               {node.total_count}
             </span>
@@ -184,10 +184,10 @@ export function CatalogProducts() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b bg-white flex items-center justify-between">
+      <div className="p-4 border-b bg-card flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Номенклатура</h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             {selectedCategoryNode
               ? selectedCategoryNode.name
               : isUncategorized
@@ -205,20 +205,20 @@ export function CatalogProducts() {
       {/* Content: tree + products */}
       <div className="flex-1 flex overflow-hidden">
         {/* Левая панель — дерево категорий */}
-        <div className="w-64 border-r bg-gray-50/50 overflow-y-auto flex-shrink-0">
+        <div className="w-64 border-r bg-muted/50 overflow-y-auto flex-shrink-0">
           {/* Все товары */}
           <div className="p-2">
             <div
               className={`flex items-center gap-2 py-2 px-3 cursor-pointer rounded-md text-sm transition-colors ${
                 !selectedCategoryId
                   ? 'bg-blue-100 text-blue-900 font-medium'
-                  : 'hover:bg-gray-100 text-gray-700'
+                  : 'hover:bg-muted text-foreground'
               }`}
               onClick={() => { setSelectedCategoryId(''); setPage(1); }}
             >
               <Package className="w-4 h-4" />
               <span className="flex-1">Все товары</span>
-              <span className={`text-xs tabular-nums ${!selectedCategoryId ? 'text-blue-600' : 'text-gray-400'}`}>
+              <span className={`text-xs tabular-nums ${!selectedCategoryId ? 'text-primary' : 'text-muted-foreground'}`}>
                 {totalProducts}
               </span>
             </div>
@@ -242,14 +242,14 @@ export function CatalogProducts() {
                       className={`flex items-center gap-2 py-1.5 px-2 cursor-pointer rounded-md text-sm transition-colors ${
                         selectedCategoryId === 'uncategorized'
                           ? 'bg-blue-100 text-blue-900 font-medium'
-                          : 'hover:bg-gray-100 text-gray-500'
+                          : 'hover:bg-muted text-muted-foreground'
                       }`}
                       onClick={() => { setSelectedCategoryId('uncategorized'); setPage(1); }}
                     >
                       <span className="w-4.5" />
                       <span className="flex-1 truncate">Без категории</span>
                       <span className={`text-xs tabular-nums ${
-                        selectedCategoryId === 'uncategorized' ? 'text-blue-600' : 'text-gray-400'
+                        selectedCategoryId === 'uncategorized' ? 'text-primary' : 'text-muted-foreground'
                       }`}>
                         {uncategorizedCount}
                       </span>
@@ -258,7 +258,7 @@ export function CatalogProducts() {
                 )}
               </>
             ) : (
-              <div className="text-center py-8 text-gray-400 text-sm">
+              <div className="text-center py-8 text-muted-foreground text-sm">
                 Категории не найдены
               </div>
             )}
@@ -266,11 +266,11 @@ export function CatalogProducts() {
         </div>
 
         {/* Правая панель — товары */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-white">
+        <div className="flex-1 flex flex-col overflow-hidden bg-card">
           {/* Фильтры */}
-          <div className="flex gap-3 p-3 border-b bg-gray-50/50">
+          <div className="flex gap-3 p-3 border-b bg-muted/50">
             <div className="flex-1 relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={filters.search}
                 onChange={(e) => { setFilters({ ...filters, search: e.target.value }); setPage(1); }}
@@ -350,15 +350,15 @@ export function CatalogProducts() {
               </div>
             ) : productsData && productsData.results && productsData.results.length > 0 ? (
               <table className="w-full">
-                <thead className="bg-gray-50 sticky top-0">
+                <thead className="bg-muted sticky top-0">
                   <tr>
                     <th className="py-2.5 px-2 w-10"></th>
-                    <th className="text-left py-2.5 px-4 text-sm font-medium text-gray-600">Название</th>
-                    <th className="text-left py-2.5 px-4 text-sm font-medium text-gray-600 w-28">Бренд</th>
-                    <th className="text-left py-2.5 px-4 text-sm font-medium text-gray-600">Категория</th>
-                    <th className="text-left py-2.5 px-4 text-sm font-medium text-gray-600 w-20">Ед.изм.</th>
-                    <th className="text-left py-2.5 px-4 text-sm font-medium text-gray-600 w-24">Статус</th>
-                    <th className="text-center py-2.5 px-4 text-sm font-medium text-gray-600 w-16"></th>
+                    <th className="text-left py-2.5 px-4 text-sm font-medium text-muted-foreground">Название</th>
+                    <th className="text-left py-2.5 px-4 text-sm font-medium text-muted-foreground w-28">Бренд</th>
+                    <th className="text-left py-2.5 px-4 text-sm font-medium text-muted-foreground">Категория</th>
+                    <th className="text-left py-2.5 px-4 text-sm font-medium text-muted-foreground w-20">Ед.изм.</th>
+                    <th className="text-left py-2.5 px-4 text-sm font-medium text-muted-foreground w-24">Статус</th>
+                    <th className="text-center py-2.5 px-4 text-sm font-medium text-muted-foreground w-16"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -367,7 +367,7 @@ export function CatalogProducts() {
                       key={product.id}
                       role="link"
                       tabIndex={0}
-                      className="border-b hover:bg-gray-50 cursor-pointer"
+                      className="border-b hover:bg-muted cursor-pointer"
                       onClick={() => navigate(`/catalog/products/${product.id}`)}
                       onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/catalog/products/${product.id}`); }}
                     >
@@ -380,17 +380,17 @@ export function CatalogProducts() {
                             loading="lazy"
                           />
                         ) : (
-                          <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
-                            <Package className="w-4 h-4 text-gray-300" />
+                          <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
+                            <Package className="w-4 h-4 text-muted-foreground" />
                           </div>
                         )}
                       </td>
-                      <td className="py-2.5 px-4 text-sm text-gray-900">{product.name}</td>
-                      <td className="py-2.5 px-4 text-sm text-gray-500">{product.brand || '—'}</td>
-                      <td className="py-2.5 px-4 text-sm text-gray-500">
+                      <td className="py-2.5 px-4 text-sm text-foreground">{product.name}</td>
+                      <td className="py-2.5 px-4 text-sm text-muted-foreground">{product.brand || '—'}</td>
+                      <td className="py-2.5 px-4 text-sm text-muted-foreground">
                         {product.category_name || '—'}
                       </td>
-                      <td className="py-2.5 px-4 text-sm text-gray-900">{product.default_unit}</td>
+                      <td className="py-2.5 px-4 text-sm text-foreground">{product.default_unit}</td>
                       <td className="py-2.5 px-4">
                         <span className={`px-2 py-0.5 rounded text-xs ${getStatusBadgeClass(product.status)}`}>
                           {product.status_display}
@@ -407,7 +407,7 @@ export function CatalogProducts() {
                             setIsDeleteDialogOpen(true);
                           }}
                         >
-                          <Trash2 className="w-3.5 h-3.5 text-gray-400" />
+                          <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
                         </Button>
                       </td>
                     </tr>
@@ -415,7 +415,7 @@ export function CatalogProducts() {
                 </tbody>
               </table>
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                 <FolderOpen className="w-12 h-12 mb-3" />
                 <p>Товары не найдены</p>
                 {selectedCategoryNode && (
@@ -428,7 +428,7 @@ export function CatalogProducts() {
           {/* Пагинация */}
           {productsData && productsData.count > 0 && (
             <div className="flex items-center justify-between px-4 py-3 border-t text-sm">
-              <span className="text-gray-500">
+              <span className="text-muted-foreground">
                 Показано {productsData.results.length} из {productsData.count}
               </span>
               <div className="flex gap-2">

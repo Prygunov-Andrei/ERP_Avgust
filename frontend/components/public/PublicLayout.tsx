@@ -43,20 +43,20 @@ export function PublicLayout({ children }: PublicLayoutProps) {
   );
 
   const navLinkClass = (active: boolean) =>
-    `text-sm font-medium transition-colors pb-1 ${
+    `pb-1 text-sm font-medium transition-colors ${
       active
-        ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-        : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+        ? 'border-b-2 border-primary text-primary'
+        : 'text-muted-foreground hover:text-primary'
     }`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
+      <header className="sticky top-0 z-50 border-b border-border bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             {/* Logo */}
-            <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
+            <Link href="/" className="text-xl font-bold text-foreground">
               HVAC Info
             </Link>
 
@@ -72,32 +72,32 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 </button>
 
                 {newsMenuOpen && (
-                  <div className="absolute left-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-50 min-w-[180px]">
+                  <div className="absolute left-0 z-50 mt-2 min-w-[180px] rounded-lg border border-border bg-popover text-popover-foreground shadow-lg py-1">
                     <Link
                       href="/"
                       onClick={() => setNewsMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
                     >
                       {language === 'ru' ? 'Все новости' : language === 'en' ? 'All news' : language === 'de' ? 'Alle Nachrichten' : 'Todas as notícias'}
                     </Link>
                     <Link
                       href="/manufacturers"
                       onClick={() => setNewsMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
                     >
                       {language === 'ru' ? 'Производители' : language === 'en' ? 'Manufacturers' : language === 'de' ? 'Hersteller' : 'Fabricantes'}
                     </Link>
                     <Link
                       href="/brands"
                       onClick={() => setNewsMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
                     >
                       {language === 'ru' ? 'Бренды' : language === 'en' ? 'Brands' : language === 'de' ? 'Marken' : 'Marcas'}
                     </Link>
                     <Link
                       href="/resources"
                       onClick={() => setNewsMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
                     >
                       {language === 'ru' ? 'Ресурсы' : language === 'en' ? 'Resources' : language === 'de' ? 'Ressourcen' : 'Recursos'}
                     </Link>
@@ -133,20 +133,20 @@ export function PublicLayout({ children }: PublicLayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+      <footer className="border-t border-border bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               &copy; {new Date().getFullYear()} HVAC Info
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-              <Link href="/feedback" className="hover:text-blue-600 dark:hover:text-blue-400">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <Link href="/feedback" className="hover:text-primary">
                 {language === 'ru' ? 'Обратная связь' : language === 'en' ? 'Feedback' : language === 'de' ? 'Feedback' : 'Feedback'}
               </Link>
-              <Link href="/rss.xml" className="hover:text-blue-600 dark:hover:text-blue-400">RSS</Link>
-              <Link href="/sitemap.xml" className="hover:text-blue-600 dark:hover:text-blue-400">Sitemap</Link>
-              <Link href="/llms.txt" className="hover:text-blue-600 dark:hover:text-blue-400">llms.txt</Link>
-              <Link href="/login" className="hover:text-blue-600 dark:hover:text-blue-400">
+              <Link href="/rss.xml" className="hover:text-primary">RSS</Link>
+              <Link href="/sitemap.xml" className="hover:text-primary">Sitemap</Link>
+              <Link href="/llms.txt" className="hover:text-primary">llms.txt</Link>
+              <Link href="/login" className="hover:text-primary">
                 {language === 'ru' ? 'Вход для своих' : 'Staff login'}
               </Link>
             </div>

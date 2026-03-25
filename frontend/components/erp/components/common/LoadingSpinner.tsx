@@ -39,7 +39,7 @@ export const LoadingSpinner = ({
   const spinnerElement = (
     <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
       <Loader2 className={cn(SIZE_MAP[size], 'animate-spin text-blue-500')} />
-      {text && <p className="text-sm text-gray-500">{text}</p>}
+      {text && <p className="text-sm text-muted-foreground">{text}</p>}
     </div>
   );
 

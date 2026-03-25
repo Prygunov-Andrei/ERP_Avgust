@@ -345,7 +345,7 @@ export const MESSAGES = {
 // ==================== API НАСТРОЙКИ ====================
 
 export const API = {
-  PREFIX: '/api/v1',
+  PREFIX: '/api/erp',
   NGROK_SKIP_WARNING: '69420',
   CONTENT_TYPE_JSON: 'application/json',
 } as const;

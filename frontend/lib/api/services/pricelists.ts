@@ -7,7 +7,7 @@ import type {
   WorkItemDetail, WorkItemList, WorkSection, WorkerGrade, WorkerGradeSkills,
 } from '../types';
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = '/api/erp';
 
 export function createPricelistsService(request: RequestFn) {
   return {

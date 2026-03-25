@@ -111,14 +111,14 @@ export function FrameworkContractDetail() {
 
   const getStatusBadge = (status: string, isActive: boolean) => {
     if (isActive) {
-      return <Badge className="bg-green-100 text-green-800">Действующий</Badge>;
+      return <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Действующий</Badge>;
     }
 
     const statusConfig = {
-      draft: { label: 'Черновик', className: 'bg-gray-100 text-gray-800' },
-      active: { label: 'Активный', className: 'bg-blue-100 text-blue-800' },
-      expired: { label: 'Истёк срок', className: 'bg-red-100 text-red-800' },
-      terminated: { label: 'Расторгнут', className: 'bg-orange-100 text-orange-800' },
+      draft: { label: 'Черновик', className: 'bg-muted text-foreground' },
+      active: { label: 'Активный', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
+      expired: { label: 'Истёк срок', className: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' },
+      terminated: { label: 'Расторгнут', className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400' },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
@@ -128,7 +128,7 @@ export function FrameworkContractDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Загрузка...</div>
+        <div className="text-muted-foreground">Загрузка...</div>
       </div>
     );
   }
@@ -136,8 +136,8 @@ export function FrameworkContractDetail() {
   if (!frameworkContract) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <AlertCircle className="w-12 h-12 text-gray-400 mb-4" />
-        <div className="text-gray-500">Рамочный договор не найден</div>
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <div className="text-muted-foreground">Рамочный договор не найден</div>
         <Button onClick={() => navigate('/contracts/framework-contracts')} className="mt-4">
           Вернуться к списку
         </Button>
@@ -148,21 +148,21 @@ export function FrameworkContractDetail() {
   return (
     <div className="space-y-6">
       {/* Хедер */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start gap-4">
             <Button
               onClick={() => navigate('/contracts/framework-contracts')}
-              className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3"
+              className="bg-muted text-foreground hover:bg-muted px-3"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-gray-900">{frameworkContract.name}</h1>
+                <h1 className="text-foreground">{frameworkContract.name}</h1>
                 {getStatusBadge(frameworkContract.status, frameworkContract.is_active)}
               </div>
-              <div className="flex items-center gap-4 text-gray-600">
+              <div className="flex items-center gap-4 text-muted-foreground">
                 <span>№ {frameworkContract.number}</span>
                 <span>от {formatDate(frameworkContract.date)}</span>
               </div>
@@ -209,14 +209,14 @@ export function FrameworkContractDetail() {
 
         {/* Предупреждения */}
         {frameworkContract.is_expired && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-red-600" />
             <span className="text-red-900">Срок действия договора истёк</span>
           </div>
         )}
 
         {!frameworkContract.is_active && frameworkContract.status === 'active' && (
-          <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center gap-2">
+          <div className="mb-4 p-3 bg-orange-50 border border-orange-200 dark:border-orange-800 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-orange-600" />
             <span className="text-orange-900">
               {frameworkContract.days_until_expiration < 0
@@ -227,7 +227,7 @@ export function FrameworkContractDetail() {
         )}
 
         {frameworkContract.days_until_expiration > 0 && frameworkContract.days_until_expiration <= 30 && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-yellow-600" />
             <span className="text-yellow-900">
               До истечения срока действия осталось {frameworkContract.days_until_expiration} дн.
@@ -236,13 +236,13 @@ export function FrameworkContractDetail() {
         )}
 
         {/* Вкладки */}
-        <div className="flex gap-1 border-b border-gray-200">
+        <div className="flex gap-1 border-b border-border">
           <button
             onClick={() => setActiveTab('info')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'info'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Основная информация
@@ -251,8 +251,8 @@ export function FrameworkContractDetail() {
             onClick={() => setActiveTab('price-lists')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'price-lists'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Прайс-листы ({frameworkContract.price_lists?.length || 0})
@@ -261,8 +261,8 @@ export function FrameworkContractDetail() {
             onClick={() => setActiveTab('contracts')}
             className={`px-4 py-2 -mb-px transition-colors ${
               activeTab === 'contracts'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'border-b-2 border-blue-600 text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Договоры ({frameworkContract.contracts_count})
@@ -340,58 +340,58 @@ function InfoTab({ frameworkContract }: { frameworkContract: FCDetail }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Основная информация */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-gray-900 mb-4 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-blue-600" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-foreground mb-4 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-primary" />
           Основная информация
         </h2>
         <div className="space-y-4">
           <div>
-            <Label className="text-gray-600">Исполнитель</Label>
+            <Label className="text-muted-foreground">Исполнитель</Label>
             <div className="mt-1 flex items-start gap-2">
-              <Building2 className="w-4 h-4 text-gray-400 mt-1" />
-              <div className="text-gray-900">{frameworkContract.counterparty_name}</div>
+              <Building2 className="w-4 h-4 text-muted-foreground mt-1" />
+              <div className="text-foreground">{frameworkContract.counterparty_name}</div>
             </div>
           </div>
 
           <div>
-            <Label className="text-gray-600">Наша компания</Label>
-            <div className="mt-1 text-gray-900">{frameworkContract.legal_entity_name}</div>
+            <Label className="text-muted-foreground">Наша компания</Label>
+            <div className="mt-1 text-foreground">{frameworkContract.legal_entity_name}</div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-gray-600">Дата заключения</Label>
+              <Label className="text-muted-foreground">Дата заключения</Label>
               <div className="mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-900">{formatDate(frameworkContract.date)}</span>
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <span className="text-foreground">{formatDate(frameworkContract.date)}</span>
               </div>
             </div>
 
             <div>
-              <Label className="text-gray-600">Создал</Label>
+              <Label className="text-muted-foreground">Создал</Label>
               <div className="mt-1 flex items-center gap-2">
-                <User className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-900">{frameworkContract.created_by_name}</span>
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span className="text-foreground">{frameworkContract.created_by_name}</span>
               </div>
             </div>
           </div>
 
           {frameworkContract.notes && (
             <div>
-              <Label className="text-gray-600">Примечания</Label>
-              <div className="mt-1 text-gray-900 whitespace-pre-wrap">{frameworkContract.notes}</div>
+              <Label className="text-muted-foreground">Примечания</Label>
+              <div className="mt-1 text-foreground whitespace-pre-wrap">{frameworkContract.notes}</div>
             </div>
           )}
 
           {frameworkContract.file && (
             <div>
-              <Label className="text-gray-600">Файл договора</Label>
+              <Label className="text-muted-foreground">Файл договора</Label>
               <a
                 href={frameworkContract.file}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-1 flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                className="mt-1 flex items-center gap-2 text-primary hover:text-primary"
               >
                 <Download className="w-4 h-4" />
                 Скачать файл
@@ -404,26 +404,26 @@ function InfoTab({ frameworkContract }: { frameworkContract: FCDetail }) {
       {/* Срок действия и статистика */}
       <div className="space-y-6">
         {/* Срок действия */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h2 className="text-foreground mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-green-600" />
             Срок действия
           </h2>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600">Начало:</span>
-              <span className="text-gray-900">{formatDate(frameworkContract.valid_from)}</span>
+              <span className="text-muted-foreground">Начало:</span>
+              <span className="text-foreground">{formatDate(frameworkContract.valid_from)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Окончание:</span>
-              <span className="text-gray-900">{formatDate(frameworkContract.valid_until)}</span>
+              <span className="text-muted-foreground">Окончание:</span>
+              <span className="text-foreground">{formatDate(frameworkContract.valid_until)}</span>
             </div>
             {frameworkContract.days_until_expiration > 0 && (
-              <div className="pt-3 border-t border-gray-200">
+              <div className="pt-3 border-t border-border">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Дней до окончания:</span>
+                  <span className="text-muted-foreground">Дней до окончания:</span>
                   <span className={`font-medium ${
-                    frameworkContract.days_until_expiration <= 30 ? 'text-orange-600' : 'text-gray-900'
+                    frameworkContract.days_until_expiration <= 30 ? 'text-orange-600' : 'text-foreground'
                   }`}>
                     {frameworkContract.days_until_expiration}
                   </span>
@@ -434,15 +434,15 @@ function InfoTab({ frameworkContract }: { frameworkContract: FCDetail }) {
         </div>
 
         {/* Статистика */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-gray-900 mb-4">Статистика</h2>
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h2 className="text-foreground mb-4">Статистика</h2>
           <div className="space-y-3">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="text-gray-600 mb-1">Количество договоров</div>
+            <div className="bg-primary/10 rounded-lg p-4">
+              <div className="text-muted-foreground mb-1">Количество договоров</div>
               <div className="text-blue-900">{frameworkContract.contracts_count}</div>
             </div>
             <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-gray-600 mb-1">бщая сумма договоров</div>
+              <div className="text-muted-foreground mb-1">бщая сумма договоров</div>
               <div className="text-green-900">{formatCurrency(frameworkContract.total_contracts_amount)}</div>
             </div>
           </div>
@@ -514,9 +514,9 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
 
   if (!frameworkContract.price_lists_details || frameworkContract.price_lists_details.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
-        <div className="text-center text-gray-500">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-12">
+        <div className="text-center text-muted-foreground">
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p className="mb-4">Прайс-листы не добавлены</p>
           <Button
             onClick={() => setIsAddDialogOpen(true)}
@@ -565,9 +565,9 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-gray-900">Согласованные прайс-листы</h2>
+          <h2 className="text-foreground">Согласованные прайс-листы</h2>
           <Button
             onClick={() => setIsAddDialogOpen(true)}
             className="bg-blue-600 text-white hover:bg-blue-700"
@@ -581,18 +581,18 @@ function PriceListsTab({ frameworkContract }: { frameworkContract: FCDetail }) {
           {frameworkContract.price_lists_details.map((priceList) => (
             <div
               key={priceList.id}
-              className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+              className="border border-border rounded-lg p-4 hover:border-blue-300 transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-gray-900">{priceList.name}</h3>
-                  <p className="text-gray-600 mt-1">
+                  <h3 className="text-foreground">{priceList.name}</h3>
+                  <p className="text-muted-foreground mt-1">
                     Версия: {priceList.version_number || 1}
                   </p>
                 </div>
                 <Button
                   onClick={() => handleRemovePriceList(priceList.id, priceList.name)}
-                  className="bg-red-100 text-red-700 hover:bg-red-200 px-2 py-1"
+                  className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 px-2 py-1"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -644,10 +644,10 @@ function ContractsTab({ contracts }: { contracts: ContractListItem[] }) {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      planned: { label: 'Запланирован', className: 'bg-gray-100 text-gray-800' },
-      active: { label: 'В работе', className: 'bg-blue-100 text-blue-800' },
-      completed: { label: 'Завершён', className: 'bg-green-100 text-green-800' },
-      terminated: { label: 'Расторгнут', className: 'bg-red-100 text-red-800' },
+      planned: { label: 'Запланирован', className: 'bg-muted text-foreground' },
+      active: { label: 'В работе', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
+      completed: { label: 'Завершён', className: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' },
+      terminated: { label: 'Расторгнут', className: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.planned;
     return <Badge className={config.className}>{config.label}</Badge>;
@@ -655,9 +655,9 @@ function ContractsTab({ contracts }: { contracts: ContractListItem[] }) {
 
   if (contracts.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
-        <div className="text-center text-gray-500">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-12">
+        <div className="text-center text-muted-foreground">
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p>Договоры под этот рамочный договор не созданы</p>
         </div>
       </div>
@@ -665,30 +665,30 @@ function ContractsTab({ contracts }: { contracts: ContractListItem[] }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-gray-900 mb-4">Договоры ({contracts.length})</h2>
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+      <h2 className="text-foreground mb-4">Договоры ({contracts.length})</h2>
       <div className="space-y-3">
         {contracts.map((contract) => (
           <div
             key={contract.id}
             onClick={() => navigate(`/contracts/${contract.id}`)}
-            className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+            className="border border-border rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-gray-900">{contract.name}</h3>
+                  <h3 className="text-foreground">{contract.name}</h3>
                   {getStatusBadge(contract.status)}
                 </div>
-                <div className="flex items-center gap-4 text-gray-600">
+                <div className="flex items-center gap-4 text-muted-foreground">
                   <span>№ {contract.number}</span>
                   <span>{formatDate(contract.contract_date)}</span>
                   <span>{contract.object_name}</span>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-gray-600">Сумма</div>
-                <div className="text-gray-900">{formatCurrency(contract.total_amount)}</div>
+                <div className="text-muted-foreground">Сумма</div>
+                <div className="text-foreground">{formatCurrency(contract.total_amount)}</div>
               </div>
             </div>
           </div>
@@ -720,16 +720,16 @@ function AddPriceListsDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-gray-900">Добавить прайс-листы</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+      <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div className="p-6 border-b border-border flex items-center justify-between">
+          <h2 className="text-foreground">Добавить прайс-листы</h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-muted-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="p-6 overflow-y-auto max-h-96">
           {availablePriceLists.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
+            <div className="text-center text-muted-foreground py-8">
               Нет доступных прайс-листов для добавления
             </div>
           ) : (
@@ -737,7 +737,7 @@ function AddPriceListsDialog({
               {availablePriceLists.map((priceList) => (
                 <label
                   key={priceList.id}
-                  className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                  className="flex items-start gap-3 p-3 border border-border rounded-lg hover:bg-muted cursor-pointer"
                 >
                   <input
                     type="checkbox"
@@ -752,16 +752,16 @@ function AddPriceListsDialog({
                     className="mt-1"
                   />
                   <div className="flex-1">
-                    <div className="text-gray-900">{priceList.name}</div>
-                    <div className="text-gray-500">Версия: {priceList.version_number || 1}</div>
+                    <div className="text-foreground">{priceList.name}</div>
+                    <div className="text-muted-foreground">Версия: {priceList.version_number || 1}</div>
                   </div>
                 </label>
               ))}
             </div>
           )}
         </div>
-        <div className="p-6 border-t border-gray-200 flex justify-end gap-2">
-          <Button onClick={onClose} className="bg-gray-100 text-gray-700 hover:bg-gray-200">
+        <div className="p-6 border-t border-border flex justify-end gap-2">
+          <Button onClick={onClose} className="bg-muted text-foreground hover:bg-muted">
             Отмена
           </Button>
           <Button

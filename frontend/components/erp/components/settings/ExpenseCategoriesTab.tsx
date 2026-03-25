@@ -75,7 +75,7 @@ export function ExpenseCategoriesTab() {
 
   if (error) {
     return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-xl">
+      <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">
         Ошибка загрузки: {(error as Error).message}
       </div>
     );
@@ -85,10 +85,10 @@ export function ExpenseCategoriesTab() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground">
             {categories?.length || 0} {categories?.length === 1 ? 'категория' : 'категорий'}
           </div>
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
             <Button
               variant={viewMode === 'table' ? 'default' : 'ghost'}
               size="sm"
@@ -167,75 +167,75 @@ export function ExpenseCategoriesTab() {
       </AlertDialog>
 
       {!categories || categories.length === 0 ? (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-          <FolderTree className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Нет категорий расходов</p>
+        <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+          <FolderTree className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-4">Нет категорий расходов</p>
           <Button onClick={() => setIsDialogOpen(true)} variant="outline">
             <Plus className="w-4 h-4 mr-2" />
             Добавить первую категорию
           </Button>
         </div>
       ) : viewMode === 'table' ? (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Название
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Код
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Родительская категория
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Требует договор
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Активна
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Порядок
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Действия
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {categories.map((category: ExpenseCategory) => (
-                  <tr key={category.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={category.id} className="hover:bg-muted transition-colors">
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{category.name}</div>
+                      <div className="text-sm font-medium text-foreground">{category.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-700 font-mono">{category.code || '—'}</div>
+                      <div className="text-sm text-foreground font-mono">{category.code || '—'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-700">{category.parent_name || '—'}</div>
+                      <div className="text-sm text-foreground">{category.parent_name || '—'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {category.requires_contract ? (
                         <Check className="w-5 h-5 text-green-600 mx-auto" />
                       ) : (
-                        <X className="w-5 h-5 text-gray-400 mx-auto" />
+                        <X className="w-5 h-5 text-muted-foreground mx-auto" />
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {category.is_active !== false ? (
-                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
                           Активна
                         </span>
                       ) : (
-                        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded">
+                        <span className="px-2 py-1 text-xs font-medium bg-muted text-muted-foreground rounded">
                           Неактивна
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="text-sm text-gray-700">{category.sort_order ?? 0}</div>
+                      <div className="text-sm text-foreground">{category.sort_order ?? 0}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <DropdownMenu>
@@ -324,8 +324,8 @@ function ExpenseCategoriesTreeView({ categories, onEdit, onDelete }: ExpenseCate
   const tree = buildTree(categories);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="divide-y divide-gray-200">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="divide-y divide-border">
         {tree.map((category) => (
           <CategoryTreeNode
             key={category.id}
@@ -354,48 +354,48 @@ function CategoryTreeNode({ category, level, onEdit, onDelete }: CategoryTreeNod
   return (
     <>
       <div
-        className={`flex items-center gap-3 py-3 px-4 hover:bg-gray-50 transition-colors`}
+        className={`flex items-center gap-3 py-3 px-4 hover:bg-muted transition-colors`}
         style={{ paddingLeft: `${level * 24 + 16}px` }}
       >
         <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
           {hasChildren ? (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="hover:bg-gray-200 rounded p-0.5 transition-colors"
+              className="hover:bg-muted rounded p-0.5 transition-colors"
             >
               <ChevronRight
-                className={`w-4 h-4 text-gray-500 transition-transform ${
+                className={`w-4 h-4 text-muted-foreground transition-transform ${
                   isExpanded ? 'rotate-90' : ''
                 }`}
               />
             </button>
           ) : (
-            <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+            <div className="w-1 h-1 bg-muted rounded-full"></div>
           )}
         </div>
 
-        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-          <FolderTree className="w-4 h-4 text-blue-600" />
+        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+          <FolderTree className="w-4 h-4 text-primary" />
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="font-medium text-gray-900 truncate">{category.name}</h3>
+            <h3 className="font-medium text-foreground truncate">{category.name}</h3>
             {category.code && (
-              <span className="px-2 py-0.5 text-xs font-mono bg-gray-100 text-gray-600 rounded">
+              <span className="px-2 py-0.5 text-xs font-mono bg-muted text-muted-foreground rounded">
                 {category.code}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2 mt-1">
             {category.requires_contract && (
-              <span className="text-xs text-blue-600 flex items-center gap-1">
+              <span className="text-xs text-primary flex items-center gap-1">
                 <Check className="w-3 h-3" />
                 Требует договор
               </span>
             )}
             {category.is_active === false && (
-              <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+              <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">
                 Неактивна
               </span>
             )}
@@ -403,7 +403,7 @@ function CategoryTreeNode({ category, level, onEdit, onDelete }: CategoryTreeNod
         </div>
 
         {hasChildren && (
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
             {category.children!.length}
           </span>
         )}

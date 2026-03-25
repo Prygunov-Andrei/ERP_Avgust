@@ -1,6 +1,9 @@
+import uuid
+
 from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
@@ -19,6 +22,18 @@ from kanban_core.services import log_card_event
 from kanban_core.permissions import RolePermission
 from kanban_files.models import FileObject
 from core.kanban_permissions import KanbanRolePermissionMixin
+
+
+def _parse_uuid_query_param(param_name, raw_value):
+    if not raw_value:
+        return None
+
+    try:
+        return uuid.UUID(str(raw_value))
+    except (TypeError, ValueError) as exc:
+        raise ValidationError({
+            param_name: [f'Значение "{raw_value}" не является верным UUID-ом.']
+        }) from exc
 
 
 class BoardViewSet(KanbanRolePermissionMixin, viewsets.ModelViewSet):
@@ -43,7 +58,7 @@ class ColumnViewSet(KanbanRolePermissionMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        board_id = self.request.query_params.get('board_id')
+        board_id = _parse_uuid_query_param('board_id', self.request.query_params.get('board_id'))
         if board_id:
             qs = qs.filter(board_id=board_id)
         return qs
@@ -61,10 +76,10 @@ class CardViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        board_id = self.request.query_params.get('board_id')
+        board_id = _parse_uuid_query_param('board_id', self.request.query_params.get('board_id'))
         if board_id:
             qs = qs.filter(board_id=board_id)
-        column_id = self.request.query_params.get('column_id')
+        column_id = _parse_uuid_query_param('column_id', self.request.query_params.get('column_id'))
         if column_id:
             qs = qs.filter(column_id=column_id)
         card_type = self.request.query_params.get('type')
@@ -148,7 +163,7 @@ class AttachmentViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        card_id = self.request.query_params.get('card_id')
+        card_id = _parse_uuid_query_param('card_id', self.request.query_params.get('card_id'))
         if card_id:
             qs = qs.filter(card_id=card_id)
         return qs

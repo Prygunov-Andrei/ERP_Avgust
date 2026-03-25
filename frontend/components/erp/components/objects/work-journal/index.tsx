@@ -80,9 +80,9 @@ export function WorkJournalTab({ objectId }: { objectId: number }) {
         </div>
       )}
 
-      <div className="flex gap-2 border-b border-gray-200 pb-0">
+      <div className="flex gap-2 border-b border-border pb-0">
         {sectionButtons.map(({ key, label, icon: Icon }) => (
-          <button key={key} type="button" className={cn('flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors', activeSection === key ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')} onClick={() => setActiveSection(key)} tabIndex={0} aria-label={`Раздел ${label}`}>
+          <button key={key} type="button" className={cn('flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors', activeSection === key ? 'border-blue-500 text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border')} onClick={() => setActiveSection(key)} tabIndex={0} aria-label={`Раздел ${label}`}>
             <Icon className="w-4 h-4" />{label}
           </button>
         ))}
@@ -90,10 +90,10 @@ export function WorkJournalTab({ objectId }: { objectId: number }) {
 
       {activeSection === 'overview' && (
         isEmpty ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-            <ClipboardList className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">Журнал работ</h3>
-            <p className="text-gray-500 max-w-md mx-auto mb-6">Здесь будут отображаться смены, звенья, медиа и отчёты монтажников. Для начала работы пригласите монтажников и откройте первую смену.</p>
+          <div className="bg-card border border-border rounded-xl p-12 text-center">
+            <ClipboardList className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Журнал работ</h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-6">Здесь будут отображаться смены, звенья, медиа и отчёты монтажников. Для начала работы пригласите монтажников и откройте первую смену.</p>
             <Button onClick={() => setActiveSection('settings')} aria-label="Перейти к настройкам" tabIndex={0}><UserPlus className="w-4 h-4 mr-2" /> Пригласить монтажника</Button>
           </div>
         ) : (<OverviewSection shifts={summary!.recent_shifts} />)

@@ -53,9 +53,9 @@ export function InviteSection({ objectId }: { objectId: number }) {
   const inviteList = invites?.results || [];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6">
-      <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2"><UserPlus className="w-5 h-5 text-blue-600" /> Пригласить монтажника</h3>
-      <p className="text-sm text-gray-500 mb-4">Создайте ссылку-приглашение и отправьте её монтажнику. Он откроет ссылку в Telegram, бот попросит ввести ФИО и выбрать язык — и монтажник будет зарегистрирован автоматически.</p>
+    <div className="bg-card border border-border rounded-xl p-6">
+      <h3 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2"><UserPlus className="w-5 h-5 text-primary" /> Пригласить монтажника</h3>
+      <p className="text-sm text-muted-foreground mb-4">Создайте ссылку-приглашение и отправьте её монтажнику. Он откроет ссылку в Telegram, бот попросит ввести ФИО и выбрать язык — и монтажник будет зарегистрирован автоматически.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
@@ -85,7 +85,7 @@ export function InviteSection({ objectId }: { objectId: number }) {
       </div>
 
       {generatedLink && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-green-800 mb-1">Ссылка готова!</div>
@@ -102,24 +102,24 @@ export function InviteSection({ objectId }: { objectId: number }) {
       )}
 
       <div className="mt-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Последние приглашения</h4>
+        <h4 className="text-sm font-medium text-foreground mb-3">Последние приглашения</h4>
         {invitesLoading ? (
           <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-blue-500" /></div>
         ) : inviteList.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">Нет приглашений</p>
+          <p className="text-sm text-muted-foreground text-center py-4">Нет приглашений</p>
         ) : (
           <div className="space-y-2">
             {inviteList.map((invite) => (
-              <div key={invite.id} className="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-3">
+              <div key={invite.id} className="flex items-center justify-between border border-border rounded-lg px-4 py-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', invite.is_valid ? 'bg-green-500' : (invite.used ? 'bg-blue-500' : 'bg-gray-400'))} />
+                  <div className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', invite.is_valid ? 'bg-green-500' : (invite.used ? 'bg-primary/100' : 'bg-muted-foreground'))} />
                   <div className="min-w-0">
-                    <div className="text-sm text-gray-900 font-mono truncate">{invite.code}</div>
-                    <div className="text-xs text-gray-500">{invite.contractor_name}{' • '}{invite.role === 'brigadier' ? 'Бригадир' : 'Монтажник'}{' • '}{formatDateTime(invite.created_at)}</div>
+                    <div className="text-sm text-foreground font-mono truncate">{invite.code}</div>
+                    <div className="text-xs text-muted-foreground">{invite.contractor_name}{' • '}{invite.role === 'brigadier' ? 'Бригадир' : 'Монтажник'}{' • '}{formatDateTime(invite.created_at)}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {invite.used ? (<Badge className="bg-blue-100 text-blue-700 text-xs">{invite.used_by_name || 'Использован'}</Badge>) : invite.is_valid ? (<Badge className="bg-green-100 text-green-700 text-xs">Активен</Badge>) : (<Badge className="bg-gray-100 text-gray-600 text-xs">Истёк</Badge>)}
+                  {invite.used ? (<Badge className="bg-blue-100 dark:bg-blue-900/30 text-primary text-xs">{invite.used_by_name || 'Использован'}</Badge>) : invite.is_valid ? (<Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs">Активен</Badge>) : (<Badge className="bg-muted text-muted-foreground text-xs">Истёк</Badge>)}
                   {invite.is_valid && (
                     <Button variant="ghost" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(invite.bot_link); toast.success('Ссылка скопирована'); } catch { toast.error('Не удалось скопировать'); } }} aria-label={`Скопировать ссылку приглашения ${invite.code}`} tabIndex={0}><Copy className="w-4 h-4" /></Button>
                   )}
@@ -167,27 +167,27 @@ export function GeoSettingsSection({ objectId }: { objectId: number }) {
   });
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6">
-      <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2"><Globe className="w-5 h-5 text-blue-600" /> Гео-настройки объекта</h3>
-      <p className="text-sm text-gray-500 mb-4">Укажите координаты центра объекта и радиус допустимой зоны для регистрации на смену через Mini App.</p>
+    <div className="bg-card border border-border rounded-xl p-6">
+      <h3 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2"><Globe className="w-5 h-5 text-primary" /> Гео-настройки объекта</h3>
+      <p className="text-sm text-muted-foreground mb-4">Укажите координаты центра объекта и радиус допустимой зоны для регистрации на смену через Mini App.</p>
       <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate(); }} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div><Label htmlFor="geo-lat">Широта (Latitude)</Label><Input id="geo-lat" type="text" inputMode="decimal" placeholder="55.7558" value={latitude} onChange={(e) => setLatitude(e.target.value)} className="mt-1.5" aria-label="Широта объекта" /></div>
           <div><Label htmlFor="geo-lng">Долгота (Longitude)</Label><Input id="geo-lng" type="text" inputMode="decimal" placeholder="37.6173" value={longitude} onChange={(e) => setLongitude(e.target.value)} className="mt-1.5" aria-label="Долгота объекта" /></div>
           <div><Label htmlFor="geo-radius">Радиус (метры)</Label><Input id="geo-radius" type="number" min="50" max="50000" step="50" placeholder="200" value={geoRadius} onChange={(e) => setGeoRadius(e.target.value)} className="mt-1.5" aria-label="Радиус гео-зоны" /></div>
         </div>
-        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <input id="allow-geo-bypass" type="checkbox" checked={allowGeoBypass} onChange={(e) => setAllowGeoBypass(e.target.checked)} className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer" aria-label="Разрешить регистрацию вне геозоны" />
+        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border border-border">
+          <input id="allow-geo-bypass" type="checkbox" checked={allowGeoBypass} onChange={(e) => setAllowGeoBypass(e.target.checked)} className="w-4 h-4 text-primary border-border rounded focus:ring-ring cursor-pointer" aria-label="Разрешить регистрацию вне геозоны" />
           <div>
-            <Label htmlFor="allow-geo-bypass" className="cursor-pointer font-medium text-gray-700">Разрешить регистрацию вне геозоны</Label>
-            <p className="text-xs text-gray-500 mt-0.5">Если включено, монтажники смогут регистрироваться находясь за пределами геозоны (с пометкой). По умолчанию регистрация вне зоны заблокирована.</p>
+            <Label htmlFor="allow-geo-bypass" className="cursor-pointer font-medium text-foreground">Разрешить регистрацию вне геозоны</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Если включено, монтажники смогут регистрироваться находясь за пределами геозоны (с пометкой). По умолчанию регистрация вне зоны заблокирована.</p>
           </div>
         </div>
-        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="p-3 bg-muted rounded-lg border border-border">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <Label htmlFor="reg-window" className="font-medium text-gray-700">Окно регистрации (минуты)</Label>
-              <p className="text-xs text-gray-500 mt-0.5">За сколько минут до начала и после окончания смены разрешена регистрация. 0 = без ограничений.</p>
+              <Label htmlFor="reg-window" className="font-medium text-foreground">Окно регистрации (минуты)</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">За сколько минут до начала и после окончания смены разрешена регистрация. 0 = без ограничений.</p>
             </div>
             <Input id="reg-window" type="number" min="0" max="1440" step="5" placeholder="0" value={registrationWindow} onChange={(e) => setRegistrationWindow(e.target.value)} className="w-24" aria-label="Окно регистрации в минутах" />
           </div>
@@ -216,29 +216,29 @@ export function SupergroupSection({ objectId }: { objectId: number }) {
   const groups = supergroups?.results || [];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6">
-      <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2"><Settings className="w-5 h-5 text-blue-600" /> Telegram-супергруппы</h3>
-      <p className="text-sm text-gray-500 mb-4">Супергруппы Telegram привязаны к объекту для фиксации работ. Каждое звено получает отдельный топик в группе.</p>
+    <div className="bg-card border border-border rounded-xl p-6">
+      <h3 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2"><Settings className="w-5 h-5 text-primary" /> Telegram-супергруппы</h3>
+      <p className="text-sm text-muted-foreground mb-4">Супергруппы Telegram привязаны к объекту для фиксации работ. Каждое звено получает отдельный топик в группе.</p>
       {groups.length === 0 ? (
         <div className="text-center py-8">
-          <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">Нет привязанных супергрупп</p>
-          <p className="text-gray-400 text-xs mt-1">Супергруппы создаются автоматически при открытии смены через бота</p>
+          <Users className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">Нет привязанных супергрупп</p>
+          <p className="text-muted-foreground text-xs mt-1">Супергруппы создаются автоматически при открытии смены через бота</p>
         </div>
       ) : (
         <div className="space-y-3">
           {groups.map((group) => (
-            <div key={group.id} className="flex items-center justify-between border border-gray-200 rounded-lg p-4">
+            <div key={group.id} className="flex items-center justify-between border border-border rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <div className={cn('w-3 h-3 rounded-full', group.is_active ? 'bg-green-500' : 'bg-gray-400')} />
+                <div className={cn('w-3 h-3 rounded-full', group.is_active ? 'bg-green-500' : 'bg-muted-foreground')} />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">{group.chat_title}</div>
-                  <div className="text-xs text-gray-500">{group.contractor_name} • ID: {group.telegram_chat_id}</div>
-                  <div className="text-xs text-gray-400">{formatDateTime(group.created_at)}</div>
+                  <div className="text-sm font-medium text-foreground">{group.chat_title}</div>
+                  <div className="text-xs text-muted-foreground">{group.contractor_name} • ID: {group.telegram_chat_id}</div>
+                  <div className="text-xs text-muted-foreground">{formatDateTime(group.created_at)}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {group.is_active ? (<Badge className="bg-green-100 text-green-700 text-xs">Активна</Badge>) : (<Badge className="bg-gray-100 text-gray-600 text-xs">Неактивна</Badge>)}
+                {group.is_active ? (<Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs">Активна</Badge>) : (<Badge className="bg-muted text-muted-foreground text-xs">Неактивна</Badge>)}
                 {group.invite_link && (<Button variant="outline" size="sm" onClick={() => window.open(group.invite_link, '_blank')} aria-label={`Открыть ссылку на группу ${group.chat_title}`}><Link2 className="w-4 h-4" /></Button>)}
               </div>
             </div>

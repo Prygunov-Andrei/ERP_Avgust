@@ -12,10 +12,10 @@ type EstimateDeviationsViewProps = {
 };
 
 const DEVIATION_LABELS: Record<string, { label: string; color: string }> = {
-  analog: { label: 'Аналог', color: 'bg-blue-100 text-blue-800' },
-  price_exceeds: { label: 'Превышение цены', color: 'bg-red-100 text-red-800' },
-  quantity_exceeds: { label: 'Превышение кол-ва', color: 'bg-orange-100 text-orange-800' },
-  additional: { label: 'Допработы', color: 'bg-purple-100 text-purple-800' },
+  analog: { label: 'Аналог', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
+  price_exceeds: { label: 'Превышение цены', color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' },
+  quantity_exceeds: { label: 'Превышение кол-ва', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400' },
+  additional: { label: 'Допработы', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400' },
 };
 
 export const EstimateDeviationsView: React.FC<EstimateDeviationsViewProps> = ({ contractId }) => {

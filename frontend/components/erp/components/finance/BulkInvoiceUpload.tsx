@@ -241,12 +241,12 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                 dragActive
-                  ? 'border-blue-400 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-blue-400 bg-primary/10'
+                  : 'border-border hover:border-foreground/30'
               }`}
             >
-              <Upload className="h-8 w-8 mx-auto mb-3 text-gray-400" />
-              <p className="text-sm text-gray-600 mb-3">
+              <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-3">
                 Перетащите файлы сюда или нажмите кнопку ниже
               </p>
               <Button
@@ -257,7 +257,7 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
                 <FileText className="h-4 w-4 mr-2" />
                 Выбрать файлы
               </Button>
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-muted-foreground mt-3">
                 Поддерживаемые форматы: PDF, XLSX, XLS, PNG, JPG
               </p>
               <input
@@ -274,14 +274,14 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
             {files.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-700">
+                  <p className="text-sm font-medium text-foreground">
                     Файлов выбрано: {files.length}
                   </p>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setFiles([])}
-                    className="text-gray-500 h-7"
+                    className="text-muted-foreground h-7"
                   >
                     Очистить
                   </Button>
@@ -293,13 +293,13 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
                       className="flex items-center gap-3 px-3 py-2 text-sm"
                     >
                       {getFileIcon(file.name)}
-                      <span className="flex-1 truncate text-gray-700">{file.name}</span>
-                      <span className="text-gray-400 text-xs shrink-0">
+                      <span className="flex-1 truncate text-foreground">{file.name}</span>
+                      <span className="text-muted-foreground text-xs shrink-0">
                         {formatFileSize(file.size)}
                       </span>
                       <button
                         onClick={() => removeFile(i)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
+                        className="text-muted-foreground hover:text-red-500 transition-colors"
                         aria-label={`Удалить ${file.name}`}
                       >
                         <X className="h-4 w-4" />
@@ -336,21 +336,21 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
               {!sessionId ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-blue-500 flex-shrink-0" />
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     Загрузка {files.length} {files.length === 1 ? 'файла' : 'файлов'} на сервер...
                   </span>
                 </>
               ) : !sessionData || sessionData.processed_files === 0 ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-purple-500 flex-shrink-0" />
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     Файлы получены — ожидание ИИ-распознавания...
                   </span>
                 </>
               ) : (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-blue-500 flex-shrink-0" />
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     Распознавание: {sessionData.processed_files} / {sessionData.total_files} файлов
                   </span>
                 </>
@@ -360,14 +360,14 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
             {/* Progress bar */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {!sessionId
                     ? 'Загрузка...'
                     : !sessionData || sessionData.processed_files === 0
                     ? 'В очереди'
                     : `Обработано ${sessionData.processed_files} из ${sessionData.total_files}`}
                 </span>
-                <span className="text-xs font-medium text-gray-700">{progressPercent}%</span>
+                <span className="text-xs font-medium text-foreground">{progressPercent}%</span>
               </div>
               <Progress value={sessionId ? progressPercent : undefined} className={!sessionId ? 'animate-pulse' : ''} />
             </div>
@@ -390,7 +390,7 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
               </div>
             )}
 
-            <p className="text-xs text-gray-400 text-center">
+            <p className="text-xs text-muted-foreground text-center">
               ИИ-распознавание каждого файла занимает 10–30 секунд
             </p>
           </div>
@@ -400,14 +400,14 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
         {step === 'done' && sessionData && (
           <div className="space-y-4 pt-2">
             {sessionData.status === 'completed' ? (
-              <Alert className="border-green-300 bg-green-50">
+              <Alert className="border-green-300 bg-green-50 dark:bg-green-900/20">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-700">
                   Все файлы успешно обработаны!
                 </AlertDescription>
               </Alert>
             ) : (
-              <Alert className="border-yellow-300 bg-yellow-50">
+              <Alert className="border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20">
                 <XCircle className="h-4 w-4 text-yellow-600" />
                 <AlertDescription className="text-yellow-700">
                   Обработка завершена с ошибками. Проверьте результаты ниже.
@@ -445,12 +445,12 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
             {/* Created invoices */}
             {sessionData.invoices.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700">Созданные счета:</p>
+                <p className="text-sm font-medium text-foreground">Созданные счета:</p>
                 <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
                   {sessionData.invoices.map((inv) => (
                     <div
                       key={inv.id}
-                      className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                      className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-muted"
                       onClick={() => {
                         handleOpenChange(false);
                         navigate(`/supply/invoices/${inv.id}`);
@@ -460,10 +460,10 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
                         variant="outline"
                         className={
                           inv.status === 'review'
-                            ? 'bg-blue-100 text-blue-800'
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
                             : inv.status === 'recognition'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-gray-100 text-gray-600'
+                              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400'
+                              : 'bg-muted text-muted-foreground'
                         }
                       >
                         {inv.status === 'review'
@@ -472,7 +472,7 @@ export const BulkInvoiceUpload = ({ open, onOpenChange, estimateId }: BulkInvoic
                             ? 'Распознаётся'
                             : inv.status}
                       </Badge>
-                      <span className="flex-1 truncate text-gray-700">
+                      <span className="flex-1 truncate text-foreground">
                         {inv.invoice_number || inv.invoice_file?.split('/').pop() || `#${inv.id}`}
                       </span>
                     </div>

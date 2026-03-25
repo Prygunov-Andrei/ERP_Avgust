@@ -164,8 +164,8 @@ export function CreatePriceList() {
           Назад
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Создать прайс-лист</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Создать прайс-лист</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Заполните основную информацию и выберите работы
           </p>
         </div>
@@ -173,8 +173,8 @@ export function CreatePriceList() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Основная информация */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Основная информация</h3>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="font-semibold text-foreground mb-4">Основная информация</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="number">Номер *</Label>
@@ -219,7 +219,7 @@ export function CreatePriceList() {
                 onChange={(e) =>
                   setFormData({ ...formData, status: e.target.value as CreatePriceListData['status'] })
                 }
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="draft">Черновик</option>
                 <option value="active">Действующий</option>
@@ -230,9 +230,9 @@ export function CreatePriceList() {
         </div>
 
         {/* Ставки по разрядам */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Ставки по разрядам</h3>
+            <h3 className="font-semibold text-foreground">Ставки по разрядам</h3>
             <div className="flex items-center gap-2">
               <Checkbox
                 id="populateRates"
@@ -270,15 +270,15 @@ export function CreatePriceList() {
           </div>
 
           {populateRates && (
-            <p className="text-xs text-blue-600 mt-3">
+            <p className="text-xs text-primary mt-3">
               Ставки заполнены автоматически из справочника разрядов
             </p>
           )}
         </div>
 
         {/* Выбор работ */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Выбор работ</h3>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="font-semibold text-foreground mb-4">Выбор работ</h3>
 
           {/* Фильтры */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -290,7 +290,7 @@ export function CreatePriceList() {
                 onChange={(e) =>
                   setSectionFilter(e.target.value ? Number(e.target.value) : undefined)
                 }
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все разделы</option>
                 {sections?.map((section) => (
@@ -309,7 +309,7 @@ export function CreatePriceList() {
                 onChange={(e) =>
                   setGradeFilter(e.target.value ? Number(e.target.value) : undefined)
                 }
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Все разряды</option>
                 {grades?.map((grade) => (
@@ -330,34 +330,34 @@ export function CreatePriceList() {
           </div>
 
           {/* Таблица работ */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+          <div className="border border-border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+              <thead className="bg-muted border-b border-border sticky top-0">
                 <tr>
                   <th className="px-4 py-3 text-left">
-                    <span className="text-xs font-medium text-gray-500 uppercase">Выбрать</span>
+                    <span className="text-xs font-medium text-muted-foreground uppercase">Выбрать</span>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Артикул
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Наименование
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Раздел
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Разряд
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {filteredWorkItems && filteredWorkItems.length > 0 ? (
                   filteredWorkItems.map((item) => (
                     <tr
                       key={item.id}
-                      className={`hover:bg-gray-50 ${
-                        selectedWorkItems.includes(item.id) ? 'bg-blue-50' : ''
+                      className={`hover:bg-muted ${
+                        selectedWorkItems.includes(item.id) ? 'bg-primary/10' : ''
                       }`}
                     >
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -367,22 +367,22 @@ export function CreatePriceList() {
                         />
                       </td>
                       <td className="px-4 py-3 cursor-pointer" onClick={() => toggleWorkItem(item.id)}>
-                        <span className="text-xs font-mono text-gray-700">{item.article}</span>
+                        <span className="text-xs font-mono text-foreground">{item.article}</span>
                       </td>
                       <td className="px-4 py-3 cursor-pointer" onClick={() => toggleWorkItem(item.id)}>
-                        <span className="text-sm text-gray-900">{item.name}</span>
+                        <span className="text-sm text-foreground">{item.name}</span>
                       </td>
                       <td className="px-4 py-3 cursor-pointer" onClick={() => toggleWorkItem(item.id)}>
-                        <span className="text-sm text-gray-600">{item.section_name}</span>
+                        <span className="text-sm text-muted-foreground">{item.section_name}</span>
                       </td>
                       <td className="px-4 py-3 cursor-pointer" onClick={() => toggleWorkItem(item.id)}>
-                        <span className="text-sm text-gray-600">{item.grade}</span>
+                        <span className="text-sm text-muted-foreground">{item.grade}</span>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                       Работы не найдены
                     </td>
                   </tr>
@@ -391,7 +391,7 @@ export function CreatePriceList() {
             </table>
           </div>
 
-          <p className="text-sm text-gray-600 mt-3">
+          <p className="text-sm text-muted-foreground mt-3">
             Выбрано работ: {selectedWorkItems.length}
           </p>
         </div>

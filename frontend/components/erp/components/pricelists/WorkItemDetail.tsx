@@ -141,7 +141,7 @@ export function WorkItemDetail() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
         </div>
       </div>
     );
@@ -151,8 +151,8 @@ export function WorkItemDetail() {
     return (
       <div className="p-8">
         <div className="text-center py-12">
-          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Работа не найдена</p>
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Работа не найдена</p>
           <Button
             variant="outline"
             onClick={() => navigate('/work-items')}
@@ -181,19 +181,19 @@ export function WorkItemDetail() {
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <span className="inline-flex px-3 py-1.5 text-sm font-mono font-medium rounded-lg bg-gray-100 text-gray-700">
+              <span className="inline-flex px-3 py-1.5 text-sm font-mono font-medium rounded-lg bg-muted text-foreground">
                 {workItem.article}
               </span>
               {workItem.is_current && (
-                <span className="inline-flex px-3 py-1.5 text-sm font-medium rounded-lg bg-green-100 text-green-700">
+                <span className="inline-flex px-3 py-1.5 text-sm font-medium rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                   Актуальная версия
                 </span>
               )}
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 Версия {workItem.version_number}
               </span>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900 mt-2">
+            <h1 className="text-2xl font-semibold text-foreground mt-2">
               {workItem.name}
             </h1>
           </div>
@@ -207,7 +207,7 @@ export function WorkItemDetail() {
               </Button>
               <Button
                 variant="outline"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-800"
                 onClick={() => setDeleteDialogOpen(true)}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -226,69 +226,69 @@ export function WorkItemDetail() {
 
       {/* Main Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Основная информация</h3>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="font-semibold text-foreground mb-4">Основная информация</h3>
           <div className="space-y-4">
             <div className="flex items-start gap-3">
-              <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
+              <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">
-                <div className="text-sm text-gray-500">Раздел</div>
-                <div className="font-medium text-gray-900">
+                <div className="text-sm text-muted-foreground">Раздел</div>
+                <div className="font-medium text-foreground">
                   {workItem.section_detail.code} - {workItem.section_detail.name}
                 </div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Hash className="w-5 h-5 text-gray-400 mt-0.5" />
+              <Hash className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">
-                <div className="text-sm text-gray-500">Единица измерения</div>
-                <div className="font-medium text-gray-900">{workItem.unit}</div>
+                <div className="text-sm text-muted-foreground">Единица измерения</div>
+                <div className="font-medium text-foreground">{workItem.unit}</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
+              <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">
-                <div className="text-sm text-gray-500">Трудозатраты</div>
-                <div className="font-medium text-gray-900">
+                <div className="text-sm text-muted-foreground">Трудозатраты</div>
+                <div className="font-medium text-foreground">
                   {workItem.hours ? `${workItem.hours} часов` : '0 часов (не указано)'}
                 </div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Users className="w-5 h-5 text-gray-400 mt-0.5" />
+              <Users className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">
-                <div className="text-sm text-gray-500">Разряд</div>
-                <div className="font-medium text-gray-900">
+                <div className="text-sm text-muted-foreground">Разряд</div>
+                <div className="font-medium text-foreground">
                   {formatGrade(workItem.required_grade)}
                 </div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Star className="w-5 h-5 text-gray-400 mt-0.5" />
+              <Star className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">
-                <div className="text-sm text-gray-500">Коэффициент</div>
-                <div className="font-medium text-gray-900">{workItem.coefficient}</div>
+                <div className="text-sm text-muted-foreground">Коэффициент</div>
+                <div className="font-medium text-foreground">{workItem.coefficient}</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Метаданные</h3>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="font-semibold text-foreground mb-4">Метаданные</h3>
           <div className="space-y-4">
             <div>
-              <div className="text-sm text-gray-500">Версия</div>
-              <div className="font-medium text-gray-900">v{workItem.version_number}</div>
+              <div className="text-sm text-muted-foreground">Версия</div>
+              <div className="font-medium text-foreground">v{workItem.version_number}</div>
             </div>
             <div>
-              <div className="text-sm text-gray-500">Статус</div>
-              <div className="font-medium text-gray-900">
+              <div className="text-sm text-muted-foreground">Статус</div>
+              <div className="font-medium text-foreground">
                 {workItem.is_current ? (
-                  <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700">
+                  <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                     Актуальная
                   </span>
                 ) : (
-                  <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700">
+                  <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-muted text-foreground">
                     Устаревшая
                   </span>
                 )}
@@ -296,22 +296,22 @@ export function WorkItemDetail() {
             </div>
             {workItem.parent_version && (
               <div>
-                <div className="text-sm text-gray-500">Родительская версия</div>
+                <div className="text-sm text-muted-foreground">Родительская версия</div>
                 <button
                   onClick={() => navigate(`/work-items/${workItem.parent_version}`)}
-                  className="font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                  className="font-medium text-primary hover:text-primary hover:underline"
                 >
                   Перейти к версии #{workItem.parent_version}
                 </button>
               </div>
             )}
             <div>
-              <div className="text-sm text-gray-500">Создана</div>
-              <div className="font-medium text-gray-900">{formatDateTime(workItem.created_at)}</div>
+              <div className="text-sm text-muted-foreground">Создана</div>
+              <div className="font-medium text-foreground">{formatDateTime(workItem.created_at)}</div>
             </div>
             <div>
-              <div className="text-sm text-gray-500">Обновлена</div>
-              <div className="font-medium text-gray-900">{formatDateTime(workItem.updated_at)}</div>
+              <div className="text-sm text-muted-foreground">Обновлена</div>
+              <div className="font-medium text-foreground">{formatDateTime(workItem.updated_at)}</div>
             </div>
           </div>
         </div>
@@ -319,76 +319,76 @@ export function WorkItemDetail() {
 
       {/* Composition */}
       {workItem.composition && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Состав работы</h3>
-          <p className="text-gray-700 whitespace-pre-wrap">{workItem.composition}</p>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="font-semibold text-foreground mb-4">Состав работы</h3>
+          <p className="text-foreground whitespace-pre-wrap">{workItem.composition}</p>
         </div>
       )}
 
       {/* Comment */}
       {workItem.comment && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Комментарий</h3>
-          <p className="text-gray-700 whitespace-pre-wrap">{workItem.comment}</p>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="font-semibold text-foreground mb-4">Комментарий</h3>
+          <p className="text-foreground whitespace-pre-wrap">{workItem.comment}</p>
         </div>
       )}
 
       {/* Version History */}
       {showVersions && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">История версий</h3>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="font-semibold text-foreground mb-4">История версий</h3>
           {versionsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+              <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
             </div>
           ) : versions && versions.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                       Артикул
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                       Версия
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                       Дата создания
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                       Актуальная
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {versions.map((version) => (
                     <tr
                       key={version.id}
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className="hover:bg-muted cursor-pointer"
                       onClick={() => navigate(`/work-items/${version.id}`)}
                     >
                       <td className="px-4 py-3">
-                        <span className="text-xs font-mono text-gray-700">
+                        <span className="text-xs font-mono text-foreground">
                           {version.article}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-foreground">
                           v{version.version_number}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-foreground">
                           {formatDateTime(version.created_at)}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         {version.is_current ? (
-                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-700">
+                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                             Да
                           </span>
                         ) : (
-                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700">
+                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-muted text-foreground">
                             Нет
                           </span>
                         )}
@@ -400,7 +400,7 @@ export function WorkItemDetail() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-sm text-gray-500">Нет истории версий</p>
+              <p className="text-sm text-muted-foreground">Нет истории версий</p>
             </div>
           )}
         </div>
@@ -423,7 +423,7 @@ export function WorkItemDetail() {
                 id="section"
                 value={formData.section}
                 onChange={(e) => setFormData({ ...formData, section: Number(e.target.value) })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 required
               >
                 <option value={0}>Выберите раздел</option>
@@ -453,7 +453,7 @@ export function WorkItemDetail() {
                   id="unit"
                   value={formData.unit}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value as CreateWorkItemData['unit'] })}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
                   {unitOptions.map((option) => (
@@ -485,7 +485,7 @@ export function WorkItemDetail() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger type="button">
-                        <Info className="w-3.5 h-3.5 text-gray-400" />
+                        <Info className="w-3.5 h-3.5 text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p className="text-xs">
@@ -537,7 +537,7 @@ export function WorkItemDetail() {
                 value={formData.composition}
                 onChange={(e) => setFormData({ ...formData, composition: e.target.value })}
                 rows={3}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 
@@ -548,7 +548,7 @@ export function WorkItemDetail() {
                 value={formData.comment}
                 onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                 rows={2}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 

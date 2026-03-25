@@ -31,14 +31,14 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  recognition: 'bg-purple-100 text-purple-800',
-  review: 'bg-blue-100 text-blue-800',
+  recognition: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
+  review: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
   verified: 'bg-teal-100 text-teal-800',
-  in_registry: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  sending: 'bg-orange-100 text-orange-800',
+  in_registry: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400',
+  approved: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
+  sending: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 dark:text-orange-400',
   paid: 'bg-emerald-100 text-emerald-800',
-  cancelled: 'bg-gray-100 text-gray-600',
+  cancelled: 'bg-muted text-muted-foreground',
 };
 
 const formatCurrency = (value: string | number | undefined | null): string => {
@@ -107,14 +107,14 @@ export const InvoicesTab = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-4">
-            <p className="text-sm text-gray-500">Всего счетов</p>
-            <p className="text-2xl font-bold text-gray-900">{summary.totalCount}</p>
-            <p className="text-sm text-gray-500 mt-1">{formatCurrency(summary.totalAmount)}</p>
+            <p className="text-sm text-muted-foreground">Всего счетов</p>
+            <p className="text-2xl font-bold text-foreground">{summary.totalCount}</p>
+            <p className="text-sm text-muted-foreground mt-1">{formatCurrency(summary.totalAmount)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <p className="text-sm text-gray-500">Просроченные</p>
+            <p className="text-sm text-muted-foreground">Просроченные</p>
             <p className="text-2xl font-bold text-red-600">{summary.overdueCount}</p>
             <p className="text-sm text-red-500 mt-1">{formatCurrency(summary.overdueAmount)}</p>
           </CardContent>
@@ -166,7 +166,7 @@ export const InvoicesTab = () => {
           ))}
         </div>
       ) : invoices.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
+        <div className="text-center py-12 text-muted-foreground">
           <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
           <p className="text-lg font-medium">Нет счетов</p>
           <p className="text-sm">Измените фильтры или создайте новый счёт</p>
@@ -174,7 +174,7 @@ export const InvoicesTab = () => {
       ) : (
         <div className="border rounded-lg overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
+            <thead className="bg-muted text-muted-foreground">
               <tr>
                 <th className="text-left px-4 py-3 font-medium">Тип</th>
                 <th className="text-left px-4 py-3 font-medium">Номер</th>
@@ -195,7 +195,7 @@ export const InvoicesTab = () => {
                   <tr
                     key={invoice.id}
                     onClick={() => handleInvoiceClick(invoice.id)}
-                    className={`cursor-pointer hover:bg-gray-50 transition-colors ${
+                    className={`cursor-pointer hover:bg-muted transition-colors ${
                       overdue ? 'bg-red-50/50' : ''
                     } ${isDebt && !overdue ? 'border-l-2 border-l-amber-400' : ''}`}
                     tabIndex={0}
@@ -205,33 +205,33 @@ export const InvoicesTab = () => {
                       if (e.key === 'Enter') handleInvoiceClick(invoice.id);
                     }}
                   >
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {INVOICE_TYPE_LABELS[invoice.invoice_type || ''] || invoice.invoice_type || '—'}
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">
+                    <td className="px-4 py-3 font-medium text-foreground">
                       {invoice.invoice_number || invoice.number || `#${invoice.id}`}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {formatDate(invoice.invoice_date || invoice.created_at)}
                     </td>
-                    <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">
+                    <td className="px-4 py-3 text-foreground max-w-[200px] truncate">
                       {invoice.counterparty_name || '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-700 max-w-[180px] truncate">
+                    <td className="px-4 py-3 text-foreground max-w-[180px] truncate">
                       {invoice.object_name || '—'}
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">
+                    <td className="px-4 py-3 text-right font-medium text-foreground">
                       {formatCurrency(invoice.amount_gross)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <Badge
                         variant="outline"
-                        className={STATUS_COLORS[invoice.status] || 'bg-gray-100 text-gray-600'}
+                        className={STATUS_COLORS[invoice.status] || 'bg-muted text-muted-foreground'}
                       >
                         {STATUS_LABELS[invoice.status] || invoice.status}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-muted-foreground">
                       <span className={overdue ? 'text-red-600 font-medium flex items-center gap-1' : ''}>
                         {overdue && <AlertTriangle className="h-3.5 w-3.5" />}
                         {formatDate(invoice.due_date)}

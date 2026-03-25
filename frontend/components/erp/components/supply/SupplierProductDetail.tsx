@@ -188,7 +188,7 @@ export function SupplierProductDetail() {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle className="text-base">Остатки</CardTitle>
-                <Badge className={totalStock > 0 ? 'bg-green-100 text-green-700' : ''}>{totalStock} шт</Badge>
+                <Badge className={totalStock > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : ''}>{totalStock} шт</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -222,7 +222,7 @@ export function SupplierProductDetail() {
               {product.product ? (
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-blue-600">{product.product_name}</p>
+                    <p className="font-medium text-primary">{product.product_name}</p>
                     <p className="text-xs text-muted-foreground">ID: {product.product}</p>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => navigate(`/catalog/products/${product.product}`)}>

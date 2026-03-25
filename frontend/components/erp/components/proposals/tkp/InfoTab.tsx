@@ -46,9 +46,9 @@ export function InfoTab({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Основная информация */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-gray-900 mb-4 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-blue-600" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-foreground mb-4 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-primary" />
           Основная информация
         </h2>
         <div className="space-y-4">
@@ -187,49 +187,49 @@ export function InfoTab({
           ) : (
             <>
               <div>
-                <Label className="text-gray-600">Объект</Label>
+                <Label className="text-muted-foreground">Объект</Label>
                 <div className="mt-1 flex items-start gap-2">
-                  <Building2 className="w-4 h-4 text-gray-400 mt-1" />
+                  <Building2 className="w-4 h-4 text-muted-foreground mt-1" />
                   <div>
-                    <div className="text-gray-900">{tkp.object_name}</div>
+                    <div className="text-foreground">{tkp.object_name}</div>
                     {tkp.object_address && (
-                      <div className="text-gray-500">{tkp.object_address}</div>
+                      <div className="text-muted-foreground">{tkp.object_address}</div>
                     )}
                     {tkp.object_area && (
-                      <div className="text-gray-500">Площадь: {tkp.object_area} м²</div>
+                      <div className="text-muted-foreground">Площадь: {tkp.object_area} м²</div>
                     )}
                   </div>
                 </div>
               </div>
 
               <div>
-                <Label className="text-gray-600">Юридическое лицо</Label>
-                <div className="mt-1 text-gray-900">{tkp.legal_entity_name}</div>
+                <Label className="text-muted-foreground">Юридическое лицо</Label>
+                <div className="mt-1 text-foreground">{tkp.legal_entity_name}</div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-gray-600">Дата создания</Label>
+                  <Label className="text-muted-foreground">Дата создания</Label>
                   <div className="mt-1 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900">{formatDate(tkp.date)}</span>
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-foreground">{formatDate(tkp.date)}</span>
                   </div>
                 </div>
                 <div>
-                  <Label className="text-gray-600">Срок действия</Label>
+                  <Label className="text-muted-foreground">Срок действия</Label>
                   <div className="mt-1 flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-foreground">
                       {tkp.validity_days} дн. (до {formatDate(tkp.validity_date)})
                     </span>
                   </div>
                 </div>
                 {tkp.due_date && (
                   <div>
-                    <Label className="text-gray-600">Дата выдачи (крайний срок)</Label>
+                    <Label className="text-muted-foreground">Дата выдачи (крайний срок)</Label>
                     <div className="mt-1 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-900">{formatDate(tkp.due_date)}</span>
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-foreground">{formatDate(tkp.due_date)}</span>
                     </div>
                   </div>
                 )}
@@ -237,22 +237,22 @@ export function InfoTab({
 
               {tkp.advance_required && (
                 <div>
-                  <Label className="text-gray-600">Требуемый аванс</Label>
-                  <div className="mt-1 text-gray-900">{formatCurrency(tkp.advance_required)}</div>
+                  <Label className="text-muted-foreground">Требуемый аванс</Label>
+                  <div className="mt-1 text-foreground">{formatCurrency(tkp.advance_required)}</div>
                 </div>
               )}
 
               {tkp.work_duration && (
                 <div>
-                  <Label className="text-gray-600">Срок выполнения работ</Label>
-                  <div className="mt-1 text-gray-900">{tkp.work_duration}</div>
+                  <Label className="text-muted-foreground">Срок выполнения работ</Label>
+                  <div className="mt-1 text-foreground">{tkp.work_duration}</div>
                 </div>
               )}
 
               {tkp.notes && (
                 <div>
-                  <Label className="text-gray-600">Примечания</Label>
-                  <div className="mt-1 text-gray-900 whitespace-pre-wrap">{tkp.notes}</div>
+                  <Label className="text-muted-foreground">Примечания</Label>
+                  <div className="mt-1 text-foreground whitespace-pre-wrap">{tkp.notes}</div>
                 </div>
               )}
             </>
@@ -261,26 +261,26 @@ export function InfoTab({
       </div>
 
       {/* Финансовая информация */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-foreground mb-4 flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-green-600" />
           Финансовая информация
         </h2>
         <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="text-gray-600 mb-1">Продажа</div>
+          <div className="bg-primary/10 rounded-lg p-4">
+            <div className="text-muted-foreground mb-1">Продажа</div>
             <div className="text-blue-900">{formatCurrency(tkp.total_amount)}</div>
           </div>
 
           <div className="bg-red-50 rounded-lg p-4">
-            <div className="text-gray-600 mb-1">Закупка</div>
+            <div className="text-muted-foreground mb-1">Закупка</div>
             <div className="text-red-900">
               {formatCurrency(String(parseFloat(tkp.total_amount) - parseFloat(tkp.total_profit)))}
             </div>
           </div>
 
           <div className="bg-green-50 rounded-lg p-4">
-            <div className="text-gray-600 mb-1">Прибыль</div>
+            <div className="text-muted-foreground mb-1">Прибыль</div>
             <div className="text-green-900 flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
               {formatCurrency(tkp.total_profit)}
@@ -294,7 +294,7 @@ export function InfoTab({
 
           {tkp.total_man_hours && (
             <div className="bg-purple-50 rounded-lg p-4">
-              <div className="text-gray-600 mb-1">Трудозатраты</div>
+              <div className="text-muted-foreground mb-1">Трудозатраты</div>
               <div className="text-purple-900 flex items-center gap-2">
                 <Clock className="w-5 h-5" />
                 {parseFloat(tkp.total_man_hours).toFixed(2)} чел/час
@@ -304,24 +304,24 @@ export function InfoTab({
 
           {(tkp.currency_rates.usd || tkp.currency_rates.eur || tkp.currency_rates.cny) && (
             <div>
-              <Label className="text-gray-600 mb-2 block">Курсы валют</Label>
+              <Label className="text-muted-foreground mb-2 block">Курсы валют</Label>
               <div className="space-y-2">
                 {tkp.currency_rates.usd && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">USD:</span>
-                    <span className="text-gray-900">{parseFloat(tkp.currency_rates.usd).toFixed(2)} ₽</span>
+                    <span className="text-muted-foreground">USD:</span>
+                    <span className="text-foreground">{parseFloat(tkp.currency_rates.usd).toFixed(2)} ₽</span>
                   </div>
                 )}
                 {tkp.currency_rates.eur && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">EUR:</span>
-                    <span className="text-gray-900">{parseFloat(tkp.currency_rates.eur).toFixed(2)} ₽</span>
+                    <span className="text-muted-foreground">EUR:</span>
+                    <span className="text-foreground">{parseFloat(tkp.currency_rates.eur).toFixed(2)} ₽</span>
                   </div>
                 )}
                 {tkp.currency_rates.cny && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">CNY:</span>
-                    <span className="text-gray-900">{parseFloat(tkp.currency_rates.cny).toFixed(2)} ₽</span>
+                    <span className="text-muted-foreground">CNY:</span>
+                    <span className="text-foreground">{parseFloat(tkp.currency_rates.cny).toFixed(2)} ₽</span>
                   </div>
                 )}
               </div>
@@ -331,49 +331,49 @@ export function InfoTab({
       </div>
 
       {/* Ответственные лица и история статусов */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-foreground mb-4 flex items-center gap-2">
           <User className="w-5 h-5 text-purple-600" />
           Ответственные лица
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <Label className="text-gray-500 text-xs">Создал</Label>
-            <div className="mt-1 text-gray-900 font-medium">{tkp.created_by_name || '—'}</div>
-            <div className="text-xs text-gray-400 mt-0.5">{formatDate(tkp.created_at)}</div>
+          <div className="p-3 bg-muted rounded-lg">
+            <Label className="text-muted-foreground text-xs">Создал</Label>
+            <div className="mt-1 text-foreground font-medium">{tkp.created_by_name || '—'}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{formatDate(tkp.created_at)}</div>
           </div>
 
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <Label className="text-gray-500 text-xs">Проверил</Label>
-            <div className="mt-1 text-gray-900 font-medium">{tkp.checked_by_name || '—'}</div>
+          <div className="p-3 bg-muted rounded-lg">
+            <Label className="text-muted-foreground text-xs">Проверил</Label>
+            <div className="mt-1 text-foreground font-medium">{tkp.checked_by_name || '—'}</div>
             {tkp.checked_at && (
-              <div className="text-xs text-gray-400 mt-0.5">{formatDate(tkp.checked_at)}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{formatDate(tkp.checked_at)}</div>
             )}
           </div>
 
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <Label className="text-gray-500 text-xs">Утвердил</Label>
-            <div className="mt-1 text-gray-900 font-medium">{tkp.approved_by_name || '—'}</div>
+          <div className="p-3 bg-muted rounded-lg">
+            <Label className="text-muted-foreground text-xs">Утвердил</Label>
+            <div className="mt-1 text-foreground font-medium">{tkp.approved_by_name || '—'}</div>
             {tkp.approved_at && (
-              <div className="text-xs text-gray-400 mt-0.5">{formatDate(tkp.approved_at)}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{formatDate(tkp.approved_at)}</div>
             )}
           </div>
         </div>
 
         {tkp.status_history && tkp.status_history.length > 0 && (
           <>
-            <h3 className="text-gray-700 text-sm font-medium mb-3 flex items-center gap-2">
-              <History className="w-4 h-4 text-gray-500" />
+            <h3 className="text-foreground text-sm font-medium mb-3 flex items-center gap-2">
+              <History className="w-4 h-4 text-muted-foreground" />
               История смены статусов
             </h3>
             <div className="space-y-2">
               {tkp.status_history.map((entry) => (
-                <div key={entry.id} className="flex items-center gap-3 text-sm py-1.5 border-b border-gray-100 last:border-0">
-                  <span className="text-gray-400 text-xs whitespace-nowrap">{formatDateTime(entry.changed_at)}</span>
-                  <span className="text-gray-600">{entry.changed_by_name || '—'}</span>
-                  <span className="text-gray-400">→</span>
+                <div key={entry.id} className="flex items-center gap-3 text-sm py-1.5 border-b border-border last:border-0">
+                  <span className="text-muted-foreground text-xs whitespace-nowrap">{formatDateTime(entry.changed_at)}</span>
+                  <span className="text-muted-foreground">{entry.changed_by_name || '—'}</span>
+                  <span className="text-muted-foreground">→</span>
                   <Badge className={getStatusBadgeClass(entry.new_status)}>{getStatusLabel(entry.new_status)}</Badge>
-                  {entry.comment && <span className="text-gray-500 italic text-xs">({entry.comment})</span>}
+                  {entry.comment && <span className="text-muted-foreground italic text-xs">({entry.comment})</span>}
                 </div>
               ))}
             </div>
@@ -383,8 +383,8 @@ export function InfoTab({
 
       {/* История версий */}
       {versions && versions.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h2 className="text-foreground mb-4 flex items-center gap-2">
             <FileCheck className="w-5 h-5 text-orange-600" />
             История версий ({versions.length})
           </h2>
@@ -394,26 +394,26 @@ export function InfoTab({
                 key={version.id}
                 className={`p-3 rounded-lg border ${
                   version.id === tkp.id
-                    ? "bg-blue-50 border-blue-200"
-                    : "bg-gray-50 border-gray-200"
+                    ? "bg-primary/10 border-primary/20"
+                    : "bg-muted border-border"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-gray-900">
+                    <div className="text-foreground">
                       Версия {version.version_number}
                       {version.is_latest_version && (
-                        <Badge className="ml-2 bg-blue-100 text-blue-700">Актуальная</Badge>
+                        <Badge className="ml-2 bg-blue-100 dark:bg-blue-900/30 text-primary">Актуальная</Badge>
                       )}
                     </div>
-                    <div className="text-gray-500">{formatDate(version.date)}</div>
+                    <div className="text-muted-foreground">{formatDate(version.date)}</div>
                   </div>
                   {version.id !== tkp.id && (
                     <Button
                       onClick={() =>
                         window.open(`/proposals/technical-proposals/${version.id}`, "_blank")
                       }
-                      className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      className="bg-muted text-foreground hover:bg-muted"
                     >
                       Открыть
                     </Button>

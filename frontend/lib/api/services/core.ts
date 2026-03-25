@@ -11,7 +11,7 @@ import type {
 } from '../types';
 import type { LLMProvider, ParseInvoiceResponse } from '../types';
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = '/api/erp';
 
 export function createCoreService(request: RequestFn) {
   return {

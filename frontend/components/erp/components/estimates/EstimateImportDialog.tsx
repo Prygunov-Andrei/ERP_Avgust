@@ -84,8 +84,8 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
           onClick={() => toggleSection(row.original._index)}
           className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
             sectionFlags.has(row.original._index)
-              ? 'bg-blue-100 text-blue-700'
-              : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+              ? 'bg-blue-100 dark:bg-blue-900/30 text-primary'
+              : 'bg-muted text-muted-foreground hover:bg-muted hover:text-muted-foreground'
           }`}
           title={sectionFlags.has(row.original._index) ? 'Снять раздел' : 'Назначить разделом'}
         >
@@ -105,7 +105,7 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
 
   const rowClassName = useCallback((row: Row<ImportRow>) => {
     if (sectionFlags.has(row.original._index)) {
-      return 'bg-blue-50 font-semibold';
+      return 'bg-primary/10 font-semibold';
     }
     return undefined;
   }, [sectionFlags]);
@@ -381,7 +381,7 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
               <div className="flex items-center gap-3 shrink-0 mb-3">
                 <Badge variant="secondary">{itemCount} строк</Badge>
                 {sectionCount > 0 && (
-                  <Badge className="bg-blue-100 text-blue-800">{sectionCount} разделов</Badge>
+                  <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">{sectionCount} разделов</Badge>
                 )}
                 {pdfErrors.length > 0 && (
                   <Badge variant="destructive">{pdfErrors.length} ошибок</Badge>
@@ -415,7 +415,7 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
               <div className="flex items-center gap-3 shrink-0 mb-3">
                 <Badge variant="secondary">{itemCount} строк</Badge>
                 {sectionCount > 0 && (
-                  <Badge className="bg-blue-100 text-blue-800">{sectionCount} разделов</Badge>
+                  <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">{sectionCount} разделов</Badge>
                 )}
                 {previewData.confidence != null && (
                   <Badge variant={previewData.confidence >= 0.7 ? 'default' : 'destructive'}>

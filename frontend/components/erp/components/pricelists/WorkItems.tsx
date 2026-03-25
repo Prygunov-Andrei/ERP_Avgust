@@ -218,8 +218,8 @@ export function WorkItems() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Каталог работ</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Каталог работ</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Справочник работ с автоматической генерацией артикулов
           </p>
         </div>
@@ -230,7 +230,7 @@ export function WorkItems() {
       </div>
 
       {/* Filters - Двухуровневая система разделов */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6 space-y-4">
         {/* Уровень 1: Родительские разделы */}
         <div>
           <Tabs 
@@ -272,37 +272,37 @@ export function WorkItems() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Артикул
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Наименование
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Ед.изм.
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Часы
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Разряд
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Коэфф.
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12">
                     <div className="flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                      <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                     </div>
                   </td>
                 </tr>
@@ -310,17 +310,17 @@ export function WorkItems() {
                 filteredItems.map((item) => (
                   <tr
                     key={item.id}
-                    className="hover:bg-gray-50 cursor-pointer"
+                    className="hover:bg-muted cursor-pointer"
                     onClick={() => navigate(`/work-items/${item.id}`)}
                   >
                     <td className="px-6 py-4">
-                      <span className="inline-flex px-2 py-1 text-xs font-mono font-medium rounded bg-gray-100 text-gray-700">
+                      <span className="inline-flex px-2 py-1 text-xs font-mono font-medium rounded bg-muted text-foreground">
                         {item.article}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">{item.name}</span>
+                        <span className="font-medium text-foreground">{item.name}</span>
                         {item.comment && (
                           <TooltipProvider>
                             <Tooltip>
@@ -336,24 +336,24 @@ export function WorkItems() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{item.unit}</span>
+                      <span className="text-sm text-muted-foreground">{item.unit}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900">{item.hours}</span>
+                      <span className="text-sm text-foreground">{item.hours}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-foreground">
                         {formatGrade(item.required_grade)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900">{item.coefficient}</span>
+                      <span className="text-sm text-foreground">{item.coefficient}</span>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                     Работы не найдены
                   </td>
                 </tr>
@@ -382,7 +382,7 @@ export function WorkItems() {
                 id="section"
                 value={formData.section}
                 onChange={(e) => setFormData({ ...formData, section: Number(e.target.value) })}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 required
               >
                 <option value={0}>Выберите раздел</option>
@@ -413,7 +413,7 @@ export function WorkItems() {
                   id="unit"
                   value={formData.unit}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value as CreateWorkItemData['unit'] })}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
                   {unitOptions.map((option) => (
@@ -446,7 +446,7 @@ export function WorkItems() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger type="button">
-                        <Info className="w-3.5 h-3.5 text-gray-400" />
+                        <Info className="w-3.5 h-3.5 text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p className="text-xs">
@@ -477,7 +477,7 @@ export function WorkItems() {
                   required
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-500 mt-1.5">
+                <p className="text-xs text-muted-foreground mt-1.5">
                   Примеры: 2 (целый), 2.5 (средний), 3.65 (взвешенный)
                 </p>
               </div>
@@ -506,7 +506,7 @@ export function WorkItems() {
                 onChange={(e) => setFormData({ ...formData, composition: e.target.value })}
                 placeholder="Опишите состав и этапы выполнения работы"
                 rows={3}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 
@@ -518,7 +518,7 @@ export function WorkItems() {
                 onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                 placeholder="Дополнительные комментарии к работе"
                 rows={2}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 

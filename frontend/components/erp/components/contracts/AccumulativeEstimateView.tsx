@@ -86,8 +86,8 @@ export const AccumulativeEstimateView: React.FC<AccumulativeEstimateViewProps> =
   const rowClassName = useCallback((row: { original: AccumulativeEstimateRow }) => {
     const est = parseFloat(row.original.estimate_quantity) || 0;
     const purch = parseFloat(row.original.purchased_quantity) || 0;
-    if (purch >= est && purch > 0) return 'bg-green-50';
-    if (purch > 0) return 'bg-amber-50';
+    if (purch >= est && purch > 0) return 'bg-green-50 dark:bg-green-900/20';
+    if (purch > 0) return 'bg-amber-50 dark:bg-amber-900/20';
     return undefined;
   }, []);
 

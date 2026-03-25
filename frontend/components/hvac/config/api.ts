@@ -1,15 +1,18 @@
-// Конфигурация HVAC API для единого портала
-// HVAC API проксируется через Next.js/nginx на /api/hvac/
+// Конфигурация HVAC API для ERP/HVAC admin.
+// Запросы идут через серверный BFF, чтобы сервисный токен не попадал в браузер.
 
 export const API_CONFIG = {
   get BASE_URL() {
-    return '/api/hvac';
+    return '/api/hvac-admin/api/hvac';
+  },
+  get ADMIN_BASE_URL() {
+    return '/api/hvac-admin/hvac-admin';
   },
   TIMEOUT: 30000,
   TUNNEL_HEADERS: {},
 };
 
-// Базовый URL сервера (без /api/hvac)
+// Базовый URL сервера (без HVAC path prefix)
 export const getServerBaseUrl = (): string => {
   if (typeof window !== 'undefined') {
     return window.location.origin;
@@ -37,7 +40,13 @@ export const getMediaUrl = (path: string): string => {
 
 export const checkApiAvailability = async (): Promise<boolean> => {
   try {
-    const response = await fetch('/api/hvac/news/', { method: 'HEAD' });
+    const token = typeof localStorage !== 'undefined'
+      ? localStorage.getItem('access_token')
+      : null;
+    const response = await fetch(`${API_CONFIG.BASE_URL}/news/`, {
+      method: 'HEAD',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     return response.ok;
   } catch {
     return false;

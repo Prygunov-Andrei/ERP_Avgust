@@ -132,15 +132,15 @@ export function Dashboard() {
 
   const getStatusBadgeClass = (status: string) => {
     const statusMap: Record<string, string> = {
-      active: 'bg-green-100 text-green-800',
-      draft: 'bg-gray-100 text-gray-800',
-      completed: 'bg-blue-100 text-blue-800',
-      cancelled: 'bg-red-100 text-red-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
+      active: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
+      draft: 'bg-muted text-foreground',
+      completed: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
+      cancelled: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400',
+      pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 dark:text-yellow-400',
+      approved: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
+      rejected: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400',
     };
-    return statusMap[status] || 'bg-gray-100 text-gray-800';
+    return statusMap[status] || 'bg-muted text-foreground';
   };
 
   const getStatusLabel = (status: string) => {
@@ -161,90 +161,90 @@ export function Dashboard() {
       <div className="max-w-7xl mx-auto">
         {/* Заголовок */}
         <div className="mb-8">
-          <h1 className="text-2xl text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-500">Общая статистика и последние операции</p>
+          <h1 className="text-2xl text-foreground mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Общая статистика и последние операции</p>
         </div>
 
         {/* Метрики - Карточки */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Всего договоров */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-gray-500">Всего договоров</div>
-              <FileText className="w-5 h-5 text-blue-600" />
+              <div className="text-sm text-muted-foreground">Всего договоров</div>
+              <FileText className="w-5 h-5 text-primary" />
             </div>
-            <div className="text-3xl text-gray-900 mb-1">
+            <div className="text-3xl text-foreground mb-1">
               {totalContracts}
             </div>
-            <div className="text-xs text-gray-500">Все договоры в системе</div>
+            <div className="text-xs text-muted-foreground">Все договоры в системе</div>
           </div>
 
           {/* Активных договоров */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-gray-500">Активных договоров</div>
+              <div className="text-sm text-muted-foreground">Активных договоров</div>
               <CheckCircle className="w-5 h-5 text-green-600" />
             </div>
-            <div className="text-3xl text-gray-900 mb-1">
+            <div className="text-3xl text-foreground mb-1">
               {activeContracts}
             </div>
-            <div className="text-xs text-gray-500">Договоры со статусом "Активен"</div>
+            <div className="text-xs text-muted-foreground">Договоры со статусом "Активен"</div>
           </div>
 
           {/* Общая сумма договоров */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-gray-500">Общая сумма договоров</div>
+              <div className="text-sm text-muted-foreground">Общая сумма договоров</div>
               <DollarSign className="w-5 h-5 text-purple-600" />
             </div>
-            <div className="text-3xl text-gray-900 mb-1">
+            <div className="text-3xl text-foreground mb-1">
               {formatThousands(totalContractsSum)} <span className="text-lg">тыс. ₽</span>
             </div>
-            <div className="text-xs text-gray-500">Сумма всех договоров</div>
+            <div className="text-xs text-muted-foreground">Сумма всех договоров</div>
           </div>
 
           {/* Дебиторская задолженность */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-gray-500">Нам должны</div>
+              <div className="text-sm text-muted-foreground">Нам должны</div>
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
             <div className="text-3xl text-green-600 mb-1">
               {formatThousands(totalReceivables)} <span className="text-lg">тыс. ₽</span>
             </div>
-            <div className="text-xs text-gray-500">Дебиторская задолженность</div>
+            <div className="text-xs text-muted-foreground">Дебиторская задолженность</div>
           </div>
 
           {/* Кредиторская задолженность */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-gray-500">Мы должны</div>
+              <div className="text-sm text-muted-foreground">Мы должны</div>
               <TrendingDown className="w-5 h-5 text-red-600" />
             </div>
             <div className="text-3xl text-red-600 mb-1">
               {formatThousands(totalPayables)} <span className="text-lg">тыс. ₽</span>
             </div>
-            <div className="text-xs text-gray-500">Кредиторская задолженность</div>
+            <div className="text-xs text-muted-foreground">Кредиторская задолженность</div>
           </div>
 
           {/* Остаток на счетах */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-gray-500">Остаток на счетах</div>
-              <Wallet className="w-5 h-5 text-blue-600" />
+              <div className="text-sm text-muted-foreground">Остаток на счетах</div>
+              <Wallet className="w-5 h-5 text-primary" />
             </div>
-            <div className="text-3xl text-gray-900 mb-1">
+            <div className="text-3xl text-foreground mb-1">
               {formatThousands(totalAccountsBalance)} <span className="text-lg">тыс. ₽</span>
             </div>
-            <div className="text-xs text-gray-500">Сумма всех активных счетов</div>
+            <div className="text-xs text-muted-foreground">Сумма всех активных счетов</div>
           </div>
         </div>
 
         {/* Графики */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Cash Flow Chart */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg text-gray-900 mb-4">Денежный поток</h3>
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+            <h3 className="text-lg text-foreground mb-4">Денежный поток</h3>
             {cashFlowLoading ? (
               <div className="flex items-center justify-center h-80">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
@@ -262,15 +262,15 @@ export function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-80 text-gray-500">
+              <div className="flex items-center justify-center h-80 text-muted-foreground">
                 Нет данных для отображения
               </div>
             )}
           </div>
 
           {/* Debt Structure Chart */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg text-gray-900 mb-4">Структура задолженности</h3>
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+            <h3 className="text-lg text-foreground mb-4">Структура задолженности</h3>
             {debtLoading ? (
               <div className="flex items-center justify-center h-80">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
@@ -296,7 +296,7 @@ export function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-80 text-gray-500">
+              <div className="flex items-center justify-center h-80 text-muted-foreground">
                 Нет данных для отображения
               </div>
             )}
@@ -306,14 +306,14 @@ export function Dashboard() {
         {/* Таблицы последних записей */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Последние платежи */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg text-gray-900">Последние платежи</h3>
+              <h3 className="text-lg text-foreground">Последние платежи</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/payments')}
-                className="text-blue-600 hover:text-blue-700"
+                className="text-primary hover:text-primary"
               >
                 Все платежи
                 <ArrowRight className="w-4 h-4 ml-1" />
@@ -325,18 +325,18 @@ export function Dashboard() {
                   <div
                     key={payment.id}
                     onClick={() => navigate(`/payments`)}
-                    className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+                    className="flex items-center justify-between p-3 hover:bg-muted rounded-lg cursor-pointer transition-colors"
                   >
                     <div className="flex-1">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-foreground">
                         {payment.contract_display || `Платеж #${payment.id}`}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {formatDate(payment.payment_date)}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-foreground">
                         {formatAmount(payment.amount)} ₽
                       </div>
                       <div className={`text-xs px-2 py-0.5 rounded-full inline-block ${getStatusBadgeClass(payment.status)}`}>
@@ -346,7 +346,7 @@ export function Dashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-center text-gray-500 py-8">
+                <div className="text-center text-muted-foreground py-8">
                   Нет платежей
                 </div>
               )}
@@ -354,14 +354,14 @@ export function Dashboard() {
           </div>
 
           {/* Последние договоры */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg text-gray-900">Последние договоры</h3>
+              <h3 className="text-lg text-foreground">Последние договоры</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/contracts')}
-                className="text-blue-600 hover:text-blue-700"
+                className="text-primary hover:text-primary"
               >
                 Все договоры
                 <ArrowRight className="w-4 h-4 ml-1" />
@@ -373,18 +373,18 @@ export function Dashboard() {
                   <div
                     key={contract.id}
                     onClick={() => navigate(`/contracts/${contract.id}`)}
-                    className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+                    className="flex items-center justify-between p-3 hover:bg-muted rounded-lg cursor-pointer transition-colors"
                   >
                     <div className="flex-1">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-foreground">
                         {contract.contract_number}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {contract.counterparty_display || 'Без контрагента'}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-foreground">
                         {formatAmount(contract.total_amount)} ₽
                       </div>
                       <div className={`text-xs px-2 py-0.5 rounded-full inline-block ${getStatusBadgeClass(contract.status)}`}>
@@ -394,7 +394,7 @@ export function Dashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-center text-gray-500 py-8">
+                <div className="text-center text-muted-foreground py-8">
                   Нет договоров
                 </div>
               )}
@@ -404,9 +404,9 @@ export function Dashboard() {
 
         {/* Договоры с истекающими сроками */}
         {expiringContracts && expiringContracts.length > 0 && (
-          <div className="bg-orange-50 rounded-xl p-6 shadow-sm border border-orange-200">
+          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6 shadow-sm border border-orange-200 dark:border-orange-800">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg text-gray-900">⚠️ Договоры с истекающими сроками</h3>
+              <h3 className="text-lg text-foreground">⚠️ Договоры с истекающими сроками</h3>
               <span className="text-sm text-orange-600">
                 Истекают в ближайшие 30 дней
               </span>
@@ -418,13 +418,13 @@ export function Dashboard() {
                   <div
                     key={contract.id}
                     onClick={() => navigate(`/contracts/${contract.id}`)}
-                    className="flex items-center justify-between p-3 bg-white hover:bg-gray-50 rounded-lg cursor-pointer transition-colors border border-orange-100"
+                    className="flex items-center justify-between p-3 bg-card hover:bg-muted rounded-lg cursor-pointer transition-colors border border-orange-100"
                   >
                     <div className="flex-1">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-foreground">
                         {contract.contract_number}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {contract.counterparty_display || 'Без контрагента'}
                       </div>
                     </div>
@@ -432,7 +432,7 @@ export function Dashboard() {
                       <div className="text-sm text-orange-600">
                         Осталось {daysLeft} {daysLeft === 1 ? 'день' : daysLeft < 5 ? 'дня' : 'дней'}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         до {formatDate(contract.end_date)}
                       </div>
                     </div>

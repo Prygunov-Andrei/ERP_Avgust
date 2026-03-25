@@ -2,6 +2,7 @@ Django==4.2.7
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.1
 django-cors-headers==4.3.1
+django-modeltranslation>=0.18
 django-filter==23.5
 drf-spectacular==0.27.1
 psycopg2-binary==2.9.9
@@ -13,7 +14,9 @@ fuzzywuzzy>=0.18.0
 python-Levenshtein>=0.12.0
 openai>=1.0.0
 google-generativeai>=0.3.0
+anthropic>=0.34.0
 httpx>=0.25.0
+requests>=2.31.0
 PyMuPDF>=1.23.0
 # Environment variables
 python-dotenv>=1.0.0
@@ -33,6 +36,8 @@ elevenlabs>=1.0.0
 cryptography>=42.0.0
 # Webhook JWT verification
 PyJWT>=2.8.0
+# Static files (production)
+whitenoise>=6.0.0
 # Monitoring
 sentry-sdk[django,celery]>=1.40.0
 # Testing

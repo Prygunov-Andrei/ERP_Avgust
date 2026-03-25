@@ -1,4 +1,5 @@
 import apiClient from './apiClient';
+import type { PaginatedResponse } from '@/lib/api/types/common';
 
 // Типы провайдеров
 export type Provider = 'grok' | 'anthropic' | 'gemini' | 'openai';
@@ -223,13 +224,6 @@ export interface DiscoveryAPICall {
 }
 
 // Пагинация
-export interface PaginatedResponse<T> {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: T[];
-}
-
 const searchConfigService = {
   // === Search Configuration ===
   

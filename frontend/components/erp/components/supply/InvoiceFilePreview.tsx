@@ -117,7 +117,7 @@ function ExcelPreview({ url }: { url: string }) {
   return (
     <iframe
       srcDoc={srcdoc}
-      className="w-full h-full min-h-[600px] rounded border bg-white"
+      className="w-full h-full min-h-[600px] rounded border bg-card"
       title="Счёт (Excel)"
       sandbox="allow-same-origin"
     />
@@ -147,7 +147,7 @@ export function InvoiceFilePreview({ url, className = '' }: InvoiceFilePreviewPr
             <a
               href={fileUrl}
               download
-              className="text-xs text-blue-600 hover:underline font-normal"
+              className="text-xs text-primary hover:underline font-normal"
             >
               Скачать файл
             </a>
@@ -156,7 +156,7 @@ export function InvoiceFilePreview({ url, className = '' }: InvoiceFilePreviewPr
               href={fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:underline font-normal"
+              className="text-xs text-primary hover:underline font-normal"
             >
               Открыть в новом окне
             </a>

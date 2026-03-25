@@ -60,7 +60,7 @@ export const HelpIndexPage = () => {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <BookOpen className="w-8 h-8 text-blue-600" />
+        <BookOpen className="w-8 h-8 text-primary" />
         <h1 className="text-2xl font-semibold">{index?.title || 'Справка'}</h1>
       </div>
 

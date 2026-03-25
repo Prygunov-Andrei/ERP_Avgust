@@ -60,15 +60,15 @@ export function ConstructionObjects({ defaultStatusFilter, defaultCreateStatus, 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'planned':
-        return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">Планируется</span>;
+        return <span className="px-2 py-1 text-xs font-medium bg-muted text-foreground rounded">Планируется</span>;
       case 'in_progress':
-        return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded">В работе</span>;
+        return <span className="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">В работе</span>;
       case 'completed':
-        return <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">Завершён</span>;
+        return <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-primary rounded">Завершён</span>;
       case 'suspended':
-        return <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded">Приостановлен</span>;
+        return <span className="px-2 py-1 text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded">Приостановлен</span>;
       default:
-        return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">{status}</span>;
+        return <span className="px-2 py-1 text-xs font-medium bg-muted text-foreground rounded">{status}</span>;
     }
   };
 
@@ -82,7 +82,7 @@ export function ConstructionObjects({ defaultStatusFilter, defaultCreateStatus, 
 
   if (error) {
     return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-xl">
+      <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">
         Ошибка загрузки: {(error as Error).message}
       </div>
     );
@@ -94,7 +94,7 @@ export function ConstructionObjects({ defaultStatusFilter, defaultCreateStatus, 
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-semibold">{pageTitle || 'Объекты строительства'}</h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-muted-foreground mt-1">
               {objects?.length || 0} {objects?.length === 1 ? 'объект' : 'объектов'}
             </p>
           </div>
@@ -109,7 +109,7 @@ export function ConstructionObjects({ defaultStatusFilter, defaultCreateStatus, 
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex-1 min-w-[250px]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Поиск по названию или адресу..."
@@ -135,7 +135,7 @@ export function ConstructionObjects({ defaultStatusFilter, defaultCreateStatus, 
             <div className="flex items-center border rounded-lg overflow-hidden">
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-2 transition-colors ${viewMode === 'table' ? 'bg-blue-100 text-blue-700' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                className={`p-2 transition-colors ${viewMode === 'table' ? 'bg-blue-100 dark:bg-blue-900/30 text-primary' : 'bg-card text-muted-foreground hover:bg-muted'}`}
                 aria-label="Табличный вид"
                 tabIndex={0}
               >
@@ -143,7 +143,7 @@ export function ConstructionObjects({ defaultStatusFilter, defaultCreateStatus, 
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-blue-100 text-blue-700' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-blue-100 dark:bg-blue-900/30 text-primary' : 'bg-card text-muted-foreground hover:bg-muted'}`}
                 aria-label="Вид мозаикой"
                 tabIndex={0}
               >
@@ -170,9 +170,9 @@ export function ConstructionObjects({ defaultStatusFilter, defaultCreateStatus, 
 
         {/* Content */}
         {!objects || objects.length === 0 ? (
-          <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-            <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">Нет объектов</p>
+          <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+            <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">Нет объектов</p>
             <Button onClick={() => setIsDialogOpen(true)} variant="outline">
               <Plus className="w-4 h-4 mr-2" />
               Добавить первый объект
@@ -198,17 +198,17 @@ type ObjectsTableProps = {
 
 const ObjectsTable = ({ objects, getStatusBadge, onRowClick }: ObjectsTableProps) => {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-gray-200 bg-gray-50">
-            <th className="text-left py-3 px-4 font-medium text-gray-600 w-10"></th>
-            <th className="text-left py-3 px-4 font-medium text-gray-600">Название</th>
-            <th className="text-left py-3 px-4 font-medium text-gray-600">Адрес</th>
-            <th className="text-left py-3 px-4 font-medium text-gray-600">Статус</th>
-            <th className="text-left py-3 px-4 font-medium text-gray-600">Начало</th>
-            <th className="text-left py-3 px-4 font-medium text-gray-600">Окончание</th>
-            <th className="text-right py-3 px-4 font-medium text-gray-600">Договоров</th>
+          <tr className="border-b border-border bg-muted">
+            <th className="text-left py-3 px-4 font-medium text-muted-foreground w-10"></th>
+            <th className="text-left py-3 px-4 font-medium text-muted-foreground">Название</th>
+            <th className="text-left py-3 px-4 font-medium text-muted-foreground">Адрес</th>
+            <th className="text-left py-3 px-4 font-medium text-muted-foreground">Статус</th>
+            <th className="text-left py-3 px-4 font-medium text-muted-foreground">Начало</th>
+            <th className="text-left py-3 px-4 font-medium text-muted-foreground">Окончание</th>
+            <th className="text-right py-3 px-4 font-medium text-muted-foreground">Договоров</th>
           </tr>
         </thead>
         <tbody>
@@ -216,7 +216,7 @@ const ObjectsTable = ({ objects, getStatusBadge, onRowClick }: ObjectsTableProps
             <tr
               key={object.id}
               onClick={() => onRowClick(object.id)}
-              className="border-b border-gray-100 last:border-0 hover:bg-blue-50/50 cursor-pointer transition-colors"
+              className="border-b border-border last:border-0 hover:bg-primary/10/50 cursor-pointer transition-colors"
               tabIndex={0}
               role="button"
               aria-label={`Открыть объект ${object.name}`}
@@ -226,17 +226,17 @@ const ObjectsTable = ({ objects, getStatusBadge, onRowClick }: ObjectsTableProps
                 {object.photo ? (
                   <img src={object.photo} alt={object.name} className="w-8 h-8 rounded-full object-cover" />
                 ) : (
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Building2 className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                    <Building2 className="w-4 h-4 text-primary" />
                   </div>
                 )}
               </td>
-              <td className="py-3 px-4 font-medium text-gray-900">{object.name}</td>
-              <td className="py-3 px-4 text-gray-600 max-w-[250px] truncate">{object.address}</td>
+              <td className="py-3 px-4 font-medium text-foreground">{object.name}</td>
+              <td className="py-3 px-4 text-muted-foreground max-w-[250px] truncate">{object.address}</td>
               <td className="py-3 px-4">{getStatusBadge(object.status)}</td>
-              <td className="py-3 px-4 text-gray-500">{object.start_date ? formatDate(object.start_date) : '—'}</td>
-              <td className="py-3 px-4 text-gray-500">{object.end_date ? formatDate(object.end_date) : '—'}</td>
-              <td className="py-3 px-4 text-right text-gray-600">{object.contracts_count ?? '—'}</td>
+              <td className="py-3 px-4 text-muted-foreground">{object.start_date ? formatDate(object.start_date) : '—'}</td>
+              <td className="py-3 px-4 text-muted-foreground">{object.end_date ? formatDate(object.end_date) : '—'}</td>
+              <td className="py-3 px-4 text-right text-muted-foreground">{object.contracts_count ?? '—'}</td>
             </tr>
           ))}
         </tbody>
@@ -259,7 +259,7 @@ const ObjectsGrid = ({ objects, getStatusBadge, onCardClick }: ObjectsGridProps)
       {objects.map((object: ConstructionObject) => (
         <div
           key={object.id}
-          className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
+          className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer"
           onClick={() => onCardClick(object.id)}
           tabIndex={0}
           role="button"
@@ -270,14 +270,14 @@ const ObjectsGrid = ({ objects, getStatusBadge, onCardClick }: ObjectsGridProps)
           {object.photo ? (
             <img src={object.photo} alt={object.name} className="w-12 h-12 rounded-full object-cover mb-4" />
           ) : (
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-              <Building2 className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
+              <Building2 className="w-6 h-6 text-primary" />
             </div>
           )}
 
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{object.name}</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-2">{object.name}</h3>
 
-          <div className="flex items-start gap-2 text-sm text-gray-600 mb-3">
+          <div className="flex items-start gap-2 text-sm text-muted-foreground mb-3">
             <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <span className="line-clamp-2">{object.address}</span>
           </div>
@@ -286,7 +286,7 @@ const ObjectsGrid = ({ objects, getStatusBadge, onCardClick }: ObjectsGridProps)
             {getStatusBadge(object.status)}
           </div>
 
-          <div className="space-y-1 text-sm text-gray-500">
+          <div className="space-y-1 text-sm text-muted-foreground">
             {object.start_date && (
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
@@ -302,9 +302,9 @@ const ObjectsGrid = ({ objects, getStatusBadge, onCardClick }: ObjectsGridProps)
           </div>
 
           {object.contracts_count !== undefined && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <span className="text-xs text-gray-500">
-                Договоров: <span className="font-semibold text-gray-700">{object.contracts_count}</span>
+            <div className="mt-3 pt-3 border-t border-border">
+              <span className="text-xs text-muted-foreground">
+                Договоров: <span className="font-semibold text-foreground">{object.contracts_count}</span>
               </span>
             </div>
           )}

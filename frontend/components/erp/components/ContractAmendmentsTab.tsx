@@ -102,51 +102,51 @@ export function ContractAmendmentsTab({ contractId }: ContractAmendmentsTabProps
       </div>
 
       {!amendmentsList || amendmentsList.length === 0 ? (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Нет дополнительных соглашений</p>
+        <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-4">Нет дополнительных соглашений</p>
           <Button onClick={() => setIsDialogOpen(true)} variant="outline">
             <Plus className="w-4 h-4 mr-2" />
             Добавить первое соглашение
           </Button>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Номер
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Дата
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Причина
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Изменения
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-10">
                     Действия
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {amendmentsList.map((amendment) => (
-                  <tr key={amendment.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={amendment.id} className="hover:bg-muted transition-colors">
                     <td className="px-4 py-2.5">
-                      <div className="text-sm font-medium text-gray-900">{amendment.number}</div>
+                      <div className="text-sm font-medium text-foreground">{amendment.number}</div>
                     </td>
                     <td className="px-4 py-2.5 whitespace-nowrap">
-                      <div className="text-xs text-gray-500">{formatDate(amendment.date)}</div>
+                      <div className="text-xs text-muted-foreground">{formatDate(amendment.date)}</div>
                     </td>
                     <td className="px-4 py-2.5">
-                      <div className="text-sm text-gray-600 max-w-xs truncate">{amendment.reason}</div>
+                      <div className="text-sm text-muted-foreground max-w-xs truncate">{amendment.reason}</div>
                     </td>
                     <td className="px-4 py-2.5">
-                      <div className="text-xs text-gray-500 space-y-1">
+                      <div className="text-xs text-muted-foreground space-y-1">
                         {amendment.new_start_date && (
                           <div>Начало: {formatDate(amendment.new_start_date)}</div>
                         )}
@@ -157,7 +157,7 @@ export function ContractAmendmentsTab({ contractId }: ContractAmendmentsTabProps
                           <div>Сумма: {formatAmount(amendment.new_total_amount)} ₽</div>
                         )}
                         {!amendment.new_start_date && !amendment.new_end_date && !amendment.new_total_amount && (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </div>
                     </td>
@@ -261,7 +261,7 @@ function AmendmentForm({ contractId, onSubmit, isLoading }: AmendmentFormProps) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+      <div className="bg-yellow-50 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-sm text-yellow-800 dark:text-yellow-400">
         <strong>Внимание:</strong> При указании новых значений для дат или суммы они автоматически обновят договор.
       </div>
 

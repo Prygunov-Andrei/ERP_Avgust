@@ -31,7 +31,12 @@ export function LoadMoreNews({ initialNews, hasMore, totalCount }: LoadMoreNewsP
   const loadMore = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/hvac/news/?page=${page}`);
+      const res = await fetch(`/api/portal/news?page=${page}`);
+
+      if (!res.ok) {
+        throw new Error(`Failed to load news page ${page}: ${res.status} ${res.statusText}`);
+      }
+
       const data = await res.json();
       setNews((prev) => [...prev, ...data.results]);
       setPage((p) => p + 1);
@@ -51,8 +56,8 @@ export function LoadMoreNews({ initialNews, hasMore, totalCount }: LoadMoreNewsP
           onClick={() => toggleViewMode('list')}
           className={`p-2 rounded-md transition-colors ${
             viewMode === 'list'
-              ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600'
-              : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground'
           }`}
           aria-label="Список"
         >
@@ -64,8 +69,8 @@ export function LoadMoreNews({ initialNews, hasMore, totalCount }: LoadMoreNewsP
           onClick={() => toggleViewMode('grid')}
           className={`p-2 rounded-md transition-colors ${
             viewMode === 'grid'
-              ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600'
-              : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground'
           }`}
           aria-label="Плитки"
         >
@@ -94,7 +99,7 @@ export function LoadMoreNews({ initialNews, hasMore, totalCount }: LoadMoreNewsP
           <button
             onClick={loadMore}
             disabled={loading}
-            className="px-6 py-3 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors disabled:opacity-50"
+            className="rounded-lg bg-primary/10 px-6 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/15 disabled:opacity-50"
           >
             {loading ? 'Загрузка...' : `Показать ещё (${news.length} из ${totalCount})`}
           </button>

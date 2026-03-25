@@ -36,12 +36,12 @@ const StubSection = ({
   title: string;
   items: string[];
 }) => (
-  <Card className="border-dashed border-gray-300">
+  <Card className="border-dashed border-border">
     <CardHeader className="pb-3">
       <div className="flex items-center gap-2">
-        <Icon className="h-5 w-5 text-gray-400" />
-        <CardTitle className="text-base text-gray-600">{title}</CardTitle>
-        <Badge variant="outline" className="ml-auto text-xs text-gray-400">
+        <Icon className="h-5 w-5 text-muted-foreground" />
+        <CardTitle className="text-base text-muted-foreground">{title}</CardTitle>
+        <Badge variant="outline" className="ml-auto text-xs text-muted-foreground">
           В разработке
         </Badge>
       </div>
@@ -49,8 +49,8 @@ const StubSection = ({
     <CardContent>
       <ul className="space-y-1">
         {items.map((item) => (
-          <li key={item} className="text-sm text-gray-400 flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-gray-300 shrink-0" />
+          <li key={item} className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <span className="w-1 h-1 rounded-full bg-muted shrink-0" />
             {item}
           </li>
         ))}
@@ -75,8 +75,8 @@ export const FinanceDashboard = () => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Дашборд Финансы</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Дашборд Финансы</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Сводная панель по финансовым показателям компании
         </p>
       </div>
@@ -85,7 +85,7 @@ export const FinanceDashboard = () => {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-blue-600" />
+            <Wallet className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">
               Итого средств на всех счетах и в кассе
             </CardTitle>
@@ -107,12 +107,12 @@ export const FinanceDashboard = () => {
           ) : (
             <>
               <div className="mb-4">
-                <span className="text-3xl font-bold text-gray-900">
+                <span className="text-3xl font-bold text-foreground">
                   {formatCurrency(totalBalance)}
                 </span>
               </div>
               {accountList.length === 0 ? (
-                <p className="text-sm text-gray-400">Нет активных счетов</p>
+                <p className="text-sm text-muted-foreground">Нет активных счетов</p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {accountList.map((acc) => {
@@ -131,15 +131,15 @@ export const FinanceDashboard = () => {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-700 truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {acc.name}
                           </p>
                           {acc.number && (
-                            <p className="text-xs text-gray-400 truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               {acc.number}
                             </p>
                           )}
-                          <p className="text-base font-semibold text-gray-900 mt-1">
+                          <p className="text-base font-semibold text-foreground mt-1">
                             {formatCurrency(bal)}
                           </p>
                         </div>

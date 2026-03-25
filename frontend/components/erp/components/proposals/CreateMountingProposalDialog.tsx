@@ -225,7 +225,7 @@ export function CreateMountingProposalDialog({
                   <Label htmlFor="status">Статус *</Label>
                   <select
                     id="status"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     required
@@ -242,7 +242,7 @@ export function CreateMountingProposalDialog({
                   <Label htmlFor="object">Объект *</Label>
                   <select
                     id="object"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                     value={formData.object}
                     onChange={(e) => {
                       setFormData({ ...formData, object: e.target.value });
@@ -261,7 +261,7 @@ export function CreateMountingProposalDialog({
                   <Label htmlFor="counterparty">Контрагент</Label>
                   <select
                     id="counterparty"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                     value={formData.counterparty}
                     onChange={(e) => setFormData({ ...formData, counterparty: e.target.value })}
                   >
@@ -276,7 +276,7 @@ export function CreateMountingProposalDialog({
                   <Label htmlFor="parent_tkp">Связанное ТКП</Label>
                   <select
                     id="parent_tkp"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                     value={formData.parent_tkp}
                     onChange={(e) => setFormData({ ...formData, parent_tkp: e.target.value })}
                   >
@@ -439,7 +439,7 @@ export function CreateMountingProposalDialog({
             <Button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+              className="bg-muted text-foreground hover:bg-muted"
             >
               Отмена
             </Button>

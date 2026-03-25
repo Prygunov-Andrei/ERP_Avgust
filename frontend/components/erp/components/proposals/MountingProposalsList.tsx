@@ -124,11 +124,11 @@ export function MountingProposalsList() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      draft: { label: 'Черновик', className: 'bg-gray-100 text-gray-800', icon: Clock },
-      published: { label: 'Опубликовано', className: 'bg-blue-100 text-blue-800', icon: FileText },
-      sent: { label: 'Отправлено', className: 'bg-purple-100 text-purple-800', icon: Send },
-      approved: { label: 'Утверждено', className: 'bg-green-100 text-green-800', icon: CheckCircle2 },
-      rejected: { label: 'Отклонено', className: 'bg-red-100 text-red-800', icon: XCircle },
+      draft: { label: 'Черновик', className: 'bg-muted text-foreground', icon: Clock },
+      published: { label: 'Опубликовано', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400', icon: FileText },
+      sent: { label: 'Отправлено', className: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400', icon: Send },
+      approved: { label: 'Утверждено', className: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400', icon: CheckCircle2 },
+      rejected: { label: 'Отклонено', className: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400', icon: XCircle },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
     const Icon = config.icon;
@@ -147,7 +147,7 @@ export function MountingProposalsList() {
     <div className="p-6 space-y-6">
       {/* Заголовок */}
       <div className="flex justify-between items-center">
-        <h1 className="text-gray-900">Монтажные Предложения</h1>
+        <h1 className="text-foreground">Монтажные Предложения</h1>
         <Button 
           onClick={() => setIsCreateDialogOpen(true)}
           className="bg-blue-600 text-white hover:bg-blue-700"
@@ -158,12 +158,12 @@ export function MountingProposalsList() {
       </div>
 
       {/* Фильтры */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
+      <div className="bg-card p-4 rounded-lg border border-border space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <Label>Поиск</Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Номер или название..."
                 value={searchQuery}
@@ -176,7 +176,7 @@ export function MountingProposalsList() {
           <div>
             <Label>Объект</Label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               value={objectFilter}
               onChange={(e) => setObjectFilter(e.target.value)}
             >
@@ -190,7 +190,7 @@ export function MountingProposalsList() {
           <div>
             <Label>Контрагент</Label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               value={counterpartyFilter}
               onChange={(e) => setCounterpartyFilter(e.target.value)}
             >
@@ -204,7 +204,7 @@ export function MountingProposalsList() {
           <div>
             <Label>ТКП</Label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               value={tkpFilter}
               onChange={(e) => setTkpFilter(e.target.value)}
             >
@@ -218,7 +218,7 @@ export function MountingProposalsList() {
           <div>
             <Label>Статус</Label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -241,7 +241,7 @@ export function MountingProposalsList() {
               setStatusFilter('');
               setTkpFilter('');
             }}
-            className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+            className="bg-muted text-foreground hover:bg-muted"
           >
             Сбросить фильтры
           </Button>
@@ -249,27 +249,27 @@ export function MountingProposalsList() {
       </div>
 
       {/* Таблица */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-4 py-3 text-left text-gray-600">Номер</th>
-                <th className="px-4 py-3 text-left text-gray-600">Название</th>
-                <th className="px-4 py-3 text-left text-gray-600">Дата</th>
-                <th className="px-4 py-3 text-left text-gray-600">Объект</th>
-                <th className="px-4 py-3 text-left text-gray-600">Контрагент</th>
-                <th className="px-4 py-3 text-left text-gray-600">ТКП</th>
-                <th className="px-4 py-3 text-left text-gray-600">Статус</th>
-                <th className="px-4 py-3 text-right text-gray-600">Сумма</th>
-                <th className="px-4 py-3 text-center text-gray-600">Версия</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Номер</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Название</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Дата</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Объект</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Контрагент</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">ТКП</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Статус</th>
+                <th className="px-4 py-3 text-right text-muted-foreground">Сумма</th>
+                <th className="px-4 py-3 text-center text-muted-foreground">Версия</th>
                 <th className="px-4 py-3 w-12" aria-hidden />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
                     Загрузка...
                   </td>
                 </tr>
@@ -279,7 +279,7 @@ export function MountingProposalsList() {
                     key={mp.id}
                     role="link"
                     tabIndex={0}
-                    className="hover:bg-gray-50 cursor-pointer"
+                    className="hover:bg-muted cursor-pointer"
                     aria-label={`Открыть МП ${mp.number} ${mp.name}`}
                     onClick={() => navigate(`/proposals/mounting-proposals/${mp.id}`)}
                     onKeyDown={(e) => {
@@ -289,17 +289,17 @@ export function MountingProposalsList() {
                       }
                     }}
                   >
-                    <td className="px-4 py-3 text-gray-900">{mp.number}</td>
+                    <td className="px-4 py-3 text-foreground">{mp.number}</td>
                     <td className="px-4 py-3">
-                      <div className="max-w-xs truncate text-gray-900">{mp.name}</div>
+                      <div className="max-w-xs truncate text-foreground">{mp.name}</div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(mp.date)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{formatDate(mp.date)}</td>
                     <td className="px-4 py-3">
-                      <div className="max-w-xs truncate text-gray-600">{mp.object_name}</div>
+                      <div className="max-w-xs truncate text-muted-foreground">{mp.object_name}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="max-w-xs truncate text-gray-600">
-                        {mp.counterparty_name || <span className="text-gray-400">—</span>}
+                      <div className="max-w-xs truncate text-muted-foreground">
+                        {mp.counterparty_name || <span className="text-muted-foreground">—</span>}
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -310,24 +310,24 @@ export function MountingProposalsList() {
                             e.stopPropagation();
                             navigate(`/proposals/technical-proposals/${mp.parent_tkp}`);
                           }}
-                          className="text-blue-600 hover:underline"
+                          className="text-primary hover:underline"
                         >
                           {mp.parent_tkp_number}
                         </button>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">{getStatusBadge(mp.status)}</td>
-                    <td className="px-4 py-3 text-right text-gray-900">
+                    <td className="px-4 py-3 text-right text-foreground">
                       {formatCurrency(mp.total_amount)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         {mp.parent_version && (
-                          <FileText className="w-3 h-3 text-gray-400" />
+                          <FileText className="w-3 h-3 text-muted-foreground" />
                         )}
-                        <span className="text-gray-600">v{mp.version_number}</span>
+                        <span className="text-muted-foreground">v{mp.version_number}</span>
                         {mp.telegram_published && (
                           <Send className="w-3 h-3 text-green-600 ml-1" aria-label="Опубликовано в Telegram" />
                         )}
@@ -340,7 +340,7 @@ export function MountingProposalsList() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handlePublishToTelegram(mp.id, mp.number)}
-                          className="h-8 w-8 p-0 bg-green-100 text-green-700 hover:bg-green-200"
+                          className="h-8 w-8 p-0 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200"
                           title="Опубликовать в Telegram"
                           aria-label={`Опубликовать МП ${mp.number} в Telegram`}
                         >
@@ -352,7 +352,7 @@ export function MountingProposalsList() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
                     Нет данных
                   </td>
                 </tr>
@@ -363,25 +363,25 @@ export function MountingProposalsList() {
 
         {/* Пагинация */}
         {totalPages > 1 && (
-          <div className="flex justify-between items-center px-4 py-3 border-t border-gray-200 bg-gray-50">
-            <div className="text-gray-600">
+          <div className="flex justify-between items-center px-4 py-3 border-t border-border bg-muted">
+            <div className="text-muted-foreground">
               Всего: {mpData?.count || 0} записей
             </div>
             <div className="flex gap-2">
               <Button
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
-                className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="bg-card border border-border text-foreground hover:bg-muted disabled:opacity-50"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <div className="flex items-center px-4 text-gray-700">
+              <div className="flex items-center px-4 text-foreground">
                 Страница {page} из {totalPages}
               </div>
               <Button
                 onClick={() => setPage(page + 1)}
                 disabled={page >= totalPages}
-                className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="bg-card border border-border text-foreground hover:bg-muted disabled:opacity-50"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>

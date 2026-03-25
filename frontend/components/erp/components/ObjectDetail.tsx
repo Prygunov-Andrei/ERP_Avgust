@@ -34,7 +34,7 @@ export function ObjectDetail() {
   if (error || !object) {
     return (
       <div className="p-8">
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl">
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">
           Ошибка загрузки объекта: {(error as Error)?.message || 'Объект не найден'}
         </div>
       </div>

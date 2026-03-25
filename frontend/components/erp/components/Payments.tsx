@@ -207,8 +207,8 @@ export function Payments() {
 
   const getPaymentTypeBadge = (type: string) => {
     return type === 'income' 
-      ? 'bg-green-100 text-green-700' 
-      : 'bg-red-100 text-red-700';
+      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
+      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
   };
 
   const getStatusLabel = (status: string) => {
@@ -222,10 +222,10 @@ export function Payments() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-700';
-      case 'paid': return 'bg-green-100 text-green-700';
-      case 'cancelled': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'pending': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400';
+      case 'paid': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+      case 'cancelled': return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -242,7 +242,7 @@ export function Payments() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl mb-1">Платежи</h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-muted-foreground text-sm">
             Управление приходами и расходами · Всего: {paymentsResponse?.count || 0} · 
             Показано: {payments?.length || 0} (стр. {currentPage} из {Math.ceil((paymentsResponse?.count || 0) / pageSize)})
           </p>
@@ -281,13 +281,13 @@ export function Payments() {
       {/* Фильтры */}
       <Card className="p-6 mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-5 h-5 text-gray-500" />
+          <Filter className="w-5 h-5 text-muted-foreground" />
           <h3 className="text-sm">Фильтры</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div>
-            <Label className="text-xs text-gray-600">Тип</Label>
+            <Label className="text-xs text-muted-foreground">Тип</Label>
             <Select
               value={filters.payment_type}
               onValueChange={(value) => setFilters({ ...filters, payment_type: value })}
@@ -304,7 +304,7 @@ export function Payments() {
           </div>
 
           <div>
-            <Label className="text-xs text-gray-600">Счёт</Label>
+            <Label className="text-xs text-muted-foreground">Счёт</Label>
             <Select
               value={filters.account}
               onValueChange={(value) => setFilters({ ...filters, account: value })}
@@ -324,7 +324,7 @@ export function Payments() {
           </div>
 
           <div>
-            <Label className="text-xs text-gray-600">Договор</Label>
+            <Label className="text-xs text-muted-foreground">Договор</Label>
             <Select
               value={filters.contract}
               onValueChange={(value) => setFilters({ ...filters, contract: value })}
@@ -343,7 +343,7 @@ export function Payments() {
           </div>
 
           <div>
-            <Label className="text-xs text-gray-600">Категория</Label>
+            <Label className="text-xs text-muted-foreground">Категория</Label>
             <Select
               value={filters.category}
               onValueChange={(value) => setFilters({ ...filters, category: value })}
@@ -363,7 +363,7 @@ export function Payments() {
           </div>
 
           <div>
-            <Label className="text-xs text-gray-600">Статус</Label>
+            <Label className="text-xs text-muted-foreground">Статус</Label>
             <Select
               value={filters.status}
               onValueChange={(value) => setFilters({ ...filters, status: value })}
@@ -381,7 +381,7 @@ export function Payments() {
           </div>
 
           <div>
-            <Label className="text-xs text-gray-600">Внутренний перевод</Label>
+            <Label className="text-xs text-muted-foreground">Внутренний перевод</Label>
             <Select
               value={filters.is_internal_transfer}
               onValueChange={(value) => setFilters({ ...filters, is_internal_transfer: value })}
@@ -398,7 +398,7 @@ export function Payments() {
           </div>
 
           <div>
-            <Label className="text-xs text-gray-600">Дата от</Label>
+            <Label className="text-xs text-muted-foreground">Дата от</Label>
             <Input
               type="date"
               value={filters.payment_date_from}
@@ -407,7 +407,7 @@ export function Payments() {
           </div>
 
           <div>
-            <Label className="text-xs text-gray-600">Дата до</Label>
+            <Label className="text-xs text-muted-foreground">Дата до</Label>
             <Input
               type="date"
               value={filters.payment_date_to}
@@ -416,9 +416,9 @@ export function Payments() {
           </div>
 
           <div>
-            <Label className="text-xs text-gray-600">Поиск</Label>
+            <Label className="text-xs text-muted-foreground">Поиск</Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Поиск..."
                 value={searchQuery}
@@ -457,33 +457,33 @@ export function Payments() {
       {/* Таблица */}
       <Card className="p-6">
         {!payments || payments.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted-foreground">
             Платежей не найдено. Создайте первый платёж.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Дата</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Тип</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Счёт</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Договор</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Категория</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Сумма (Gross)</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">НДС</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Статус</th>
-                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Документ</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Дата</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Тип</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Счёт</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Договор</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Категория</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Сумма (Gross)</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">НДС</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Статус</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Документ</th>
                 </tr>
               </thead>
               <tbody>
                 {payments.map((payment) => (
                   <tr 
                     key={payment.id} 
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="border-b border-border hover:bg-muted transition-colors cursor-pointer"
                     onClick={() => setSelectedPayment(payment)}
                   >
-                    <td className="py-3 px-4 text-sm text-gray-600">{formatDate(payment.payment_date)}</td>
+                    <td className="py-3 px-4 text-sm text-muted-foreground">{formatDate(payment.payment_date)}</td>
                     <td className="py-3 px-4 text-sm">
                       <Badge className={getPaymentTypeBadge(payment.payment_type)}>
                         {payment.payment_type === 'income' ? (
@@ -494,20 +494,20 @@ export function Payments() {
                         {getPaymentTypeLabel(payment.payment_type)}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{payment.account_name}</td>
+                    <td className="py-3 px-4 text-sm text-muted-foreground">{payment.account_name}</td>
                     <td className="py-3 px-4 text-sm">
                       {payment.contract_name ? (
                         <div>
                           <div className="font-medium">{payment.contract_name}</div>
-                          <div className="text-xs text-gray-500">{payment.contract_number}</div>
+                          <div className="text-xs text-muted-foreground">{payment.contract_number}</div>
                         </div>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{payment.category_name}</td>
+                    <td className="py-3 px-4 text-sm text-muted-foreground">{payment.category_name}</td>
                     <td className="py-3 px-4 text-sm text-right font-medium">{formatAmount(payment.amount_gross)} ₽</td>
-                    <td className="py-3 px-4 text-sm text-right text-gray-600">{formatAmount(payment.vat_amount)} ₽</td>
+                    <td className="py-3 px-4 text-sm text-right text-muted-foreground">{formatAmount(payment.vat_amount)} ₽</td>
                     <td className="py-3 px-4 text-sm">
                       <Badge className={getStatusBadge(payment.status)}>
                         {getStatusLabel(payment.status)}
@@ -537,7 +537,7 @@ export function Payments() {
                               e.stopPropagation();
                               window.location.href = `/payment-registry`;
                             }}
-                            className="inline-flex items-center gap-1 text-blue-600"
+                            className="inline-flex items-center gap-1 text-primary"
                           >
                             <ExternalLink className="w-3 h-3" />
                             Реестр
@@ -556,7 +556,7 @@ export function Payments() {
         {paymentsResponse && paymentsResponse.count > 0 && (
           <div className="mt-6 flex items-center justify-between border-t pt-4">
             <div className="flex items-center gap-2">
-              <Label className="text-xs text-gray-600">Записей на странице:</Label>
+              <Label className="text-xs text-muted-foreground">Записей на странице:</Label>
               <Select
                 value={pageSize.toString()}
                 onValueChange={(value) => {
@@ -604,7 +604,7 @@ export function Payments() {
                     
                     return (
                       <div key={page} className="flex items-center gap-1">
-                        {showEllipsis && <span className="px-2 text-gray-400">...</span>}
+                        {showEllipsis && <span className="px-2 text-muted-foreground">...</span>}
                         <Button
                           variant={currentPage === page ? "default" : "outline"}
                           size="sm"
@@ -628,7 +628,7 @@ export function Payments() {
               </Button>
             </div>
 
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               Записи {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, paymentsResponse.count)} из {paymentsResponse.count}
             </div>
           </div>
@@ -637,10 +637,10 @@ export function Payments() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-gray-50 rounded-2xl p-8 w-[calc(100vw-4rem)] max-w-[1200px] max-h-[95vh] overflow-y-auto sm:max-w-[1200px]">
+        <DialogContent className="bg-muted rounded-2xl p-8 w-[calc(100vw-4rem)] max-w-[1200px] max-h-[95vh] overflow-y-auto sm:max-w-[1200px]">
           <DialogHeader className="mb-6">
             <DialogTitle className="text-2xl">Новый платёж</DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 mt-2">
+            <DialogDescription className="text-sm text-muted-foreground mt-2">
               Для расходных платежей PDF-счёт обрабатывается автоматически с помощью AI.
             </DialogDescription>
           </DialogHeader>
@@ -655,15 +655,15 @@ export function Payments() {
       {/* Payment Detail Dialog */}
       {selectedPayment && (
         <Dialog open={!!selectedPayment} onOpenChange={() => setSelectedPayment(null)}>
-          <DialogContent className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-card rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold mb-4">
                 Детали платежа
                 {selectedPayment.is_internal_transfer && (
-                  <Badge className="bg-blue-100 text-blue-700 ml-2">Внутренний перевод</Badge>
+                  <Badge className="bg-blue-100 dark:bg-blue-900/30 text-primary ml-2">Внутренний перевод</Badge>
                 )}
               </DialogTitle>
-              <DialogDescription className="text-sm text-gray-500">
+              <DialogDescription className="text-sm text-muted-foreground">
                 Подробная информация о платеже и связанных документах
               </DialogDescription>
             </DialogHeader>
@@ -671,21 +671,21 @@ export function Payments() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500">Дата</p>
+                  <p className="text-xs text-muted-foreground">Дата</p>
                   <p className="font-medium">{formatDate(selectedPayment.payment_date)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Тип</p>
+                  <p className="text-xs text-muted-foreground">Тип</p>
                   <Badge className={getPaymentTypeBadge(selectedPayment.payment_type)}>
                     {getPaymentTypeLabel(selectedPayment.payment_type)}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Счёт</p>
+                  <p className="text-xs text-muted-foreground">Счёт</p>
                   <p className="font-medium">{selectedPayment.account_name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Статус</p>
+                  <p className="text-xs text-muted-foreground">Статус</p>
                   <Badge className={getStatusBadge(selectedPayment.status)}>
                     {getStatusLabel(selectedPayment.status)}
                   </Badge>
@@ -693,21 +693,21 @@ export function Payments() {
                 {selectedPayment.contract_name && (
                   <>
                     <div>
-                      <p className="text-xs text-gray-500">Договор</p>
+                      <p className="text-xs text-muted-foreground">Договор</p>
                       <p className="font-medium">{selectedPayment.contract_name}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Номер договора</p>
+                      <p className="text-xs text-muted-foreground">Номер договора</p>
                       <p className="font-medium">{selectedPayment.contract_number}</p>
                     </div>
                   </>
                 )}
                 <div>
-                  <p className="text-xs text-gray-500">Категория</p>
+                  <p className="text-xs text-muted-foreground">Категория</p>
                   <p className="font-medium">{selectedPayment.category_name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Юр. лицо</p>
+                  <p className="text-xs text-muted-foreground">Юр. лицо</p>
                   <p className="font-medium">{selectedPayment.legal_entity_name}</p>
                 </div>
               </div>
@@ -716,15 +716,15 @@ export function Payments() {
                 <h4 className="text-sm font-medium mb-3">Суммы</h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <p className="text-xs text-gray-500">Сумма с НДС</p>
+                    <p className="text-xs text-muted-foreground">Сумма с НДС</p>
                     <p className="text-lg font-medium">{formatAmount(selectedPayment.amount_gross)} ₽</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Сумма без НДС</p>
+                    <p className="text-xs text-muted-foreground">Сумма без НДС</p>
                     <p className="text-lg font-medium">{formatAmount(selectedPayment.amount_net)} ₽</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">НДС</p>
+                    <p className="text-xs text-muted-foreground">НДС</p>
                     <p className="text-lg font-medium">{formatAmount(selectedPayment.vat_amount)} ₽</p>
                   </div>
                 </div>
@@ -732,7 +732,7 @@ export function Payments() {
 
               {selectedPayment.description && (
                 <div className="border-t pt-4">
-                  <p className="text-xs text-gray-500 mb-1">Описание</p>
+                  <p className="text-xs text-muted-foreground mb-1">Описание</p>
                   <p className="text-sm">{selectedPayment.description}</p>
                 </div>
               )}
@@ -741,7 +741,7 @@ export function Payments() {
                 <div className="border-t pt-4">
                   <div className="flex flex-col gap-2">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Группа перевода</p>
+                      <p className="text-xs text-muted-foreground mb-1">Группа перевода</p>
                       <p className="font-medium">{selectedPayment.internal_transfer_group || '—'}</p>
                     </div>
                     {selectedPayment.internal_transfer_group && (
@@ -785,14 +785,14 @@ export function Payments() {
 
               {selectedPayment.payment_registry && (
                 <div className="border-t pt-4">
-                  <p className="text-xs text-gray-500 mb-1">Создан из реестра</p>
+                  <p className="text-xs text-muted-foreground mb-1">Создан из реестра</p>
                   <p className="text-sm font-medium">Реестр платежей #{selectedPayment.payment_registry}</p>
                 </div>
               )}
 
               {selectedPayment.scan_file && (
                 <div className="border-t pt-4">
-                  <p className="text-xs text-gray-500 mb-2">Скан документа</p>
+                  <p className="text-xs text-muted-foreground mb-2">Скан документа</p>
                   <Button
                     variant="outline"
                     size="sm"
@@ -821,7 +821,7 @@ export function Payments() {
                 </div>
               )}
 
-              <div className="border-t pt-4 text-xs text-gray-500">
+              <div className="border-t pt-4 text-xs text-muted-foreground">
                 <p>Создан: {formatDate(selectedPayment.created_at)}</p>
                 <p>Обновлён: {formatDate(selectedPayment.updated_at)}</p>
               </div>

@@ -352,15 +352,15 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
               <button
                 key={value}
                 onClick={() => handleTypeSelect(value)}
-                className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-400 hover:bg-blue-50/50 transition-colors text-left group"
+                className="flex items-start gap-3 p-4 rounded-lg border border-border hover:border-blue-400 hover:bg-primary/10/50 transition-colors text-left group"
                 aria-label={title}
               >
-                <div className="p-2 rounded-md bg-gray-100 group-hover:bg-blue-100 transition-colors shrink-0">
-                  <Icon className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
+                <div className="p-2 rounded-md bg-muted group-hover:bg-blue-100 transition-colors shrink-0">
+                  <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 text-sm">{title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                  <p className="font-medium text-foreground text-sm">{title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
                 </div>
               </button>
             ))}
@@ -380,10 +380,10 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                   onClick={() => fileInputRef.current?.click()}
                   className={`mt-1.5 border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                     dragActive
-                      ? 'border-blue-400 bg-blue-50'
+                      ? 'border-blue-400 bg-primary/10'
                       : invoiceFile
-                        ? 'border-green-300 bg-green-50'
-                        : 'border-gray-300 hover:border-gray-400'
+                        ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
+                        : 'border-border hover:border-foreground/30'
                   }`}
                   role="button"
                   tabIndex={0}
@@ -392,11 +392,11 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                     if (e.key === 'Enter') fileInputRef.current?.click();
                   }}
                 >
-                  <Upload className="h-6 w-6 mx-auto mb-2 text-gray-400" />
+                  <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
                   {invoiceFile ? (
                     <p className="text-sm text-green-700">{invoiceFile.name}</p>
                   ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Перетащите файл или нажмите для выбора
                     </p>
                   )}
@@ -587,7 +587,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                   <button
                     type="button"
                     onClick={() => setVatManual(!vatManual)}
-                    className="ml-2 text-xs text-blue-600 hover:underline"
+                    className="ml-2 text-xs text-primary hover:underline"
                   >
                     {vatManual ? 'авто' : 'вручную'}
                   </button>
@@ -612,7 +612,7 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
                 <Input
                   value={amountNet}
                   readOnly
-                  className="mt-1.5 bg-gray-50"
+                  className="mt-1.5 bg-muted"
                   tabIndex={-1}
                   aria-label="Сумма без НДС"
                 />
@@ -714,9 +714,9 @@ export const InvoiceCreateDialog = ({ open, onOpenChange }: InvoiceCreateDialogP
             )}
 
             {balanceWarning && (
-              <Alert className="border-yellow-300 bg-yellow-50">
+              <Alert className="border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20">
                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                <AlertTitle className="text-yellow-800">Внимание</AlertTitle>
+                <AlertTitle className="text-yellow-800 dark:text-yellow-400">Внимание</AlertTitle>
                 <AlertDescription className="text-yellow-700">
                   {balanceWarning}
                 </AlertDescription>

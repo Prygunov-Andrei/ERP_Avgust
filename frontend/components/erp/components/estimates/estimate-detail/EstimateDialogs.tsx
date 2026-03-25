@@ -232,7 +232,7 @@ export function CharacteristicDialog({ open, onOpenChange, editing, form, onForm
           </div>
 
           {editing?.is_auto_calculated && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+            <div className="bg-yellow-50 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-sm text-yellow-800 dark:text-yellow-400">
               При редактировании автоматической характеристики она станет ручной и больше не будет обновляться автоматически.
             </div>
           )}
@@ -355,20 +355,20 @@ export function VersionHistoryDialog({ open, onOpenChange, versions, estimateNum
               <div
                 key={version.id}
                 onClick={() => onSelectVersion(version.id)}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted cursor-pointer transition-colors"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900">{version.number}</span>
-                    <span className="text-sm text-gray-500">v{version.version_number}</span>
+                    <span className="font-medium text-foreground">{version.number}</span>
+                    <span className="text-sm text-muted-foreground">v{version.version_number}</span>
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">{version.name}</div>
+                  <div className="text-sm text-muted-foreground mt-1">{version.name}</div>
                 </div>
                 <Button variant="ghost" size="sm">Открыть</Button>
               </div>
             ))
           ) : (
-            <p className="text-center text-gray-500 py-8">Нет других версий</p>
+            <p className="text-center text-muted-foreground py-8">Нет других версий</p>
           )}
         </div>
       </DialogContent>
@@ -408,8 +408,8 @@ export function DeleteEstimateDialog({
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <Label className="text-sm text-gray-600">
-              Для подтверждения введите название сметы: <span className="font-semibold text-gray-900">{estimateName}</span>
+            <Label className="text-sm text-muted-foreground">
+              Для подтверждения введите название сметы: <span className="font-semibold text-foreground">{estimateName}</span>
             </Label>
             <Input
               className="mt-2"

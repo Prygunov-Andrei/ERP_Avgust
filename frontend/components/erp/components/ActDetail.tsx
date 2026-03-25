@@ -81,10 +81,10 @@ export function ActDetail() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'draft': return 'bg-gray-100 text-gray-700';
-      case 'signed': return 'bg-green-100 text-green-700';
-      case 'cancelled': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'draft': return 'bg-muted text-foreground';
+      case 'signed': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+      case 'cancelled': return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -110,7 +110,7 @@ export function ActDetail() {
   if (error || !act) {
     return (
       <div className="p-8">
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl">
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">
           Ошибка загрузки: {(error as Error)?.message || 'Акт не найден'}
         </div>
       </div>
@@ -139,7 +139,7 @@ export function ActDetail() {
         </div>
 
         {/* Main Info Card */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+        <div className="bg-card border border-border rounded-xl p-6 mb-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
@@ -148,23 +148,23 @@ export function ActDetail() {
                   {getStatusLabel(act.status)}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <FileText className="w-4 h-4" />
-                <Link to={`/contracts/${act.contract}`} className="hover:text-blue-600 hover:underline">
+                <Link to={`/contracts/${act.contract}`} className="hover:text-primary hover:underline">
                   Договор: {act.contract_number}
                 </Link>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-500 mb-1">Сумма с НДС</div>
-              <div className="text-2xl font-semibold text-gray-900">
+              <div className="text-sm text-muted-foreground mb-1">Сумма с НДС</div>
+              <div className="text-2xl font-semibold text-foreground">
                 {formatAmount(act.amount_gross)} ₽
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+          <div className="flex items-center gap-3 pt-4 border-t border-border">
             {act.status === 'draft' && (
               <Button
                 onClick={handleSign}
@@ -196,7 +196,7 @@ export function ActDetail() {
               onClick={handleDelete}
               variant="outline"
               size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 dark:bg-red-900/20"
               disabled={deleteMutation.isPending}
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -229,7 +229,7 @@ export function ActDetail() {
                       {formatDate(act.due_date)}
                     </span>
                     {isOverdue() && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 rounded">
                         Просрочен
                       </span>
                     )}
@@ -247,7 +247,7 @@ export function ActDetail() {
             
             {/* Предупреждение о просрочке */}
             {isOverdue() && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 dark:border-red-800 rounded-lg">
                 <div className="flex items-start gap-2">
                   <span className="text-red-600 text-lg">⚠️</span>
                   <div>
@@ -283,7 +283,7 @@ export function ActDetail() {
         {act.description && (
           <Card className="p-6 mt-6">
             <h3 className="text-lg font-semibold mb-4">Описание работ</h3>
-            <p className="text-gray-700 whitespace-pre-wrap">{act.description}</p>
+            <p className="text-foreground whitespace-pre-wrap">{act.description}</p>
           </Card>
         )}
 
@@ -292,8 +292,8 @@ export function ActDetail() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Распределение платежей</h3>
             <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-500">
-                Оплачено: <span className="font-semibold text-gray-900">{formatAmount(totalAllocated.toString())} ₽</span> из {formatAmount(act.amount_gross)} ₽
+              <div className="text-sm text-muted-foreground">
+                Оплачено: <span className="font-semibold text-foreground">{formatAmount(totalAllocated.toString())} ₽</span> из {formatAmount(act.amount_gross)} ₽
               </div>
             </div>
           </div>
@@ -301,7 +301,7 @@ export function ActDetail() {
           {/* Progress Bar */}
           <div className="mb-6">
             <Progress value={paidPercentage} className="h-2" />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
               <span>0%</span>
               <span className="font-semibold">{paidPercentage.toFixed(1)}%</span>
               <span>100%</span>
@@ -311,32 +311,32 @@ export function ActDetail() {
           {act.allocations && act.allocations.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Платеж
                     </th>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Дата платежа
                     </th>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Сумма покрытия
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {act.allocations.map((allocation) => (
-                    <tr key={allocation.id} className="hover:bg-gray-50">
+                    <tr key={allocation.id} className="hover:bg-muted">
                       <td className="px-4 py-2.5">
-                        <div className="text-sm text-gray-900">{allocation.payment_description}</div>
+                        <div className="text-sm text-foreground">{allocation.payment_description}</div>
                       </td>
                       <td className="px-4 py-2.5 whitespace-nowrap">
-                        <div className="text-xs text-gray-500">{formatDate(allocation.payment_date)}</div>
+                        <div className="text-xs text-muted-foreground">{formatDate(allocation.payment_date)}</div>
                       </td>
                       <td className="px-4 py-2.5 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-4 h-4 text-green-600" />
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-foreground">
                             {formatAmount(allocation.amount)} ₽
                           </div>
                         </div>
@@ -347,9 +347,9 @@ export function ActDetail() {
               </table>
             </div>
           ) : (
-            <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-8 text-center">
-              <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Платежи не распределены</p>
+            <div className="bg-muted border-2 border-dashed border-border rounded-xl p-8 text-center">
+              <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Платежи не распределены</p>
             </div>
           )}
         </Card>
@@ -420,8 +420,8 @@ interface InfoFieldProps {
 function InfoField({ label, value, className = '' }: InfoFieldProps) {
   return (
     <div>
-      <div className="text-sm text-gray-500 mb-1">{label}</div>
-      <div className={`text-sm text-gray-900 ${className}`}>{value}</div>
+      <div className="text-sm text-muted-foreground mb-1">{label}</div>
+      <div className={`text-sm text-foreground ${className}`}>{value}</div>
     </div>
   );
 }
@@ -516,7 +516,7 @@ function ActEditForm({ act, onSuccess }: ActEditFormProps) {
           className="mt-1.5"
           min={formData.date}
         />
-        <p className="text-xs text-gray-500 mt-1">Дата, до которой должен быть оплачен акт</p>
+        <p className="text-xs text-muted-foreground mt-1">Дата, до которой должен быть оплачен акт</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

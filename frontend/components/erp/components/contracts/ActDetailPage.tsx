@@ -12,10 +12,10 @@ import { ArrowLeft, Loader2, CheckCircle, FileSignature } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  draft: { label: 'Черновик', color: 'bg-gray-100 text-gray-800' },
-  agreed: { label: 'Согласован', color: 'bg-blue-100 text-blue-800' },
-  signed: { label: 'Подписан', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Отменён', color: 'bg-red-100 text-red-800' },
+  draft: { label: 'Черновик', color: 'bg-muted text-foreground' },
+  agreed: { label: 'Согласован', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' },
+  signed: { label: 'Подписан', color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' },
+  cancelled: { label: 'Отменён', color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' },
 };
 
 const ACT_TYPE_MAP: Record<string, string> = {
@@ -115,22 +115,22 @@ export const ActDetailPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-card rounded-lg border p-4">
           <div className="text-sm text-muted-foreground">Сумма с НДС</div>
           <div className="text-xl font-bold">{formatCurrency(act.amount_gross)}</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-card rounded-lg border p-4">
           <div className="text-sm text-muted-foreground">НДС</div>
           <div className="text-xl font-bold">{formatCurrency(act.vat_amount)}</div>
         </div>
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-card rounded-lg border p-4">
           <div className="text-sm text-muted-foreground">Неоплачено</div>
           <div className="text-xl font-bold text-amber-600">{formatCurrency(act.unpaid_amount)}</div>
         </div>
       </div>
 
       {act.description && (
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-card rounded-lg border p-4">
           <div className="text-sm text-muted-foreground mb-1">Описание</div>
           <p>{act.description}</p>
         </div>

@@ -14,7 +14,7 @@ export default async function ResourcesPage() {
   return (
     <PublicLayout>
       <section>
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        <h1 className="mb-8 text-3xl font-bold text-foreground">
           Ресурсы и источники
         </h1>
 
@@ -22,13 +22,13 @@ export default async function ResourcesPage() {
           {data.map((resource) => (
             <article
               key={resource.id}
-              className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow"
+              className="rounded-lg border border-border bg-card p-5 text-card-foreground transition-shadow hover:shadow-md"
             >
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-card-foreground">
                 {resource.name}
               </h2>
               {resource.description && (
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {resource.description}
                 </p>
               )}
@@ -37,7 +37,7 @@ export default async function ResourcesPage() {
                   href={resource.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-block text-sm text-blue-600 hover:underline"
+                  className="mt-3 inline-block text-sm text-primary hover:underline"
                 >
                   Перейти на сайт &rarr;
                 </a>

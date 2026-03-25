@@ -1,9 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Placeholder, Spinner } from '@telegram-apps/telegram-ui';
-import { getGeolocation, hapticNotification } from '@/lib/telegram';
+import { getGeolocation, hapticNotification, scanQrCode } from '@/lib/telegram';
 import { registerForShift } from '@/api/client';
-import WebApp from '@twa-dev/sdk';
 
 type RegistrationState = 'idle' | 'locating' | 'registering' | 'success' | 'success_geo_warning' | 'error';
 
@@ -20,7 +19,6 @@ const forceWebviewRecovery = () => {
   document.body.style.opacity = '0.99';
   requestAnimationFrame(() => {
     document.body.style.opacity = '1';
-    WebApp.expand();
   });
 };
 
@@ -29,19 +27,6 @@ export const RegisterPage = ({ workerName }: RegisterPageProps) => {
   const [state, setState] = useState<RegistrationState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const scanningRef = useRef(false);
-
-  // Подписываемся на событие закрытия QR-сканера для восстановления webview
-  useEffect(() => {
-    const handleScanClosed = () => {
-      scanningRef.current = false;
-      forceWebviewRecovery();
-    };
-
-    WebApp.onEvent('scanQrPopupClosed', handleScanClosed);
-    return () => {
-      WebApp.offEvent('scanQrPopupClosed', handleScanClosed);
-    };
-  }, []);
 
   const processQrData = useCallback(async (qrData: string) => {
     try {
@@ -76,26 +61,20 @@ export const RegisterPage = ({ workerName }: RegisterPageProps) => {
     }
   }, []);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (scanningRef.current) return;
     scanningRef.current = true;
 
     try {
-      WebApp.showScanQrPopup(
-        { text: 'Наведите камеру на QR-код смены' },
-        (data: string) => {
-          if (data) {
-            scanningRef.current = false;
-            WebApp.closeScanQrPopup();
-            processQrData(data);
-            return true;
-          }
-        },
-      );
-    } catch {
+      const qrData = await scanQrCode();
       scanningRef.current = false;
+      forceWebviewRecovery();
+      await processQrData(qrData);
+    } catch (error) {
+      scanningRef.current = false;
+      forceWebviewRecovery();
       setState('error');
-      setErrorMessage('QR-сканер недоступен');
+      setErrorMessage(error instanceof Error ? error.message : 'QR-сканер недоступен');
       hapticNotification('error');
     }
   };

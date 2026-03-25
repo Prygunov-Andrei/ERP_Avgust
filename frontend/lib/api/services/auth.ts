@@ -12,7 +12,7 @@ interface User {
   [key: string]: unknown;
 }
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = '/api/erp';
 
 export function createAuthService(_request: RequestFn) {
   return {

@@ -43,7 +43,7 @@ export function PositionRecordsTab({ employee, legalEntities }: PositionRecordsT
       </div>
 
       {showPositionForm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+        <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Юридическое лицо *</Label>
@@ -68,22 +68,22 @@ export function PositionRecordsTab({ employee, legalEntities }: PositionRecordsT
 
       <div className="space-y-3">
         {employee.positions.length === 0 ? (
-          <p className="text-gray-500 text-sm text-center py-4">Нет записей о должностях</p>
+          <p className="text-muted-foreground text-sm text-center py-4">Нет записей о должностях</p>
         ) : (
           employee.positions.map((pos) => (
-            <div key={pos.id} className={`border rounded-xl p-4 ${pos.is_current ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white'}`}>
+            <div key={pos.id} className={`border rounded-xl p-4 ${pos.is_current ? 'border-green-300 bg-green-50 dark:bg-green-900/20' : 'border-border bg-card'}`}>
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold">{pos.position_title}</h4>
                     {pos.is_current && (<span className="text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full">Текущая</span>)}
                   </div>
-                  <p className="text-sm text-gray-600 flex items-center gap-1 mt-1"><Building2 className="w-3.5 h-3.5" />{pos.legal_entity_name}</p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Building2 className="w-3.5 h-3.5" />{pos.legal_entity_name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
                     {new Date(pos.start_date).toLocaleDateString('ru-RU')}
                     {pos.end_date ? ` — ${new Date(pos.end_date).toLocaleDateString('ru-RU')}` : ' — н.в.'}
                   </p>
-                  {pos.order_number && (<p className="text-xs text-gray-400 mt-1">Приказ: {pos.order_number}</p>)}
+                  {pos.order_number && (<p className="text-xs text-muted-foreground mt-1">Приказ: {pos.order_number}</p>)}
                 </div>
               </div>
             </div>

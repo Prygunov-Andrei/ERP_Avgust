@@ -7,34 +7,41 @@ const nextConfig = {
 
   async rewrites() {
     const backendUrl = process.env.BACKEND_API_URL || 'http://backend:8000';
-    const hvacUrl = process.env.HVAC_API_URL || 'http://hvac-backend:8001';
     const minioUrl = process.env.MINIO_URL || 'http://minio:9000';
+    // Для локальной разработки: медиа новостей/HVAC берётся с прод-сервера,
+    // т.к. файлы физически существуют только там.
+    // На продакшне PROD_MEDIA_URL не задаётся — всё идёт через backendUrl.
+    const prodMediaUrl = process.env.PROD_MEDIA_URL || backendUrl;
 
     return [
       // ERP API
       { source: '/api/v1/:path*', destination: `${backendUrl}/api/v1/:path*` },
       // HVAC API
-      { source: '/api/hvac/:path*', destination: `${hvacUrl}/api/hvac/:path*` },
+      { source: '/api/hvac/:path*', destination: `${backendUrl}/api/v1/hvac/public/:path*` },
       // Public portal API
       { source: '/api/public/:path*', destination: `${backendUrl}/api/public/:path*` },
       // Django admin
       { source: '/admin/:path*', destination: `${backendUrl}/admin/:path*` },
-      { source: '/hvac-admin/:path*', destination: `${hvacUrl}/hvac-admin/:path*` },
-      // Static/media
+      { source: '/hvac-admin/:path*', destination: `${backendUrl}/api/v1/hvac/admin/:path*` },
+      // Static/media — news media с прод-сервера (файлы не существуют локально)
+      { source: '/media/news/:path*', destination: `${prodMediaUrl}/media/news/:path*` },
+      { source: '/hvac-media/:path*', destination: `${prodMediaUrl}/hvac-media/:path*` },
+      { source: '/hvac-static/:path*', destination: `${prodMediaUrl}/hvac-static/:path*` },
+      // Остальные media/static — локальный backend (product_images, projects и т.д.)
       { source: '/static/:path*', destination: `${backendUrl}/static/:path*` },
       { source: '/media/:path*', destination: `${backendUrl}/media/:path*` },
-      { source: '/hvac-media/:path*', destination: `${hvacUrl}/hvac-media/:path*` },
-      { source: '/hvac-static/:path*', destination: `${hvacUrl}/hvac-static/:path*` },
       // MinIO files
       { source: '/files/:path*', destination: `${minioUrl}/files/:path*` },
     ];
   },
 
+  devIndicators: false,
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'hvac-info.com' },
       { protocol: 'http', hostname: 'localhost' },
-      { protocol: 'http', hostname: 'hvac-backend' },
+      { protocol: 'http', hostname: 'backend' },
     ],
   },
 };

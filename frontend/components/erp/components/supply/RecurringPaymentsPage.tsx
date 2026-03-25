@@ -238,7 +238,7 @@ export function RecurringPaymentsPage() {
                       {formatDate(p.next_generation_date)}
                     </td>
                     <td className="p-3 text-center">
-                      <Badge className={p.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}>
+                      <Badge className={p.is_active ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-muted text-muted-foreground'}>
                         {p.is_active ? 'Да' : 'Нет'}
                       </Badge>
                     </td>

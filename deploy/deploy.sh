@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "=========================================="
 echo "Full Deployment Script"
@@ -19,9 +19,39 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
+COMPOSE=(docker compose -f docker-compose.prod.yml)
 
-echo -e "${GREEN}[1/9] Pulling latest code from GitHub...${NC}"
-git pull origin main
+wait_for_http() {
+    local url="$1"
+    local label="$2"
+    local attempts="${3:-30}"
+    local delay="${4:-2}"
+
+    for ((i=1; i<=attempts; i++)); do
+        if curl -fsS "$url" >/dev/null 2>&1; then
+            echo -e "${GREEN}${label} OK${NC}"
+            return 0
+        fi
+        sleep "$delay"
+    done
+
+    echo -e "${RED}${label} failed: ${url}${NC}"
+    return 1
+}
+
+run_backend_check() {
+    local description="$1"
+    shift
+    echo -e "${GREEN}${description}${NC}"
+    "${COMPOSE[@]}" exec -T backend "$@"
+}
+
+echo -e "${GREEN}[1/9] Syncing application code...${NC}"
+if [ "${SKIP_GIT_PULL:-0}" = "1" ]; then
+    echo -e "${YELLOW}SKIP_GIT_PULL=1, using current server workspace without git pull.${NC}"
+else
+    git pull origin main
+fi
 
 # Проверка критических переменных окружения
 MISSING_SECRETS=0
@@ -50,43 +80,51 @@ if [ "$MISSING_SECRETS" -eq 1 ]; then
 fi
 
 echo -e "${GREEN}[2/9] Backing up database before deploy...${NC}"
-docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U "${DB_USER:-finans_user}" "${DB_NAME:-finans_assistant_prod}" > "/opt/backups/finans_assistant/pre_deploy_$(date +%Y%m%d_%H%M%S).sql" 2>/dev/null || echo -e "${YELLOW}Warning: Backup failed (DB may not be running yet)${NC}"
+./deploy/backup.sh || echo -e "${YELLOW}Warning: Full backup failed (services may not be running yet)${NC}"
 
 echo -e "${GREEN}[3/9] Stopping existing containers...${NC}"
-docker compose -f docker-compose.prod.yml down
+"${COMPOSE[@]}" down --remove-orphans
 
 echo -e "${GREEN}[4/9] Building Docker images...${NC}"
-docker compose -f docker-compose.prod.yml build --no-cache
+"${COMPOSE[@]}" build --no-cache
 
 echo -e "${GREEN}[5/9] Starting containers...${NC}"
-docker compose -f docker-compose.prod.yml up -d
+"${COMPOSE[@]}" up -d
 
 echo -e "${GREEN}[6/9] Waiting for services to be healthy...${NC}"
-sleep 30
+wait_for_http "http://localhost:8000/api/v1/health/" "Backend health"
 
 echo -e "${GREEN}[7/9] Running database migrations...${NC}"
-docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
+"${COMPOSE[@]}" exec -T backend python manage.py migrate --noinput
 
 echo -e "${GREEN}[7.1/9] Настройка LLM-провайдеров...${NC}"
-docker compose -f docker-compose.prod.yml exec -T backend python manage.py setup_providers
+"${COMPOSE[@]}" exec -T backend python manage.py setup_providers
 
 echo -e "${GREEN}[7.2/9] Collecting static files...${NC}"
-docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
+"${COMPOSE[@]}" exec -T backend python manage.py collectstatic --noinput
+
+run_backend_check "[7.3/9] Django system checks..." python manage.py check
+run_backend_check "[7.4/9] HVAC smoke checks..." python manage.py hvac_api_smoke --skip-feedback-write
 
 echo -e "${GREEN}[8/9] Checking service status...${NC}"
-docker compose -f docker-compose.prod.yml ps
+"${COMPOSE[@]}" ps
 
 echo -e "${GREEN}[9/9] Testing backend health...${NC}"
-sleep 5
-curl -sf http://localhost:8000/api/schema/ >/dev/null 2>&1 && echo -e "${GREEN}Backend OK${NC}" || echo -e "${YELLOW}Warning: Backend health check failed${NC}"
-curl -sf http://localhost:3000/ >/dev/null 2>&1 && echo -e "${GREEN}Frontend OK${NC}" || echo -e "${YELLOW}Warning: Frontend health check failed${NC}"
+wait_for_http "http://localhost:8000/api/schema/" "Backend schema"
+wait_for_http "http://localhost:3000/" "Frontend root" 40 3
+
+echo -e "${GREEN}[9.1/9] Cleaning unused Docker artifacts...${NC}"
+docker container prune -f >/dev/null 2>&1 || true
+docker image prune -af >/dev/null 2>&1 || true
+docker builder prune -af >/dev/null 2>&1 || true
 
 echo ""
 echo -e "${GREEN}Deployment completed!${NC}"
 echo ""
 echo "Services status:"
-docker compose -f docker-compose.prod.yml ps
+"${COMPOSE[@]}" ps
 echo ""
 echo "To view logs: docker compose -f docker-compose.prod.yml logs -f [service]"
 echo "To restart: docker compose -f docker-compose.prod.yml restart [service]"
+echo "Для локальной разработки с production DB используйте SSH-туннель на 127.0.0.1:5432 сервера."
 echo ""

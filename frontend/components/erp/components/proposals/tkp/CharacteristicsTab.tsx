@@ -111,9 +111,9 @@ export function CharacteristicsTab({ tkpId, characteristics }: CharacteristicsTa
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-gray-900">Характеристики</h2>
+        <h2 className="text-foreground">Характеристики</h2>
         {!isAdding && (
           <Button
             onClick={() => setIsAdding(true)}
@@ -128,7 +128,7 @@ export function CharacteristicsTab({ tkpId, characteristics }: CharacteristicsTa
       {isAdding && (
         <form
           onSubmit={handleSubmit}
-          className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
+          className="mb-6 p-4 bg-muted rounded-lg border border-border"
         >
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
@@ -173,7 +173,7 @@ export function CharacteristicsTab({ tkpId, characteristics }: CharacteristicsTa
             <Button
               type="button"
               onClick={handleCancel}
-              className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+              className="bg-muted text-foreground hover:bg-muted"
             >
               Отмена
             </Button>
@@ -182,30 +182,30 @@ export function CharacteristicsTab({ tkpId, characteristics }: CharacteristicsTa
       )}
 
       {characteristics.length === 0 && !isAdding ? (
-        <div className="text-center py-12 text-gray-500">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <div className="text-center py-12 text-muted-foreground">
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p>Характеристики не добавлены</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-y border-gray-200">
+            <thead className="bg-muted border-y border-border">
               <tr>
-                <th className="px-4 py-3 text-left text-gray-600">Название</th>
-                <th className="px-4 py-3 text-right text-gray-600">Сумма закупки</th>
-                <th className="px-4 py-3 text-right text-gray-600">Сумма продажи</th>
-                <th className="px-4 py-3 text-right text-gray-600">Прибыль</th>
-                <th className="px-4 py-3 text-right text-gray-600">Действия</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Название</th>
+                <th className="px-4 py-3 text-right text-muted-foreground">Сумма закупки</th>
+                <th className="px-4 py-3 text-right text-muted-foreground">Сумма продажи</th>
+                <th className="px-4 py-3 text-right text-muted-foreground">Прибыль</th>
+                <th className="px-4 py-3 text-right text-muted-foreground">Действия</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border">
               {characteristics.map((char) => (
-                <tr key={char.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900">{char.name}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">
+                <tr key={char.id} className="hover:bg-muted">
+                  <td className="px-4 py-3 text-foreground">{char.name}</td>
+                  <td className="px-4 py-3 text-right text-foreground">
                     {formatCurrency(char.purchase_amount)}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-900">
+                  <td className="px-4 py-3 text-right text-foreground">
                     {formatCurrency(char.sale_amount)}
                   </td>
                   <td className="px-4 py-3 text-right text-green-700">
@@ -215,13 +215,13 @@ export function CharacteristicsTab({ tkpId, characteristics }: CharacteristicsTa
                     <div className="flex justify-end gap-2">
                       <Button
                         onClick={() => handleEdit(char)}
-                        className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3"
+                        className="bg-muted text-foreground hover:bg-muted px-3"
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
                         onClick={() => setDeleteCharTarget({ id: char.id, name: char.name })}
-                        className="bg-red-100 text-red-700 hover:bg-red-200 px-3"
+                        className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 px-3"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

@@ -336,3 +336,51 @@ export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength).trimEnd() + '…';
 }
+
+const INTERNAL_MEDIA_PREFIXES = ['/media/', '/hvac-media/', '/static/', '/hvac-static/'] as const;
+
+export function normalizePortalMediaUrl(path: string | null | undefined): string {
+  if (!path) return '';
+
+  if (path.startsWith('/')) {
+    return path;
+  }
+
+  try {
+    const url = new URL(path);
+    const internalPrefix = INTERNAL_MEDIA_PREFIXES.find((prefix) => url.pathname.startsWith(prefix));
+
+    if (internalPrefix) {
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    return path;
+  } catch {
+    return path;
+  }
+}
+
+export function extractFirstImageUrlFromHtml(html: string | null | undefined): string | null {
+  if (!html) return null;
+
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+
+  if (!match?.[1]) {
+    return null;
+  }
+
+  return normalizePortalMediaUrl(match[1]);
+}
+
+export function getNewsPrimaryImageUrl(news: {
+  media?: Array<{ file?: string | null }> | null;
+  body?: string | null;
+}): string | null {
+  const mediaImage = normalizePortalMediaUrl(news.media?.[0]?.file);
+
+  if (mediaImage) {
+    return mediaImage;
+  }
+
+  return extractFirstImageUrlFromHtml(news.body);
+}

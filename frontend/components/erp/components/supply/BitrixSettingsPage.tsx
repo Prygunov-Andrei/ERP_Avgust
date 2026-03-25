@@ -156,17 +156,17 @@ export function BitrixSettingsPage() {
       </div>
 
       {/* Webhook URL */}
-      <Card className="border-blue-200 bg-blue-50/50">
+      <Card className="border-primary/20 bg-primary/10/50">
         <CardContent className="py-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <AlertCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm font-medium">URL для входящего вебхука в Битрикс24</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Укажите этот URL в настройках исходящего вебхука Битрикс24 (событие <code className="bg-blue-100 px-1 rounded">onCrmDealUpdate</code>)
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <code className="bg-white border px-3 py-1.5 rounded text-sm font-mono flex-1">
+                <code className="bg-card border px-3 py-1.5 rounded text-sm font-mono flex-1">
                   {window.location.origin}/api/supply/webhook/bitrix/
                 </code>
                 <Button variant="outline" size="sm" onClick={handleCopyWebhookUrl}>
@@ -197,7 +197,7 @@ export function BitrixSettingsPage() {
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <div className={`w-3 h-3 rounded-full ${item.is_active ? 'bg-green-500' : 'bg-muted'}`} />
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{item.name}</p>

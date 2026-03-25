@@ -13,9 +13,9 @@ export function PriceLists() {
 
   const getStatusBadge = (status: string, statusDisplay: string) => {
     const badges = {
-      draft: 'bg-gray-100 text-gray-700',
-      active: 'bg-green-100 text-green-700',
-      archived: 'bg-gray-100 text-gray-500',
+      draft: 'bg-muted text-foreground',
+      active: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+      archived: 'bg-muted text-muted-foreground',
     };
     return (
       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${badges[status as keyof typeof badges] || badges.draft}`}>
@@ -35,8 +35,8 @@ export function PriceLists() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Прайс-листы</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Прайс-листы</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Управление прайс-листами и ставками
           </p>
         </div>
@@ -50,17 +50,17 @@ export function PriceLists() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-4">
         <div className="flex items-center gap-4">
           <div className="flex-1 max-w-xs">
-            <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">
+            <label htmlFor="statusFilter" className="text-sm font-medium text-foreground">
               Статус
             </label>
             <select
               id="statusFilter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">Все</option>
               <option value="draft">Черновик</option>
@@ -72,39 +72,39 @@ export function PriceLists() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-muted border-b border-border">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Номер
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Название
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Дата
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Статус
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Версия
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Работ
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Согласований
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
               <tr>
                 <td colSpan={7} className="px-6 py-12">
                   <div className="flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                    <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                   </div>
                 </td>
               </tr>
@@ -113,19 +113,19 @@ export function PriceLists() {
                 <tr
                   key={list.id}
                   onClick={() => navigate(`/price-lists/${list.id}`)}
-                  className="hover:bg-gray-50 cursor-pointer"
+                  className="hover:bg-muted cursor-pointer"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-900">{list.number}</span>
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium text-foreground">{list.number}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-900">{list.name || '—'}</span>
+                    <span className="text-sm text-foreground">{list.name || '—'}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="w-4 h-4" />
                       {formatDate(list.date)}
                     </div>
@@ -134,21 +134,21 @@ export function PriceLists() {
                     {getStatusBadge(list.status, list.status_display)}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-900">v{list.version_number}</span>
+                    <span className="text-sm text-foreground">v{list.version_number}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-900">{list.items_count}</span>
+                    <span className="text-sm text-foreground">{list.items_count}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-900">{list.agreements_count}</span>
+                    <span className="text-sm text-foreground">{list.agreements_count}</span>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center">
-                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Прайс-листы не найдены</p>
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Прайс-листы не найдены</p>
                   <Button
                     variant="outline"
                     onClick={() => navigate('/price-lists/create')}

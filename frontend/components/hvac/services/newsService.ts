@@ -1,48 +1,21 @@
 import axios from 'axios';
 import apiClient from './apiClient';
+import type {
+  HvacNews as News,
+  HvacNewsAuthor as NewsAuthor,
+  HvacNewsMedia as NewsMedia,
+  HvacPaginatedResponse as PaginatedResponse,
+  HvacSourceLanguage,
+} from '@/lib/api/types/hvac';
 
-export interface NewsMedia {
-  id: number;
-  file: string;
-  media_type: 'image' | 'video';
-}
-
-export interface NewsAuthor {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-}
-
-export interface News {
-  id: number;
-  title: string;
-  title_ru?: string;
-  title_en?: string;
-  title_de?: string;
-  title_pt?: string;
-  body: string;
-  body_ru?: string;
-  body_en?: string;
-  body_de?: string;
-  body_pt?: string;
-  pub_date: string;
-  status?: 'draft' | 'scheduled' | 'published';
-  source_language?: 'ru' | 'en' | 'de' | 'pt';
-  source_url?: string; // URL оригинального источника новости (для автоматически созданных новостей)
-  is_no_news_found?: boolean; // Признак записи "новостей не найдено"
-  created_at?: string;
-  updated_at?: string;
-  author?: NewsAuthor;
-  media?: NewsMedia[];
-}
+export type { News, NewsAuthor, NewsMedia, PaginatedResponse };
 
 export interface NewsCreateData {
   title: string;
   body: string;
   pub_date: string;
   status: 'draft' | 'scheduled' | 'published';
-  source_language: 'ru' | 'en' | 'de' | 'pt';
+  source_language: HvacSourceLanguage;
   auto_translate?: boolean;
   source_url?: string;
 }
@@ -52,7 +25,7 @@ export interface NewsUpdateData {
   body?: string;
   pub_date?: string;
   status?: 'draft' | 'scheduled' | 'published';
-  source_language?: 'ru' | 'en' | 'de' | 'pt';
+  source_language?: HvacSourceLanguage;
   auto_translate?: boolean;
   source_url?: string;
 }
@@ -65,13 +38,6 @@ export interface MediaUpload {
   file_size: number;
   uploaded_by: number;
   created_at: string;
-}
-
-export interface PaginatedResponse<T> {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: T[];
 }
 
 const newsService = {

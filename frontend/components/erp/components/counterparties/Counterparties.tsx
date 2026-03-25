@@ -170,8 +170,8 @@ export function Counterparties({ lockedFilter, lockedCreateType, pageTitle }: Co
         )}
 
         {selectedIds.size > 0 && (
-          <div className="flex items-center gap-3 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <span className="text-sm text-blue-700">Выбрано: {selectedIds.size}</span>
+          <div className="flex items-center gap-3 mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <span className="text-sm text-primary">Выбрано: {selectedIds.size}</span>
             <Button variant="destructive" size="sm" onClick={() => setBulkDeleteConfirm(true)} disabled={bulkDeleteMutation.isPending}>
               {bulkDeleteMutation.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Trash2 className="w-4 h-4 mr-1" />}
               Удалить выбранных
@@ -183,49 +183,49 @@ export function Counterparties({ lockedFilter, lockedCreateType, pageTitle }: Co
         {isLoading ? (
           <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
         ) : error ? (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl">Ошибка загрузки: {(error as Error).message}</div>
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl">Ошибка загрузки: {(error as Error).message}</div>
         ) : !filteredCounterparties || filteredCounterparties.length === 0 ? (
-          <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">{filter === 'all' ? 'Нет контрагентов' : 'Нет контрагентов в этой категории'}</p>
+          <div className="bg-muted border-2 border-dashed border-border rounded-xl p-12 text-center">
+            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">{filter === 'all' ? 'Нет контрагентов' : 'Нет контрагентов в этой категории'}</p>
             <Button onClick={() => setIsDialogOpen(true)} variant="outline"><Plus className="w-4 h-4 mr-2" />Добавить первого контрагента</Button>
           </div>
         ) : (
           <>
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
                     <th className="px-3 py-2.5 w-10"><Checkbox checked={filteredCounterparties.length > 0 && selectedIds.size === filteredCounterparties.length} onCheckedChange={toggleSelectAll} /></th>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">ИНН</th>
-                    {filter === 'all' && <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Тип</th>}
-                    {(filter === 'all' || filter === 'supplier' || filter === 'executor') && <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-36">Подтип</th>}
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Правовая форма</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Контакты</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Название</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-32">ИНН</th>
+                    {filter === 'all' && <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-40">Тип</th>}
+                    {(filter === 'all' || filter === 'supplier' || filter === 'executor') && <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-36">Подтип</th>}
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-24">Правовая форма</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Контакты</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {filteredCounterparties.map((counterparty: Counterparty) => (
-                    <tr key={counterparty.id} className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedIds.has(counterparty.id) ? 'bg-blue-50' : ''}`} onClick={() => navigate(`/counterparties/${counterparty.id}`)} tabIndex={0} role="link" aria-label={`Открыть карточку ${counterparty.name}`} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/counterparties/${counterparty.id}`); }}>
+                    <tr key={counterparty.id} className={`hover:bg-muted transition-colors cursor-pointer ${selectedIds.has(counterparty.id) ? 'bg-primary/10' : ''}`} onClick={() => navigate(`/counterparties/${counterparty.id}`)} tabIndex={0} role="link" aria-label={`Открыть карточку ${counterparty.name}`} onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/counterparties/${counterparty.id}`); }}>
                       <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}><Checkbox checked={selectedIds.has(counterparty.id)} onCheckedChange={() => toggleSelect(counterparty.id)} /></td>
-                      <td className="px-4 py-2.5"><div className="text-sm text-gray-900">{counterparty.name}</div>{counterparty.short_name && <div className="text-xs text-gray-500">{counterparty.short_name}</div>}</td>
-                      <td className="px-4 py-2.5 whitespace-nowrap"><div className="text-xs font-mono text-gray-500">{counterparty.inn}</div></td>
+                      <td className="px-4 py-2.5"><div className="text-sm text-foreground">{counterparty.name}</div>{counterparty.short_name && <div className="text-xs text-muted-foreground">{counterparty.short_name}</div>}</td>
+                      <td className="px-4 py-2.5 whitespace-nowrap"><div className="text-xs font-mono text-muted-foreground">{counterparty.inn}</div></td>
                       {filter === 'all' && (
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className={`px-2 py-0.5 text-xs font-medium rounded ${counterparty.type === 'customer' ? 'bg-green-100 text-green-700' : counterparty.type === 'potential_customer' ? 'bg-orange-100 text-orange-700' : counterparty.type === 'vendor' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>{getTypeLabel(counterparty.type)}</span>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded ${counterparty.type === 'customer' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : counterparty.type === 'potential_customer' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' : counterparty.type === 'vendor' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-900/30 text-primary'}`}>{getTypeLabel(counterparty.type)}</span>
                         </td>
                       )}
                       {(filter === 'all' || filter === 'supplier' || filter === 'executor') && (
                         <td className="px-4 py-2.5 whitespace-nowrap">
                           {(counterparty.type === 'vendor' || counterparty.type === 'both') ? (
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded ${counterparty.vendor_subtype === 'supplier' ? 'bg-orange-100 text-orange-700' : counterparty.vendor_subtype === 'executor' ? 'bg-indigo-100 text-indigo-700' : counterparty.vendor_subtype === 'both' ? 'bg-cyan-100 text-cyan-700' : 'bg-gray-100 text-gray-500'}`}>{getVendorSubtypeLabel(counterparty.vendor_subtype)}</span>
-                          ) : <span className="text-xs text-gray-400">—</span>}
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded ${counterparty.vendor_subtype === 'supplier' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' : counterparty.vendor_subtype === 'executor' ? 'bg-indigo-100 text-indigo-700' : counterparty.vendor_subtype === 'both' ? 'bg-cyan-100 text-cyan-700' : 'bg-muted text-muted-foreground'}`}>{getVendorSubtypeLabel(counterparty.vendor_subtype)}</span>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
                         </td>
                       )}
-                      <td className="px-4 py-2.5 whitespace-nowrap"><div className="text-xs text-gray-600">{getLegalFormLabel(counterparty.legal_form)}</div></td>
-                      <td className="px-4 py-2.5"><div className="text-xs text-gray-500 max-w-xs truncate">{counterparty.contact_info || '—'}</div></td>
+                      <td className="px-4 py-2.5 whitespace-nowrap"><div className="text-xs text-muted-foreground">{getLegalFormLabel(counterparty.legal_form)}</div></td>
+                      <td className="px-4 py-2.5"><div className="text-xs text-muted-foreground max-w-xs truncate">{counterparty.contact_info || '—'}</div></td>
                     </tr>
                   ))}
                 </tbody>
@@ -235,14 +235,14 @@ export function Counterparties({ lockedFilter, lockedCreateType, pageTitle }: Co
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-gray-500">Всего: {totalCount}</div>
+              <div className="text-sm text-muted-foreground">Всего: {totalCount}</div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => { setPage(p => Math.max(1, p - 1)); setSelectedIds(new Set()); }} disabled={page <= 1}><ChevronLeft className="w-4 h-4" /></Button>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
                     .reduce<(number | 'dots')[]>((acc, p, i, arr) => { if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('dots'); acc.push(p); return acc; }, [])
-                    .map((item, i) => item === 'dots' ? <span key={`dots-${i}`} className="px-1 text-gray-400">...</span> : <Button key={item} variant={page === item ? 'default' : 'outline'} size="sm" className="min-w-[32px]" onClick={() => { setPage(item); setSelectedIds(new Set()); }}>{item}</Button>)}
+                    .map((item, i) => item === 'dots' ? <span key={`dots-${i}`} className="px-1 text-muted-foreground">...</span> : <Button key={item} variant={page === item ? 'default' : 'outline'} size="sm" className="min-w-[32px]" onClick={() => { setPage(item); setSelectedIds(new Set()); }}>{item}</Button>)}
                 </div>
                 <Button variant="outline" size="sm" onClick={() => { setPage(p => Math.min(totalPages, p + 1)); setSelectedIds(new Set()); }} disabled={page >= totalPages}><ChevronRight className="w-4 h-4" /></Button>
               </div>

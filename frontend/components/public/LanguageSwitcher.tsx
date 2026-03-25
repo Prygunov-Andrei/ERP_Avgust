@@ -49,20 +49,20 @@ export function LanguageSwitcher() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 px-2 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-lg"
+        className="flex items-center gap-1 px-2 py-1.5 rounded-md text-foreground hover:bg-accent transition-colors text-lg"
         aria-label="Выбрать язык"
       >
         <span>{currentLang.flag}</span>
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-50 min-w-[140px]">
+        <div className="absolute right-0 mt-1 min-w-[140px] rounded-lg border border-border bg-popover text-popover-foreground shadow-lg py-1 z-50">
           {languages.map((lang) => (
             <button
               key={lang.code}
               onClick={() => switchLanguage(lang.code)}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                lang.code === current ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600' : 'text-gray-700 dark:text-gray-300'
+              className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                lang.code === current ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent'
               }`}
             >
               <span className="text-lg">{lang.flag}</span>

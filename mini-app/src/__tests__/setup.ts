@@ -25,6 +25,8 @@ vi.mock('@twa-dev/sdk', () => ({
       show: vi.fn(),
       hide: vi.fn(),
     },
+    onEvent: vi.fn(),
+    offEvent: vi.fn(),
     showScanQrPopup: vi.fn(),
     closeScanQrPopup: vi.fn(),
     showConfirm: vi.fn(),

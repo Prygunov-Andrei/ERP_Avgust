@@ -129,9 +129,9 @@ export function FrontOfWorkTab({ tkpId, frontOfWork }: FrontOfWorkTabProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-card rounded-lg shadow-sm border border-border p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-gray-900">Фронт работ</h2>
+        <h2 className="text-foreground">Фронт работ</h2>
         {!isAdding && (
           <Button
             onClick={() => setIsAdding(true)}
@@ -146,7 +146,7 @@ export function FrontOfWorkTab({ tkpId, frontOfWork }: FrontOfWorkTabProps) {
       {isAdding && (
         <form
           onSubmit={handleSubmit}
-          className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
+          className="mb-6 p-4 bg-muted rounded-lg border border-border"
         >
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
@@ -157,7 +157,7 @@ export function FrontOfWorkTab({ tkpId, frontOfWork }: FrontOfWorkTabProps) {
                 onChange={(e) => setFormData({ ...formData, front_item: e.target.value })}
                 required={!editingId}
                 disabled={!!editingId}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Выберите элемент</option>
                 {frontItems?.map((item) => (
@@ -193,7 +193,7 @@ export function FrontOfWorkTab({ tkpId, frontOfWork }: FrontOfWorkTabProps) {
             <Button
               type="button"
               onClick={handleCancel}
-              className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+              className="bg-muted text-foreground hover:bg-muted"
             >
               Отмена
             </Button>
@@ -202,40 +202,40 @@ export function FrontOfWorkTab({ tkpId, frontOfWork }: FrontOfWorkTabProps) {
       )}
 
       {frontOfWork.length === 0 && !isAdding ? (
-        <div className="text-center py-12 text-gray-500">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <div className="text-center py-12 text-muted-foreground">
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p>Фронт работ не добавлен</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-y border-gray-200">
+            <thead className="bg-muted border-y border-border">
               <tr>
-                <th className="px-4 py-3 text-left text-gray-600">Элемент</th>
-                <th className="px-4 py-3 text-left text-gray-600">Категория</th>
-                <th className="px-4 py-3 text-left text-gray-600">Когда (текст)</th>
-                <th className="px-4 py-3 text-left text-gray-600">Когда (дата)</th>
-                <th className="px-4 py-3 text-right text-gray-600">Действия</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Элемент</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Категория</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Когда (текст)</th>
+                <th className="px-4 py-3 text-left text-muted-foreground">Когда (дата)</th>
+                <th className="px-4 py-3 text-right text-muted-foreground">Действия</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border">
               {frontOfWork.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900">{item.front_item_name}</td>
-                  <td className="px-4 py-3 text-gray-600">{item.front_item_category}</td>
-                  <td className="px-4 py-3 text-gray-600">{item.when_text || "-"}</td>
-                  <td className="px-4 py-3 text-gray-600">{formatDateOrDash(item.when_date)}</td>
+                <tr key={item.id} className="hover:bg-muted">
+                  <td className="px-4 py-3 text-foreground">{item.front_item_name}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{item.front_item_category}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{item.when_text || "-"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{formatDateOrDash(item.when_date)}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
                       <Button
                         onClick={() => handleEdit(item)}
-                        className="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3"
+                        className="bg-muted text-foreground hover:bg-muted px-3"
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
                         onClick={() => setDeleteFrontTarget({ id: item.id, name: item.front_item_name })}
-                        className="bg-red-100 text-red-700 hover:bg-red-200 px-3"
+                        className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 px-3"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

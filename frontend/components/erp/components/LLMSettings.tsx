@@ -44,13 +44,13 @@ export function LLMSettings() {
   const getProviderColor = (type: string) => {
     switch (type) {
       case 'openai':
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
       case 'gemini':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-blue-100 dark:bg-blue-900/30 text-primary';
       case 'grok':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-muted text-foreground';
     }
   };
 
@@ -66,19 +66,19 @@ export function LLMSettings() {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl mb-1">Настройки LLM</h1>
-        <p className="text-gray-500 text-sm">
+        <p className="text-muted-foreground text-sm">
           Управление провайдерами для парсинга PDF-счетов
         </p>
       </div>
 
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
         <div className="flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <Sparkles className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm text-blue-900 font-medium mb-1">
               Важно: API-ключи настраиваются в переменных окружения сервера
             </p>
-            <p className="text-xs text-blue-700">
+            <p className="text-xs text-primary">
               Провайдеры с активными ключами отображаются как "Активен". 
               По умолчанию используется выбранный провайдер для парсинга счетов.
             </p>
@@ -88,11 +88,11 @@ export function LLMSettings() {
 
       {!providers || providers.length === 0 ? (
         <Card className="p-12 text-center">
-          <div className="text-gray-400 mb-2">
+          <div className="text-muted-foreground mb-2">
             <Sparkles className="w-12 h-12 mx-auto mb-3" />
           </div>
-          <p className="text-gray-600">Провайдеры не найдены</p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-muted-foreground">Провайдеры не найдены</p>
+          <p className="text-sm text-muted-foreground mt-1">
             Обратитесь к администратору для настройки LLM провайдеров
           </p>
         </Card>
@@ -116,21 +116,21 @@ export function LLMSettings() {
                     <h3 className="font-semibold text-lg">
                       {provider.provider_type_display}
                     </h3>
-                    <p className="text-xs text-gray-500">{provider.model_name}</p>
+                    <p className="text-xs text-muted-foreground">{provider.model_name}</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2 mb-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Статус:</span>
-                  <Badge className={provider.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                  <span className="text-xs text-muted-foreground">Статус:</span>
+                  <Badge className={provider.is_active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-muted text-foreground'}>
                     {provider.is_active ? 'Активен' : 'Неактивен'}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Переменная:</span>
-                  <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                  <span className="text-xs text-muted-foreground">Переменная:</span>
+                  <code className="text-xs bg-muted px-2 py-1 rounded">
                     {provider.env_key_name}
                   </code>
                 </div>
@@ -156,7 +156,7 @@ export function LLMSettings() {
               )}
 
               {provider.is_default && (
-                <div className="text-center text-sm text-gray-500 italic">
+                <div className="text-center text-sm text-muted-foreground italic">
                   Используется для парсинга
                 </div>
               )}
@@ -165,9 +165,9 @@ export function LLMSettings() {
         </div>
       )}
 
-      <div className="mt-8 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+      <div className="mt-8 p-4 bg-muted border border-border rounded-lg">
         <h3 className="text-sm font-medium mb-2">Как работает парсинг счетов?</h3>
-        <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
+        <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
           <li>При создании расходного платежа загружается PDF-файл</li>
           <li>Система отправляет файл выбранному LLM-провайдеру</li>
           <li>Провайдер извлекает данные: контрагента, суммы, товары</li>

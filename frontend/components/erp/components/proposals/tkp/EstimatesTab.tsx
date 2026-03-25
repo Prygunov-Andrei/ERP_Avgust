@@ -123,13 +123,13 @@ export function EstimatesTab({ tkp }: EstimatesTabProps) {
   const renderAddEstimatesDialog = () => (
     isAddDialogOpen && (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-gray-900">Добавить сметы в ТКП</h2>
+        <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+          <div className="p-6 border-b border-border">
+            <h2 className="text-foreground">Добавить сметы в ТКП</h2>
           </div>
           <div className="p-6 overflow-y-auto max-h-96">
             {availableEstimates.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-muted-foreground py-8">
                 Нет доступных смет для добавления
               </div>
             ) : (
@@ -137,7 +137,7 @@ export function EstimatesTab({ tkp }: EstimatesTabProps) {
                 {availableEstimates.map((estimate: { id: number; number?: string; name?: string; object_name?: string; project_name?: string; total_sale?: string }) => (
                   <label
                     key={estimate.id}
-                    className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                    className="flex items-start gap-3 p-3 border border-border rounded-lg hover:bg-muted cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -152,33 +152,33 @@ export function EstimatesTab({ tkp }: EstimatesTabProps) {
                       className="mt-1"
                     />
                     <div className="flex-1">
-                      <div className="text-gray-900">{estimate.name}</div>
-                      <div className="text-gray-500">Проект: {estimate.project_name}</div>
+                      <div className="text-foreground">{estimate.name}</div>
+                      <div className="text-muted-foreground">Проект: {estimate.project_name}</div>
                     </div>
                   </label>
                 ))}
               </div>
             )}
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-border">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={copyData}
                   onChange={(e) => setCopyData(e.target.checked)}
                 />
-                <span className="text-gray-700">
+                <span className="text-foreground">
                   Автоматически скопировать характеристики и фронт работ из смет
                 </span>
               </label>
             </div>
           </div>
-          <div className="p-6 border-t border-gray-200 flex justify-end gap-2">
+          <div className="p-6 border-t border-border flex justify-end gap-2">
             <Button
               onClick={() => {
                 setIsAddDialogOpen(false);
                 setSelectedEstimates([]);
               }}
-              className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+              className="bg-muted text-foreground hover:bg-muted"
             >
               Отмена
             </Button>
@@ -198,9 +198,9 @@ export function EstimatesTab({ tkp }: EstimatesTabProps) {
   if (tkp.estimates.length === 0 && tkp.estimate_sections.length === 0) {
     return (
       <>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
-          <div className="text-center text-gray-500">
-            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <div className="bg-card rounded-lg shadow-sm border border-border p-12">
+          <div className="text-center text-muted-foreground">
+            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p>Сметы не добавлены</p>
             <Button
               onClick={() => setIsAddDialogOpen(true)}
@@ -219,9 +219,9 @@ export function EstimatesTab({ tkp }: EstimatesTabProps) {
   return (
     <>
       <div className="space-y-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-gray-900">
+            <h2 className="text-foreground">
               Сметы в ТКП ({tkp.estimates.length})
             </h2>
             <div className="flex gap-2">
@@ -259,16 +259,16 @@ export function EstimatesTab({ tkp }: EstimatesTabProps) {
                 return (
                   <div
                     key={estimateId ?? 'unknown'}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                    className="border border-border rounded-lg p-4 hover:border-blue-300 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="text-gray-900">{estimateName}</h3>
-                        <p className="text-sm text-gray-500">{sections.length} {sections.length === 1 ? 'раздел' : sections.length < 5 ? 'раздела' : 'разделов'}</p>
+                        <h3 className="text-foreground">{estimateName}</h3>
+                        <p className="text-sm text-muted-foreground">{sections.length} {sections.length === 1 ? 'раздел' : sections.length < 5 ? 'раздела' : 'разделов'}</p>
                       </div>
                       <Button
                         onClick={() => handleRemoveEstimate(estimateId || sections[0]?.id, estimateName)}
-                        className="bg-red-100 text-red-700 hover:bg-red-200"
+                        className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200"
                         title="Удалить смету из ТКП"
                       >
                         <X className="w-4 h-4" />
@@ -276,23 +276,23 @@ export function EstimatesTab({ tkp }: EstimatesTabProps) {
                     </div>
                     <div className="space-y-1 mb-3">
                       {sections.map((section) => (
-                        <div key={section.id} className="flex items-center justify-between text-sm py-1 px-2 bg-gray-50 rounded">
-                          <span className="text-gray-700">{section.name}</span>
-                          <span className="text-gray-600">{formatCurrency(section.total_sale)}</span>
+                        <div key={section.id} className="flex items-center justify-between text-sm py-1 px-2 bg-muted rounded">
+                          <span className="text-foreground">{section.name}</span>
+                          <span className="text-muted-foreground">{formatCurrency(section.total_sale)}</span>
                         </div>
                       ))}
                     </div>
-                    <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-100">
+                    <div className="grid grid-cols-3 gap-4 pt-3 border-t border-border">
                       <div>
-                        <div className="text-gray-600">Продажа</div>
-                        <div className="text-gray-900">{formatCurrency(String(totalSale))}</div>
+                        <div className="text-muted-foreground">Продажа</div>
+                        <div className="text-foreground">{formatCurrency(String(totalSale))}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Закупка</div>
-                        <div className="text-gray-900">{formatCurrency(String(totalPurchase))}</div>
+                        <div className="text-muted-foreground">Закупка</div>
+                        <div className="text-foreground">{formatCurrency(String(totalPurchase))}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Прибыль</div>
+                        <div className="text-muted-foreground">Прибыль</div>
                         <div className="text-green-700">{formatCurrency(String(totalProfit))}</div>
                       </div>
                     </div>

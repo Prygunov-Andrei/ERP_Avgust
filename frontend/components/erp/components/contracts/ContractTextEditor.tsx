@@ -159,13 +159,13 @@ export const ContractTextEditor: React.FC<ContractTextEditorProps> = ({
             />
           </TabsContent>
           <TabsContent value="preview">
-            <div className="prose prose-sm max-w-none border rounded-md p-6 bg-white min-h-[400px]">
+            <div className="prose prose-sm max-w-none border rounded-md p-6 bg-card min-h-[400px]">
               <ReactMarkdown>{content || '*Пустой текст*'}</ReactMarkdown>
             </div>
           </TabsContent>
         </Tabs>
       ) : currentText ? (
-        <div className="prose prose-sm max-w-none border rounded-md p-6 bg-white">
+        <div className="prose prose-sm max-w-none border rounded-md p-6 bg-card">
           <ReactMarkdown>{currentText.content_md}</ReactMarkdown>
         </div>
       ) : (

@@ -112,7 +112,7 @@ export function ProductDetail() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <p className="text-gray-500">Товар не найден</p>
+          <p className="text-muted-foreground">Товар не найден</p>
           <Button
             variant="outline"
             onClick={() => navigate('/catalog/products')}
@@ -128,15 +128,15 @@ export function ProductDetail() {
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'new':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400';
       case 'verified':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400';
       case 'merged':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-foreground';
       case 'archived':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-foreground';
     }
   };
 
@@ -154,7 +154,7 @@ export function ProductDetail() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b bg-white">
+      <div className="p-6 border-b bg-card">
         <div className="flex items-center gap-4 mb-4">
           <Button
             variant="ghost"
@@ -177,12 +177,12 @@ export function ProductDetail() {
                 {product.status_display}
               </span>
               {product.is_service && (
-                <span className="px-2 py-1 rounded text-xs bg-purple-100 text-purple-800">
+                <span className="px-2 py-1 rounded text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
                   Услуга
                 </span>
               )}
             </div>
-            <div className="text-gray-600 space-y-1">
+            <div className="text-muted-foreground space-y-1">
               <div>Категория: {product.category_name || 'Не указана'}</div>
               <div>Единица измерения: {product.default_unit}</div>
               {product.brand && <div>Бренд: {product.brand}</div>}
@@ -210,7 +210,7 @@ export function ProductDetail() {
                 onClick={() => setIsArchiveDialogOpen(true)}
                 disabled={archiveMutation.isPending}
                 variant="outline"
-                className="text-red-600 hover:bg-red-50"
+                className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 dark:bg-red-900/20"
               >
                 <Archive className="w-4 h-4 mr-2" />
                 Архивировать
@@ -221,7 +221,7 @@ export function ProductDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b bg-white">
+      <div className="border-b bg-card">
         <div className="flex px-6">
           {([
             { key: 'info' as Tab, label: 'Информация' },
@@ -234,8 +234,8 @@ export function ProductDetail() {
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-3 border-b-2 transition ${
                 activeTab === tab.key
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  ? 'border-blue-600 text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -245,12 +245,12 @@ export function ProductDetail() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto bg-gray-50 p-6">
+      <div className="flex-1 overflow-auto bg-muted p-6">
         {activeTab === 'info' && (
           <div className="max-w-4xl space-y-6">
             {/* Галерея изображений */}
             {hasImages && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-card rounded-lg shadow p-6">
                 <h3 className="text-lg mb-4">Изображения</h3>
                 <div className="flex gap-3 overflow-x-auto pb-2">
                   {product.images.map((url: string, i: number) => (
@@ -268,15 +268,15 @@ export function ProductDetail() {
             )}
 
             {/* Основная информация */}
-            <div className="bg-white rounded-lg shadow p-6 space-y-6">
+            <div className="bg-card rounded-lg shadow p-6 space-y-6">
               <div>
                 <Label>Название</Label>
-                <div className="mt-1.5 text-gray-900">{product.name}</div>
+                <div className="mt-1.5 text-foreground">{product.name}</div>
               </div>
 
               <div>
                 <Label>Нормализованное название</Label>
-                <div className="mt-1.5 text-gray-600">{product.normalized_name}</div>
+                <div className="mt-1.5 text-muted-foreground">{product.normalized_name}</div>
               </div>
 
               <div>
@@ -335,7 +335,7 @@ export function ProductDetail() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="mt-1.5 text-gray-900">
+                  <div className="mt-1.5 text-foreground">
                     {product.category_path || product.category_name || 'Не указана'}
                   </div>
                 )}
@@ -344,24 +344,24 @@ export function ProductDetail() {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <Label>Единица измерения</Label>
-                  <div className="mt-1.5 text-gray-900">{product.default_unit}</div>
+                  <div className="mt-1.5 text-foreground">{product.default_unit}</div>
                 </div>
                 <div>
                   <Label>Тип</Label>
-                  <div className="mt-1.5 text-gray-900">
+                  <div className="mt-1.5 text-foreground">
                     {product.is_service ? 'Услуга' : 'Товар'}
                   </div>
                 </div>
                 {product.brand && (
                   <div>
                     <Label>Бренд</Label>
-                    <div className="mt-1.5 text-gray-900">{product.brand}</div>
+                    <div className="mt-1.5 text-foreground">{product.brand}</div>
                   </div>
                 )}
                 {product.series && (
                   <div>
                     <Label>Серия</Label>
-                    <div className="mt-1.5 text-gray-900">{product.series}</div>
+                    <div className="mt-1.5 text-foreground">{product.series}</div>
                   </div>
                 )}
               </div>
@@ -380,14 +380,14 @@ export function ProductDetail() {
               </div>
 
               {product.merged_into && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
-                  <div className="text-sm text-yellow-800">
+                <div className="p-4 bg-yellow-50 border border-yellow-200 dark:border-yellow-800 rounded">
+                  <div className="text-sm text-yellow-800 dark:text-yellow-400">
                     Этот товар объединён в товар #{product.merged_into}
                   </div>
                 </div>
               )}
 
-              <div className="pt-4 border-t text-sm text-gray-500">
+              <div className="pt-4 border-t text-sm text-muted-foreground">
                 <div>Создан: {formatDate(product.created_at)}</div>
                 <div>Обновлён: {formatDate(product.updated_at)}</div>
               </div>
@@ -395,22 +395,22 @@ export function ProductDetail() {
 
             {/* Описание */}
             {product.description && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-card rounded-lg shadow p-6">
                 <h3 className="text-lg mb-3">Описание</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{product.description}</p>
+                <p className="text-foreground whitespace-pre-wrap">{product.description}</p>
               </div>
             )}
 
             {/* Технические характеристики */}
             {hasTechSpecs && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-card rounded-lg shadow p-6">
                 <h3 className="text-lg mb-4">Технические характеристики</h3>
                 <table className="w-full">
                   <tbody>
                     {Object.entries(product.tech_specs).map(([key, value]) => (
                       <tr key={key} className="border-b last:border-0">
-                        <td className="py-2 pr-4 text-gray-600 font-medium w-1/3">{key}</td>
-                        <td className="py-2 text-gray-900">{value as React.ReactNode}</td>
+                        <td className="py-2 pr-4 text-muted-foreground font-medium w-1/3">{key}</td>
+                        <td className="py-2 text-foreground">{value as React.ReactNode}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -420,7 +420,7 @@ export function ProductDetail() {
 
             {/* Документация */}
             {hasDocs && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-card rounded-lg shadow p-6">
                 <h3 className="text-lg mb-4">Документация</h3>
                 <div className="flex gap-3">
                   {product.booklet_url && (
@@ -428,7 +428,7 @@ export function ProductDetail() {
                       href={product.booklet_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-blue-100 transition"
                     >
                       <FileText className="w-4 h-4" />
                       Буклет (PDF)
@@ -454,10 +454,10 @@ export function ProductDetail() {
         )}
 
         {activeTab === 'aliases' && (
-          <div className="max-w-4xl bg-white rounded-lg shadow">
+          <div className="max-w-4xl bg-card rounded-lg shadow">
             {product.aliases && product.aliases.length > 0 ? (
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-muted">
                   <tr>
                     <th className="text-left py-3 px-4">Название</th>
                     <th className="text-left py-3 px-4">Источник</th>
@@ -472,15 +472,15 @@ export function ProductDetail() {
                         {alias.source_payment ? (
                           <a
                             href={`/payments/${alias.source_payment}`}
-                            className="text-blue-600 hover:underline"
+                            className="text-primary hover:underline"
                           >
                             Платёж #{alias.source_payment}
                           </a>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td className="py-3 px-4 text-muted-foreground">
                         {formatDate(alias.created_at)}
                       </td>
                     </tr>
@@ -488,7 +488,7 @@ export function ProductDetail() {
                 </tbody>
               </table>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 Синонимы отсутствуют
               </div>
             )}
@@ -496,7 +496,7 @@ export function ProductDetail() {
         )}
 
         {activeTab === 'prices' && (
-          <div className="max-w-6xl bg-white rounded-lg shadow p-6">
+          <div className="max-w-6xl bg-card rounded-lg shadow p-6">
             <h3 className="text-lg mb-4">История цен</h3>
             <PriceHistoryTable prices={prices || []} isLoading={pricesLoading} />
           </div>
@@ -509,9 +509,9 @@ export function ProductDetail() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : supplierList.length > 0 ? (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="bg-card rounded-lg shadow overflow-hidden">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-muted">
                     <tr>
                       <th className="text-left py-3 px-4">Поставщик</th>
                       <th className="text-left py-3 px-4">НС-код</th>
@@ -530,8 +530,8 @@ export function ProductDetail() {
                 </table>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow text-center py-12 text-gray-500">
-                <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <div className="bg-card rounded-lg shadow text-center py-12 text-muted-foreground">
+                <Package className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
                 <p>Нет предложений от поставщиков</p>
               </div>
             )}
@@ -577,13 +577,13 @@ export function ProductDetail() {
                 <>
                   <button
                     onClick={() => setGalleryIndex((prev) => (prev - 1 + product.images.length) % product.images.length)}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/20 hover:bg-white/40 text-white transition"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-card/20 hover:bg-card/40 text-white transition"
                   >
                     <ChevronLeft className="w-6 h-6" />
                   </button>
                   <button
                     onClick={() => setGalleryIndex((prev) => (prev + 1) % product.images.length)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/20 hover:bg-white/40 text-white transition"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-card/20 hover:bg-card/40 text-white transition"
                   >
                     <ChevronRight className="w-6 h-6" />
                   </button>
@@ -607,12 +607,12 @@ function SupplierProductRow({ sp }: { sp: SupplierProduct }) {
   return (
     <>
       <tr
-        className="border-b hover:bg-gray-50 cursor-pointer"
+        className="border-b hover:bg-muted cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         <td className="py-3 px-4 font-medium">{sp.brand_name || '—'}</td>
-        <td className="py-3 px-4 text-sm text-gray-600">{sp.nc_code || '—'}</td>
-        <td className="py-3 px-4 text-sm text-gray-600">{sp.articul || '—'}</td>
+        <td className="py-3 px-4 text-sm text-muted-foreground">{sp.nc_code || '—'}</td>
+        <td className="py-3 px-4 text-sm text-muted-foreground">{sp.articul || '—'}</td>
         <td className="py-3 px-4 text-right">
           {sp.base_price ? `${formatAmount(sp.base_price)} ${sp.base_price_currency}` : '—'}
         </td>
@@ -623,41 +623,41 @@ function SupplierProductRow({ sp }: { sp: SupplierProduct }) {
           {sp.total_stock > 0 ? (
             <span className="text-green-700">{sp.total_stock} шт</span>
           ) : (
-            <span className="text-gray-400">Нет</span>
+            <span className="text-muted-foreground">Нет</span>
           )}
         </td>
-        <td className="py-3 px-4 text-sm text-gray-500">
+        <td className="py-3 px-4 text-sm text-muted-foreground">
           {sp.price_updated_at ? formatDate(sp.price_updated_at) : '—'}
         </td>
       </tr>
       {expanded && (
-        <tr className="bg-gray-50">
+        <tr className="bg-muted">
           <td colSpan={7} className="px-4 py-3">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-medium text-gray-600">Название у поставщика:</span>{' '}
+                <span className="font-medium text-muted-foreground">Название у поставщика:</span>{' '}
                 {sp.title}
               </div>
               {sp.series && (
                 <div>
-                  <span className="font-medium text-gray-600">Серия:</span> {sp.series}
+                  <span className="font-medium text-muted-foreground">Серия:</span> {sp.series}
                 </div>
               )}
               {sp.category_name && (
                 <div>
-                  <span className="font-medium text-gray-600">Категория поставщика:</span>{' '}
+                  <span className="font-medium text-muted-foreground">Категория поставщика:</span>{' '}
                   {sp.category_name}
                 </div>
               )}
               <div>
-                <span className="font-medium text-gray-600">Маркетплейс:</span>{' '}
+                <span className="font-medium text-muted-foreground">Маркетплейс:</span>{' '}
                 {sp.for_marketplace ? 'Да' : 'Нет'}
               </div>
             </div>
 
             {sp.stocks && sp.stocks.length > 0 && (
               <div className="mt-3">
-                <div className="flex items-center gap-1 font-medium text-gray-600 text-sm mb-2">
+                <div className="flex items-center gap-1 font-medium text-muted-foreground text-sm mb-2">
                   <Warehouse className="w-4 h-4" />
                   Склады:
                 </div>
@@ -668,7 +668,7 @@ function SupplierProductRow({ sp }: { sp: SupplierProduct }) {
                       className={`px-2 py-1 rounded text-xs ${
                         stock.quantity > 0
                           ? 'bg-green-50 text-green-700'
-                          : 'bg-gray-100 text-gray-500'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {stock.warehouse_name}: {stock.quantity} шт

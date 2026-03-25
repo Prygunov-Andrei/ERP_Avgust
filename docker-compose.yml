@@ -7,8 +7,8 @@ x-logging: &default-logging
 x-backend-env: &backend-env
   DEBUG: ${DEBUG:-True}
   SECRET_KEY: ${SECRET_KEY:-django-insecure-docker-dev-key-change-in-production}
-  DB_HOST: postgres
-  DB_PORT: "5432"
+  DB_HOST: ${DB_HOST:-postgres}
+  DB_PORT: "${DB_PORT:-5432}"
   DB_NAME: ${DB_NAME:-finans_assistant}
   DB_USER: ${DB_USER:-postgres}
   DB_PASSWORD: ${DB_PASSWORD:-postgres}
@@ -62,6 +62,8 @@ services:
 
   postgres:
     image: postgres:14-alpine
+    profiles:
+      - local-db
     ports:
       - "5432:5432"
     environment:
@@ -131,25 +133,6 @@ services:
       "
     logging: *default-logging
 
-  createhvacdb:
-    image: postgres:14-alpine
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      PGPASSWORD: ${DB_PASSWORD:-postgres}
-      DB_USER: ${DB_USER:-postgres}
-      DB_HOST: postgres
-      HVAC_DB_NAME: ${HVAC_DB_NAME:-hvac_db}
-    entrypoint: >
-      /bin/sh -c "
-      echo 'Ensuring hvac_db database exists...';
-      psql -h $$DB_HOST -U $$DB_USER -d postgres -tc \"SELECT 1 FROM pg_database WHERE datname='$$HVAC_DB_NAME'\" | grep -q 1
-      || psql -h $$DB_HOST -U $$DB_USER -d postgres -c \"CREATE DATABASE \\\"$$HVAC_DB_NAME\\\"\" ;
-      exit 0;
-      "
-    logging: *default-logging
-
   # =========================================================================
   # BACKEND (Django + Gunicorn)
   # =========================================================================
@@ -173,10 +156,10 @@ services:
       - backend_logs:/app/logs
       - backend_static:/app/staticfiles
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; r = urllib.request.urlopen('http://localhost:8000/api/v1/health/')"]
       interval: 15s
@@ -187,6 +170,8 @@ services:
     restart: unless-stopped
 
   celery-worker:
+    profiles:
+      - full-stack
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -198,14 +183,16 @@ services:
       - backend_media:/app/media
       - backend_logs:/app/logs
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     logging: *default-logging
     restart: unless-stopped
 
   celery-beat:
+    profiles:
+      - full-stack
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -215,10 +202,14 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     logging: *default-logging
     restart: unless-stopped
 
   celery-public-worker:
+    profiles:
+      - full-stack
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -230,10 +221,10 @@ services:
       - backend_media:/app/media
       - backend_logs:/app/logs
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     logging: *default-logging
     restart: unless-stopped
 
@@ -242,6 +233,8 @@ services:
   # =========================================================================
 
   bot:
+    profiles:
+      - full-stack
     build:
       context: ./bot
       dockerfile: Dockerfile
@@ -253,18 +246,18 @@ services:
       WEBHOOK_PATH: /bot/webhook
       WEBAPP_HOST: 0.0.0.0
       WEBAPP_PORT: "8081"
-      DB_HOST: postgres
-      DB_PORT: "5432"
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: "${DB_PORT:-5432}"
       DB_NAME: ${DB_NAME:-finans_assistant}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       REDIS_URL: redis://redis:6379/0
       MINI_APP_URL: ${MINI_APP_URL:-}
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "python3", "-c", "import socket; s=socket.socket(); s.settimeout(1); s.connect(('localhost', 8081)); s.close()"]
       interval: 30s
@@ -286,7 +279,6 @@ services:
       - "3000:3000"
     environment:
       BACKEND_API_URL: http://backend:8000
-      HVAC_API_URL: http://hvac-backend:8001
       MINIO_URL: http://minio:9000
     depends_on:
       - backend
@@ -320,57 +312,6 @@ services:
     logging: *default-logging
     restart: unless-stopped
 
-  # =========================================================================
-  # HVAC-INFO — Новостной портал климатической индустрии
-  # =========================================================================
-
-  hvac-backend:
-    build:
-      context: ./hvac-backend
-      dockerfile: Dockerfile
-    # Gunicorn: 2 workers оптимально для 1 CPU VPS (формула: 2*CPU+1, но ограничено RAM)
-    command: ["gunicorn", "config.wsgi:application",
-              "--bind", "0.0.0.0:8001", "--workers", "2", "--timeout", "120",
-              "--access-logfile", "-", "--error-logfile", "-"]
-    ports:
-      - "8001:8001"
-    environment:
-      DEBUG: ${HVAC_DEBUG:-False}
-      HVAC_ENV: prod
-      SECRET_KEY: ${HVAC_SECRET_KEY:-django-insecure-hvac-change-in-production}
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_NAME: ${HVAC_DB_NAME:-hvac_db}
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      ALLOWED_HOSTS: hvac-info.com,www.hvac-info.com,localhost,hvac-backend
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      XAI_API_KEY: ${XAI_API_KEY:-}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
-      EMAIL_HOST: ${EMAIL_HOST:-}
-      EMAIL_PORT: ${EMAIL_PORT:-587}
-      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
-      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
-      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
-      HCAPTCHA_SECRET_KEY: ${HCAPTCHA_SECRET_KEY:-}
-      TRANSLATION_API_KEY: ${TRANSLATION_API_KEY:-}
-    volumes:
-      - hvac_media:/app/media
-      - hvac_static:/app/staticfiles
-    depends_on:
-      createhvacdb:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; r = urllib.request.urlopen('http://localhost:8001/api/hvac/references/manufacturers/')"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    logging: *default-logging
-    restart: unless-stopped
-
 volumes:
   postgres_data:
   redis_data:
@@ -378,5 +319,3 @@ volumes:
   backend_media:
   backend_logs:
   backend_static:
-  hvac_media:
-  hvac_static:

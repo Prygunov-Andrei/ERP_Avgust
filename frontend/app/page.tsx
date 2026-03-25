@@ -9,7 +9,7 @@ export default async function HomePage() {
   return (
     <PublicLayout>
       <section>
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        <h1 className="mb-8 text-3xl font-bold text-foreground">
           Новости HVAC-индустрии
         </h1>
         <LoadMoreNews

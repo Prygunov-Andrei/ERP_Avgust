@@ -90,24 +90,24 @@ export function CatalogModeration() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b bg-white">
+      <div className="p-6 border-b bg-card">
         <div>
           <h1 className="text-2xl">Модерация товаров</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             Проверка новых товаров и поиск дубликатов
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b bg-white">
+      <div className="border-b bg-card">
         <div className="flex px-6">
           <button
             onClick={() => setActiveTab('new')}
             className={`px-4 py-3 border-b-2 transition ${
               activeTab === 'new'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
+                ? 'border-blue-600 text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             Новые товары
@@ -121,8 +121,8 @@ export function CatalogModeration() {
             onClick={() => setActiveTab('duplicates')}
             className={`px-4 py-3 border-b-2 transition ${
               activeTab === 'duplicates'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
+                ? 'border-blue-600 text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             Дубликаты
@@ -136,16 +136,16 @@ export function CatalogModeration() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto bg-gray-50 p-6">
+      <div className="flex-1 overflow-auto bg-muted p-6">
         {activeTab === 'new' && (
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-card rounded-lg shadow">
             {newProductsLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : newProductsData && newProductsData.results && newProductsData.results.length > 0 ? (
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-muted">
                   <tr>
                     <th className="text-left py-3 px-4">Название</th>
                     <th className="text-left py-3 px-4">Категория</th>
@@ -157,9 +157,9 @@ export function CatalogModeration() {
                 </thead>
                 <tbody>
                   {newProductsData.results.map((product: Product) => (
-                    <tr key={product.id} className="border-b hover:bg-gray-50">
+                    <tr key={product.id} className="border-b hover:bg-muted">
                       <td className="py-3 px-4">{product.name}</td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td className="py-3 px-4 text-muted-foreground">
                         {product.category_name || '—'}
                       </td>
                       <td className="py-3 px-4">{product.default_unit}</td>
@@ -167,7 +167,7 @@ export function CatalogModeration() {
                         {product.source_payment ? (
                           <a
                             href={`/payments/${product.source_payment}`}
-                            className="text-blue-600 hover:underline"
+                            className="text-primary hover:underline"
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/payments/${product.source_payment}`);
@@ -176,10 +176,10 @@ export function CatalogModeration() {
                             Платёж #{product.source_payment}
                           </a>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td className="py-3 px-4 text-muted-foreground">
                         {formatDate(product.created_at)}
                       </td>
                       <td className="py-3 px-4">
@@ -237,7 +237,7 @@ export function CatalogModeration() {
                             variant="outline"
                             onClick={() => setArchiveTarget(product.id)}
                             disabled={archiveMutation.isPending}
-                            className="text-red-600 hover:bg-red-50"
+                            className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 dark:bg-red-900/20"
                           >
                             <Archive className="w-4 h-4" />
                           </Button>
@@ -248,7 +248,7 @@ export function CatalogModeration() {
                 </tbody>
               </table>
             ) : (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-muted-foreground">
                 Нет новых товаров для модерации
               </div>
             )}
@@ -257,11 +257,11 @@ export function CatalogModeration() {
 
         {activeTab === 'duplicates' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-card rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg">Поиск дубликатов</h3>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Система автоматически найдёт похожие товары в каталоге
                   </p>
                 </div>
@@ -279,13 +279,13 @@ export function CatalogModeration() {
             {duplicates.length > 0 ? (
               <div className="space-y-4">
                 {duplicates.map((group, index) => (
-                  <div key={index} className="bg-white rounded-lg shadow p-6">
+                  <div key={index} className="bg-card rounded-lg shadow p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h4 className="text-lg">
                           Основной товар: {group.product.name}
                         </h4>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           Найдено {group.similar.length} похожих товаров
                         </p>
                       </div>
@@ -312,11 +312,11 @@ export function CatalogModeration() {
                       {group.similar.map((similar) => (
                         <div
                           key={similar.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded"
+                          className="flex items-center justify-between p-3 bg-muted rounded"
                         >
                           <div className="flex-1">
                             <div>{similar.name}</div>
-                            <div className="text-sm text-gray-600 mt-1">
+                            <div className="text-sm text-muted-foreground mt-1">
                               Схожесть: {(similar.score * 100).toFixed(0)}%
                             </div>
                           </div>
@@ -334,7 +334,7 @@ export function CatalogModeration() {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow p-12 text-center text-gray-500">
+              <div className="bg-card rounded-lg shadow p-12 text-center text-muted-foreground">
                 Нажмите кнопку "Найти дубликаты" для начала поиска
               </div>
             )}

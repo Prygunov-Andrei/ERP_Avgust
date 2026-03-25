@@ -191,14 +191,14 @@ export function SupplierCatalogPage() {
                   <TableCell className="text-right text-muted-foreground">{formatPrice(p.ric_price, p.ric_price_currency)}</TableCell>
                   <TableCell className="text-center">
                     {p.total_stock > 0 ? (
-                      <Badge className="bg-green-100 text-green-700">{p.total_stock}</Badge>
+                      <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">{p.total_stock}</Badge>
                     ) : (
                       <Badge variant="outline" className="text-muted-foreground">0</Badge>
                     )}
                   </TableCell>
                   <TableCell>
                     {p.product_name ? (
-                      <span className="text-sm text-blue-600">{p.product_name}</span>
+                      <span className="text-sm text-primary">{p.product_name}</span>
                     ) : (
                       <span className="text-sm text-muted-foreground">—</span>
                     )}
