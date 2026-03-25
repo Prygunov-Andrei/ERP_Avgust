@@ -53,6 +53,6 @@ class PotentialCustomerModelTest(APITestCase):
         )
         response = self.client.get('/api/v1/counterparties/?type=potential_customer')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = response.data.get('results', response.data)
+        results = response.data if isinstance(response.data, list) else response.data.get('results', [])
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['type'], 'potential_customer')

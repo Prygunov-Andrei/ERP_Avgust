@@ -15,13 +15,14 @@ from estimates.column_defaults import DEFAULT_COLUMN_CONFIG
 
 def _make_estimate_with_items(user, column_config=None):
     """Helper: смета + раздел + несколько строк."""
-    from accounting.models import LegalEntity
+    from accounting.models import LegalEntity, TaxSystem
     from objects.models import Object as BuildObject
 
     obj, _ = BuildObject.objects.get_or_create(name='Тест-экспорт', defaults={'address': 'тест'})
+    ts, _ = TaxSystem.objects.get_or_create(name='УСН', defaults={'code': 'usn', 'has_vat': False})
     le, _ = LegalEntity.objects.get_or_create(
         short_name='ТестООО',
-        defaults={'full_name': 'ООО Тест', 'inn': '1234567890'},
+        defaults={'name': 'ООО Тест', 'inn': '1234567890', 'tax_system': ts},
     )
     estimate = Estimate.objects.create(
         object=obj, legal_entity=le, name='Тест-смета',
@@ -75,8 +76,16 @@ class TestEstimateExport(TestCase):
     def test_export_content_disposition(self):
         estimate, _ = _make_estimate_with_items(self.user)
         response = self._export(estimate)
-        self.assertIn('attachment', response['Content-Disposition'])
-        self.assertIn('.xlsx', response['Content-Disposition'])
+        cd = response['Content-Disposition']
+        # Content-Disposition может быть RFC 2047-encoded (base64) при кириллице
+        from email.header import decode_header
+        decoded_parts = decode_header(cd)
+        decoded_cd = ''.join(
+            part.decode(enc or 'utf-8') if isinstance(part, bytes) else part
+            for part, enc in decoded_parts
+        )
+        self.assertIn('attachment', decoded_cd)
+        self.assertIn('.xlsx', decoded_cd)
 
     def test_export_custom_columns(self):
         """Экспорт с кастомным column_config — столбцы соответствуют."""
@@ -149,13 +158,14 @@ class TestEstimateExport(TestCase):
 
     def test_empty_estimate_export(self):
         """Пустая смета (0 items) — корректный xlsx."""
-        from accounting.models import LegalEntity
+        from accounting.models import LegalEntity, TaxSystem
         from objects.models import Object as BuildObject
 
         obj, _ = BuildObject.objects.get_or_create(name='Пустой', defaults={'address': 'тест'})
+        ts, _ = TaxSystem.objects.get_or_create(name='УСН', defaults={'code': 'usn', 'has_vat': False})
         le, _ = LegalEntity.objects.get_or_create(
             short_name='ТестООО',
-            defaults={'full_name': 'ООО Тест', 'inn': '1234567890'},
+            defaults={'name': 'ООО Тест', 'inn': '1234567890', 'tax_system': ts},
         )
         estimate = Estimate.objects.create(
             object=obj, legal_entity=le, name='Пустая смета', created_by=self.user,

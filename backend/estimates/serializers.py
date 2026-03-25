@@ -513,7 +513,14 @@ class EstimateCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         projects = validated_data.pop('projects', [])
         created_by = self.context['request'].user
-        
+
+        # НДС определяется налоговой системой компании
+        legal_entity = validated_data['legal_entity']
+        tax_system = legal_entity.tax_system
+        validated_data['with_vat'] = tax_system.has_vat
+        if tax_system.has_vat and tax_system.vat_rate is not None:
+            validated_data['vat_rate'] = tax_system.vat_rate
+
         estimate = Estimate.objects.create(
             **validated_data,
             created_by=created_by

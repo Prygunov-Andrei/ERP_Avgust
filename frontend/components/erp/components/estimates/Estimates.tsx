@@ -38,8 +38,6 @@ export function Estimates() {
     object: 0,
     legal_entity: 0,
     name: '',
-    with_vat: true,
-    vat_rate: '20.00',
     projects: [] as number[],
   });
 
@@ -59,22 +57,14 @@ export function Estimates() {
   });
 
   const { data: projects } = useQuery({
-    queryKey: ['projects-all'],
-    queryFn: () => api.estimates.getProjects(),
+    queryKey: ['projects', formData.object],
+    queryFn: () => api.estimates.getProjects({ object: formData.object }),
     staleTime: CONSTANTS.QUERY_STALE_TIME_MS,
+    enabled: formData.object > 0,
   });
 
   const handleLegalEntityChange = (entityId: number) => {
-    const entity = legalEntities?.find(le => le.id === entityId);
-    const taxDetails = entity?.tax_system_details;
-    setFormData(prev => ({
-      ...prev,
-      legal_entity: entityId,
-      ...(taxDetails ? {
-        with_vat: taxDetails.has_vat,
-        vat_rate: taxDetails.vat_rate || '20.00',
-      } : {}),
-    }));
+    setFormData(prev => ({ ...prev, legal_entity: entityId }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,8 +79,6 @@ export function Estimates() {
       object: formData.object,
       legal_entity: formData.legal_entity,
       name: formData.name,
-      with_vat: formData.with_vat,
-      vat_rate: formData.with_vat ? formData.vat_rate : undefined,
       projects: formData.projects.length > 0 ? formData.projects : undefined,
     };
 
@@ -111,8 +99,6 @@ export function Estimates() {
       object: 0,
       legal_entity: 0,
       name: '',
-      with_vat: true,
-      vat_rate: '20.00',
       projects: [],
     });
   };
@@ -340,7 +326,7 @@ export function Estimates() {
                 <select
                   id="object"
                   value={formData.object}
-                  onChange={(e) => setFormData({ ...formData, object: Number(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, object: Number(e.target.value), projects: [] })}
                   className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
@@ -383,52 +369,46 @@ export function Estimates() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.with_vat}
-                    onChange={(e) => setFormData({ ...formData, with_vat: e.target.checked })}
-                    className="rounded border-border"
-                  />
-                  <span>С НДС</span>
-                </Label>
-              </div>
-
-              {formData.with_vat && (
-                <div>
-                  <Label htmlFor="vat_rate">Ставка НДС, %</Label>
-                  <Input
-                    id="vat_rate"
-                    type="number"
-                    step="0.01"
-                    value={formData.vat_rate}
-                    onChange={(e) => setFormData({ ...formData, vat_rate: e.target.value })}
-                    className="mt-1.5"
-                  />
-                </div>
-              )}
-            </div>
-
             <div>
               <Label htmlFor="projects">Проекты-основания (опционально)</Label>
-              <select
-                id="projects"
-                multiple
-                value={formData.projects.map(String)}
-                onChange={(e) => {
-                  const selected = Array.from(e.target.selectedOptions).map(o => Number(o.value));
-                  setFormData({ ...formData, projects: selected });
-                }}
-                className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-                size={3}
-              >
-                {projects?.map((p) => (
-                  <option key={p.id} value={p.id}>{p.cipher} - {p.name}</option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground mt-1">Удерживайте Ctrl для множественного выбора</p>
+              {formData.object === 0 ? (
+                <select
+                  id="projects"
+                  disabled
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg opacity-50 cursor-not-allowed"
+                  size={3}
+                >
+                  <option>Сначала выберите объект</option>
+                </select>
+              ) : !projects?.length ? (
+                <select
+                  id="projects"
+                  disabled
+                  className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg opacity-50 cursor-not-allowed"
+                  size={3}
+                >
+                  <option>Нет проектов для этого объекта</option>
+                </select>
+              ) : (
+                <>
+                  <select
+                    id="projects"
+                    multiple
+                    value={formData.projects.map(String)}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions).map(o => Number(o.value));
+                      setFormData({ ...formData, projects: selected });
+                    }}
+                    className="mt-1.5 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                    size={3}
+                  >
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>{p.cipher} - {p.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">Удерживайте Ctrl для множественного выбора</p>
+                </>
+              )}
             </div>
 
             <DialogFooter>

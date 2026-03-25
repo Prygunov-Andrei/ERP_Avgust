@@ -713,6 +713,7 @@ class EstimateSubsection(TimestampedModel):
 def update_estimate_characteristics(sender, instance, **kwargs):
     """При изменении подраздела обновить автоматические характеристики сметы"""
     estimate = instance.section.estimate
+    estimate.refresh_from_db()
     estimate.update_auto_characteristics()
 
 
@@ -748,7 +749,7 @@ class EstimateItem(TimestampedModel):
         verbose_name='Номер по порядку'
     )
     name = models.CharField(
-        max_length=500,
+        max_length=1000,
         verbose_name='Наименование товара / работы'
     )
     model_name = models.CharField(
@@ -806,7 +807,7 @@ class EstimateItem(TimestampedModel):
         verbose_name='Обоснование применения аналога'
     )
     original_name = models.CharField(
-        max_length=500,
+        max_length=1000,
         blank=True,
         verbose_name='Оригинальное наименование из спецификации'
     )
@@ -1172,7 +1173,7 @@ class SpecificationItem(TimestampedModel):
         verbose_name='Исходный файл',
     )
 
-    name = models.CharField(max_length=500, verbose_name='Наименование')
+    name = models.CharField(max_length=1000, verbose_name='Наименование')
     model_name = models.CharField(
         max_length=300, blank=True, verbose_name='Модель/артикул',
     )

@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from accounting.models import Counterparty, LegalEntity
+from accounting.models import Counterparty, LegalEntity, TaxSystem
 from catalog.models import Product, ProductPriceHistory
 from estimates.models import Estimate, EstimateSection, EstimateItem
 from objects.models import Object
@@ -18,9 +18,13 @@ class AutoMatcherSuppliersTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user('testuser', password='test')
         self.obj = Object.objects.create(name='Тест', address='test')
+        self.tax_system = TaxSystem.objects.create(
+            name='УСН (Доходы)', code='usn_6', has_vat=False,
+        )
         self.entity = LegalEntity.objects.create(
-            short_name='Тест', full_name='Тест', legal_form='ooo',
+            name='Тест', short_name='Тест',
             inn='9999999999', is_active=True,
+            tax_system=self.tax_system,
         )
         self.estimate = Estimate.objects.create(
             name='Тестовая', object=self.obj,

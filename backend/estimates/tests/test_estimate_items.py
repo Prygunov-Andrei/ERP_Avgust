@@ -298,7 +298,7 @@ class EstimateItemAPITests(EstimateItemModelTestMixin, APITestCase):
         resp = self.client.post(self.list_url, self._item_payload(), format='json')
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         self.assertEqual(resp.data['name'], 'Позиция API')
-        self.assertEqual(resp.data['material_total'], '100.00')
+        self.assertEqual(resp.data['material_total'], Decimal('100.00'))
 
     def test_list(self):
         EstimateItem.objects.create(
@@ -320,7 +320,7 @@ class EstimateItemAPITests(EstimateItemModelTestMixin, APITestCase):
         )
         resp = self.client.get(f'{self.list_url}{item.pk}/')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data['line_total'], '900.00')
+        self.assertEqual(resp.data['line_total'], Decimal('900.00'))
 
     def test_update_put(self):
         item = EstimateItem.objects.create(
@@ -522,9 +522,9 @@ class EstimateItemAPITests(EstimateItemModelTestMixin, APITestCase):
             work_unit_price=Decimal('150.00'),
         )
         resp = self.client.get(f'{self.list_url}{item.pk}/')
-        self.assertEqual(resp.data['material_total'], '1000.00')
-        self.assertEqual(resp.data['work_total'], '600.00')
-        self.assertEqual(resp.data['line_total'], '1600.00')
+        self.assertEqual(resp.data['material_total'], Decimal('1000.00'))
+        self.assertEqual(resp.data['work_total'], Decimal('600.00'))
+        self.assertEqual(resp.data['line_total'], Decimal('1600.00'))
 
     # -- unauthenticated access --
     def test_unauthenticated_forbidden(self):

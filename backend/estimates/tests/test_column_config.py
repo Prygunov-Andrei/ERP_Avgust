@@ -13,13 +13,14 @@ from estimates.column_defaults import DEFAULT_COLUMN_CONFIG
 
 def _make_estimate(user, **kwargs):
     """Helper: создать смету с минимальными полями."""
-    from accounting.models import LegalEntity
+    from accounting.models import LegalEntity, TaxSystem
     from objects.models import Object as BuildObject
 
     obj, _ = BuildObject.objects.get_or_create(name='Тест-объект', defaults={'address': 'тест'})
+    ts, _ = TaxSystem.objects.get_or_create(name='УСН', defaults={'code': 'usn', 'has_vat': False})
     le, _ = LegalEntity.objects.get_or_create(
         short_name='ТестООО',
-        defaults={'full_name': 'ООО Тест', 'inn': '1234567890'},
+        defaults={'name': 'ООО Тест', 'inn': '1234567890', 'tax_system': ts},
     )
     return Estimate.objects.create(
         object=obj, legal_entity=le, name='Тест-смета',

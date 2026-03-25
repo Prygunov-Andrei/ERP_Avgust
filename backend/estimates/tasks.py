@@ -37,17 +37,22 @@ SINGLE_PAGE_SYSTEM_PROMPT = """Ты — эксперт по строительн
 
 
 def _get_redis():
-    return redis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
+    # B16: обработка ошибки подключения
+    try:
+        return redis.from_url(settings.CELERY_BROKER_URL, decode_responses=True)
+    except redis.ConnectionError as e:
+        logger.error('Redis connection failed: %s', e)
+        raise RuntimeError(f'Redis unavailable: {e}') from e
 
 
 def _json_default(obj):
     """Сериализатор для Decimal и прочих типов."""
     if isinstance(obj, Decimal):
-        return float(obj)
+        return str(obj)
     return str(obj)
 
 
-def create_import_session(file_content: bytes, estimate_id: int) -> dict:
+def create_import_session(file_content: bytes, estimate_id: int, user_id: int = 0) -> dict:
     """Создаёт сессию импорта: сохраняет PDF на диск, считает страницы, пишет в Redis."""
     session_id = uuid.uuid4().hex[:16]
 
@@ -63,7 +68,7 @@ def create_import_session(file_content: bytes, estimate_id: int) -> dict:
     total_pages = len(doc)
     doc.close()
 
-    # Пишем начальное состояние в Redis
+    # B22: пишем начальное состояние в Redis (включая user_id)
     r = _get_redis()
     r.hset(f'estimate_import:{session_id}', mapping={
         'status': 'processing',
@@ -74,6 +79,7 @@ def create_import_session(file_content: bytes, estimate_id: int) -> dict:
         'errors': '[]',
         'file_path': file_path,
         'estimate_id': str(estimate_id),
+        'user_id': str(user_id),
     })
     r.expire(f'estimate_import:{session_id}', SESSION_TTL)
 
@@ -97,6 +103,7 @@ def get_session_data(session_id: str) -> dict | None:
         'rows': json.loads(data.get('rows', '[]')),
         'sections': json.loads(data.get('sections', '[]')),
         'errors': json.loads(data.get('errors', '[]')),
+        'user_id': data.get('user_id', ''),
     }
 
 
@@ -114,8 +121,9 @@ def _cleanup_file(file_path: str):
     try:
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
-    except Exception:
-        pass
+    except Exception as e:
+        # B20: логируем ошибку cleanup
+        logger.warning('Failed to cleanup import file %s: %s', file_path, e)
 
 
 @shared_task(bind=True, max_retries=0, time_limit=3600, soft_time_limit=3400)
@@ -139,12 +147,25 @@ def process_estimate_pdf_pages(self, session_id: str):
     file_path = session_data['file_path']
     total_pages = int(session_data['total_pages'])
 
+    try:
+        _process_pdf_pages(r, key, session_id, file_path, total_pages)
+    except Exception:
+        logger.exception('Session %s: unexpected error', session_id)
+        r.hset(key, 'status', 'error')
+    finally:
+        _cleanup_file(file_path)
+
+
+def _process_pdf_pages(r, key, session_id, file_path, total_pages):
+    from llm_services.models import LLMProvider
+    from llm_services.providers import get_provider
+    from llm_services.services.exceptions import RateLimitError
+
     # Получаем LLM-провайдер
     provider_model = LLMProvider.get_default()
     if not provider_model:
         r.hset(key, 'status', 'error')
         logger.error('No default LLM provider configured')
-        _cleanup_file(file_path)
         return
 
     provider = get_provider(provider_model)
@@ -156,84 +177,88 @@ def process_estimate_pdf_pages(self, session_id: str):
 
     doc = fitz.open(file_path)
 
-    for page_num in range(total_pages):
-        # Проверяем, не отменена ли сессия
-        current_status = r.hget(key, 'status')
-        if current_status in ('cancelled', 'error'):
-            logger.info('Session %s cancelled/errored at page %d', session_id, page_num + 1)
-            doc.close()
-            _cleanup_file(file_path)
-            return
+    try:
+        for page_num in range(total_pages):
+            # Проверяем, не отменена ли сессия
+            current_status = r.hget(key, 'status')
+            if current_status in ('cancelled', 'error'):
+                logger.info('Session %s cancelled/errored at page %d', session_id, page_num + 1)
+                return
 
-        page_success = False
-        retries = 0
-        max_page_retries = 2
+            page_success = False
+            retries = 0
+            max_page_retries = 2
 
-        while not page_success and retries <= max_page_retries:
-            try:
-                # Рендерим одну страницу в PNG
-                page = doc.load_page(page_num)
-                mat = fitz.Matrix(PAGE_DPI / 72, PAGE_DPI / 72)
-                pix = page.get_pixmap(matrix=mat)
-                img_bytes = pix.tobytes("png")
+            while not page_success and retries <= max_page_retries:
+                try:
+                    # Рендерим одну страницу в PNG
+                    page = doc.load_page(page_num)
+                    mat = fitz.Matrix(PAGE_DPI / 72, PAGE_DPI / 72)
+                    pix = page.get_pixmap(matrix=mat)
+                    img_bytes = pix.tobytes("png")
 
-                # Отправляем в LLM
-                response = provider.parse_with_prompt(
-                    file_content=img_bytes,
-                    file_type='png',
-                    system_prompt=SINGLE_PAGE_SYSTEM_PROMPT,
-                    user_prompt=f'Извлеки строки сметы со страницы {page_num + 1}:',
-                )
+                    # Отправляем в LLM
+                    response = provider.parse_with_prompt(
+                        file_content=img_bytes,
+                        file_type='png',
+                        system_prompt=SINGLE_PAGE_SYSTEM_PROMPT,
+                        user_prompt=f'Извлеки строки сметы со страницы {page_num + 1}:',
+                    )
 
-                # Парсим ответ
-                page_rows = response.get('rows', [])
-                page_sections = response.get('sections', [])
+                    # Парсим ответ
+                    page_rows = response.get('rows', [])
+                    page_sections = response.get('sections', [])
 
-                for row_data in page_rows:
-                    name = row_data.get('name', '').strip()
-                    if not name:
-                        continue
-                    item_counter += 1
-                    row_data['item_number'] = item_counter
-                    all_rows.append(row_data)
-                    section = row_data.get('section_name', '')
-                    if section:
-                        all_sections.add(section)
+                    for row_data in page_rows:
+                        name = row_data.get('name', '').strip()
+                        if not name:
+                            continue
+                        item_counter += 1
+                        row_data['item_number'] = item_counter
+                        all_rows.append(row_data)
+                        section = row_data.get('section_name', '')
+                        if section:
+                            all_sections.add(section)
 
-                for s in page_sections:
-                    if s:
-                        all_sections.add(s)
+                    for s in page_sections:
+                        if s:
+                            all_sections.add(s)
 
-                page_success = True
+                    page_success = True
 
-            except RateLimitError as e:
-                retries += 1
-                if retries <= max_page_retries:
-                    logger.warning('Rate limit on page %d, retry %d: %s', page_num + 1, retries, e)
-                    time.sleep(30)
-                else:
-                    logger.warning('Rate limit on page %d, skipping: %s', page_num + 1, e)
-                    errors.append({'page': page_num + 1, 'error': f'Rate limit: {e}'})
-            except Exception as e:
-                logger.warning('Error on page %d: %s', page_num + 1, e)
-                errors.append({'page': page_num + 1, 'error': str(e)})
-                page_success = True  # Не retry на обычных ошибках, пропускаем
+                except RateLimitError as e:
+                    retries += 1
+                    if retries <= max_page_retries:
+                        logger.warning('Rate limit on page %d, retry %d: %s', page_num + 1, retries, e)
+                        time.sleep(30)
+                    else:
+                        logger.warning('Rate limit on page %d, skipping: %s', page_num + 1, e)
+                        errors.append({'page': page_num + 1, 'error': f'Rate limit: {e}'})
+                except Exception as e:
+                    # B21: 1 retry для обычных ошибок
+                    retries += 1
+                    if retries <= 1:
+                        logger.warning('Error on page %d, retrying: %s', page_num + 1, e)
+                        time.sleep(5)
+                    else:
+                        logger.warning('Error on page %d, skipping: %s', page_num + 1, e)
+                        errors.append({'page': page_num + 1, 'error': str(e)})
+                        page_success = True
 
-        # Обновляем Redis после каждой страницы
-        r.hset(key, mapping={
-            'current_page': str(page_num + 1),
-            'rows': json.dumps(all_rows, ensure_ascii=False, default=_json_default),
-            'sections': json.dumps(list(all_sections), ensure_ascii=False),
-            'errors': json.dumps(errors, ensure_ascii=False),
-        })
-        r.expire(key, SESSION_TTL)
-
-    doc.close()
+            # Обновляем Redis после каждой страницы
+            r.hset(key, mapping={
+                'current_page': str(page_num + 1),
+                'rows': json.dumps(all_rows, ensure_ascii=False, default=_json_default),
+                'sections': json.dumps(list(all_sections), ensure_ascii=False),
+                'errors': json.dumps(errors, ensure_ascii=False),
+            })
+            r.expire(key, SESSION_TTL)
+    finally:
+        doc.close()
 
     # Завершение
     r.hset(key, 'status', 'completed')
     r.expire(key, SESSION_TTL)
-    _cleanup_file(file_path)
 
     logger.info(
         'Session %s completed: %d pages, %d rows, %d errors',

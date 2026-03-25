@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -6,6 +8,21 @@ from rest_framework.response import Response
 from django.db.models import F, ExpressionWrapper, DecimalField, Sum
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
+
+logger = logging.getLogger(__name__)
+
+# Лимит размера файла для импорта (50 МБ)
+MAX_IMPORT_FILE_SIZE = 50 * 1024 * 1024
+
+ALLOWED_EXCEL_CONTENT_TYPES = {
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'application/octet-stream',  # некоторые браузеры отправляют так
+}
+ALLOWED_PDF_CONTENT_TYPES = {
+    'application/pdf',
+    'application/octet-stream',
+}
 
 from core.version_mixin import VersioningMixin
 from estimates.formula_engine import topological_sort
@@ -423,6 +440,20 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # B2: пустой файл
+        if file.size == 0:
+            return Response(
+                {'error': 'Файл пуст'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # B1: лимит размера
+        if file.size > MAX_IMPORT_FILE_SIZE:
+            return Response(
+                {'error': f'Файл слишком большой (макс. {MAX_IMPORT_FILE_SIZE // (1024 * 1024)} МБ)'},
+                status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            )
+
         try:
             estimate = Estimate.objects.get(pk=estimate_id)
         except Estimate.DoesNotExist:
@@ -431,29 +462,49 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        file_content = file.read()
         filename = file.name.lower()
+        ext = filename.rsplit('.', 1)[-1] if '.' in filename else ''
 
-        from estimates.services.estimate_import_service import EstimateImportService
-        importer = EstimateImportService()
-
-        if filename.endswith(('.xlsx', '.xls')):
-            parsed = importer.import_from_excel(file_content, file.name)
-        elif filename.endswith('.pdf'):
-            parsed = importer.import_from_pdf(file_content, file.name)
+        # B3: проверка расширения + MIME-type
+        if ext in ('xlsx', 'xls'):
+            if file.content_type not in ALLOWED_EXCEL_CONTENT_TYPES:
+                logger.warning('Import: unexpected content_type %s for Excel file %s', file.content_type, file.name)
+        elif ext == 'pdf':
+            if file.content_type not in ALLOWED_PDF_CONTENT_TYPES:
+                logger.warning('Import: unexpected content_type %s for PDF file %s', file.content_type, file.name)
         else:
             return Response(
                 {'error': 'Поддерживаются только файлы Excel (.xlsx) и PDF'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        file_content = file.read()
+
+        from estimates.services.estimate_import_service import EstimateImportService
+        importer = EstimateImportService()
+
+        try:
+            if ext in ('xlsx', 'xls'):
+                parsed = importer.import_from_excel(file_content, file.name)
+            else:
+                parsed = importer.import_from_pdf(file_content, file.name)
+        except Exception:
+            logger.exception('Ошибка парсинга файла %s для сметы %s', file.name, estimate_id)
+            return Response(
+                {'error': 'Не удалось распознать файл. Проверьте формат.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if preview_mode:
-            return Response({
+            result = {
                 'rows': [row.model_dump() for row in parsed.rows],
                 'sections': parsed.sections,
                 'total_rows': parsed.total_rows,
                 'confidence': parsed.confidence,
-            })
+            }
+            if parsed.warnings:
+                result['warnings'] = parsed.warnings
+            return Response(result)
 
         created_items = importer.save_imported_items(int(estimate_id), parsed)
         return Response(
@@ -473,6 +524,19 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # B8: валидация структуры rows
+        if not isinstance(rows, list):
+            return Response(
+                {'error': 'rows должен быть массивом'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        for i, row in enumerate(rows):
+            if not isinstance(row, dict) or not row.get('name', '').strip():
+                return Response(
+                    {'error': f'Строка {i + 1}: отсутствует или пустое поле name'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         try:
             Estimate.objects.get(pk=estimate_id)
         except Estimate.DoesNotExist:
@@ -483,9 +547,17 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
 
         from estimates.services.estimate_import_service import EstimateImportService
         importer = EstimateImportService()
-        created_items = importer.save_rows_from_preview(int(estimate_id), rows)
+        try:
+            created_items = importer.save_rows_from_preview(int(estimate_id), rows)
+        except Exception:
+            # B5: не возвращаем exception message клиенту
+            logger.exception('Ошибка импорта строк сметы %s', estimate_id)
+            return Response(
+                {'error': 'Ошибка при сохранении строк. Проверьте данные и повторите.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response(
-            EstimateItemSerializer(created_items, many=True).data,
+            {'created_count': len(created_items), 'item_ids': [item.id for item in created_items]},
             status=status.HTTP_201_CREATED,
         )
 
@@ -502,6 +574,20 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
             return Response(
                 {'error': 'Необходимы estimate_id и file'},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # B2: пустой файл
+        if file.size == 0:
+            return Response(
+                {'error': 'Файл пуст'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # B1: лимит размера
+        if file.size > MAX_IMPORT_FILE_SIZE:
+            return Response(
+                {'error': f'Файл слишком большой (макс. {MAX_IMPORT_FILE_SIZE // (1024 * 1024)} МБ)'},
+                status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             )
 
         try:
@@ -521,13 +607,13 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
         file_content = file.read()
 
         from estimates.tasks import create_import_session, process_estimate_pdf_pages
-        session = create_import_session(file_content, int(estimate_id))
+        session = create_import_session(file_content, int(estimate_id), user_id=request.user.id)
         process_estimate_pdf_pages.delay(session['session_id'])
 
         return Response(session, status=status.HTTP_202_ACCEPTED)
 
     @action(detail=False, methods=['get'],
-            url_path=r'import-progress/(?P<session_id>[a-f0-9]+)')
+            url_path=r'import-progress/(?P<session_id>[a-f0-9]{16})')
     def import_progress(self, request, session_id=None):
         """Поллинг прогресса импорта PDF."""
         from estimates.tasks import get_session_data
@@ -537,13 +623,29 @@ class EstimateItemViewSet(viewsets.ModelViewSet):
                 {'error': 'Сессия не найдена или истекла'},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        # B7: проверяем что сессия принадлежит текущему пользователю
+        session_user_id = data.pop('user_id', None)
+        if session_user_id and session_user_id != '0' and int(session_user_id) != request.user.id:
+            return Response(
+                {'error': 'Сессия не найдена или истекла'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         return Response(data)
 
     @action(detail=False, methods=['post'],
-            url_path=r'import-cancel/(?P<session_id>[a-f0-9]+)')
+            url_path=r'import-cancel/(?P<session_id>[a-f0-9]{16})')
     def import_cancel(self, request, session_id=None):
         """Отмена импорта PDF."""
-        from estimates.tasks import cancel_session
+        from estimates.tasks import get_session_data, cancel_session
+        # B7: проверяем что сессия принадлежит текущему пользователю
+        data = get_session_data(session_id)
+        if data:
+            session_user_id = data.get('user_id')
+            if session_user_id and session_user_id != '0' and int(session_user_id) != request.user.id:
+                return Response(
+                    {'error': 'Сессия не найдена'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
         if cancel_session(session_id):
             return Response({'status': 'cancelled'})
         return Response(

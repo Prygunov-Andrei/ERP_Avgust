@@ -207,7 +207,7 @@ export interface EstimateCreateRequest {
   object: number;
   legal_entity: number;
   name: string;
-  with_vat: boolean;
+  with_vat?: boolean;
   vat_rate?: string;
   projects?: number[];
   price_list?: number;

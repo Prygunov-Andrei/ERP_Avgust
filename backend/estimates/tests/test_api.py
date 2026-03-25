@@ -385,22 +385,43 @@ class EstimateAPITests(BaseAPITestCase):
     """Тесты API для смет"""
     
     def test_create_estimate(self):
-        """Тест создания сметы"""
+        """Тест создания сметы — НДС берётся из налоговой системы компании"""
         data = {
             'name': 'Тестовая смета',
             'object': self.object.id,
             'legal_entity': self.legal_entity.id,
-            'with_vat': True,
-            'vat_rate': '20.00'
         }
         response = self.client.post('/api/v1/estimates/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIsNotNone(response.data['number'])
         self.assertTrue(response.data['number'].startswith('СМ-'))
-        
-        # Проверяем, что созданы начальные характеристики
+
+        # НДС определён из tax_system компании
         estimate = Estimate.objects.get(id=response.data['id'])
+        self.assertTrue(estimate.with_vat)
+        self.assertEqual(estimate.vat_rate, Decimal('20.00'))
+
+        # Проверяем, что созданы начальные характеристики
         self.assertEqual(estimate.characteristics.count(), 2)
+
+    def test_create_estimate_without_vat(self):
+        """Тест создания сметы для компании без НДС (УСН)"""
+        usn_tax = TaxSystem.objects.create(
+            code='usn', name='УСН', has_vat=False
+        )
+        usn_entity = LegalEntity.objects.create(
+            name='ООО Тест УСН', short_name='Тест УСН',
+            inn='9876543210', tax_system=usn_tax
+        )
+        data = {
+            'name': 'Смета без НДС',
+            'object': self.object.id,
+            'legal_entity': usn_entity.id,
+        }
+        response = self.client.post('/api/v1/estimates/', data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        estimate = Estimate.objects.get(id=response.data['id'])
+        self.assertFalse(estimate.with_vat)
     
     def test_get_estimate_detail(self):
         """Тест получения деталей сметы"""
@@ -430,8 +451,8 @@ class EstimateAPITests(BaseAPITestCase):
         self.assertEqual(len(response.data['sections'][0]['subsections']), 1)
         
         # Проверяем вычисляемые поля
-        self.assertEqual(response.data['total_sale'], '150000.00')
-    
+        self.assertEqual(response.data['total_sale'], Decimal('150000.00'))
+
     def test_create_estimate_version(self):
         """Тест создания новой версии сметы"""
         estimate = Estimate.objects.create(
@@ -615,10 +636,10 @@ class EstimateAPITests(BaseAPITestCase):
         
         response = self.client.get(f'/api/v1/estimates/{estimate.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['total_sale'], '150000.00')
-        self.assertEqual(response.data['vat_amount'], '30000.00')
-        self.assertEqual(response.data['total_with_vat'], '180000.00')
-        self.assertEqual(response.data['profit_amount'], '40000.00')
+        self.assertEqual(response.data['total_sale'], Decimal('150000.00'))
+        self.assertEqual(response.data['vat_amount'], Decimal('30000.00'))
+        self.assertEqual(response.data['total_with_vat'], Decimal('180000.00'))
+        self.assertEqual(response.data['profit_amount'], Decimal('40000.00'))
 
 
 class EstimateSectionAPITests(BaseAPITestCase):

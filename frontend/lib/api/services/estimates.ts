@@ -392,12 +392,23 @@ export function createEstimatesService(request: RequestFn) {
       });
     },
 
-    async importEstimateFile(estimateId: number, file: File, preview?: boolean) {
+    // F11: отдельная функция для preview — всегда возвращает EstimateImportPreview
+    async importEstimateFilePreview(estimateId: number, file: File) {
       const formData = new FormData();
       formData.append('estimate_id', estimateId.toString());
       formData.append('file', file);
-      if (preview) formData.append('preview', 'true');
-      return request<EstimateImportPreview | EstimateItem[]>(
+      formData.append('preview', 'true');
+      return request<EstimateImportPreview>(
+        '/estimate-items/import/',
+        { method: 'POST', body: formData },
+      );
+    },
+
+    async importEstimateFile(estimateId: number, file: File) {
+      const formData = new FormData();
+      formData.append('estimate_id', estimateId.toString());
+      formData.append('file', file);
+      return request<EstimateItem[]>(
         '/estimate-items/import/',
         { method: 'POST', body: formData },
       );
@@ -407,9 +418,19 @@ export function createEstimatesService(request: RequestFn) {
       estimateId: number,
       rows: Array<{ name: string; model_name?: string; unit?: string; quantity?: string; material_unit_price?: string; work_unit_price?: string; is_section?: boolean }>,
     ) {
-      return request<EstimateItem[]>('/estimate-items/import-rows/', {
+      // F12: фильтруем undefined → default values перед отправкой
+      const cleanRows = rows.map((row) => ({
+        name: row.name,
+        model_name: row.model_name || '',
+        unit: row.unit || 'шт',
+        quantity: row.quantity ?? '0',
+        material_unit_price: row.material_unit_price ?? '0',
+        work_unit_price: row.work_unit_price ?? '0',
+        is_section: row.is_section ?? false,
+      }));
+      return request<{ created_count: number; item_ids: number[] }>('/estimate-items/import-rows/', {
         method: 'POST',
-        body: JSON.stringify({ estimate_id: estimateId, rows }),
+        body: JSON.stringify({ estimate_id: estimateId, rows: cleanRows }),
       });
     },
 
@@ -423,8 +444,8 @@ export function createEstimatesService(request: RequestFn) {
       });
     },
 
-    async getEstimateImportProgress(sessionId: string): Promise<EstimateImportProgress> {
-      return request<EstimateImportProgress>(`/estimate-items/import-progress/${sessionId}/`);
+    async getEstimateImportProgress(sessionId: string, signal?: AbortSignal): Promise<EstimateImportProgress> {
+      return request<EstimateImportProgress>(`/estimate-items/import-progress/${sessionId}/`, signal ? { signal } : undefined);
     },
 
     async cancelEstimateImport(sessionId: string): Promise<{ status: string }> {

@@ -60,6 +60,9 @@ class EstimateImportServiceExcelTests(TestCase):
         self.assertEqual(parsed.rows[1].name, 'Автомат АВВ 16А')
 
     def test_section_detection(self):
+        """Excel-парсер не автоматически определяет секции —
+        все строки (включая заголовки разделов) парсятся как items.
+        Назначение секций происходит через UI (is_section флаг)."""
         content = _create_test_excel(
             headers=['Наименование', 'Ед.', 'Кол-во', 'Цена'],
             rows=[
@@ -70,10 +73,11 @@ class EstimateImportServiceExcelTests(TestCase):
             ],
         )
         parsed = self.service.import_from_excel(content, 'test.xlsx')
-        self.assertEqual(parsed.total_rows, 2)
-        self.assertEqual(len(parsed.sections), 2)
-        self.assertEqual(parsed.rows[0].section_name, 'Раздел 1: Кабельная продукция')
-        self.assertEqual(parsed.rows[1].section_name, 'Раздел 2: Автоматика')
+        self.assertEqual(parsed.total_rows, 4)
+        self.assertEqual(parsed.rows[0].name, 'Раздел 1: Кабельная продукция')
+        self.assertEqual(parsed.rows[1].name, 'Кабель NYM 3x1.5')
+        self.assertEqual(parsed.rows[2].name, 'Раздел 2: Автоматика')
+        self.assertEqual(parsed.rows[3].name, 'Автомат ABB S201')
 
     def test_totals_row_skipped(self):
         content = _create_test_excel(
@@ -111,6 +115,8 @@ class EstimateImportServiceExcelTests(TestCase):
         self.assertTrue(sections.exists())
 
     def test_save_with_sections(self):
+        """Excel-парсер не определяет секции автоматически —
+        все строки сохраняются в дефолтный раздел."""
         content = _create_test_excel(
             headers=['Наименование', 'Ед.', 'Кол-во', 'Цена'],
             rows=[
@@ -121,9 +127,13 @@ class EstimateImportServiceExcelTests(TestCase):
         parsed = self.service.import_from_excel(content, 'test.xlsx')
         items = self.service.save_imported_items(self.estimate.id, parsed)
 
-        self.assertEqual(len(items), 1)
-        section = EstimateSection.objects.get(estimate=self.estimate, name='Раздел: Электрика')
-        self.assertEqual(items[0].section, section)
+        self.assertEqual(len(items), 2)
+        # Обе строки в дефолтном разделе (секции назначаются через UI)
+        default_section = EstimateSection.objects.get(
+            estimate=self.estimate, name='Основной раздел',
+        )
+        self.assertEqual(items[0].section, default_section)
+        self.assertEqual(items[1].section, default_section)
 
     def test_confidence_high_with_many_columns(self):
         content = _create_test_excel(

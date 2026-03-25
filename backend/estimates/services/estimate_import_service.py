@@ -85,16 +85,31 @@ class EstimateImportService:
     """Сервис импорта смет из Excel и PDF"""
 
     def import_from_excel(self, file_content: bytes, filename: str) -> ParsedEstimate:
-        wb = openpyxl.load_workbook(
-            filename=__import__('io').BytesIO(file_content),
-            read_only=True,
-            data_only=True,
-        )
+        # B9: обработка ошибок при открытии Excel
+        try:
+            import io
+            wb = openpyxl.load_workbook(
+                filename=io.BytesIO(file_content),
+                read_only=True,
+                data_only=True,
+            )
+        except Exception as e:
+            logger.warning('Не удалось открыть Excel %s: %s', filename, e)
+            return ParsedEstimate(
+                rows=[], sections=[], total_rows=0, confidence=0.0,
+                warnings=[f'Не удалось открыть файл: {e}'],
+            )
+
         ws = wb.active
 
         all_rows = list(ws.iter_rows(values_only=True))
         if not all_rows:
-            return ParsedEstimate(rows=[], sections=[], total_rows=0, confidence=0.0)
+            wb.close()
+            # B10: явное уведомление о пустом файле
+            return ParsedEstimate(
+                rows=[], sections=[], total_rows=0, confidence=0.0,
+                warnings=['Файл не содержит данных'],
+            )
 
         header_row_idx = None
         col_mapping = {}
@@ -212,6 +227,7 @@ class EstimateImportService:
         file_type = ext if ext in ('pdf', 'png', 'jpg', 'jpeg') else 'pdf'
 
         # Ограничиваем PDF — макс 15 страниц, чтобы не убить воркер по памяти/таймауту
+        warnings = []
         if file_type == 'pdf':
             try:
                 import fitz
@@ -219,6 +235,7 @@ class EstimateImportService:
                 total_pages = len(doc)
                 if total_pages > 15:
                     logger.info(f"PDF has {total_pages} pages, truncating to 15")
+                    warnings.append(f'Обработаны только первые 15 из {total_pages} страниц. Для полного импорта используйте кнопку "Импорт PDF" (постраничный режим).')
                     new_doc = fitz.open()
                     new_doc.insert_pdf(doc, to_page=14)
                     file_content = new_doc.tobytes()
@@ -234,17 +251,21 @@ class EstimateImportService:
                 system_prompt=system_prompt,
                 user_prompt="Извлеки все строки из этой сметы:",
             )
-            return self._parse_llm_response(response)
+            result = self._parse_llm_response(response)
+            result.warnings = warnings
+            return result
         except json.JSONDecodeError as e:
             logger.warning(f"PDF estimate: truncated/invalid JSON, salvaging rows: {e}")
-            raw = e.doc if hasattr(e, 'doc') else ''
+            # B12: безопасный доступ к e.doc
+            raw = getattr(e, 'doc', '') or ''
             result = self._salvage_truncated_json(raw)
+            result.warnings = warnings
             if result.rows:
                 return result
         except Exception as e:
             logger.error(f"PDF estimate parsing failed: {e}", exc_info=True)
 
-        return ParsedEstimate(rows=[], sections=[], total_rows=0, confidence=0.0)
+        return ParsedEstimate(rows=[], sections=[], total_rows=0, confidence=0.0, warnings=warnings)
 
     @staticmethod
     def _parse_llm_response(response: dict) -> ParsedEstimate:
@@ -302,6 +323,12 @@ class EstimateImportService:
     ) -> List[EstimateItem]:
         estimate = Estimate.objects.get(pk=estimate_id)
 
+        # B13: учитываем существующие секции при назначении sort_order
+        max_section_sort = (
+            EstimateSection.objects.filter(estimate=estimate)
+            .aggregate(m=Max('sort_order'))['m'] or -1
+        )
+
         section_map: Dict[str, EstimateSection] = {}
         for section_name in parsed.sections:
             if not section_name:
@@ -309,7 +336,7 @@ class EstimateImportService:
             section, _ = EstimateSection.objects.get_or_create(
                 estimate=estimate,
                 name=section_name,
-                defaults={'sort_order': len(section_map)},
+                defaults={'sort_order': max_section_sort + 1 + len(section_map)},
             )
             section_map[section_name] = section
 
@@ -323,27 +350,32 @@ class EstimateImportService:
 
         existing_max = EstimateItem.objects.filter(estimate=estimate).order_by('-item_number').values_list('item_number', flat=True).first() or 0
 
-        created_items = []
+        items_to_create = []
         for row in parsed.rows:
             section = section_map.get(row.section_name, default_section)
+            # B14: safety fallback (теоретически невозможно, но на всякий случай)
             if not section:
-                section = default_section or list(section_map.values())[0]
+                section = default_section or next(iter(section_map.values()), None)
+            if not section:
+                default_section, _ = EstimateSection.objects.get_or_create(
+                    estimate=estimate, name='Основной раздел', defaults={'sort_order': 0},
+                )
+                section = default_section
 
-            item = EstimateItem.objects.create(
+            items_to_create.append(EstimateItem(
                 estimate=estimate,
                 section=section,
                 item_number=existing_max + row.item_number,
                 sort_order=existing_max + row.item_number,
-                name=row.name,
-                model_name=row.model_name,
-                unit=row.unit or 'шт',
+                name=row.name[:1000],
+                model_name=row.model_name[:300],
+                unit=(row.unit or 'шт')[:50],
                 quantity=row.quantity,
                 material_unit_price=row.material_unit_price,
                 work_unit_price=row.work_unit_price,
-            )
-            created_items.append(item)
+            ))
 
-        return created_items
+        return EstimateItem.objects.bulk_create(items_to_create)
 
     @transaction.atomic
     def save_rows_from_preview(
@@ -365,9 +397,15 @@ class EstimateImportService:
             .first()
         ) or 0
 
+        # B13: учитываем существующие секции при назначении sort_order
+        max_section_sort = (
+            EstimateSection.objects.filter(estimate=estimate)
+            .aggregate(m=Max('sort_order'))['m'] or -1
+        )
+
         # Первый проход: создаём разделы
         section_map: Dict[str, EstimateSection] = {}
-        sort_order = 0
+        sort_order = max_section_sort + 1
         for row_data in rows:
             if row_data.get('is_section'):
                 name = row_data.get('name', '').strip()
@@ -389,9 +427,9 @@ class EstimateImportService:
                 defaults={'sort_order': 0},
             )
 
-        # Второй проход: создаём строки
+        # Второй проход: собираем объекты для bulk_create
         current_section = default_section
-        created_items = []
+        items_to_create = []
         item_counter = 0
 
         for row_data in rows:
@@ -401,23 +439,28 @@ class EstimateImportService:
                 continue
 
             item_counter += 1
-            section = current_section or default_section or next(iter(section_map.values()))
+            # B15: safety fallback
+            section = current_section or default_section or next(iter(section_map.values()), None)
+            if not section:
+                default_section, _ = EstimateSection.objects.get_or_create(
+                    estimate=estimate, name='Основной раздел', defaults={'sort_order': 0},
+                )
+                section = default_section
 
-            item = EstimateItem.objects.create(
+            items_to_create.append(EstimateItem(
                 estimate=estimate,
                 section=section,
                 item_number=existing_max + item_counter,
                 sort_order=existing_max + item_counter,
-                name=row_data.get('name', ''),
-                model_name=row_data.get('model_name', ''),
-                unit=row_data.get('unit', 'шт') or 'шт',
+                name=row_data.get('name', '')[:1000],
+                model_name=row_data.get('model_name', '')[:300],
+                unit=(row_data.get('unit', 'шт') or 'шт')[:50],
                 quantity=_safe_decimal(row_data.get('quantity', 1)),
                 material_unit_price=_safe_decimal(row_data.get('material_unit_price', 0)),
                 work_unit_price=_safe_decimal(row_data.get('work_unit_price', 0)),
-            )
-            created_items.append(item)
+            ))
 
-        return created_items
+        return EstimateItem.objects.bulk_create(items_to_create)
 
     @staticmethod
     def _renumber_items(estimate):

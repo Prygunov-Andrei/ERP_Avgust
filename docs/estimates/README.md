@@ -58,7 +58,11 @@ class Meta:
 | GET/POST | `/api/v1/estimate-items/` | Список / создание строк |
 | GET/PATCH/DELETE | `/api/v1/estimate-items/{id}/` | CRUD строки |
 | POST | `/api/v1/estimate-items/{id}/promote-to-section/` | Назначить строку заголовком раздела |
-| POST | `/api/v1/estimate-items/import-rows/` | Импорт строк из Excel/PDF |
+| POST | `/api/v1/estimate-items/import/` | Импорт из Excel/PDF (синхронный, preview) |
+| POST | `/api/v1/estimate-items/import-rows/` | Сохранение строк из предпросмотра |
+| POST | `/api/v1/estimate-items/import-pdf/` | Запуск постраничного импорта PDF (Celery) |
+| GET | `/api/v1/estimate-items/import-progress/{session_id}/` | Polling прогресса PDF-импорта |
+| POST | `/api/v1/estimate-items/import-cancel/{session_id}/` | Отмена PDF-импорта |
 | POST | `/api/v1/estimate-items/auto-match/` | Автоподбор цен из каталога |
 | POST | `/api/v1/estimate-items/auto-match-works/` | Автоподбор работ |
 
@@ -72,10 +76,94 @@ class Meta:
 
 | Метод | Описание |
 |-------|----------|
-| `parse_file(file, filename)` | Парсинг Excel/PDF → preview JSON |
-| `save_rows_from_preview(estimate_id, sections_data)` | Сохранение строк из превью импорта |
+| `import_from_excel(file_content, filename)` | Парсинг Excel → `ParsedEstimate` |
+| `import_from_pdf(file_content, filename)` | Парсинг PDF через LLM → `ParsedEstimate` (макс 15 стр.) |
+| `save_imported_items(estimate_id, parsed)` | Сохранение из `ParsedEstimate` (bulk_create, @transaction.atomic) |
+| `save_rows_from_preview(estimate_id, rows)` | Сохранение строк из JSON-предпросмотра |
 | `promote_item_to_section(item_id)` | Превращает строку в раздел |
 | `demote_section_to_item(section_id)` | Превращает раздел обратно в строку |
+
+### `ParsedEstimate` (`services/estimate_import_schemas.py`)
+
+Pydantic-модель результата парсинга:
+- `rows: List[EstimateImportRow]` — распознанные строки
+- `sections: List[str]` — уникальные названия разделов
+- `total_rows: int` — количество строк
+- `confidence: float` — уверенность парсинга (0.0–1.0)
+- `warnings: List[str]` — предупреждения (напр. "обработано 15 из 87 страниц")
+
+---
+
+## Импорт смет — архитектура
+
+### Excel (синхронный)
+
+```
+Frontend                          Backend
+POST /import/ (preview=true)  →   EstimateImportService.import_from_excel()
+                              ←   {rows, sections, confidence, warnings}
+POST /import-rows/            →   EstimateImportService.save_rows_from_preview()
+                              ←   {created_count, item_ids}
+```
+
+Парсинг через `openpyxl`: детекция заголовков по HEADER_KEYWORDS, эвристический fallback.
+
+### PDF (асинхронный, Celery + Redis)
+
+```
+Frontend                          Backend
+POST /import-pdf/             →   create_import_session() → Redis + файл на диск
+                              ←   {session_id, total_pages} (HTTP 202)
+
+[Celery worker]                   process_estimate_pdf_pages(session_id)
+                                  Для каждой страницы:
+                                    1. Рендер PNG (PyMuPDF, DPI=100)
+                                    2. POST в LLM (system prompt)
+                                    3. Парсинг JSON-ответа
+                                    4. Обновление Redis (rows, progress, errors)
+                                  Статус: processing → completed/error
+
+GET /import-progress/{id}/    →   get_session_data(session_id) → чтение Redis
+                              ←   {status, current_page, rows, sections, errors}
+(polling каждые 3 сек)
+
+POST /import-cancel/{id}/     →   cancel_session() → status='cancelled' в Redis
+                              ←   {status: 'cancelled'}
+
+POST /import-rows/            →   save_rows_from_preview() — финальное сохранение
+                              ←   {created_count, item_ids}
+```
+
+**Redis ключ:** `estimate_import:{session_id}` (hash), TTL = 3600 сек.
+**Celery task:** `process_estimate_pdf_pages`, time_limit=3600, soft_time_limit=3400.
+**Temp файлы:** `{MEDIA_ROOT}/tmp/estimate_imports/{session_id}.pdf` — удаляются после обработки.
+
+### Валидация файлов (бэкенд)
+
+- Максимальный размер: 50 МБ (`MAX_IMPORT_FILE_SIZE`)
+- Проверка пустого файла: `file.size == 0`
+- Расширение + MIME-type: `.xlsx`/`.xls` + `application/vnd.openxmlformats-...`, `.pdf` + `application/pdf`
+- Валидация `rows` в `import-rows`: каждый элемент — dict с непустым `name`
+- session_id в URL: строго `[a-f0-9]{16}`
+
+### Фронтенд: EstimateImportDialog
+
+**Компонент:** `frontend/components/erp/components/estimates/EstimateImportDialog.tsx`
+
+Шаги (step machine): `upload → parsing/progressive → preview → done`
+
+**Сворачиваемый режим (для PDF):**
+- Состояние `isMinimized` — диалог сворачивается в floating chip (через `createPortal`)
+- Polling продолжает работать в свёрнутом виде
+- При закрытии диалога во время `progressive` → автосворачивание (не cancel)
+- При завершении в свёрнутом виде: звуковой сигнал (`AudioContext` beep) + авторазворачивание + toast
+- `beforeunload` warning при уходе со страницы во время импорта
+
+**Защита от потери данных:**
+- `AbortController` для отмены in-flight fetch при unmount
+- `estimateIdRef` — стабильная ссылка на estimateId
+- `previewDataRef` — для доступа к данным в catch без зависимости в useEffect
+- Оптимизация: previewData обновляется только при изменении количества строк
 
 ---
 
@@ -98,17 +186,6 @@ class Meta:
 5. Секция удаляется
 
 Оба метода обёрнуты в `@transaction.atomic` и используют bulk `.update()`.
-
----
-
-## Импорт смет
-
-Pipeline: `Excel/PDF → parse_file() → preview JSON → save_rows_from_preview()`
-
-1. Файл загружается через `EstimateImportDialog` (фронтенд)
-2. Бэкенд парсит файл (`openpyxl` для Excel)
-3. Фронтенд показывает превью с возможностью назначить разделы
-4. Пользователь сохраняет — создаются секции и строки
 
 ---
 
@@ -140,10 +217,10 @@ TableRow = EstimateItem & { _isSection?: boolean; _sectionId?: number }
 
 ```bash
 # Все тесты модуля
-cd backend && .venv/bin/python manage.py test estimates
+cd backend && python -m pytest estimates/tests/ -v
 
 # Только promote/demote
-cd backend && .venv/bin/python manage.py test estimates.tests.test_api.EstimateItemSectionPromotionTests estimates.tests.test_models.EstimateItemPromotionServiceTests
+cd backend && python -m pytest estimates/tests/test_api.py -k "Promotion" -v
 ```
 
 *Последнее обновление: Март 2026*

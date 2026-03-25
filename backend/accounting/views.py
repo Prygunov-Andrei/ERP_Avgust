@@ -77,6 +77,7 @@ class CounterpartyViewSet(viewsets.ModelViewSet):
     """Управление контрагентами"""
     queryset = Counterparty.objects.all()
     serializer_class = CounterpartySerializer
+    pagination_class = None
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name', 'short_name', 'inn']
     filterset_fields = ['type', 'legal_form', 'is_active']
