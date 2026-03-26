@@ -23,10 +23,9 @@ if [ -f "$PIDFILE" ]; then
 else
     echo -e "${YELLOW}PID-файл не найден, пробую найти процессы...${NC}"
     # Fallback: убить известные процессы
-    pkill -f "manage.py runserver" 2>/dev/null && echo "  Остановлены Django серверы" || true
-    pkill -f "celery -A finans_assistant" 2>/dev/null && echo "  Остановлен Celery ERP" || true
-    pkill -f "celery -A kanban_service" 2>/dev/null && echo "  Остановлен Celery Kanban" || true
-    pkill -f "vite" 2>/dev/null && echo "  Остановлен Vite" || true
+    pkill -f "manage.py runserver" 2>/dev/null && echo "  Остановлен Django" || true
+    pkill -f "celery -A finans_assistant" 2>/dev/null && echo "  Остановлен Celery" || true
+    pkill -f "next-server" 2>/dev/null && echo "  Остановлен Next.js" || true
 fi
 
 sleep 1

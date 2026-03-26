@@ -1,27 +1,12 @@
 # =============================================================================
 # Только инфраструктура для локальной разработки
+# БД — на проде через SSH-туннель (dev-local.sh поднимает автоматически)
+# Здесь только Redis (Celery) и MinIO (файлы)
 # Приложения (Django, Vite, Celery) запускаются нативно на хосте
 # Использование: docker compose -f docker-compose.dev.yml up -d
 # =============================================================================
 
 services:
-
-  postgres:
-    image: postgres:14-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: ${DB_NAME:-finans_assistant}
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -70,25 +55,6 @@ services:
       exit 0;
       "
 
-  createkanbandb:
-    image: postgres:14-alpine
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      PGPASSWORD: ${DB_PASSWORD:-postgres}
-      DB_USER: ${DB_USER:-postgres}
-      DB_HOST: postgres
-      KANBAN_DB_NAME: ${KANBAN_DB_NAME:-kanban}
-    entrypoint: >
-      /bin/sh -c "
-      echo 'Ensuring kanban database exists...';
-      psql -h $$DB_HOST -U $$DB_USER -d postgres -tc \"SELECT 1 FROM pg_database WHERE datname='$$KANBAN_DB_NAME'\" | grep -q 1
-      || psql -h $$DB_HOST -U $$DB_USER -d postgres -c \"CREATE DATABASE \\\"$$KANBAN_DB_NAME\\\"\" ;
-      exit 0;
-      "
-
 volumes:
-  postgres_data:
   redis_data:
   minio_data:

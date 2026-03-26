@@ -1,8 +1,14 @@
 #!/bin/bash
 # =============================================================================
-# Локальная разработка: инфраструктура в Docker, приложения — нативно
+# Локальная разработка: полный запуск одной командой
+# SSH-туннель → venv → Docker инфраструктура → миграции → приложения
+#
 # Запуск: ./dev-local.sh
 # Остановка: Ctrl+C (или ./dev-stop.sh из другого терминала)
+#
+# БД: продакшен через SSH-туннель (localhost:15432 → prod:5432)
+# Docker: только Redis + MinIO (для Celery и файлов)
+# Приложения: нативно на хосте (Django, Celery, Next.js)
 # =============================================================================
 
 set -e
@@ -17,6 +23,7 @@ CELERY="$VENV_DIR/bin/celery"
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 cleanup() {
@@ -32,45 +39,166 @@ cleanup() {
         rm -f "$PIDFILE"
     fi
 
-    # Немного подождать завершения процессов
     sleep 1
 
     echo -e "${YELLOW}Останавливаю Docker инфраструктуру...${NC}"
     docker compose -f "$ROOT_DIR/docker-compose.dev.yml" down
 
-    echo -e "${GREEN}Всё остановлено.${NC}"
+    # SSH-туннель НЕ убиваем — он переживает перезапуски
+    echo -e "${GREEN}Всё остановлено. SSH-туннель оставлен активным.${NC}"
     exit 0
 }
 
 trap cleanup SIGINT SIGTERM
 
-# Проверить venv
-if [ ! -f "$PYTHON" ]; then
-    echo -e "${RED}Python venv не найден: $VENV_DIR${NC}"
-    echo "Создайте: python3.12 -m venv backend/.venv && source backend/.venv/bin/activate && pip install -r backend/requirements.txt"
+# =========================================================================
+# Очистка: убить старые процессы на наших портах
+# =========================================================================
+echo -e "${YELLOW}Очищаю старые процессы...${NC}"
+
+# Старый pidfile
+if [ -f "$PIDFILE" ]; then
+    while read -r pid; do
+        kill "$pid" 2>/dev/null || true
+    done < "$PIDFILE"
+    rm -f "$PIDFILE"
+fi
+
+# Django (порт 8000)
+OLD_DJANGO=$(lsof -ti :8000 2>/dev/null || true)
+if [ -n "$OLD_DJANGO" ]; then
+    echo "  Убиваю старый Django на :8000 (PID: $OLD_DJANGO)"
+    echo "$OLD_DJANGO" | xargs kill 2>/dev/null || true
+fi
+
+# Next.js (порт 3000)
+OLD_NEXT=$(lsof -ti :3000 2>/dev/null || true)
+if [ -n "$OLD_NEXT" ]; then
+    echo "  Убиваю старый Next.js на :3000 (PID: $OLD_NEXT)"
+    echo "$OLD_NEXT" | xargs kill 2>/dev/null || true
+fi
+
+# Celery
+pkill -f "celery -A finans_assistant" 2>/dev/null && echo "  Убит старый Celery" || true
+
+# Подождать освобождения портов
+if [ -n "$OLD_DJANGO" ] || [ -n "$OLD_NEXT" ]; then
+    sleep 1
+fi
+
+echo "  OK"
+
+# =========================================================================
+# 0. Загрузить переменные окружения
+# =========================================================================
+if [ -f "$ROOT_DIR/backend/.env" ]; then
+    set -a
+    source "$ROOT_DIR/backend/.env"
+    set +a
+else
+    echo -e "${RED}backend/.env не найден!${NC}"
+    echo "Скопируйте .env.example → .env и заполните значениями"
     exit 1
 fi
 
-# Очистить старый pidfile
-rm -f "$PIDFILE"
+# =========================================================================
+# 1. SSH-туннель к прод-БД
+# =========================================================================
+TUNNEL_PORT="${DB_PORT:-15432}"
+echo -e "${GREEN}[1/6] SSH-туннель к прод-БД (порт $TUNNEL_PORT)...${NC}"
+
+if lsof -i :"$TUNNEL_PORT" > /dev/null 2>&1; then
+    echo "  Туннель уже активен"
+else
+    echo "  Туннель не найден, поднимаю..."
+
+    if [ -z "$PROD_SSH_HOST" ]; then
+        echo -e "${RED}PROD_SSH_HOST не задан в backend/.env${NC}"
+        exit 1
+    fi
+
+    if ! command -v sshpass &> /dev/null; then
+        echo -e "${RED}sshpass не установлен!${NC}"
+        echo "  Установите: brew install hudochenkov/sshpass/sshpass"
+        exit 1
+    fi
+
+    SSHPASS="$PROD_SSH_PASS" sshpass -e ssh \
+        -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=60 \
+        -o ServerAliveCountMax=3 \
+        -N -L "$TUNNEL_PORT":127.0.0.1:5432 \
+        "${PROD_SSH_USER:-root}@${PROD_SSH_HOST}" &
+    SSH_PID=$!
+
+    echo -n "  Жду подключения"
+    for i in $(seq 1 15); do
+        if lsof -i :"$TUNNEL_PORT" > /dev/null 2>&1; then
+            echo " OK"
+            break
+        fi
+        if ! kill -0 "$SSH_PID" 2>/dev/null; then
+            echo ""
+            echo -e "${RED}SSH-туннель упал. Проверьте доступ к $PROD_SSH_HOST${NC}"
+            exit 1
+        fi
+        echo -n "."
+        sleep 1
+    done
+
+    if ! lsof -i :"$TUNNEL_PORT" > /dev/null 2>&1; then
+        echo ""
+        echo -e "${RED}Таймаут: SSH-туннель не поднялся за 15 сек${NC}"
+        kill "$SSH_PID" 2>/dev/null || true
+        exit 1
+    fi
+fi
+
+# Быстрая проверка что БД отвечает
+echo -n "  Проверяю соединение с БД..."
+if PGPASSWORD="$DB_PASSWORD" psql -h "${DB_HOST:-localhost}" -p "$TUNNEL_PORT" -U "${DB_USER:-postgres}" -d "${DB_NAME:-finans_assistant}" -c "SELECT 1" > /dev/null 2>&1; then
+    echo " OK"
+else
+    echo ""
+    echo -e "${RED}БД не отвечает на порту $TUNNEL_PORT. Туннель есть, но БД недоступна.${NC}"
+    exit 1
+fi
 
 # =========================================================================
-# 1. Поднять инфраструктуру
+# 2. Python venv
 # =========================================================================
-echo -e "${GREEN}[1/5] Поднимаю Docker инфраструктуру (PostgreSQL, Redis, MinIO)...${NC}"
+echo -e "${GREEN}[2/6] Python venv...${NC}"
+
+NEED_VENV=false
+if [ ! -f "$PYTHON" ]; then
+    NEED_VENV=true
+    echo "  venv не найден, создаю..."
+elif ! "$PYTHON" -c "import django" 2>/dev/null; then
+    NEED_VENV=true
+    echo "  venv сломан (django не импортируется), пересоздаю..."
+    rm -rf "$VENV_DIR"
+fi
+
+if [ "$NEED_VENV" = true ]; then
+    python3.12 -m venv "$VENV_DIR"
+    "$VENV_DIR/bin/pip" install --quiet --upgrade pip
+    "$VENV_DIR/bin/pip" install --quiet -r "$ROOT_DIR/backend/requirements.txt"
+    "$VENV_DIR/bin/pip" install --quiet whitenoise
+    echo "  venv создан и зависимости установлены"
+else
+    echo "  OK"
+fi
+
+# =========================================================================
+# 3. Docker инфраструктура (Redis + MinIO)
+# =========================================================================
+echo -e "${GREEN}[3/6] Docker инфраструктура (Redis, MinIO)...${NC}"
 docker compose -f "$ROOT_DIR/docker-compose.dev.yml" up -d
 
 # =========================================================================
-# 2. Подождать готовности сервисов
+# 4. Ждём готовности сервисов
 # =========================================================================
-echo -e "${GREEN}[2/5] Жду готовности сервисов...${NC}"
-
-echo -n "  PostgreSQL..."
-until docker compose -f "$ROOT_DIR/docker-compose.dev.yml" exec -T postgres pg_isready -U postgres > /dev/null 2>&1; do
-    echo -n "."
-    sleep 1
-done
-echo " OK"
+echo -e "${GREEN}[4/6] Жду готовности сервисов...${NC}"
 
 echo -n "  Redis..."
 until docker compose -f "$ROOT_DIR/docker-compose.dev.yml" exec -T redis redis-cli ping > /dev/null 2>&1; do
@@ -87,16 +215,9 @@ done
 echo " OK"
 
 # =========================================================================
-# 2.5. Загрузить переменные из .env (kanban_service не использует dotenv)
+# 5. Миграции
 # =========================================================================
-set -a
-source "$ROOT_DIR/backend/.env"
-set +a
-
-# =========================================================================
-# 3. Миграции
-# =========================================================================
-echo -e "${GREEN}[3/5] Применяю миграции...${NC}"
+echo -e "${GREEN}[5/6] Применяю миграции...${NC}"
 cd "$ROOT_DIR/backend"
 
 echo "  ERP (finans_assistant)..."
@@ -105,22 +226,18 @@ $PYTHON manage.py migrate --no-input
 echo "  Настройка LLM-провайдеров..."
 $PYTHON manage.py setup_providers
 
-# Kanban миграции теперь часть основного бэкенда (finans_assistant)
-
 cd "$ROOT_DIR"
 
 # =========================================================================
-# 4. Запуск приложений
+# 6. Запуск приложений
 # =========================================================================
-echo -e "${GREEN}[4/5] Запускаю приложения...${NC}"
+echo -e "${GREEN}[6/6] Запускаю приложения...${NC}"
 
 # Django ERP (порт 8000)
 cd "$ROOT_DIR/backend"
 $PYTHON manage.py runserver 0.0.0.0:8000 &
 echo $! >> "$PIDFILE"
 echo "  Django ERP         → PID $!"
-
-# Kanban теперь часть основного бэкенда (порт 8000)
 
 # Celery ERP worker
 # macOS: --pool=solo чтобы избежать SIGSEGV при fork() (ObjC runtime)
@@ -132,34 +249,32 @@ $CELERY -A finans_assistant worker --pool=$CELERY_POOL --concurrency=1 -l info &
 echo $! >> "$PIDFILE"
 echo "  Celery ERP worker  → PID $! (pool=$CELERY_POOL)"
 
-
 # Celery ERP beat (периодические задачи)
 $CELERY -A finans_assistant beat -l info --schedule=/tmp/celerybeat-erp &
 echo $! >> "$PIDFILE"
 echo "  Celery ERP beat    → PID $!"
 
-# Kanban beat теперь часть finans_assistant (celery ERP beat выше)
-
-# Vite dev server (порт 3000)
+# Next.js dev server (порт 3000)
 cd "$ROOT_DIR/frontend"
 npm run dev &
 echo $! >> "$PIDFILE"
-echo "  Vite frontend      → PID $!"
+echo "  Next.js frontend   → PID $!"
 
 cd "$ROOT_DIR"
 
 # =========================================================================
-# 5. Готово
+# Готово
 # =========================================================================
 echo ""
-echo -e "${GREEN}[5/5] Локальная разработка запущена!${NC}"
+echo -e "${GREEN}Локальная разработка запущена!${NC}"
 echo ""
-echo "  Frontend (Vite HMR):  http://localhost:3000"
-echo "  ERP API:              http://localhost:8000/api/v1/"
-echo "  Kanban API:           http://localhost:8000/kanban-api/v1/"
-echo "  MinIO Console:        http://localhost:9001"
+echo -e "  ${CYAN}Frontend:${NC}    http://localhost:3000"
+echo -e "  ${CYAN}ERP API:${NC}     http://localhost:8000/api/v1/"
+echo -e "  ${CYAN}Kanban API:${NC}  http://localhost:8000/kanban-api/v1/"
+echo -e "  ${CYAN}MinIO:${NC}       http://localhost:9001"
+echo -e "  ${CYAN}Прод-БД:${NC}     localhost:$TUNNEL_PORT → $PROD_SSH_HOST"
 echo ""
-echo -e "${YELLOW}Ctrl+C для остановки всех сервисов${NC}"
+echo -e "${YELLOW}Ctrl+C для остановки (SSH-туннель останется активным)${NC}"
 echo ""
 
 # Ждём завершения (Ctrl+C вызовет cleanup через trap)
