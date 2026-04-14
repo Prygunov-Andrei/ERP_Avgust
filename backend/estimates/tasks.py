@@ -149,9 +149,15 @@ def process_estimate_pdf_pages(self, session_id: str):
 
     try:
         _process_pdf_pages(r, key, session_id, file_path, total_pages)
-    except Exception:
+    except Exception as exc:
         logger.exception('Session %s: unexpected error', session_id)
-        r.hset(key, 'status', 'error')
+        r.hset(key, mapping={
+            'status': 'error',
+            'errors': json.dumps(
+                [{'reason': 'unexpected', 'detail': f'{type(exc).__name__}: {exc}'}],
+                ensure_ascii=False,
+            ),
+        })
     finally:
         _cleanup_file(file_path)
 
@@ -162,13 +168,34 @@ def _process_pdf_pages(r, key, session_id, file_path, total_pages):
     from llm_services.services.exceptions import RateLimitError
 
     # Получаем LLM-провайдер
-    provider_model = LLMProvider.get_default()
-    if not provider_model:
-        r.hset(key, 'status', 'error')
-        logger.error('No default LLM provider configured')
+    try:
+        provider_model = LLMProvider.get_default()
+    except LLMProvider.DoesNotExist:
+        r.hset(key, mapping={
+            'status': 'error',
+            'errors': json.dumps(
+                [{'reason': 'llm_not_configured',
+                  'detail': 'LLM-провайдер не настроен в админке. Обратитесь к администратору.'}],
+                ensure_ascii=False,
+            ),
+        })
+        logger.error('Session %s: no default LLM provider configured', session_id)
         return
 
-    provider = get_provider(provider_model)
+    try:
+        provider = get_provider(provider_model)
+    except ValueError as e:
+        # get_api_key() → нет env-переменной
+        r.hset(key, mapping={
+            'status': 'error',
+            'errors': json.dumps(
+                [{'reason': 'llm_api_key_missing',
+                  'detail': f'Ключ LLM не задан в окружении ({provider_model.env_key_name}). Обратитесь к администратору.'}],
+                ensure_ascii=False,
+            ),
+        })
+        logger.error('Session %s: LLM api key missing: %s', session_id, e)
+        return
 
     all_rows = []
     all_sections = set()

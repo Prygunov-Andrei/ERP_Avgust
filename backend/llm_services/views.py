@@ -1,11 +1,12 @@
 import logging
+import os
 import uuid
 from typing import Optional
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes, parser_classes, throttle_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.throttling import UserRateThrottle
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -41,6 +42,49 @@ def detect_file_type(content: bytes) -> Optional[str]:
         if content.startswith(magic):
             return file_type
     return None
+
+
+@extend_schema(summary='Healthcheck LLM', tags=['LLM'])
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def llm_health(request):
+    """Проверка доступности default LLM-провайдера.
+
+    200 — провайдер настроен, env-ключ присутствует.
+    503 — провайдер не настроен или нет env-ключа (деталь в reason).
+
+    Используется внешним мониторингом. Ping самого провайдера не делается (чтобы не тратить токены).
+    """
+    try:
+        provider = LLMProvider.get_default()
+    except LLMProvider.DoesNotExist:
+        return Response(
+            {'status': 'error', 'reason': 'no_default_provider',
+             'detail': 'В БД нет активного LLM-провайдера'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+    if not provider.env_key_name:
+        return Response(
+            {'status': 'error', 'reason': 'no_env_key_name',
+             'detail': f'У провайдера {provider} пустое env_key_name'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+    if not os.environ.get(provider.env_key_name):
+        return Response(
+            {'status': 'error', 'reason': 'env_var_missing',
+             'detail': f'В окружении нет {provider.env_key_name}',
+             'provider': provider.model_name},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+    return Response({
+        'status': 'ok',
+        'provider_type': provider.provider_type,
+        'model_name': provider.model_name,
+        'env_key_name': provider.env_key_name,
+    })
 
 
 class LLMProviderViewSet(viewsets.ModelViewSet):

@@ -1,10 +1,30 @@
 #!/bin/bash
 set -e
 
+ENV_FILE=/opt/finans_assistant/.env
+SECRETS_FILE=/opt/finans_assistant/.env.secrets
+
 echo "=========================================="
 echo "Production Environment File Generator"
 echo "=========================================="
 echo ""
+
+# --- Защита от перезаписи существующего .env ---
+# Если .env уже есть — НЕ перетираем, только создаём бэкап и выходим.
+# Это критично: при повторном запуске деплоя мы НЕ должны терять API-ключи,
+# которые уже были добавлены вручную (OPENAI_API_KEY и т.п.).
+if [ -f "$ENV_FILE" ]; then
+    BACKUP="$ENV_FILE.backup.$(date +%Y%m%d_%H%M%S)"
+    cp "$ENV_FILE" "$BACKUP"
+    echo "✓ Существующий .env сохранён, перезапись пропущена."
+    echo "  Backup: $BACKUP"
+    echo ""
+    echo "Если нужно сгенерировать новый .env заново:"
+    echo "  1. mv $ENV_FILE $ENV_FILE.old"
+    echo "  2. $0"
+    echo "  3. Перенести секреты (API-ключи и т.п.) из .old в новый .env"
+    exit 0
+fi
 
 # Генерация безопасных паролей
 generate_password() {
@@ -107,9 +127,29 @@ PUBLIC_MINIAPP_URL=${PUBLIC_URL}/miniapp
 WORKLOG_S3_PUBLIC_URL=${PUBLIC_URL}/media
 EOF
 
+# --- Merge long-lived secrets, если есть ---
+# .env.secrets — опциональный файл, который админ кладёт рядом вручную.
+# В нём хранятся API-ключи (OPENAI_API_KEY, GEMINI_API_KEY, TELEGRAM_BOT_TOKEN и т.п.).
+# Он НЕ удаляется и НЕ пересоздаётся скриптом — переживает любой redeploy.
+if [ -f "$SECRETS_FILE" ]; then
+    echo "" >> "$ENV_FILE"
+    echo "# --- Long-lived secrets (из .env.secrets) ---" >> "$ENV_FILE"
+    cat "$SECRETS_FILE" >> "$ENV_FILE"
+    echo "✓ Секреты из $SECRETS_FILE добавлены в .env"
+fi
+
 echo ""
 echo "✓ Production .env file created at /opt/finans_assistant/.env"
 echo ""
+if [ ! -f "$SECRETS_FILE" ]; then
+    echo "⚠  Файл $SECRETS_FILE не найден."
+    echo "   Рекомендуется создать его для хранения долгоживущих секретов (API-ключи LLM и т.п.),"
+    echo "   чтобы они переживали пересоздание .env. Пример:"
+    echo "     OPENAI_API_KEY=sk-..."
+    echo "     GEMINI_API_KEY=..."
+    echo "     TELEGRAM_BOT_TOKEN=..."
+    echo ""
+fi
 echo "Generated credentials:"
 echo "  PostgreSQL password: ${DB_PASSWORD}"
 echo "  MinIO user: ${MINIO_USER}"

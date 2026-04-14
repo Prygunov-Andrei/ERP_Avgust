@@ -119,6 +119,14 @@ jobs:
         run: pip install ruff && ruff check . --select=E,F,W --ignore=E501,E402 --exclude=migrations,__pycache__,.venv
     timeout-minutes: 10
 
+  env-keys:
+    name: Env keys drift check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash deploy/check_env_keys.sh
+    timeout-minutes: 2
+
   bot:
     name: Bot Tests
     runs-on: ubuntu-latest

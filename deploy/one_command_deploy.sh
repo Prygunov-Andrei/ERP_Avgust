@@ -118,6 +118,12 @@ echo -e "${GREEN}[12/12] Running database migrations...${NC}"
 docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
 docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
 
+echo -e "${GREEN}[smoke] Checking LLM availability...${NC}"
+if ! docker compose -f docker-compose.prod.yml exec -T backend python manage.py check_llm; then
+    echo -e "${YELLOW}⚠  LLM smoke-check FAILED — импорт смет и счетов не будет работать.${NC}"
+    echo -e "${YELLOW}   Проверьте .env (OPENAI_API_KEY и т.п.) и перезапустите celery-worker.${NC}"
+fi
+
 echo ""
 echo -e "${BLUE}=============================================="
 echo "  Deployment completed!"

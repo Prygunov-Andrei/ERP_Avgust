@@ -338,7 +338,9 @@ export const EstimateImportDialog: React.FC<EstimateImportDialogProps> = ({
             setIsMinimized(false);
             setStep(data.rows.length > 0 ? 'preview' : 'upload');
           } else {
-            toast.error('Ошибка при обработке PDF');
+            const firstErr = data.errors?.[0] as { detail?: string; reason?: string; error?: string } | undefined;
+            const detail = firstErr?.detail || firstErr?.error || firstErr?.reason;
+            toast.error(detail ? `Ошибка при обработке PDF: ${detail}` : 'Ошибка при обработке PDF');
             setIsMinimized((wasMinimized) => {
               if (wasMinimized) playNotificationBeep();
               return false;
