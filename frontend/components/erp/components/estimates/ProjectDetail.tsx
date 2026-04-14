@@ -172,6 +172,18 @@ export function ProjectDetail() {
     },
   });
 
+  const updateFileTypeMutation = useMutation({
+    mutationFn: ({ fileId, fileTypeId }: { fileId: number; fileTypeId: number }) =>
+      api.estimates.updateProjectFile(fileId, { file_type: fileTypeId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', id] });
+      toast.success('Тип файла обновлён');
+    },
+    onError: (error) => {
+      toast.error(`Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+    },
+  });
+
   const deleteFileMutation = useMutation({
     mutationFn: (fileId: number) => api.estimates.deleteProjectFile(fileId),
     onSuccess: () => {
@@ -405,9 +417,22 @@ export function ProjectDetail() {
                     {project.project_files.map((pf) => (
                       <tr key={pf.id} className="hover:bg-muted/50">
                         <td className="px-4 py-3">
-                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 dark:bg-blue-900/30 text-primary">
-                            {pf.file_type_name}
-                          </span>
+                          <select
+                            value={pf.file_type}
+                            disabled={updateFileTypeMutation.isPending}
+                            onChange={(e) => {
+                              const newType = Number(e.target.value);
+                              if (newType && newType !== pf.file_type) {
+                                updateFileTypeMutation.mutate({ fileId: pf.id, fileTypeId: newType });
+                              }
+                            }}
+                            className="text-xs font-medium rounded-md bg-blue-100 dark:bg-blue-900/30 text-primary px-2 py-1 border-0 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                            title="Сменить тип файла"
+                          >
+                            {fileTypes?.map((ft) => (
+                              <option key={ft.id} value={ft.id}>{ft.name}</option>
+                            ))}
+                          </select>
                         </td>
                         <td className="px-4 py-3 text-sm text-foreground">
                           {pf.original_filename}
