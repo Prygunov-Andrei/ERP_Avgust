@@ -63,7 +63,8 @@ def discover_news_for_resource_task(self, resource_id, provider='auto', user_id=
         raise self.retry(exc=e)
 
 
-@shared_task(bind=True, max_retries=1, default_retry_delay=60)
+@shared_task(bind=True, max_retries=1, default_retry_delay=60,
+             time_limit=7200, soft_time_limit=7000)
 def discover_all_resources_task(self, user_id=None, config_id=None, provider='auto',
                                  last_search_date_override=None):
     """
@@ -101,7 +102,8 @@ def discover_all_resources_task(self, user_id=None, config_id=None, provider='au
         raise self.retry(exc=e)
 
 
-@shared_task(bind=True, max_retries=1, default_retry_delay=60)
+@shared_task(bind=True, max_retries=1, default_retry_delay=60,
+             time_limit=7200, soft_time_limit=7000)
 def discover_all_manufacturers_task(self, user_id=None, config_id=None, provider='auto',
                                       last_search_date_override=None):
     """
