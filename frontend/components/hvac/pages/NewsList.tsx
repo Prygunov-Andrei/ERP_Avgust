@@ -135,14 +135,14 @@ export default function NewsList() {
     setCurrentPage(1);
     setSelectedIds([]);
     loadNews(1, true);
-  }, [language, statusFilter]);
+  }, [language, statusFilter, starFilter]);
 
   const loadNews = async (page: number = 1, reset: boolean = false) => {
     try {
       if (reset) setLoading(true);
       else setLoadingMore(true);
       setError(null);
-      const response = await newsService.getNews(language, page);
+      const response = await newsService.getNews(language, page, starFilter);
 
       let pageNews: News[] = [];
       let nextPage: string | null = null;
@@ -158,13 +158,6 @@ export default function NewsList() {
       }
       if (statusFilter !== 'all') {
         pageNews = pageNews.filter(item => item.status === statusFilter);
-      }
-      // Фильтр по рейтингу (клиентский)
-      if (starFilter.length > 0) {
-        pageNews = pageNews.filter(item => {
-          const rating = (item as News & { star_rating?: number | null }).star_rating;
-          return rating !== null && rating !== undefined && starFilter.includes(rating);
-        });
       }
 
       setNews(prev => reset ? pageNews : [...prev, ...pageNews]);
