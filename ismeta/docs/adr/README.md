@@ -28,7 +28,7 @@
 | [0009](./0009-knowledge-md-files.md) | ProductKnowledge в БД + зеркало в .md файлах per-workspace | Accepted |
 | [0010](./0010-optimistic-locking.md) | Optimistic locking на строках сметы вместо CRDT | Accepted |
 | [0011](./0011-widget-pattern.md) | Встраивание в ERP через npm-пакет `@ismeta/widget` | Accepted |
-| [0012](./0012-auditlog-1year.md) | AuditLog хранится 1 год без партиционирования | Accepted |
+| [0012](./0012-auditlog-1year.md) | AuditLog хранится 1 год (retention) | Accepted (partitioning superseded by 0021) |
 | [0013](./0013-excel-roundtrip.md) | Excel-цикл через row_id + hash, без Google Sheets в MVP | Accepted |
 | [0014](./0014-no-contract-creation-from-ismeta.md) | ISMeta не создаёт ContractEstimate/ContractAmendment в ERP | Accepted |
 | [0015](./0015-version-link-ismeta-erp.md) | VersionLink — явная связь версий ISMeta ↔ ERP | Accepted |
@@ -37,3 +37,4 @@
 | [0018](./0018-docker-compose-not-k8s.md) | Docker Compose вместо Kubernetes в MVP и коробке | Accepted |
 | [0019](./0019-feature-flags-db-only.md) | Feature Flags в БД без отдельной админки | Accepted |
 | [0020](./0020-django-admin-in-mvp.md) | Django Admin для админки в MVP | Accepted |
+| [0021](./0021-partition-from-day-one.md) | Партиционирование append-heavy таблиц с первой миграции | Accepted |
