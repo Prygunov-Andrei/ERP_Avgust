@@ -652,4 +652,5 @@ STORAGES = {
 # =============================================================================
 CELERY_TASK_ROUTES = {
     'api_public.tasks.*': {'queue': 'public_tasks'},
+    'news.tasks.translate_news_task': {'queue': 'translations'},
 }

@@ -95,6 +95,29 @@ class NewsPost(models.Model):
         help_text=_("Группа дубликатов, к которой относится эта новость")
     )
 
+    TRANSLATION_STATUS_CHOICES = [
+        ('pending', _('Pending')),
+        ('in_progress', _('In progress')),
+        ('completed', _('Completed')),
+        ('failed', _('Failed')),
+    ]
+    translation_status = models.CharField(
+        _("Translation Status"),
+        max_length=16,
+        choices=TRANSLATION_STATUS_CHOICES,
+        null=True,
+        blank=True,
+        default=None,
+        db_index=True,
+        help_text=_("Статус фонового перевода. NULL = перевод не запрашивался."),
+    )
+    translation_error = models.TextField(
+        _("Translation Error"),
+        blank=True,
+        null=True,
+        help_text=_("Последняя ошибка Celery-задачи перевода (если была).")
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

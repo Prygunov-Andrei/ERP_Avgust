@@ -2,6 +2,7 @@ import type { PaginatedResponse } from './common';
 
 export type HvacNewsStatus = 'draft' | 'scheduled' | 'published';
 export type HvacSourceLanguage = 'ru' | 'en' | 'de' | 'pt';
+export type HvacTranslationStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
 
 export interface HvacNewsMedia {
   id: number;
@@ -49,6 +50,9 @@ export interface HvacNews {
   rating_explanation?: string;
   matched_criteria?: number[];
   duplicate_group?: number | null;
+  // Асинхронный перевод
+  translation_status?: HvacTranslationStatus | null;
+  translation_error?: string | null;
 }
 
 export interface HvacManufacturer {

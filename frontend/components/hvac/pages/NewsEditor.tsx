@@ -184,23 +184,24 @@ export default function NewsEditor() {
         source_url: sourceUrl,
       };
 
+      const translationNote = autoTranslate ? ' Перевод выполняется в фоне.' : '';
       if (id) {
         await newsService.updateNews(parseInt(id), data);
         if (finalStatus === 'published') {
-          toast.success('Новость опубликована');
+          toast.success('Новость опубликована.' + translationNote);
         } else if (finalStatus === 'scheduled') {
-          toast.success('Новость запланирована');
+          toast.success('Новость запланирована.' + translationNote);
         } else {
-          toast.success('Новость обновлена');
+          toast.success('Новость обновлена.' + translationNote);
         }
       } else {
         await newsService.createNews(data as NewsCreateData);
         if (finalStatus === 'published') {
-          toast.success('Новость опубликована');
+          toast.success('Новость опубликована.' + translationNote);
         } else if (finalStatus === 'scheduled') {
-          toast.success('Новость запланирована');
+          toast.success('Новость запланирована.' + translationNote);
         } else {
-          toast.success('Новость создана');
+          toast.success('Новость создана.' + translationNote);
         }
       }
       

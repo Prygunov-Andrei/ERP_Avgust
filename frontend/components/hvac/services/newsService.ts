@@ -95,14 +95,20 @@ const newsService = {
   // Создать новость (только для админов)
   // Таймаут увеличен: автоперевод через OpenAI может занять до 2 минут
   createNews: async (data: NewsCreateData): Promise<News> => {
-    const response = await apiClient.post('/news/', data, { timeout: 120000 });
+    // Автоперевод теперь асинхронный (Celery), но оставляем запас 30 сек на случай медленной БД
+    const response = await apiClient.post('/news/', data, { timeout: 30000 });
     return response.data;
   },
 
   // Обновить новость (только для админов)
-  // Таймаут увеличен: автоперевод через OpenAI может занять до 2 минут
   updateNews: async (id: number, data: NewsUpdateData): Promise<News> => {
-    const response = await apiClient.patch(`/news/${id}/`, data, { timeout: 120000 });
+    const response = await apiClient.patch(`/news/${id}/`, data, { timeout: 30000 });
+    return response.data;
+  },
+
+  // Перезапустить фоновый перевод (используется после failed)
+  retranslate: async (id: number): Promise<News> => {
+    const response = await apiClient.post(`/news/${id}/retranslate/`);
     return response.data;
   },
 

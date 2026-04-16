@@ -5,7 +5,7 @@ import zipfile
 from io import BytesIO
 from unittest.mock import patch, MagicMock
 from PIL import Image
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
@@ -787,122 +787,157 @@ class NewsPostStatusTest(TestCase):
 
 
 class NewsPostTranslationTest(TestCase):
-    """Тесты для автоперевода новостей (Этап 5.3)"""
-    
+    """Тесты асинхронного автоперевода новостей (Celery)."""
+
     def setUp(self):
         self.client = APIClient()
         self.admin_user = User.objects.create_user(
             email='admin@test.com',
             password='password',
             is_staff=True,
-            is_superuser=True
+            is_superuser=True,
         )
-        # Мокируем ответ OpenAI
-        self.mock_openai_response = MagicMock()
-        self.mock_openai_response.choices = [MagicMock()]
-        self.mock_openai_response.choices[0].message.content = "Translated text"
-    
-    @patch('news.views.TranslationService')
-    def test_create_news_with_auto_translate(self, mock_translation_service):
-        """При создании новости с auto_translate=true заполняются все языковые поля"""
-        # Настраиваем мок сервиса перевода
-        mock_service_instance = MagicMock()
-        mock_translation_service.return_value = mock_service_instance
-        mock_service_instance.translate_news.return_value = {
-            'en': {'title': 'English Title', 'body': 'English Body'},
-            'de': {'title': 'German Title', 'body': 'German Body'},
-            'pt': {'title': 'Portuguese Title', 'body': 'Portuguese Body'},
-        }
-        
+
+    @patch('news.views.translate_news_task.delay')
+    def test_create_news_with_auto_translate_enqueues_task(self, mock_delay):
+        """POST /news/ с auto_translate=True ставит задачу в очередь и помечает pending."""
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.post('/api/news/', {
             'title': 'Test Title',
             'body': 'Test Body',
             'source_language': 'ru',
             'auto_translate': True,
-            'pub_date': timezone.now().isoformat()
+            'pub_date': timezone.now().isoformat(),
         })
-        
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         news = NewsPost.objects.get(title='Test Title')
-        
-        # Проверяем, что сервис перевода был вызван
-        mock_service_instance.translate_news.assert_called_once()
-        
-        # Проверяем, что source_language установлен
-        self.assertEqual(news.source_language, 'ru')
-    
-    @patch('news.views.TranslationService')
-    def test_auto_translate_false_no_translation(self, mock_translation_service):
-        """При auto_translate=false переводы не выполняются"""
+        mock_delay.assert_called_once_with(news.id, 'ru')
+        self.assertEqual(news.translation_status, 'pending')
+        self.assertIsNone(news.translation_error)
+
+    @patch('news.views.translate_news_task.delay')
+    def test_auto_translate_false_does_not_enqueue(self, mock_delay):
+        """auto_translate=False не создаёт задачу и не меняет translation_status."""
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.post('/api/news/', {
             'title': 'Test Title',
             'body': 'Test Body',
             'source_language': 'ru',
             'auto_translate': False,
-            'pub_date': timezone.now().isoformat()
+            'pub_date': timezone.now().isoformat(),
         })
-        
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
-        # Проверяем, что сервис перевода не вызывался
-        mock_translation_service.assert_not_called()
-    
-    @patch('news.views.TranslationService')
-    def test_translation_error_does_not_block_creation(self, mock_translation_service):
-        """Ошибка API перевода не блокирует создание новости"""
-        # Настраиваем мок для выброса ошибки
-        mock_service_instance = MagicMock()
-        mock_translation_service.return_value = mock_service_instance
-        mock_service_instance.translate_news.side_effect = Exception("API Error")
-        
+        mock_delay.assert_not_called()
+        news = NewsPost.objects.get(title='Test Title')
+        self.assertIsNone(news.translation_status)
+
+    @patch('news.views.translate_news_task.delay')
+    def test_update_news_with_auto_translate_enqueues_task(self, mock_delay):
+        """PATCH /news/{id}/ с auto_translate=True ставит задачу с правильным source_language."""
+        news = NewsPost.objects.create(
+            title='Original Title',
+            body='Original Body',
+            source_language='ru',
+            status='published',
+            pub_date=timezone.now() - timezone.timedelta(days=1),
+            author=self.admin_user,
+        )
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.patch(f'/api/news/{news.id}/', {
+            'title': 'Updated Title',
+            'body': 'Updated Body',
+            'auto_translate': True,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_delay.assert_called_once_with(news.id, 'ru')
+        news.refresh_from_db()
+        self.assertEqual(news.translation_status, 'pending')
+
+    @patch('news.views.translate_news_task.delay')
+    def test_enqueue_failure_marks_news_as_failed(self, mock_delay):
+        """Если Celery-broker недоступен, новость всё равно создаётся, status=failed."""
+        mock_delay.side_effect = Exception('broker unreachable')
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.post('/api/news/', {
             'title': 'Test Title',
             'body': 'Test Body',
             'source_language': 'ru',
             'auto_translate': True,
-            'pub_date': timezone.now().isoformat()
+            'pub_date': timezone.now().isoformat(),
         })
-        
-        # Новость должна быть создана даже при ошибке перевода
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(NewsPost.objects.count(), 1)
-    
-    @patch('news.views.TranslationService')
-    def test_update_news_with_auto_translate(self, mock_translation_service):
-        """При обновлении новости с auto_translate=true выполняется перевод"""
-        # Создаем новость
+        news = NewsPost.objects.get(title='Test Title')
+        self.assertEqual(news.translation_status, 'failed')
+        self.assertIn('broker unreachable', news.translation_error)
+
+    @patch('news.tasks.TranslationService')
+    def test_translate_news_task_happy_path(self, mock_translation_service):
+        """Eager-режим: task заполняет title_en/de/pt и ставит completed."""
+        mock_service = MagicMock()
+        mock_translation_service.return_value = mock_service
+        mock_service.translate_news.return_value = {
+            'en': {'title': 'EN Title', 'body': 'EN Body'},
+            'de': {'title': 'DE Title', 'body': 'DE Body'},
+            'pt': {'title': 'PT Title', 'body': 'PT Body'},
+        }
         news = NewsPost.objects.create(
-            title="Original Title",
-            body="Original Body",
+            title='Источник',
+            body='Тело',
             source_language='ru',
             status='published',
-            pub_date=timezone.now() - timezone.timedelta(days=1),
-            author=self.admin_user
+            pub_date=timezone.now(),
+            author=self.admin_user,
         )
-        
-        # Настраиваем мок сервиса перевода
-        mock_service_instance = MagicMock()
-        mock_translation_service.return_value = mock_service_instance
-        mock_service_instance.translate_news.return_value = {
-            'en': {'title': 'English Title', 'body': 'English Body'},
-            'de': {'title': 'German Title', 'body': 'German Body'},
-            'pt': {'title': 'Portuguese Title', 'body': 'Portuguese Body'},
-        }
-        
+        from news.tasks import translate_news_task
+        with override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True):
+            translate_news_task.apply(args=(news.id, 'ru')).get()
+        news.refresh_from_db()
+        self.assertEqual(news.translation_status, 'completed')
+        self.assertEqual(news.title_en, 'EN Title')
+        self.assertEqual(news.body_de, 'DE Body')
+        self.assertEqual(news.title_pt, 'PT Title')
+        # Исходный язык не трогали
+        self.assertEqual(news.title_ru, 'Источник')
+
+    @patch('news.tasks.TranslationService')
+    def test_translate_news_task_skips_deleted_post(self, mock_translation_service):
+        """is_deleted=True → task возвращается без вызова TranslationService."""
+        news = NewsPost.objects.create(
+            title='Test',
+            body='Body',
+            source_language='ru',
+            status='draft',
+            pub_date=timezone.now(),
+            author=self.admin_user,
+            is_deleted=True,
+        )
+        from news.tasks import translate_news_task
+        with override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True):
+            translate_news_task.apply(args=(news.id, 'ru')).get()
+        mock_translation_service.assert_not_called()
+        news.refresh_from_db()
+        self.assertIsNone(news.translation_status)
+
+    @patch('news.views.translate_news_task.delay')
+    def test_retranslate_endpoint_enqueues_task(self, mock_delay):
+        """POST /news/{id}/retranslate/ ставит задачу и возвращает обновлённый объект."""
+        news = NewsPost.objects.create(
+            title='Test',
+            body='Body',
+            source_language='ru',
+            status='published',
+            pub_date=timezone.now(),
+            author=self.admin_user,
+            translation_status='failed',
+            translation_error='previous error',
+        )
         self.client.force_authenticate(user=self.admin_user)
-        response = self.client.patch(f'/api/news/{news.id}/', {
-            'title': 'Updated Title',
-            'body': 'Updated Body',
-            'auto_translate': True
-        })
-        
+        response = self.client.post(f'/api/news/{news.id}/retranslate/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        # Проверяем, что сервис перевода был вызван
-        mock_service_instance.translate_news.assert_called_once()
+        mock_delay.assert_called_once_with(news.id, 'ru')
+        news.refresh_from_db()
+        self.assertEqual(news.translation_status, 'pending')
+        self.assertIsNone(news.translation_error)
     
     def test_source_language_validation(self):
         """Валидация исходного языка"""

@@ -177,7 +177,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: celery -A finans_assistant worker --loglevel=info --concurrency=2
+    command: celery -A finans_assistant worker --loglevel=info --concurrency=2 -Q celery,translations
     environment:
       <<: *backend-env
     volumes:

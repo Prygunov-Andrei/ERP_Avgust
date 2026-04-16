@@ -222,3 +222,78 @@ def analyze_published_news_task(self, config_id=None):
     except Exception as e:
         logger.error("Celery analysis failed: %s", str(e), exc_info=True)
         raise
+
+
+# ============================================================================
+# Translation задачи
+# ============================================================================
+
+@shared_task(bind=True, max_retries=2, default_retry_delay=60,
+             time_limit=600, soft_time_limit=540)
+def translate_news_task(self, news_post_id, source_language):
+    """
+    Фоновый перевод новости на все поддерживаемые языки.
+    Заменяет синхронный вызов _translate_news_post в views.py.
+
+    Пишет только в target-языки (title_en/de/pt, body_*) через update_fields,
+    поэтому одновременные правки пользователем в title_{source_language} не
+    перезаписываются.
+    """
+    from news.models import NewsPost
+    from news.translation_service import TranslationService
+
+    logger.info("translate_news_task started: post=%s, src=%s", news_post_id, source_language)
+
+    try:
+        post = NewsPost.objects.filter(pk=news_post_id, is_deleted=False).first()
+        if not post:
+            logger.info("translate_news_task: post %s missing or deleted — skip", news_post_id)
+            return {'skipped': True, 'reason': 'missing_or_deleted'}
+
+        NewsPost.objects.filter(pk=news_post_id).update(
+            translation_status='in_progress',
+            translation_error=None,
+        )
+        post.refresh_from_db()
+
+        title = getattr(post, f'title_{source_language}', None) or post.title
+        body = getattr(post, f'body_{source_language}', None) or post.body
+        if not title or not body:
+            logger.warning("translate_news_task: empty title or body for post %s (src=%s)",
+                           news_post_id, source_language)
+            NewsPost.objects.filter(pk=news_post_id).update(
+                translation_status='failed',
+                translation_error='Empty title or body for source language',
+            )
+            return {'skipped': True, 'reason': 'empty_source'}
+
+        translations = TranslationService().translate_news(title, body, source_language)
+
+        post.refresh_from_db()
+        if post.is_deleted:
+            logger.info("translate_news_task: post %s was deleted during translation — skip save", news_post_id)
+            return {'skipped': True, 'reason': 'deleted_during_translate'}
+
+        update_fields = ['translation_status', 'translation_error']
+        for lang, tr in (translations or {}).items():
+            if lang == source_language:
+                continue
+            if tr.get('title') and tr.get('body'):
+                setattr(post, f'title_{lang}', tr['title'])
+                setattr(post, f'body_{lang}', tr['body'])
+                update_fields += [f'title_{lang}', f'body_{lang}']
+
+        post.translation_status = 'completed'
+        post.translation_error = None
+        post.save(update_fields=update_fields)
+
+        logger.info("translate_news_task completed: post=%s, langs=%s", news_post_id,
+                    [l for l in (translations or {}) if l != source_language])
+        return {'completed': True, 'languages': list((translations or {}).keys())}
+    except Exception as e:
+        logger.error("translate_news_task failed for %s: %s", news_post_id, e, exc_info=True)
+        NewsPost.objects.filter(pk=news_post_id).update(
+            translation_status='failed',
+            translation_error=str(e)[:2000],
+        )
+        raise self.retry(exc=e)

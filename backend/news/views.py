@@ -21,8 +21,6 @@ from .serializers import (
     RatingCriterionSerializer, RatingConfigurationSerializer, RatingConfigurationListSerializer,
     RatingRunSerializer, RatingRunListSerializer,
 )
-from .translation_service import TranslationService
-
 logger = logging.getLogger(__name__)
 
 
@@ -150,19 +148,28 @@ class NewsPostViewSet(viewsets.ModelViewSet):
         """
         if self.action in ['create', 'update', 'partial_update', 'destroy', 'drafts',
                            'scheduled', 'publish', 'rate_all_unrated', 'rate_batch', 'set_rating',
-                           'analyze_published', 'rating_progress']:
+                           'analyze_published', 'rating_progress', 'retranslate']:
             return [permissions.IsAdminUser()]
         return [permissions.AllowAny()]
-    
+
     def _handle_translation_and_response(self, news_post, auto_translate, source_language, request):
-        """Общая логика для обработки автоперевода и возврата полного объекта"""
-        # Выполняем автоперевод если запрошен
-        if auto_translate and settings.TRANSLATION_ENABLED:
-            self._translate_news_post(news_post, source_language)
-            # Обновляем объект из БД после перевода
+        """Общая логика: ставим пустой перевод в очередь Celery, возвращаем свежий объект."""
+        if auto_translate and getattr(settings, 'TRANSLATION_ENABLED', True):
+            from .tasks import translate_news_task
+            NewsPost.objects.filter(pk=news_post.id).update(
+                translation_status='pending',
+                translation_error=None,
+            )
+            try:
+                translate_news_task.delay(news_post.id, source_language)
+            except Exception as e:
+                logger.error("Failed to enqueue translate_news_task for %s: %s", news_post.id, e, exc_info=True)
+                NewsPost.objects.filter(pk=news_post.id).update(
+                    translation_status='failed',
+                    translation_error=f'Queue error: {e}'[:2000],
+                )
             news_post.refresh_from_db()
-        
-        # Возвращаем полный объект через NewsPostSerializer
+
         output_serializer = NewsPostSerializer(news_post, context={'request': request})
         return output_serializer.data
     
@@ -197,41 +204,34 @@ class NewsPostViewSet(viewsets.ModelViewSet):
         output_data = self._handle_translation_and_response(news_post, auto_translate, source_language, request)
         return Response(output_data)
     
-    def _translate_news_post(self, news_post, source_language):
-        """Выполняет перевод новости на все языки"""
+    @action(detail=True, methods=['post'], url_path='retranslate')
+    def retranslate(self, request, pk=None):
+        """Перезапустить фоновый перевод для новости (обычно после failed)."""
+        from .tasks import translate_news_task
+        news_post = self.get_object()
+        if news_post.is_deleted:
+            return Response({'error': 'Новость удалена'}, status=status.HTTP_404_NOT_FOUND)
+
+        source_language = news_post.source_language or settings.MODELTRANSLATION_DEFAULT_LANGUAGE
+        NewsPost.objects.filter(pk=news_post.id).update(
+            translation_status='pending',
+            translation_error=None,
+        )
         try:
-            translation_service = TranslationService()
-            
-            # Получаем исходный текст из поля для исходного языка
-            # modeltranslation использует title_ru, title_en и т.д.
-            title = getattr(news_post, f'title_{source_language}', None) or news_post.title
-            body = getattr(news_post, f'body_{source_language}', None) or news_post.body
-            
-            if not title or not body:
-                logger.warning(f"Empty title or body for news post {news_post.id}, skipping translation")
-                return
-            
-            # Переводим на все языки
-            translations = translation_service.translate_news(title, body, source_language)
-            
-            # Сохраняем переводы в соответствующие поля
-            for lang, trans in translations.items():
-                if lang != source_language and trans.get('title') and trans.get('body'):
-                    setattr(news_post, f'title_{lang}', trans['title'])
-                    setattr(news_post, f'body_{lang}', trans['body'])
-            
-            # Сохраняем исходный текст в поле для исходного языка, если его там еще нет
-            if not getattr(news_post, f'title_{source_language}', None):
-                setattr(news_post, f'title_{source_language}', title)
-            if not getattr(news_post, f'body_{source_language}', None):
-                setattr(news_post, f'body_{source_language}', body)
-            
-            news_post.save()
-            logger.info(f"Translation completed for news post {news_post.id}")
+            translate_news_task.delay(news_post.id, source_language)
         except Exception as e:
-            # Логируем ошибку, но не блокируем создание/обновление новости
-            logger.error(f"Translation failed for news post {news_post.id}: {str(e)}", exc_info=True)
-    
+            logger.error("Failed to enqueue retranslate for %s: %s", news_post.id, e, exc_info=True)
+            NewsPost.objects.filter(pk=news_post.id).update(
+                translation_status='failed',
+                translation_error=f'Queue error: {e}'[:2000],
+            )
+            return Response({'error': f'Не удалось поставить задачу в очередь: {e}'},
+                            status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        news_post.refresh_from_db()
+        serializer = NewsPostSerializer(news_post, context={'request': request})
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get'])
     def drafts(self, request):
         """Получить все черновики (только для админов)"""

@@ -50,6 +50,7 @@ class NewsPostSerializer(serializers.ModelSerializer):
             'pub_date', 'status', 'source_language', 'source_url', 'created_at', 'updated_at', 'author', 'media',
             'is_no_news_found', 'manufacturer',
             'star_rating', 'rating_explanation', 'matched_criteria', 'duplicate_group',
+            'translation_status', 'translation_error',
         )
         read_only_fields = (
             'id', 'created_at', 'updated_at', 'author',
@@ -57,6 +58,7 @@ class NewsPostSerializer(serializers.ModelSerializer):
             'body_ru', 'body_en', 'body_de', 'body_pt',
             'is_no_news_found', 'manufacturer',
             'rating_explanation', 'matched_criteria', 'duplicate_group',
+            'translation_status', 'translation_error',
         )
     
     def _get_translation_field(self, obj, field_name, lang_code):

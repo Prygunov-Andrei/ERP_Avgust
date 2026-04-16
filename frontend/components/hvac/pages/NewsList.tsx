@@ -4,6 +4,7 @@ import { Link } from '@/hooks/erp-router';
 import { useHvacLanguage as useLanguage } from '../hooks/useHvacLanguage';
 import { useHvacAuth as useAuth } from '../hooks/useHvacAuth';
 import newsService, { News } from '../services/newsService';
+import TranslationBadge from '../components/TranslationBadge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,7 @@ export default function NewsList() {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [starFilter, setStarFilter] = useState<number[]>([]);
+  const [retryingTranslationId, setRetryingTranslationId] = useState<number | null>(null);
 
   const isAdmin = user?.is_staff === true;
 
@@ -136,6 +138,31 @@ export default function NewsList() {
     setSelectedIds([]);
     loadNews(1, true);
   }, [language, statusFilter, starFilter]);
+
+  // Polling пока есть новости с активным переводом. 12 сек — перевод обычно 30-60 сек.
+  useEffect(() => {
+    const hasTranslating = news.some(
+      n => n.translation_status === 'pending' || n.translation_status === 'in_progress'
+    );
+    if (!hasTranslating) return;
+    const timerId = setTimeout(() => {
+      loadNews(1, true);
+    }, 12000);
+    return () => clearTimeout(timerId);
+  }, [news]);
+
+  const handleRetranslate = async (id: number) => {
+    setRetryingTranslationId(id);
+    try {
+      await newsService.retranslate(id);
+      toast.success('Перевод перезапущен');
+      setNews(prev => prev.map(n => n.id === id ? { ...n, translation_status: 'pending', translation_error: null } : n));
+    } catch (e) {
+      toast.error('Не удалось перезапустить перевод');
+    } finally {
+      setRetryingTranslationId(null);
+    }
+  };
 
   const loadNews = async (page: number = 1, reset: boolean = false) => {
     try {
@@ -455,6 +482,12 @@ export default function NewsList() {
                                 <Badge variant="outline" className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">Не найдено</Badge>
                               )}
                               {getStatusBadge(item)}
+                              <TranslationBadge
+                                status={item.translation_status}
+                                error={item.translation_error}
+                                onRetry={() => handleRetranslate(item.id)}
+                                retrying={retryingTranslationId === item.id}
+                              />
                               {getStarBadge(item)}
                             </div>
                             {isAdmin && renderInlineRatingEditor(item)}
