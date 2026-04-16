@@ -4,11 +4,18 @@ Celery-задачи для HVAC-новостей.
 """
 import logging
 import time as _time
+from datetime import date, datetime
 from celery import shared_task
 from django.contrib.auth import get_user_model
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+def _parse_search_date(value):
+    if value is None or isinstance(value, date):
+        return value
+    return datetime.strptime(str(value), '%Y-%m-%d').date()
 
 
 # ============================================================================
@@ -80,7 +87,7 @@ def discover_all_resources_task(self, user_id=None, config_id=None, provider='au
         )
         stats = service.discover_all_news(
             status_obj=status_obj,
-            last_search_date_override=last_search_date_override,
+            last_search_date_override=_parse_search_date(last_search_date_override),
         )
         logger.info("Celery discovery for all resources completed: %s", stats)
 
@@ -118,7 +125,7 @@ def discover_all_manufacturers_task(self, user_id=None, config_id=None, provider
         )
         stats = service.discover_all_manufacturers_news(
             status_obj=status_obj,
-            last_search_date_override=last_search_date_override,
+            last_search_date_override=_parse_search_date(last_search_date_override),
         )
         logger.info("Celery discovery for all manufacturers completed: %s", stats)
 
