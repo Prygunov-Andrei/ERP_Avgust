@@ -79,6 +79,7 @@ def health_deps(_request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     # Health-checks — см. docs/SLO.md
+    path("health", health_liveness, name="health-liveness-short"),
     path("api/v1/health", health_liveness, name="health-liveness"),
     path("api/v1/health/ready", health_readiness, name="health-readiness"),
     path("api/v1/health/deps", health_deps, name="health-deps"),

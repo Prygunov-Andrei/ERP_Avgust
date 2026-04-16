@@ -1,0 +1,106 @@
+# ISMeta — dev оркестрация (E1.1).
+# ADR-0018: docker-compose как prod-подобная среда MVP.
+# Поднимает 4 сервиса: postgres (host 5433), redis (6380), backend (8001),
+# frontend (3001). Нестандартные host-порты — чтобы работать параллельно
+# с ERP-стеком, который занимает 5432/6379/8000/3000. Внутри контейнеров
+# стандартные порты.
+# Миграции НЕ запускаются (apps ещё не созданы — E1.2).
+
+name: ismeta
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: ismeta-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ismeta}
+      POSTGRES_USER: ${POSTGRES_USER:-ismeta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ismeta}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ismeta} -d ${POSTGRES_DB:-ismeta}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: ismeta-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ismeta-backend:
+    build:
+      context: ./backend
+      target: development
+    container_name: ismeta-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-secret-change-me}
+      DEBUG: ${DEBUG:-1}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,ismeta-backend}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-ismeta}
+      DB_USER: ${POSTGRES_USER:-ismeta}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-ismeta}
+      CELERY_BROKER_URL: redis://redis:6379/3
+      CELERY_RESULT_BACKEND: redis://redis:6379/3
+      REDIS_URL: redis://redis:6379/2
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-text}
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+    ports:
+      - "${BACKEND_PORT:-8001}:8000"
+    volumes:
+      # Bind mount исходников для hot reload через runserver.
+      - ./backend:/app
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+  ismeta-frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: ismeta-frontend
+    restart: unless-stopped
+    depends_on:
+      - ismeta-backend
+    environment:
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      NEXT_PUBLIC_ISMETA_API_URL: ${NEXT_PUBLIC_ISMETA_API_URL:-http://localhost:8001/api/v1}
+      NEXT_PUBLIC_DEFAULT_WORKSPACE: ${NEXT_PUBLIC_DEFAULT_WORKSPACE:-11111111-1111-1111-1111-111111111111}
+      NEXT_PUBLIC_FEATURE_AGENT: ${NEXT_PUBLIC_FEATURE_AGENT:-true}
+      NEXT_PUBLIC_FEATURE_EXCEL_ROUNDTRIP: ${NEXT_PUBLIC_FEATURE_EXCEL_ROUNDTRIP:-true}
+      NEXT_PUBLIC_FEATURE_PUBLIC_MODE: ${NEXT_PUBLIC_FEATURE_PUBLIC_MODE:-false}
+    ports:
+      - "${FRONTEND_PORT:-3001}:3000"
+    volumes:
+      # Bind mount исходников; node_modules остаётся в образе.
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  postgres-data:
+  redis-data:
