@@ -78,7 +78,7 @@ def discover_all_resources_task(self, user_id=None, config_id=None, provider='au
             search_type='resources',
             provider=provider,
         )
-        stats = service.discover_all_resources_news(
+        stats = service.discover_all_news(
             status_obj=status_obj,
             last_search_date_override=last_search_date_override,
         )
