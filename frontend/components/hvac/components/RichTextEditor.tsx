@@ -33,6 +33,7 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
   const [isLinkDialogOpen, setIsLinkDialogOpen] = React.useState(false);
   const [isImageDialogOpen, setIsImageDialogOpen] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -279,17 +280,23 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
             <div className="space-y-4">
               {onImageUpload && (
                 <div>
-                  <Label htmlFor="image-file">Загрузить файл</Label>
-                  <Input
-                    id="image-file"
+                  <Label>Загрузить файл</Label>
+                  <input
+                    ref={fileInputRef}
                     type="file"
                     accept="image/*"
-                    onChange={handleImageFileUpload}
-                    disabled={isUploading}
+                    onChange={(e) => { handleImageFileUpload(e); e.target.value = ''; }}
+                    className="hidden"
                   />
-                  {isUploading && (
-                    <p className="text-sm text-muted-foreground mt-2">Загрузка...</p>
-                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-1 w-full"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? 'Загрузка…' : 'Выбрать файл'}
+                  </Button>
                 </div>
               )}
               <div>
