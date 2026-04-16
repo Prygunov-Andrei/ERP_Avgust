@@ -20,9 +20,11 @@ WORKDIR /app
 FROM base AS deps
 
 COPY package.json package-lock.json* ./
-# --legacy-peer-deps: next@15 объявляет peer react@18 || 19-rc, а package.json
-# фиксирует react@19.0.0 (stable). Для dev bootstrap принимаем; финальная фиксация
-# версий — задача tech lead'а в E9.
+# --legacy-peer-deps всё ещё нужен после bump next@15.1.0: конфликт
+# переехал с next → next-themes@0.3.0, который объявляет peer
+# react@"^16.8 || ^17 || ^18" и не принимает react@19. Решение по этому
+# конкретному пакету — за Tech Lead (bump до 0.4.x, замена, или дождаться
+# релиза 0.4 с поддержкой react 19). См. E1.1-fixes отчёт.
 RUN --mount=type=cache,target=/root/.npm \
     if [ -f package-lock.json ]; then \
         npm ci --legacy-peer-deps; \
