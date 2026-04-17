@@ -6,6 +6,8 @@ import type {
   EstimateItem,
   EstimateListItem,
   EstimateSection,
+  MatchingResult,
+  MatchingSession,
   ProblemDetails,
   UUID,
 } from "./types";
@@ -232,4 +234,33 @@ export const itemApi = {
       ifMatch: version,
       expect: "none",
     }),
+};
+
+export const matchingApi = {
+  start: (estimateId: UUID, workspaceId: string) =>
+    apiFetch<MatchingSession>(
+      `/estimates/${estimateId}/match-works/`,
+      { method: "POST", workspaceId },
+    ),
+
+  getProgress: (estimateId: UUID, sessionId: string, workspaceId: string) =>
+    apiFetch<{ session_id: string; status: "pending" | "done" | "error" }>(
+      `/estimates/${estimateId}/match-works/${sessionId}/`,
+      { workspaceId },
+    ),
+
+  apply: (
+    estimateId: UUID,
+    sessionId: string,
+    results: MatchingResult[],
+    workspaceId: string,
+  ) =>
+    apiFetch<{ updated: number }>(
+      `/estimates/${estimateId}/match-works/${sessionId}/apply/`,
+      {
+        method: "POST",
+        body: { results },
+        workspaceId,
+      },
+    ),
 };

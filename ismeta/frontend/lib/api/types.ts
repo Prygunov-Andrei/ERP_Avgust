@@ -158,6 +158,30 @@ export const ESTIMATE_STATUS_LABELS: Record<EstimateStatus, string> = {
   archived: "Архив",
 };
 
+export interface MatchingMatch {
+  work_name: string;
+  work_unit: string;
+  work_price: string;
+  confidence: string;
+  source: MatchSource;
+  reasoning: string;
+}
+
+export interface MatchingResult {
+  group_name: string;
+  unit: string;
+  item_count: number;
+  item_ids: UUID[];
+  match: MatchingMatch;
+}
+
+export interface MatchingSession {
+  session_id: string;
+  total_items: number;
+  groups: number;
+  results: MatchingResult[];
+}
+
 export const MATCH_SOURCE_LABELS: Record<MatchSource, string> = {
   manual: "Вручную",
   history: "История",

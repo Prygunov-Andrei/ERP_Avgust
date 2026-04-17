@@ -4,13 +4,13 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Download, GitBranch, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, GitBranch, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/app/estimates/status-badge";
-import { estimateApi, ApiError } from "@/lib/api/client";
+import { ApiError, estimateApi, matchingApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
 import { downloadBlob, cn } from "@/lib/utils";
 import type { Estimate } from "@/lib/api/types";
@@ -71,6 +71,28 @@ export function EstimateHeader({ estimate }: Props) {
       router.push(`/estimates/${next.id}`);
     },
     onError: () => toast.error("Не удалось создать версию"),
+  });
+
+  const startMatching = useMutation({
+    mutationFn: () => matchingApi.start(estimate.id, workspaceId),
+    onSuccess: (session) => {
+      if (session.results.length === 0) {
+        toast.info("Нет позиций для подбора. Добавьте строки в смету.");
+        return;
+      }
+      qc.setQueryData(
+        ["matching", estimate.id, session.session_id, workspaceId],
+        session,
+      );
+      router.push(`/estimates/${estimate.id}/matching/${session.session_id}`);
+    },
+    onError: (e: unknown) => {
+      if (e instanceof ApiError) {
+        toast.error(e.problem?.detail ?? "Не удалось запустить подбор");
+      } else {
+        toast.error("Не удалось запустить подбор");
+      }
+    },
   });
 
   const commitName = () => {
@@ -135,6 +157,18 @@ export function EstimateHeader({ estimate }: Props) {
           <StatusBadge status={estimate.status} />
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => startMatching.mutate()}
+            disabled={startMatching.isPending}
+          >
+            {startMatching.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wand2 className="h-4 w-4" />
+            )}
+            Подобрать работы
+          </Button>
           <Button
             variant="outline"
             onClick={() => exportXlsx.mutate()}
