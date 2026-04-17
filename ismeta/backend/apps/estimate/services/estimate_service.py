@@ -7,6 +7,7 @@ from decimal import Decimal
 from django.db import connection
 
 from apps.estimate.models import Estimate, EstimateItem, EstimateSection
+from apps.estimate.services.markup_service import recalc_estimate_totals, recalc_item_totals
 
 
 class OptimisticLockError(Exception):
@@ -31,6 +32,11 @@ class EstimateService:
         item_id = uuid.uuid4()
         row_id = uuid.uuid4()
         _j = EstimateService._to_json_str
+
+        # Пересчитать totals через markup cascade
+        totals = recalc_item_totals(data, section, estimate)
+        data.update(totals)
+
         with connection.cursor() as cur:
             cur.execute(
                 """
@@ -75,6 +81,7 @@ class EstimateService:
                     data.get("man_hours", 0),
                 ],
             )
+        recalc_estimate_totals(estimate.id, workspace_id)
         return EstimateItem.all_objects.get(id=item_id)
 
     # Whitelist колонок, допустимых для UPDATE (защита от SQL injection).
@@ -117,7 +124,9 @@ class EstimateService:
             if cur.rowcount == 0:
                 raise OptimisticLockError(f"EstimateItem {item_id} version conflict (expected {version})")
 
-        return EstimateItem.all_objects.get(id=item_id)
+        item = EstimateItem.all_objects.get(id=item_id)
+        recalc_estimate_totals(item.estimate_id, workspace_id)
+        return item
 
     @staticmethod
     def soft_delete_item(item_id, workspace_id, version: int) -> bool:
