@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     'news',
     'feedback',
     'section_feedback',
+    'ismeta_integration',
     # Kanban (бывший отдельный сервис, теперь часть основного бэкенда)
     'kanban_core',
     'kanban_commercial',
@@ -654,3 +655,10 @@ CELERY_TASK_ROUTES = {
     'api_public.tasks.*': {'queue': 'public_tasks'},
     'news.tasks.translate_news_task': {'queue': 'translations'},
 }
+
+# =============================================================================
+# ISMeta Integration (E12 + E14)
+# =============================================================================
+ISMETA_MASTER_TOKEN = os.environ.get('ISMETA_MASTER_TOKEN', 'dev-ismeta-master-token')
+ISMETA_JWT_SECRET = os.environ.get('ISMETA_JWT_SECRET', 'ismeta-jwt-dev-secret')
+ISMETA_JWT_EXPIRY_SECONDS = int(os.environ.get('ISMETA_JWT_EXPIRY_SECONDS', '3600'))

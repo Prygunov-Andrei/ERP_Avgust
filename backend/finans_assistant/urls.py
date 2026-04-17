@@ -150,6 +150,9 @@ urlpatterns = [
     path('api/v1/', include('kanban_warehouse.urls')),
     path('api/v1/', include('kanban_object_tasks.urls')),
     path('api/v1/', include('kanban_commercial.urls')),
+    # ISMeta integration (E12: snapshots, E14: JWT)
+    path('api/v1/', include('ismeta_integration.urls')),
+    path('api/erp-auth/v1/', include(('ismeta_integration.jwt_urls', 'ismeta_jwt'))),
     # Публичный API портала смет (отдельный namespace)
     path('api/public/v1/', include('api_public.urls')),
     # Admin API портала (для ERP-операторов, JWT-аутентификация)
