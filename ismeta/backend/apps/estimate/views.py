@@ -15,6 +15,8 @@ from apps.estimate.serializers import (
     EstimateSectionSerializer,
 )
 from apps.estimate.services.estimate_service import EstimateService, OptimisticLockError
+from apps.estimate.services.markup_service import recalc_after_markup_change
+from apps.estimate.excel.exporter import export_estimate_xlsx
 from apps.workspace.filters import WorkspaceFilterBackend
 
 
@@ -72,13 +74,6 @@ class EstimateViewSet(viewsets.ModelViewSet):
         )
         return Response(EstimateDetailSerializer(instance).data, status=status.HTTP_201_CREATED)
 
-    def perform_update(self, serializer):
-        version = _check_version(self.request)
-        instance = self.get_object()
-        if version is not None and instance.version != version:
-            raise OptimisticLockError("Estimate version conflict")
-        serializer.save(version=instance.version + 1)
-
     def update(self, request, *args, **kwargs):
         try:
             return super().update(request, *args, **kwargs)
@@ -91,6 +86,18 @@ class EstimateViewSet(viewsets.ModelViewSet):
         instance.save(update_fields=["status", "updated_at"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    def perform_update(self, serializer):
+        version = _check_version(self.request)
+        instance = self.get_object()
+        if version is not None and instance.version != version:
+            raise OptimisticLockError("Estimate version conflict")
+        updated = serializer.save(version=instance.version + 1)
+        # Если изменились markup-дефолты — пересчитать строки
+        changed = set(serializer.validated_data.keys())
+        if changed & {"default_material_markup", "default_work_markup"}:
+            workspace_id = _get_workspace_id(self.request)
+            recalc_after_markup_change(updated.id, workspace_id, scope="estimate")
+
     @action(detail=True, methods=["post"], url_path="create-version")
     def create_version(self, request, pk=None):
         estimate = self.get_object()
@@ -98,6 +105,19 @@ class EstimateViewSet(viewsets.ModelViewSet):
         new_est = EstimateService.create_version(estimate, workspace_id)
         serializer = EstimateDetailSerializer(new_est)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["get"], url_path="export/xlsx")
+    def export_xlsx(self, request, pk=None):
+        from django.http import HttpResponse
+        estimate = self.get_object()
+        workspace_id = _get_workspace_id(request)
+        output = export_estimate_xlsx(estimate.id, workspace_id)
+        response = HttpResponse(
+            output.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = f'attachment; filename="estimate-{estimate.id}.xlsx"'
+        return response
 
 
 # ---------------------------------------------------------------------------
