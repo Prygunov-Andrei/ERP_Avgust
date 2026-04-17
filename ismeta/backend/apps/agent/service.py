@@ -80,9 +80,18 @@ class AgentService:
 
         # Build messages from history (last 20)
         estimate = Estimate.objects.get(id=estimate_id, workspace_id=workspace_id)
+        items = EstimateItem.objects.filter(
+            estimate_id=estimate_id, workspace_id=workspace_id
+        )
+        items_text = "\n".join(
+            f"- {i.name} ({i.unit}): кол-во {i.quantity}, оборуд. {i.equipment_price}₽, "
+            f"мат. {i.material_price}₽, работы {i.work_price}₽, итого {i.total}₽"
+            for i in items
+        ) or "(пусто)"
+
         context = (
-            f"\n\nТекущая смета: «{estimate.name}» (id: {estimate_id}). "
-            f"При вызове инструментов используй estimate_id = \"{estimate_id}\"."
+            f"\n\nТекущая смета: «{estimate.name}».\n"
+            f"Позиции ({items.count()} шт):\n{items_text}"
         )
 
         history = ChatMessage.objects.filter(session=session).order_by("created_at")[:20]
@@ -92,30 +101,13 @@ class AgentService:
 
         svc = LLMService(workspace_id=workspace_id, task_type="chat", estimate_id=estimate_id)
 
-        # ReAct loop
+        # Простой вызов без tools (tools ReAct — E8.3)
         tool_calls_log = []
         tool_results_log = []
-        total_tokens_in = 0
-        total_tokens_out = 0
 
-        for step in range(MAX_REACT_STEPS):
-            resp = svc.complete_sync(messages=messages, tools=TOOLS)
-            total_tokens_in += resp.tokens_in
-            total_tokens_out += resp.tokens_out
+        resp = svc.complete_sync(messages=messages)
 
-            if not resp.tool_calls:
-                # Final answer
-                break
-
-            # Execute tools
-            for tc in resp.tool_calls:
-                tool_calls_log.append({"name": tc.name, "arguments": tc.arguments})
-                result = execute_tool(tc.name, tc.arguments, workspace_id, estimate_id)
-                tool_results_log.append({"name": tc.name, "result": result})
-                messages.append({"role": "assistant", "content": "", "tool_calls": [{"function": {"name": tc.name, "arguments": json.dumps(tc.arguments)}}]})
-                messages.append({"role": "tool", "content": json.dumps(result)})
-
-        cost = calc_cost(resp.model, total_tokens_in, total_tokens_out)
+        cost = calc_cost(resp.model, resp.tokens_in, resp.tokens_out)
 
         assistant_msg = ChatMessage.objects.create(
             session=session,
@@ -123,8 +115,8 @@ class AgentService:
             content=resp.content,
             tool_calls=tool_calls_log or None,
             tool_results=tool_results_log or None,
-            tokens_in=total_tokens_in,
-            tokens_out=total_tokens_out,
+            tokens_in=resp.tokens_in,
+            tokens_out=resp.tokens_out,
             cost_usd=cost,
         )
 
@@ -134,7 +126,7 @@ class AgentService:
             "content": resp.content,
             "tool_calls": tool_calls_log,
             "tool_results": tool_results_log,
-            "tokens_in": total_tokens_in,
-            "tokens_out": total_tokens_out,
+            "tokens_in": resp.tokens_in,
+            "tokens_out": resp.tokens_out,
             "cost_usd": float(cost),
         }
