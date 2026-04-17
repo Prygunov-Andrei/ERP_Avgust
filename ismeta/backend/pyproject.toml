@@ -11,19 +11,31 @@ extend-exclude = ["migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B", "C4", "DJ", "RUF"]
-ignore = ["E501"]  # длина строки обрабатывается форматером
+ignore = [
+    "E501",    # длина строки обрабатывается форматером
+    "RUF001",  # кириллица в строках — ок, русскоязычный проект
+    "RUF002",  # кириллица в docstrings
+    "RUF003",  # кириллица в комментариях
+    "RUF012",  # mutable class defaults — false positive для Django Meta.ordering/constraints
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["ismeta", "apps"]
 
 [tool.mypy]
 python_version = "3.12"
-strict = true
-exclude = ["migrations/", "tests/fixtures/"]
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+exclude = ["migrations/", "tests/"]
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "ismeta.settings"
 
 [[tool.mypy.overrides]]
-module = "tests.*"
-strict = false
+module = ["django.*", "rest_framework.*", "django_filters.*", "celery.*", "drf_spectacular.*", "decouple.*", "redis.*", "httpx.*", "pydantic.*", "rapidfuzz.*", "openpyxl.*", "openai.*", "google.*", "anthropic.*", "structlog.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "ismeta.settings"

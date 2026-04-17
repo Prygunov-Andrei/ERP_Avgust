@@ -1,0 +1,95 @@
+name: ISMeta CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["ismeta/**"]
+  pull_request:
+    branches: [main]
+    paths: ["ismeta/**"]
+
+jobs:
+  backend:
+    name: ISMeta Backend (lint + type-check + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ismeta/backend
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_DB: ismeta_test
+          POSTGRES_USER: ismeta
+          POSTGRES_PASSWORD: ismeta
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U ismeta -d ismeta_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6380:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DJANGO_SECRET_KEY: ci-test-secret-key
+      DEBUG: "1"
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      DB_HOST: localhost
+      DB_PORT: "5433"
+      DB_NAME: ismeta_test
+      DB_USER: ismeta
+      DB_PASSWORD: ismeta
+      CELERY_BROKER_URL: redis://localhost:6380/3
+      CELERY_RESULT_BACKEND: redis://localhost:6380/3
+      REDIS_URL: redis://localhost:6380/2
+      OTEL_ENABLED: "false"
+      LLM_MODE: mock
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ismeta/backend/requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Ruff check
+        run: ruff check .
+      - name: Ruff format check
+        run: ruff format --check .
+      - name: Mypy
+        run: mypy apps/ ismeta/ manage.py
+      - name: Pytest + coverage
+        run: pytest apps/ --cov=apps --cov-fail-under=70 --tb=short -q
+    timeout-minutes: 10
+
+  frontend:
+    name: ISMeta Frontend (lint + type-check + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ismeta/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ismeta/frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: ESLint
+        run: npx next lint
+      - name: TypeScript check
+        run: npx tsc --noEmit
+      - name: Vitest
+        run: npx vitest run
+    timeout-minutes: 10

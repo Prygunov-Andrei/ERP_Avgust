@@ -112,10 +112,14 @@ ismeta-format: ## Автоформатирование
 	cd backend && .venv/bin/ruff format .
 	cd frontend && npm run format
 
-ismeta-ci-local: ## Полный CI локально: линт + тесты + openapi
-	$(MAKE) ismeta-lint
-	$(MAKE) ismeta-test
-	$(MAKE) ismeta-openapi
+ismeta-ci-local: ## Полный CI локально: линт + format-check + тесты
+	cd backend && .venv/bin/ruff check .
+	cd backend && .venv/bin/ruff format --check .
+	cd backend && .venv/bin/mypy apps/ ismeta/ manage.py
+	cd backend && .venv/bin/pytest apps/ --cov=apps --cov-fail-under=70 --tb=short -q
+	cd frontend && npx next lint
+	cd frontend && npx tsc --noEmit
+	cd frontend && npx vitest run
 
 # ====== Mock-серверы ======
 

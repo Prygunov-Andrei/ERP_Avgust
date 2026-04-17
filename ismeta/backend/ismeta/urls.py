@@ -3,6 +3,7 @@
 Эндпоинты наполняются по мере реализации эпиков.
 Health-check по трём уровням — см. docs/SLO.md §7.1.
 """
+
 from django.contrib import admin
 from django.db import connection
 from django.http import JsonResponse
@@ -37,7 +38,9 @@ def health_readiness(_request):
     except Exception:
         status_code = 503
 
-    return JsonResponse({"status": "ok" if status_code == 200 else "degraded", "checks": checks}, status=status_code)
+    return JsonResponse(
+        {"status": "ok" if status_code == 200 else "degraded", "checks": checks}, status=status_code
+    )
 
 
 def health_deps(_request):
@@ -68,7 +71,10 @@ def health_deps(_request):
     try:
         with httpx.Client(timeout=2.0) as client:
             resp = client.get(f"{settings.ISMETA_ERP_BASE_URL}/api/erp-catalog/v1/health")
-            deps["erp_catalog"] = {"status": "ok" if resp.status_code == 200 else "degraded", "http_status": resp.status_code}
+            deps["erp_catalog"] = {
+                "status": "ok" if resp.status_code == 200 else "degraded",
+                "http_status": resp.status_code,
+            }
     except Exception as e:
         deps["erp_catalog"] = {"status": "error", "error": str(e)[:200]}
 
@@ -85,7 +91,9 @@ urlpatterns = [
     path("api/v1/health/deps", health_deps, name="health-deps"),
     # OpenAPI schema + UI
     path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/v1/schema/swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger"),
+    path(
+        "api/v1/schema/swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger"
+    ),
     # ISMeta endpoints (подключаются по эпикам E4+)
     # path("api/v1/workspaces/", include("workspace.urls")),
     # path("api/v1/estimates/", include("estimate.urls")),

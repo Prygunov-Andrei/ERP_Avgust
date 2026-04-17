@@ -4,6 +4,7 @@ Django settings для ISMeta.
 Минимальный скелет. Детальная настройка идёт по эпику E1.
 Для production-настроек см. specs/12-security.md и specs/13-release-process.md.
 """
+
 from pathlib import Path
 
 from decouple import Csv, config
