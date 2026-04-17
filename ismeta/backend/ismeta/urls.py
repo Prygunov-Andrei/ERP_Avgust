@@ -96,7 +96,7 @@ urlpatterns = [
     ),
     # ISMeta endpoints
     path("api/v1/", include("apps.estimate.urls")),
+    path("api/v1/", include("apps.agent.urls")),
     # path("api/v1/workspaces/", include("apps.workspace.urls")),
-    # path("api/v1/chat/", include("apps.agent.urls")),  # E5
     # path("api/v1/webhooks/", include("apps.integration.webhooks.urls")),  # E13
 ]

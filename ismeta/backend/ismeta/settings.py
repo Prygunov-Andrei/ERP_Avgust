@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     "apps.workspace",
     "apps.estimate",
     "apps.llm",
-    # "apps.agent",     # E5
+    "apps.agent",
     # "apps.integration",  # E13
 ]
 

@@ -8,6 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EstimateHeader } from "@/components/estimate/estimate-header";
 import { SectionsPanel } from "@/components/estimate/sections-panel";
 import { ItemsTable } from "@/components/estimate/items-table";
+import { ProcurementSummary } from "@/components/estimate/procurement-summary";
+import { TrackTabs, type EquipmentTrack } from "@/components/estimate/track-tabs";
+import { useEquipmentTrack } from "@/lib/hooks/use-equipment-track";
 import { estimateApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
 import type { UUID } from "@/lib/api/types";
@@ -20,6 +23,7 @@ export default function EstimateDetailPage({ params }: Props) {
   const { id } = use(params);
   const workspaceId = getWorkspaceId();
   const [sectionId, setSectionId] = React.useState<UUID | null>(null);
+  const [track, setTrack] = useEquipmentTrack();
 
   const estimateQ = useQuery({
     queryKey: ["estimate", id, workspaceId],
@@ -37,6 +41,24 @@ export default function EstimateDetailPage({ params }: Props) {
       estimateApi.items(id, workspaceId, sectionId ?? undefined),
     enabled: sectionsQ.isSuccess,
   });
+
+  const allItems = itemsQ.data ?? [];
+
+  const trackCounts = React.useMemo<Record<EquipmentTrack, number>>(() => {
+    let key = 0;
+    for (const it of allItems) if (it.is_key_equipment) key++;
+    return {
+      all: allItems.length,
+      standard: allItems.length - key,
+      key,
+    };
+  }, [allItems]);
+
+  const filteredItems = React.useMemo(() => {
+    if (track === "all") return allItems;
+    if (track === "key") return allItems.filter((i) => i.is_key_equipment);
+    return allItems.filter((i) => !i.is_key_equipment);
+  }, [allItems, track]);
 
   if (estimateQ.isError) {
     return (
@@ -76,13 +98,27 @@ export default function EstimateDetailPage({ params }: Props) {
           selectedId={sectionId}
           onSelect={setSectionId}
         />
-        <ItemsTable
-          estimateId={id}
-          items={itemsQ.data ?? []}
-          isLoading={itemsQ.isLoading || sectionsQ.isLoading}
-          activeSectionId={sectionId}
-          fallbackSectionId={firstSectionId}
-        />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b bg-background px-6 py-3">
+            <TrackTabs
+              value={track}
+              onChange={setTrack}
+              counts={trackCounts}
+            />
+            <ProcurementSummary
+              items={allItems}
+              className="w-full max-w-xs shrink-0 md:w-80"
+            />
+          </div>
+          <ItemsTable
+            estimateId={id}
+            items={filteredItems}
+            isLoading={itemsQ.isLoading || sectionsQ.isLoading}
+            activeSectionId={sectionId}
+            fallbackSectionId={firstSectionId}
+            track={track}
+          />
+        </div>
       </div>
     </div>
   );

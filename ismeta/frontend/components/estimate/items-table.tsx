@@ -8,7 +8,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -23,13 +23,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EditableCell } from "./editable-cell";
+import { ProcurementStatusSelect } from "./procurement-status-select";
+import type { EquipmentTrack } from "./track-tabs";
 import { ApiError, itemApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import {
   MATCH_SOURCE_LABELS,
   type CreateItemDto,
   type EstimateItem,
+  type ProcurementStatus,
   type UUID,
 } from "@/lib/api/types";
 
@@ -39,6 +42,7 @@ interface Props {
   isLoading?: boolean;
   activeSectionId: UUID | null;
   fallbackSectionId: UUID | null;
+  track?: EquipmentTrack;
 }
 
 export function ItemsTable({
@@ -47,6 +51,7 @@ export function ItemsTable({
   isLoading,
   activeSectionId,
   fallbackSectionId,
+  track = "all",
 }: Props) {
   const qc = useQueryClient();
   const workspaceId = getWorkspaceId();
@@ -125,6 +130,23 @@ export function ItemsTable({
     [update],
   );
 
+  const toggleKeyEquipment = React.useCallback(
+    (item: EstimateItem) => {
+      update.mutate({
+        item,
+        patch: { is_key_equipment: !item.is_key_equipment },
+      });
+    },
+    [update],
+  );
+
+  const setProcurementStatus = React.useCallback(
+    (item: EstimateItem, next: ProcurementStatus) => {
+      update.mutate({ item, patch: { procurement_status: next } });
+    },
+    [update],
+  );
+
   const columns = React.useMemo<ColumnDef<EstimateItem>[]>(
     () => [
       {
@@ -136,6 +158,44 @@ export function ItemsTable({
           </span>
         ),
         size: 40,
+      },
+      {
+        id: "key_toggle",
+        header: () => (
+          <span className="sr-only">Основное оборудование</span>
+        ),
+        cell: ({ row }) => {
+          const on = row.original.is_key_equipment;
+          return (
+            <button
+              type="button"
+              onClick={() => toggleKeyEquipment(row.original)}
+              aria-pressed={on}
+              aria-label={
+                on
+                  ? "Снять признак основного оборудования"
+                  : "Отметить как основное оборудование"
+              }
+              title={
+                on
+                  ? "Основное оборудование"
+                  : "Отметить как основное оборудование"
+              }
+              className="rounded p-1 hover:bg-accent/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              disabled={update.isPending}
+            >
+              <Star
+                className={cn(
+                  "h-4 w-4 transition-colors",
+                  on
+                    ? "fill-amber-400 text-amber-500"
+                    : "text-muted-foreground",
+                )}
+              />
+            </button>
+          );
+        },
+        size: 44,
       },
       {
         accessorKey: "name",
@@ -237,6 +297,25 @@ export function ItemsTable({
         ),
         size: 110,
       },
+      ...(track === "key"
+        ? [
+            {
+              id: "procurement_status",
+              accessorKey: "procurement_status",
+              header: "Статус закупки",
+              cell: ({ row }) => (
+                <ProcurementStatusSelect
+                  value={row.original.procurement_status}
+                  onChange={(next) =>
+                    setProcurementStatus(row.original, next)
+                  }
+                  disabled={update.isPending}
+                />
+              ),
+              size: 150,
+            } satisfies ColumnDef<EstimateItem>,
+          ]
+        : []),
       {
         id: "actions",
         header: "",
@@ -254,7 +333,7 @@ export function ItemsTable({
         size: 48,
       },
     ],
-    [commitField, remove],
+    [commitField, remove, toggleKeyEquipment, setProcurementStatus, track, update.isPending],
   );
 
   const table = useReactTable({
