@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     # ISMeta apps — добавляются по мере реализации эпиков
     "apps.workspace",
     "apps.estimate",
+    "apps.llm",
     # "apps.agent",     # E5
     # "apps.integration",  # E13
 ]
