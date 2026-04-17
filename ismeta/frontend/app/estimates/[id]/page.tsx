@@ -5,11 +5,13 @@ import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChatPanel } from "@/components/estimate/chat-panel";
 import { EstimateHeader } from "@/components/estimate/estimate-header";
-import { SectionsPanel } from "@/components/estimate/sections-panel";
 import { ItemsTable } from "@/components/estimate/items-table";
 import { ProcurementSummary } from "@/components/estimate/procurement-summary";
+import { SectionsPanel } from "@/components/estimate/sections-panel";
 import { TrackTabs, type EquipmentTrack } from "@/components/estimate/track-tabs";
+import { ValidationReportDialog } from "@/components/estimate/validation-report-dialog";
 import { useEquipmentTrack } from "@/lib/hooks/use-equipment-track";
 import { estimateApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
@@ -24,6 +26,10 @@ export default function EstimateDetailPage({ params }: Props) {
   const workspaceId = getWorkspaceId();
   const [sectionId, setSectionId] = React.useState<UUID | null>(null);
   const [track, setTrack] = useEquipmentTrack();
+  const [validateOpen, setValidateOpen] = React.useState(false);
+  const [chatOpen, setChatOpen] = React.useState(false);
+  const [highlightItemId, setHighlightItemId] =
+    React.useState<UUID | null>(null);
 
   const estimateQ = useQuery({
     queryKey: ["estimate", id, workspaceId],
@@ -60,6 +66,18 @@ export default function EstimateDetailPage({ params }: Props) {
     return allItems.filter((i) => !i.is_key_equipment);
   }, [allItems, track]);
 
+  const selectFromValidate = React.useCallback(
+    (itemId: UUID) => {
+      // Сброс фильтра раздела — позиция может быть в другом разделе
+      setSectionId(null);
+      setTrack("all");
+      setHighlightItemId(itemId);
+      // Снять подсветку через 3 сек
+      window.setTimeout(() => setHighlightItemId(null), 3000);
+    },
+    [setTrack],
+  );
+
   if (estimateQ.isError) {
     return (
       <div className="container py-10">
@@ -90,7 +108,11 @@ export default function EstimateDetailPage({ params }: Props) {
 
   return (
     <div className="flex h-full flex-col">
-      <EstimateHeader estimate={estimateQ.data} />
+      <EstimateHeader
+        estimate={estimateQ.data}
+        onOpenValidate={() => setValidateOpen(true)}
+        onOpenChat={() => setChatOpen(true)}
+      />
       <div className="flex flex-1 overflow-hidden">
         <SectionsPanel
           estimateId={id}
@@ -117,9 +139,21 @@ export default function EstimateDetailPage({ params }: Props) {
             activeSectionId={sectionId}
             fallbackSectionId={firstSectionId}
             track={track}
+            highlightItemId={highlightItemId}
           />
         </div>
+        <ChatPanel
+          estimateId={id}
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+        />
       </div>
+      <ValidationReportDialog
+        estimateId={id}
+        open={validateOpen}
+        onOpenChange={setValidateOpen}
+        onSelectItem={selectFromValidate}
+      />
     </div>
   );
 }

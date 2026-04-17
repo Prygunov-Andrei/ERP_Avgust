@@ -4,7 +4,16 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Download, GitBranch, Loader2, Wand2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Download,
+  GitBranch,
+  Loader2,
+  MessageSquare,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,9 +26,11 @@ import type { Estimate } from "@/lib/api/types";
 
 interface Props {
   estimate: Estimate;
+  onOpenValidate?: () => void;
+  onOpenChat?: () => void;
 }
 
-export function EstimateHeader({ estimate }: Props) {
+export function EstimateHeader({ estimate, onOpenValidate, onOpenChat }: Props) {
   const router = useRouter();
   const qc = useQueryClient();
   const workspaceId = getWorkspaceId();
@@ -157,6 +168,18 @@ export function EstimateHeader({ estimate }: Props) {
           <StatusBadge status={estimate.status} />
         </div>
         <div className="flex items-center gap-2">
+          {onOpenValidate ? (
+            <Button variant="outline" onClick={onOpenValidate}>
+              <Sparkles className="h-4 w-4" />
+              Проверить ИИ
+            </Button>
+          ) : null}
+          {onOpenChat ? (
+            <Button variant="outline" onClick={onOpenChat}>
+              <MessageSquare className="h-4 w-4" />
+              ИИ-помощник
+            </Button>
+          ) : null}
           <Button
             variant="outline"
             onClick={() => startMatching.mutate()}
@@ -195,6 +218,19 @@ export function EstimateHeader({ estimate }: Props) {
           </Button>
         </div>
       </div>
+      {estimate.status === "transmitted" ? (
+        <div
+          role="alert"
+          data-testid="transmitted-warning"
+          className="flex items-center gap-2 rounded-md border border-amber-400/60 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-400/40 dark:bg-amber-950/30 dark:text-amber-100"
+        >
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>
+            Данные в ERP устарели: после изменения смету нужно передать заново
+            (&laquo;Создать версию&raquo; → отправка в ERP).
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -182,6 +182,79 @@ export interface MatchingSession {
   results: MatchingResult[];
 }
 
+export type IssueSeverity = "error" | "warning" | "info";
+export type IssueCategory =
+  | "price_outlier"
+  | "missing_work"
+  | "quantity_mismatch"
+  | "spec_error";
+
+export interface ValidationIssue {
+  item_name: string;
+  item_id: UUID | null;
+  severity: IssueSeverity;
+  category: IssueCategory;
+  message: string;
+  suggestion: string;
+}
+
+export interface ValidationReport {
+  issues: ValidationIssue[];
+  summary: string;
+  tokens_used: number;
+  cost_usd: number;
+}
+
+export type ChatRole = "user" | "assistant" | "system" | "tool";
+
+export interface ChatToolCall {
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface ChatToolResult {
+  name: string;
+  result: unknown;
+}
+
+export interface ChatMessage {
+  id: UUID;
+  role: ChatRole;
+  content: string;
+  tool_calls: ChatToolCall[] | null;
+  tokens_in: number;
+  tokens_out: number;
+  cost_usd: number;
+  created_at: string;
+}
+
+export interface ChatResponse {
+  message_id: UUID;
+  session_id: UUID;
+  content: string;
+  tool_calls: ChatToolCall[];
+  tool_results: ChatToolResult[];
+  tokens_in: number;
+  tokens_out: number;
+  cost_usd: number;
+}
+
+export const PROCUREMENT_STATUSES: ProcurementStatus[] = [
+  "none",
+  "requested",
+  "quoted",
+  "booked",
+  "ordered",
+];
+
+export const PROCUREMENT_STATUS_LABELS: Record<ProcurementStatus, string> = {
+  none: "—",
+  requested: "Запрошено",
+  quoted: "КП получено",
+  booked: "Забронировано",
+  ordered: "Заказано",
+};
+
 export const MATCH_SOURCE_LABELS: Record<MatchSource, string> = {
   manual: "Вручную",
   history: "История",

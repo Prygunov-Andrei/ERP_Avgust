@@ -1,4 +1,6 @@
 import type {
+  ChatMessage,
+  ChatResponse,
   CreateEstimateDto,
   CreateItemDto,
   CreateSectionDto,
@@ -10,6 +12,7 @@ import type {
   MatchingSession,
   ProblemDetails,
   UUID,
+  ValidationReport,
 } from "./types";
 
 export const API_BASE =
@@ -262,5 +265,29 @@ export const matchingApi = {
         body: { results },
         workspaceId,
       },
+    ),
+};
+
+export const agentApi = {
+  validate: (estimateId: UUID, workspaceId: string) =>
+    apiFetch<ValidationReport>(
+      `/estimates/${estimateId}/validate/`,
+      { method: "POST", workspaceId },
+    ),
+
+  sendMessage: (estimateId: UUID, content: string, workspaceId: string) =>
+    apiFetch<ChatResponse>(
+      `/estimates/${estimateId}/chat/messages/`,
+      {
+        method: "POST",
+        body: { content },
+        workspaceId,
+      },
+    ),
+
+  getHistory: (estimateId: UUID, workspaceId: string) =>
+    apiFetch<ChatMessage[]>(
+      `/estimates/${estimateId}/chat/history/`,
+      { workspaceId },
     ),
 };

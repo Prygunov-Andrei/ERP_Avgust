@@ -43,6 +43,7 @@ interface Props {
   activeSectionId: UUID | null;
   fallbackSectionId: UUID | null;
   track?: EquipmentTrack;
+  highlightItemId?: UUID | null;
 }
 
 export function ItemsTable({
@@ -52,6 +53,7 @@ export function ItemsTable({
   activeSectionId,
   fallbackSectionId,
   track = "all",
+  highlightItemId = null,
 }: Props) {
   const qc = useQueryClient();
   const workspaceId = getWorkspaceId();
@@ -61,6 +63,12 @@ export function ItemsTable({
     qc.invalidateQueries({ queryKey: ["estimate", estimateId] });
   }, [qc, estimateId]);
 
+  React.useEffect(() => {
+    if (!highlightItemId) return;
+    const el = document.getElementById(`item-row-${highlightItemId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightItemId]);
+
   const update = useMutation({
     mutationFn: ({
       item,
@@ -69,7 +77,10 @@ export function ItemsTable({
       item: EstimateItem;
       patch: Partial<EstimateItem>;
     }) => itemApi.update(item.id, patch, item.version, workspaceId),
-    onSuccess: () => invalidate(),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Итоги пересчитаны", { id: "items-recalc" });
+    },
     onError: (e: unknown) => {
       if (e instanceof ApiError && e.status === 409) {
         toast.error("Кто-то обновил эту строку. Обновите страницу.");
@@ -397,15 +408,31 @@ export function ItemsTable({
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="p-1 align-top">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const isHighlighted =
+                  highlightItemId !== null &&
+                  row.original.id === highlightItemId;
+                return (
+                  <TableRow
+                    key={row.id}
+                    id={`item-row-${row.original.id}`}
+                    data-highlighted={isHighlighted || undefined}
+                    className={cn(
+                      isHighlighted &&
+                        "animate-pulse bg-amber-100/60 dark:bg-amber-900/30",
+                    )}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="p-1 align-top">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             )}
             <TableRow>
               <TableCell colSpan={columns.length} className="p-0">
