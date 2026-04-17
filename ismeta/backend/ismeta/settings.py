@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     "apps.estimate",
     "apps.llm",
     "apps.agent",
-    # "apps.integration",  # E13
+    "apps.integration",
 ]
 
 MIDDLEWARE = [
