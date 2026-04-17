@@ -59,6 +59,13 @@ class EstimateViewSet(viewsets.ModelViewSet):
     filter_backends = [WorkspaceFilterBackend]
     pagination_class = None
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        return qs
+
     def get_serializer_class(self):
         if self.action == "list":
             return EstimateListSerializer

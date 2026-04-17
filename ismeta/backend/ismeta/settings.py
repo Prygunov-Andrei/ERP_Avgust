@@ -96,11 +96,11 @@ REST_FRAMEWORK = {
         "apps.workspace.filters.WorkspaceFilterBackend",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "apps.workspace.auth.ERPJwtAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-        # TODO(E14): ERPJwtAuthentication
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",  # FIXME: вернуть IsAuthenticated после интеграционного теста
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
