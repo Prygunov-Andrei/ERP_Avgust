@@ -195,10 +195,11 @@ export const sectionApi = {
       ifMatch: version,
     }),
 
-  delete: (id: UUID, workspaceId: string) =>
+  delete: (id: UUID, version: number, workspaceId: string) =>
     apiFetch<void>(`/sections/${id}/`, {
       method: "DELETE",
       workspaceId,
+      ifMatch: version,
       expect: "none",
     }),
 };

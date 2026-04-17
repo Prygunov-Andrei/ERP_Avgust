@@ -12,13 +12,6 @@ from .base import AbstractProvider
 
 OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 
-# Стоимость за 1M токенов (USD). Обновлять при смене тарифов.
-COST_PER_1M = {
-    "gpt-4o": {"in": 2.50, "out": 10.00},
-    "gpt-4o-mini": {"in": 0.15, "out": 0.60},
-}
-DEFAULT_COST = {"in": 5.00, "out": 15.00}
-
 
 class OpenAIProvider(AbstractProvider):
     def __init__(self):
@@ -66,9 +59,6 @@ class OpenAIProvider(AbstractProvider):
 
         tokens_in = usage.get("prompt_tokens", 0)
         tokens_out = usage.get("completion_tokens", 0)
-
-        rates = COST_PER_1M.get(model, DEFAULT_COST)
-        cost_usd = (tokens_in * rates["in"] + tokens_out * rates["out"]) / 1_000_000
 
         return LLMResponse(
             content=choice["message"].get("content", "") or "",

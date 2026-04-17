@@ -1,5 +1,7 @@
 """Views для Estimate CRUD API (E4.1, specs/02-api-contracts.md §1.2–1.4)."""
 
+import json
+
 from django.db import connection
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -211,8 +213,6 @@ class EstimateItemViewSet(viewsets.ViewSet):
             )
         try:
             data = dict(request.data)
-            # Конвертируем jsonb-поля
-            import json
             for jfield in ("tech_specs", "custom_data", "material_markup", "work_markup"):
                 val = data.get(jfield)
                 if val and not isinstance(val, str):

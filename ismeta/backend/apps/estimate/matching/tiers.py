@@ -1,10 +1,13 @@
 """8 tier'ов matching pipeline."""
 
 import json
+import logging
 from decimal import Decimal
 from difflib import SequenceMatcher
 
 from django.db import connection
+
+logger = logging.getLogger(__name__)
 
 from apps.llm.service import LLMService
 
@@ -167,7 +170,11 @@ class LLMTier(BaseTier):
                 source="llm",
                 reasoning=data.get("reasoning", "LLM suggestion"),
             )
-        except Exception:
+        except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
+            logger.warning("LLMTier: failed to parse response for '%s': %s", group.normalized_name, e)
+            return None
+        except Exception as e:
+            logger.error("LLMTier: unexpected error for '%s': %s", group.normalized_name, e, exc_info=True)
             return None
 
 

@@ -81,8 +81,9 @@ export function SectionsPanel({
   });
 
   const remove = useMutation({
-    mutationFn: (id: UUID) => sectionApi.delete(id, workspaceId),
-    onSuccess: (_data, id) => {
+    mutationFn: ({ id, version }: { id: UUID; version: number }) =>
+      sectionApi.delete(id, version, workspaceId),
+    onSuccess: (_data, { id }) => {
       invalidateSections();
       qc.invalidateQueries({ queryKey: ["estimate-items", estimateId] });
       setPendingDelete(null);
@@ -245,7 +246,11 @@ export function SectionsPanel({
             <Button
               variant="destructive"
               onClick={() =>
-                pendingDelete && remove.mutate(pendingDelete.id)
+                pendingDelete &&
+                  remove.mutate({
+                    id: pendingDelete.id,
+                    version: pendingDelete.version,
+                  })
               }
               disabled={remove.isPending}
             >
