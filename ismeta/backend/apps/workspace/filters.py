@@ -15,12 +15,12 @@ class WorkspaceFilterBackend(filters.BaseFilterBackend):
     QUERY_PARAM = "workspace_id"
 
     def _get_workspace_id(self, request):
-        workspace_id = request.META.get(self.HEADER) or request.query_params.get(
-            self.QUERY_PARAM
-        )
+        workspace_id = request.META.get(self.HEADER) or request.query_params.get(self.QUERY_PARAM)
         if not workspace_id:
             raise exceptions.ValidationError(
-                {"workspace_id": "Обязательный параметр. Передайте X-Workspace-Id заголовок или ?workspace_id query param."}
+                {
+                    "workspace_id": "Обязательный параметр. Передайте X-Workspace-Id заголовок или ?workspace_id query param."
+                }
             )
         return workspace_id
 

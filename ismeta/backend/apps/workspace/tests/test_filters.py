@@ -1,10 +1,7 @@
 """Тесты WorkspaceFilterBackend — multi-tenancy isolation."""
 
-import uuid
-
 import pytest
 from django.contrib.auth import get_user_model
-from django.test import RequestFactory
 from rest_framework import serializers, status, viewsets
 from rest_framework.test import APIRequestFactory
 
