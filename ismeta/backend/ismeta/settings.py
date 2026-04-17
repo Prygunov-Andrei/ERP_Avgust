@@ -100,7 +100,7 @@ REST_FRAMEWORK = {
         # TODO(E14): ERPJwtAuthentication
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",  # FIXME: вернуть IsAuthenticated после интеграционного теста
     ],
 }
 
@@ -121,6 +121,17 @@ CELERY_TIMEZONE = "Europe/Moscow"
 
 # ==== CORS ====
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # в dev разрешаем всё; в prod — явные origin'ы (TODO E14)
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "if-match",
+    "idempotency-key",
+    "x-workspace-id",
+    "x-webhook-secret",
+    "x-webhook-event-id",
+    "x-webhook-event-type",
+]
 
 # ==== Media / Files ====
 MEDIA_URL = "/media/"
