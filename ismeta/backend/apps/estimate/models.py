@@ -226,3 +226,43 @@ class EstimateItem(models.Model):
             MarkupConfig.model_validate(self.work_markup)
         if self.tech_specs:
             TechSpecs.model_validate(self.tech_specs)
+
+
+# ---------------------------------------------------------------------------
+# SnapshotTransmission
+# ---------------------------------------------------------------------------
+
+
+class TransmissionStatus(models.TextChoices):
+    PENDING = "pending", "Ожидает"
+    SENDING = "sending", "Отправляется"
+    SUCCESS = "success", "Успешно"
+    FAILED = "failed", "Ошибка"
+    RETRYING = "retrying", "Повтор"
+
+
+class SnapshotTransmission(models.Model):
+    """Отслеживание отправки snapshot'а сметы в ERP (ADR-0007, ADR-0014)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    estimate = models.ForeignKey(Estimate, on_delete=models.CASCADE, related_name="transmissions")
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+    idempotency_key = models.UUIDField(unique=True, default=uuid.uuid4)
+    status = models.CharField(
+        max_length=16, choices=TransmissionStatus.choices, default=TransmissionStatus.PENDING
+    )
+    payload = models.JSONField(default=dict)
+    response_data = models.JSONField(null=True, blank=True)
+    error_message = models.TextField(blank=True, default="")
+    attempts = models.PositiveIntegerField(default=0)
+    max_attempts = models.PositiveIntegerField(default=3)
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    next_retry_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "snapshot_transmission"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"Transmission {self.id} [{self.status}] → {self.estimate.name}"

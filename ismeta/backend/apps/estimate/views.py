@@ -7,7 +7,7 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.estimate.models import Estimate, EstimateItem, EstimateSection
+from apps.estimate.models import Estimate, EstimateItem, EstimateSection, SnapshotTransmission
 from apps.estimate.serializers import (
     EstimateCreateSerializer,
     EstimateDetailSerializer,
@@ -89,8 +89,12 @@ class EstimateViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def perform_update(self, serializer):
-        version = _check_version(self.request)
         instance = self.get_object()
+        # ADR-0007: переданная смета — read-only
+        if instance.status == "transmitted":
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Переданная в ERP смета недоступна для редактирования (ADR-0007).")
+        version = _check_version(self.request)
         if version is not None and instance.version != version:
             raise OptimisticLockError("Estimate version conflict")
         updated = serializer.save(version=instance.version + 1)
@@ -120,6 +124,47 @@ class EstimateViewSet(viewsets.ModelViewSet):
         )
         response["Content-Disposition"] = f'attachment; filename="estimate-{estimate.id}.xlsx"'
         return response
+
+    @action(detail=True, methods=["post"], url_path="transmit")
+    def transmit(self, request, pk=None):
+        """POST /api/v1/estimates/{id}/transmit/ — передать в ERP."""
+        from apps.estimate.services.transmission_service import (
+            AlreadyTransmittedError,
+            TransmissionService,
+        )
+
+        workspace_id = _get_workspace_id(request)
+        try:
+            t = TransmissionService.transmit(str(pk), workspace_id)
+            return Response(
+                {"id": str(t.id), "status": t.status, "attempts": t.attempts},
+                status=status.HTTP_200_OK if t.status == "success" else status.HTTP_202_ACCEPTED,
+            )
+        except AlreadyTransmittedError as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+    @action(detail=True, methods=["get"], url_path="transmissions")
+    def transmissions(self, request, pk=None):
+        """GET /api/v1/estimates/{id}/transmissions/ — список попыток."""
+        workspace_id = _get_workspace_id(request)
+        qs = SnapshotTransmission.objects.filter(
+            estimate_id=pk, workspace_id=workspace_id
+        )
+        data = [
+            {
+                "id": str(t.id),
+                "status": t.status,
+                "attempts": t.attempts,
+                "error_message": t.error_message,
+                "created_at": t.created_at.isoformat() if t.created_at else None,
+                "sent_at": t.sent_at.isoformat() if t.sent_at else None,
+            }
+            for t in qs
+        ]
+        return Response(data)
 
 
 # ---------------------------------------------------------------------------
