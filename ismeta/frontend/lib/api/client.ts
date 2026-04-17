@@ -1,7 +1,11 @@
 import type {
   CreateEstimateDto,
+  CreateItemDto,
+  CreateSectionDto,
   Estimate,
+  EstimateItem,
   EstimateListItem,
+  EstimateSection,
   ProblemDetails,
   UUID,
 } from "./types";
@@ -149,5 +153,82 @@ export const estimateApi = {
     apiFetch<Blob>(`/estimates/${id}/export/xlsx/`, {
       workspaceId,
       expect: "blob",
+    }),
+
+  createVersion: (id: UUID, workspaceId: string) =>
+    apiFetch<Estimate>(`/estimates/${id}/create-version/`, {
+      method: "POST",
+      workspaceId,
+    }),
+
+  sections: (estimateId: UUID, workspaceId: string) =>
+    apiFetch<EstimateSection[]>(
+      `/estimates/${estimateId}/sections/`,
+      { workspaceId },
+    ),
+
+  items: (estimateId: UUID, workspaceId: string, sectionId?: UUID) =>
+    apiFetch<EstimateItem[]>(
+      `/estimates/${estimateId}/items/${q({ section_id: sectionId })}`,
+      { workspaceId },
+    ),
+};
+
+export const sectionApi = {
+  create: (estimateId: UUID, data: CreateSectionDto, workspaceId: string) =>
+    apiFetch<EstimateSection>(`/estimates/${estimateId}/sections/`, {
+      method: "POST",
+      body: data as unknown as Record<string, unknown>,
+      workspaceId,
+    }),
+
+  update: (
+    id: UUID,
+    data: Partial<EstimateSection>,
+    version: number,
+    workspaceId: string,
+  ) =>
+    apiFetch<EstimateSection>(`/sections/${id}/`, {
+      method: "PATCH",
+      body: data as unknown as Record<string, unknown>,
+      workspaceId,
+      ifMatch: version,
+    }),
+
+  delete: (id: UUID, workspaceId: string) =>
+    apiFetch<void>(`/sections/${id}/`, {
+      method: "DELETE",
+      workspaceId,
+      expect: "none",
+    }),
+};
+
+export const itemApi = {
+  create: (estimateId: UUID, data: CreateItemDto, workspaceId: string) =>
+    apiFetch<EstimateItem>(`/estimates/${estimateId}/items/`, {
+      method: "POST",
+      body: data as unknown as Record<string, unknown>,
+      workspaceId,
+    }),
+
+  update: (
+    id: UUID,
+    data: Partial<EstimateItem>,
+    version: number,
+    workspaceId: string,
+  ) =>
+    apiFetch<EstimateItem>(`/items/${id}/`, {
+      method: "PATCH",
+      body: data as unknown as Record<string, unknown>,
+      workspaceId,
+      ifMatch: version,
+    }),
+
+  softDelete: (id: UUID, version: number, workspaceId: string) =>
+    apiFetch<void>(`/items/${id}/`, {
+      method: "DELETE",
+      workspaceId,
+      ifMatch: version,
+      expect: "none",
     }),
 };

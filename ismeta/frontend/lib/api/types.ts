@@ -77,6 +77,26 @@ export interface CreateEstimateDto {
   default_work_markup?: MarkupConfig;
 }
 
+export interface CreateSectionDto {
+  name: string;
+  sort_order?: number;
+}
+
+export interface CreateItemDto {
+  section_id: UUID;
+  name: string;
+  unit?: string;
+  quantity?: number | string;
+  equipment_price?: number | string;
+  material_price?: number | string;
+  work_price?: number | string;
+  sort_order?: number;
+  match_source?: MatchSource;
+  is_key_equipment?: boolean;
+  procurement_status?: ProcurementStatus;
+  man_hours?: number | string;
+}
+
 export interface EstimateSection {
   id: UUID;
   estimate: UUID;
@@ -136,4 +156,17 @@ export const ESTIMATE_STATUS_LABELS: Record<EstimateStatus, string> = {
   ready: "Готова",
   transmitted: "Передана в ERP",
   archived: "Архив",
+};
+
+export const MATCH_SOURCE_LABELS: Record<MatchSource, string> = {
+  manual: "Вручную",
+  history: "История",
+  pricelist: "Прайс",
+  knowledge: "База",
+  category: "Категория",
+  fuzzy: "Fuzzy",
+  llm: "LLM",
+  web: "Web",
+  supplier: "Поставщик",
+  unmatched: "Не подобрано",
 };

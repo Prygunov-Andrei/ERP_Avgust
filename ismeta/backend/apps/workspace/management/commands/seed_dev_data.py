@@ -12,6 +12,7 @@ from django.core.management.base import BaseCommand
 
 from apps.workspace.models import MemberRole, Workspace, WorkspaceMember
 from apps.estimate.models import Estimate, EstimateSection
+from apps.estimate.matching.knowledge import ProductKnowledge
 
 User = get_user_model()
 
@@ -112,5 +113,30 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"  Создано {len(SEED_ITEMS)} позиций"))
         else:
             self.stdout.write("  Смета уже существует, пропуск.")
+
+        # ProductKnowledge rules (E5.1)
+        knowledge_rules = [
+            {"pattern": "кабель+utp", "work_name": "Прокладка кабеля UTP", "unit": "м", "price": 150},
+            {"pattern": "воздуховод+прямоугольный", "work_name": "Монтаж воздуховода прямоуг.", "unit": "м.п.", "price": 800},
+            {"pattern": "вентилятор+крышный", "work_name": "Монтаж вентилятора крышного", "unit": "шт", "price": 12000},
+            {"pattern": "кондиционер", "work_name": "Монтаж кондиционера", "unit": "шт", "price": 15000},
+            {"pattern": "датчик+дым", "work_name": "Монтаж датчика дыма", "unit": "шт", "price": 350},
+            {"pattern": "камера+видеонаблюдение", "work_name": "Монтаж IP-камеры", "unit": "шт", "price": 1200},
+            {"pattern": "коммутатор", "work_name": "Монтаж коммутатора", "unit": "шт", "price": 2500},
+            {"pattern": "клапан+огнезадерживающий", "work_name": "Монтаж огнезадерж. клапана", "unit": "шт", "price": 3500},
+            {"pattern": "воздуховод+круглый", "work_name": "Монтаж воздуховода круглого", "unit": "м.п.", "price": 600},
+            {"pattern": "розетка+электрическая", "work_name": "Установка розетки", "unit": "шт", "price": 250},
+        ]
+        pk_created = 0
+        for rule in knowledge_rules:
+            _, created = ProductKnowledge.objects.get_or_create(
+                workspace_id=ws_avg.id,
+                pattern=rule["pattern"],
+                defaults={"work_name": rule["work_name"], "work_unit": rule["unit"], "work_price": rule["price"]},
+            )
+            if created:
+                pk_created += 1
+        if pk_created:
+            self.stdout.write(self.style.SUCCESS(f"  Создано {pk_created} правил ProductKnowledge"))
 
         self.stdout.write(self.style.SUCCESS(f"\nSeed завершён: {len(SEED_WORKSPACES)} workspace."))
