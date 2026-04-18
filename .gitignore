@@ -17,7 +17,13 @@ db.sqlite3-journal
 /media
 /static
 /staticfiles
-/backend/media/
+/backend/media/*
+# Исключение: каркас каталогов для рейтинга кондиционеров (phase 1)
+!/backend/media/ac_rating/
+/backend/media/ac_rating/*
+!/backend/media/ac_rating/*/
+/backend/media/ac_rating/*/*
+!/backend/media/ac_rating/*/.gitkeep
 
 # IDE
 .vscode/
@@ -64,4 +70,11 @@ backend/catalog/data/suppliers/**/*.pdf
 # Конфиденциальные документы
 реквизиты*
 docs/private/
+
+# AC Rating integration workspace
+# Трекаем: plan.md, brief-designer.md, reports/ (текстовые отчёты агентов)
+# Игнорим: review/ (чужой git-репо Максима), screenshots/ (тяжёлые png), notes/ (личное)
+ac-rating/review/
+ac-rating/screenshots/
+ac-rating/notes/
 
