@@ -141,6 +141,13 @@ INSTALLED_APPS = [
     'kanban_files',
     # Маркетинг (поиск исполнителей, Avito-интеграция)
     'marketing',
+    # Рейтинг кондиционеров (интеграция из ac-rating/, фаза 1 — скелет)
+    'ac_brands',
+    'ac_catalog',
+    'ac_methodology',
+    'ac_scoring',
+    'ac_reviews',
+    'ac_submissions',
 ]
 
 MIDDLEWARE = [
