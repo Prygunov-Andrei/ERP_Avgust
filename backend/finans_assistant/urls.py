@@ -153,6 +153,10 @@ urlpatterns = [
     # ISMeta integration (E12: snapshots, E14: JWT)
     path('api/v1/', include('ismeta_integration.urls')),
     path('api/erp-auth/v1/', include(('ismeta_integration.jwt_urls', 'ismeta_jwt'))),
+    # Рейтинг кондиционеров: публичный (клиенты) и админский (ERP-операторы) API.
+    # Фаза 1 — пустые urlpatterns, роуты приедут в фазе 4 (см. ac-rating/plan.md).
+    path('api/public/v1/rating/', include('ac_catalog.public_urls')),
+    path('api/hvac/rating/', include('ac_catalog.admin_urls')),
     # Публичный API портала смет (отдельный namespace)
     path('api/public/v1/', include('api_public.urls')),
     # Admin API портала (для ERP-операторов, JWT-аутентификация)
