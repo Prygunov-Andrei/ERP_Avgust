@@ -517,7 +517,8 @@
 | 2026-04-18 | 1 | ✅ done | `ac-rating/01-backend-skeleton` | Claude | Агент: Петя. Чисто, `manage.py check` зелёный. Нюанс: `TimestampedModel`, не `TimestampMixin` (поправлено в плане). Полный pytest не прогнан (нет SSH-туннеля к prod-БД) — риск нулевой, изменения чисто аддитивные. |
 | 2026-04-18 | 2 | ✅ done | `ac-rating/02-models` | Claude | Агент: Петя. 14 моделей в 6 apps, 6 clean initial миграций, 45 unit-тестов зелёных у Пети (локальный PG). FK кросс-app строкой. `manage.py check` + `makemigrations --dry-run` чисто. Live pytest у ревьюера не прогнан (нет туннеля), но diff чисто аддитивный, existing миграции не тронуты. Nit: constraint names без `ac_` префикса — чинить по ходу. |
 | 2026-04-18 | 3 | ✅ done | `ac-rating/03-scoring` | Claude | Агент: Петя. Engine + 9 scorers + 2 теста (15+53), Celery task `ac_scoring.recalculate_all`, signal с recursion-guard, management command с `--methodology-id`, known-issues.md. **Live pytest (ERP БД): 78 passed за 4:14.** Side-effect: Петя расширил scope и добавил `ac_catalog/sync_brand_age.py` + `ac_catalog/signals.py` (нужны для test_engine), архитектурно правильно (brand-сигнал должен быть там где Brand). Эпизод с ошибочным коммитом в main → откачен до push-а, main чиста. Nit: `Brand.save()` без update_fields триггерит sync-пересчёт всех моделей бренда — future refactor в Celery. |
-| — | 4 | pending | — | — | Ждёт старта (API + Django admin). ТЗ: надо составить. |
+| — | 4A | pending | — | — | **Ф4 разбита на 4A+4B из-за объёма.** Ф4A: Public API + сериализаторы. ТЗ готово: `ac-rating/tz/04a-public-api.md`. |
+| — | 4B | pending | — | — | Ф4B: Django admin + XLSX импорт. ТЗ: после Ф4A. |
 
 (Заполняется по ходу работы.)
 
