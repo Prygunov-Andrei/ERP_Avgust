@@ -76,16 +76,19 @@ def test_create_review_honeypot_blocks_spam(client):
 def test_create_review_ratelimit_5_per_hour(client):
     m = PublishedACModelFactory()
     payload = {"model": m.pk, "author_name": "A", "rating": 5}
-    statuses = []
+    responses = []
     for _ in range(6):
         resp = client.post(
             "/api/public/v1/rating/reviews/", payload, format="json",
             REMOTE_ADDR="192.168.99.1",
         )
-        statuses.append(resp.status_code)
-    # Первые 5 — 201, шестой блокируется. django-ratelimit с block=True
-    # бросает Ratelimited (subclass PermissionDenied), Django default
-    # handler отдаёт 403; в ERP нет кастомного RATELIMIT_VIEW на 429.
-    # Тестируем фактический контракт: 5 проходят, 6-й заблокирован.
+        responses.append(resp)
+    statuses = [r.status_code for r in responses]
+    # Первые 5 — 201; шестой ловится django-ratelimit (block=True) и
+    # уезжает в наш RATELIMIT_VIEW (ac_catalog.ratelimit.ratelimited_view) —
+    # 429 с JSON-detail.
     assert statuses[:5].count(201) == 5, f"первые 5 должны проходить, было {statuses}"
-    assert statuses[5] == 403, f"6-й POST должен быть заблокирован (403), было {statuses[5]}"
+    assert statuses[5] == 429, f"6-й POST должен быть 429, было {statuses[5]}"
+    body = responses[5].json()
+    assert body["detail"].startswith("Слишком много")
+    assert responses[5]["Retry-After"] == "60"
