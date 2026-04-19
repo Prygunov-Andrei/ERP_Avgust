@@ -160,6 +160,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django_ratelimit.middleware.RatelimitMiddleware',  # ловит Ratelimited → RATELIMIT_VIEW (см. ac_catalog.ratelimit)
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -281,6 +282,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'EXCEPTION_HANDLER': 'ac_catalog.ratelimit.exception_handler',  # 403→429 для django-ratelimit, остальное — DRF default
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
@@ -293,6 +295,9 @@ REST_FRAMEWORK = {
         'read_only': '120/min',
     },
 }
+
+# django-ratelimit: при block=True использовать наш handler с 429 + JSON
+RATELIMIT_VIEW = "ac_catalog.ratelimit.ratelimited_view"
 
 # CORS settings
 # ⚠️ Зависит от DEBUG — в production автоматически отключается CORS_ALLOW_ALL_ORIGINS

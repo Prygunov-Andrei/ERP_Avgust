@@ -181,7 +181,7 @@ def test_create_submission_brand_or_custom_required(client):
 def test_create_submission_ratelimit_3_per_hour(client):
     brand = BrandFactory()
     data = _payload(brand)
-    statuses = []
+    responses = []
     for _ in range(4):
         resp = client.post(
             "/api/public/v1/rating/submissions/",
@@ -189,8 +189,12 @@ def test_create_submission_ratelimit_3_per_hour(client):
             format="multipart",
             REMOTE_ADDR="192.168.77.7",
         )
-        statuses.append(resp.status_code)
-    # django-ratelimit (block=True) → Ratelimited → 403 (Django default).
-    # См. комментарий в ac_reviews/tests/test_api.py.
+        responses.append(resp)
+    statuses = [r.status_code for r in responses]
+    # django-ratelimit (block=True) → Ratelimited → RATELIMIT_VIEW
+    # (ac_catalog.ratelimit.ratelimited_view) → 429 + JSON detail.
     assert statuses[:3].count(201) == 3, f"первые 3 должны проходить, было {statuses}"
-    assert statuses[3] == 403, f"4-й должен быть заблокирован (403), было {statuses[3]}"
+    assert statuses[3] == 429, f"4-й должен быть 429, было {statuses[3]}"
+    body = responses[3].json()
+    assert body["detail"].startswith("Слишком много")
+    assert responses[3]["Retry-After"] == "60"
