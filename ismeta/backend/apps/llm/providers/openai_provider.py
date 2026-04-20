@@ -37,9 +37,16 @@ class OpenAIProvider(AbstractProvider):
             body["tools"] = tools
 
         start = time.monotonic()
-        with httpx.Client(timeout=60.0) as client:
-            resp = client.post(OPENAI_API_URL, json=body, headers=headers)
+        max_retries = 3
+        for attempt in range(max_retries):
+            with httpx.Client(timeout=60.0) as client:
+                resp = client.post(OPENAI_API_URL, json=body, headers=headers)
+            if resp.status_code == 429 and attempt < max_retries - 1:
+                retry_after = int(resp.headers.get("retry-after", 5))
+                time.sleep(min(retry_after, 30))
+                continue
             resp.raise_for_status()
+            break
 
         latency_ms = int((time.monotonic() - start) * 1000)
         data = resp.json()
