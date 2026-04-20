@@ -126,11 +126,16 @@ export function EstimateHeader({
   const archive = useMutation({
     mutationFn: () => estimateApi.archive(estimate.id, workspaceId),
     onSuccess: () => {
-      toast.success("Смета архивирована");
+      setArchiveOpen(false);
       qc.invalidateQueries({ queryKey: ["estimates"] });
-      router.push("/estimates");
+      toast.success("Смета архивирована");
+      // setTimeout чтобы Dialog успел закрыться до навигации
+      setTimeout(() => router.push("/estimates"), 100);
     },
-    onError: () => toast.error("Не удалось архивировать смету"),
+    onError: () => {
+      setArchiveOpen(false);
+      toast.error("Не удалось архивировать смету");
+    },
   });
 
   const commitName = () => {
