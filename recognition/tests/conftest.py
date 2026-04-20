@@ -5,18 +5,37 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
-# Set test API key before importing app
-os.environ["RECOGNITION_API_KEY"] = "test-key"
-os.environ["OPENAI_API_KEY"] = "sk-test"
+os.environ.setdefault("RECOGNITION_API_KEY", "test-key")
+os.environ.setdefault("OPENAI_API_KEY", "sk-test")
 
+from app.api.parse import get_provider  # noqa: E402
 from app.main import app  # noqa: E402
+from app.providers.base import BaseLLMProvider  # noqa: E402
+
+
+class _InertProvider(BaseLLMProvider):
+    """Default test provider — raises if hit. Tests that need responses override via fixture."""
+
+    async def vision_complete(self, image_b64: str, prompt: str) -> str:  # noqa: ARG002
+        raise RuntimeError("provider not configured in this test")
+
+    async def aclose(self) -> None:
+        return None
 
 
 @pytest.fixture()
-def client():
-    return TestClient(app)
+def inert_provider() -> BaseLLMProvider:
+    return _InertProvider()
 
 
 @pytest.fixture()
-def auth_headers():
+def client(inert_provider: BaseLLMProvider):
+    app.dependency_overrides[get_provider] = lambda: inert_provider
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def auth_headers() -> dict[str, str]:
     return {"X-API-Key": "test-key"}
