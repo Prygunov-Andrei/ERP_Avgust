@@ -315,6 +315,32 @@ services:
     logging: *default-logging
     restart: unless-stopped
 
+  # =========================================================================
+  # RECOGNITION SERVICE (PDF → items via LLM Vision, ADR-0023)
+  # =========================================================================
+
+  recognition:
+    build:
+      context: ./recognition
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      RECOGNITION_API_KEY: ${RECOGNITION_API_KEY:-dev-recognition-key-change-me}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LOG_LEVEL: ${RECOGNITION_LOG_LEVEL:-INFO}
+      MAX_FILE_SIZE_MB: ${RECOGNITION_MAX_FILE_SIZE_MB:-50}
+      PARSE_TIMEOUT_SECONDS: ${RECOGNITION_PARSE_TIMEOUT_SECONDS:-300}
+      LLM_MODEL: ${RECOGNITION_LLM_MODEL:-gpt-4o-mini}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8003/v1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging: *default-logging
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:

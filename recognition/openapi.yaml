@@ -1,0 +1,171 @@
+openapi: 3.1.0
+info:
+  title: ISMeta Recognition Service
+  description: PDF → structured items via LLM Vision
+  version: 0.1.0
+paths:
+  /v1/healthz:
+    get:
+      summary: Healthz
+      operationId: healthz_v1_healthz_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Healthz V1 Healthz Get
+  /v1/parse/spec:
+    post:
+      summary: Parse Spec
+      operationId: parse_spec_v1_parse_spec_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_parse_spec_v1_parse_spec_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecParseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    Body_parse_spec_v1_parse_spec_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_parse_spec_v1_parse_spec_post
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PagesStats:
+      properties:
+        total:
+          type: integer
+          title: Total
+          default: 0
+        processed:
+          type: integer
+          title: Processed
+          default: 0
+        skipped:
+          type: integer
+          title: Skipped
+          default: 0
+        error:
+          type: integer
+          title: Error
+          default: 0
+      type: object
+      title: PagesStats
+    SpecItem:
+      properties:
+        name:
+          type: string
+          title: Name
+        model_name:
+          type: string
+          title: Model Name
+          default: ''
+        brand:
+          type: string
+          title: Brand
+          default: ''
+        unit:
+          type: string
+          title: Unit
+          default: шт
+        quantity:
+          type: number
+          title: Quantity
+          default: 1.0
+        tech_specs:
+          type: string
+          title: Tech Specs
+          default: ''
+        section_name:
+          type: string
+          title: Section Name
+          default: ''
+        page_number:
+          type: integer
+          title: Page Number
+          default: 0
+        sort_order:
+          type: integer
+          title: Sort Order
+          default: 0
+      type: object
+      required:
+      - name
+      title: SpecItem
+    SpecParseResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: done
+        items:
+          items:
+            $ref: '#/components/schemas/SpecItem'
+          type: array
+          title: Items
+        errors:
+          items:
+            type: string
+          type: array
+          title: Errors
+        pages_stats:
+          $ref: '#/components/schemas/PagesStats'
+      type: object
+      title: SpecParseResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
