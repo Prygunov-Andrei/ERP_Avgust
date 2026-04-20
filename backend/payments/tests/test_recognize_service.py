@@ -5,6 +5,8 @@ import pytest
 from decimal import Decimal
 from unittest.mock import patch
 
+import httpx
+import respx
 from django.core.files.base import ContentFile
 
 from payments.models import Invoice, InvoiceEvent, InvoiceItem, BulkImportSession
@@ -267,3 +269,74 @@ class TestBulkSessionUpdate:
         assert session.failed == 1
         assert len(session.errors) == 1
         assert 'Test error' in session.errors[0]
+
+
+@pytest.mark.django_db
+class TestRecognitionServiceIntegration:
+    """E2E: реальный invoice_service → RecognitionClient → HTTP (respx mock).
+
+    Проверяет интеграционный путь PDF — без патча _parse_invoice_file.
+    """
+
+    RECOGNITION_URL = "http://recognition:8003"
+
+    @pytest.fixture(autouse=True)
+    def _configure_recognition(self, settings):
+        settings.RECOGNITION_URL = self.RECOGNITION_URL
+        settings.RECOGNITION_API_KEY = "dev-recognition-key-change-me"
+
+    @pytest.fixture
+    def mock_save(self):
+        with patch.object(
+            InvoiceService, '_save_parsed_document', return_value=None,
+        ):
+            yield
+
+    def test_pdf_goes_through_recognition_http(self, mock_save, mock_categorize):
+        invoice = _create_invoice()
+        recognition_response = {
+            "status": "done",
+            "items": [
+                {"name": "Цемент М500", "model_name": "", "brand": "",
+                 "unit": "шт", "quantity": 10.0, "price_unit": 1200.0,
+                 "price_total": 12000.0, "currency": "RUB", "vat_rate": 20,
+                 "page_number": 1, "sort_order": 0}
+            ],
+            "supplier": {
+                "name": "ООО Поставщик", "inn": "7707083893", "kpp": "770701001",
+                "bank_account": "", "bik": "", "correspondent_account": "",
+            },
+            "invoice_meta": {
+                "number": "СЧ-001", "date": "2025-03-15",
+                "total_amount": 12000.0, "vat_amount": 2000.0, "currency": "RUB",
+            },
+            "errors": [],
+            "pages_stats": {"total": 1, "processed": 1, "skipped": 0, "error": 0},
+        }
+        with respx.mock() as mock:
+            mock.post(f"{self.RECOGNITION_URL}/v1/parse/invoice").mock(
+                return_value=httpx.Response(200, json=recognition_response)
+            )
+            InvoiceService.recognize(invoice.id)
+
+        invoice.refresh_from_db()
+        assert invoice.status == Invoice.Status.REVIEW
+        assert invoice.invoice_number == "СЧ-001"
+        assert invoice.amount_gross == Decimal("12000.0")
+        assert invoice.vat_amount == Decimal("2000.0")
+        items = InvoiceItem.objects.filter(invoice=invoice)
+        assert items.count() == 1
+        assert items.first().raw_name == "Цемент М500"
+
+    def test_recognition_401_moves_to_review_with_event(self, mock_save):
+        invoice = _create_invoice()
+        with respx.mock() as mock:
+            mock.post(f"{self.RECOGNITION_URL}/v1/parse/invoice").mock(
+                return_value=httpx.Response(401, json={"error": "invalid_api_key"})
+            )
+            InvoiceService.recognize(invoice.id)
+
+        invoice.refresh_from_db()
+        assert invoice.status == Invoice.Status.REVIEW
+        events = InvoiceEvent.objects.filter(invoice=invoice)
+        assert any('invalid_api_key' in (e.comment or '') for e in events)

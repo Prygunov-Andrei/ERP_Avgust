@@ -598,9 +598,14 @@ class InvoiceService:
         """
         Парсит файл счёта в зависимости от расширения.
 
+        PDF → Recognition Service (E15.02b, standalone FastAPI микросервис).
+        Изображения (png/jpg/jpeg) → legacy DocumentParser (до конвертера в PDF).
+        Excel (xlsx/xls) → ExcelInvoiceParser.
+
         Returns:
             (ParsedInvoice, processing_time_ms)
         """
+        import time
         from pathlib import Path
         from llm_services.schemas import ParsedInvoice
 
@@ -610,7 +615,28 @@ class InvoiceService:
         file_content = invoice.invoice_file.read()
         invoice.invoice_file.seek(0)
 
-        if ext in ('.pdf', '.png', '.jpg', '.jpeg'):
+        if ext == '.pdf':
+            from payments.services.recognition_client import (
+                RecognitionClient,
+                RecognitionClientError,
+                response_to_parsed_invoice,
+            )
+
+            client = RecognitionClient()
+            t0 = time.monotonic()
+            try:
+                response = client.parse_invoice(file_content, filename)
+            except RecognitionClientError as e:
+                # Приводим к ValueError — выше в recognize() уже catchall на Exception.
+                raise ValueError(f'Recognition: {e.code} — {e.detail or ""}') from e
+            time_ms = int((time.monotonic() - t0) * 1000)
+
+            parsed_invoice = response_to_parsed_invoice(response)
+            return parsed_invoice, time_ms
+
+        if ext in ('.png', '.jpg', '.jpeg'):
+            # Legacy LLM-path для изображений — Recognition пока принимает только PDF.
+            # Будет мигрировано отдельно (конвертер PNG/JPG → PDF перед вызовом).
             from llm_services.services.document_parser import DocumentParser
             from llm_services.models import LLMProvider
 
@@ -635,15 +661,14 @@ class InvoiceService:
                 result['parsed_document'].delete()
             return parsed_invoice, time_ms or 0
 
-        elif ext in ('.xlsx', '.xls'):
+        if ext in ('.xlsx', '.xls'):
             from llm_services.services.excel_parser import ExcelInvoiceParser
             from llm_services.models import LLMProvider
 
             parser = ExcelInvoiceParser(provider_model=LLMProvider.get_default())
             return parser.parse(file_content, filename)
 
-        else:
-            raise ValueError(f'Неподдерживаемый формат файла: {ext}')
+        raise ValueError(f'Неподдерживаемый формат файла: {ext}')
 
     @staticmethod
     def _save_parsed_document(invoice: Invoice, parsed_invoice, processing_time: int):
