@@ -15,6 +15,10 @@ from .base import LangMixin, parse_float_param
 class ACModelListView(LangMixin, generics.ListAPIView):
     serializer_class = ACModelListSerializer
     permission_classes = [AllowAny]
+    # Публичный рейтинг отдаёт весь каталог одним ответом: SEO-страница
+    # индексируется за один hit, «Свой рейтинг» считает индекс по всем
+    # моделям. Глобальный PAGE_SIZE=20 из settings тут не нужен.
+    pagination_class = None
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -112,6 +116,10 @@ class ACModelDetailBySlugView(ACModelDetailView):
 
 class ACModelArchiveListView(ACModelListView):
     """Список архивных моделей."""
+
+    # Наследуется от ACModelListView (pagination_class уже None), но фиксируем
+    # явно: архив — тоже plain array для фронта.
+    pagination_class = None
 
     def get_queryset(self):
         qs = ACModel.objects.select_related("brand", "brand__origin_class").prefetch_related(
