@@ -46,4 +46,5 @@ pytest>=8.0.0
 pytest-django>=4.7.0
 pytest-cov>=4.1.0
 pytest-xdist>=3.5.0
+respx>=0.21.0
 factory-boy>=3.3.0

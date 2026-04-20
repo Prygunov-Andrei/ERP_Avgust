@@ -674,3 +674,9 @@ CELERY_TASK_ROUTES = {
 ISMETA_MASTER_TOKEN = os.environ.get('ISMETA_MASTER_TOKEN', 'dev-ismeta-master-token')
 ISMETA_JWT_SECRET = os.environ.get('ISMETA_JWT_SECRET', 'ismeta-jwt-dev-secret')
 ISMETA_JWT_EXPIRY_SECONDS = int(os.environ.get('ISMETA_JWT_EXPIRY_SECONDS', '3600'))
+
+# =============================================================================
+# Recognition Service (E15.02b) — standalone PDF parser, port 8003
+# =============================================================================
+RECOGNITION_URL = os.environ.get('RECOGNITION_URL', 'http://recognition:8003')
+RECOGNITION_API_KEY = os.environ.get('RECOGNITION_API_KEY', '')
