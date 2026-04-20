@@ -69,8 +69,10 @@ describe("EmptyEstimatesState", () => {
     ).toBeInTheDocument();
   });
 
-  it("показывает подсказочный текст про ИИ и разделы", () => {
+  it("показывает подсказочный текст про ИИ", () => {
     render(wrap(<EmptyEstimatesState />));
-    expect(screen.getByText(/ИИ подберёт работы/)).toBeInTheDocument();
+    // Текст empty-state эволюционировал с добавлением PDF: проверяем
+    // что копирайт упоминает «подберёт работы» (стабильная часть).
+    expect(screen.getByText(/подберёт работы/)).toBeInTheDocument();
   });
 });

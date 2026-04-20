@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChatPanel } from "@/components/estimate/chat-panel";
 import { EstimateHeader } from "@/components/estimate/estimate-header";
 import { ImportDialog } from "@/components/estimate/import-dialog";
+import { PdfImportDialog } from "@/components/estimate/pdf-import-dialog";
 import { ItemsTable } from "@/components/estimate/items-table";
 import { ProcurementSummary } from "@/components/estimate/procurement-summary";
 import { SectionsPanel } from "@/components/estimate/sections-panel";
@@ -30,6 +31,7 @@ export default function EstimateDetailPage({ params }: Props) {
   const [validateOpen, setValidateOpen] = React.useState(false);
   const [chatOpen, setChatOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
+  const [pdfImportOpen, setPdfImportOpen] = React.useState(false);
   const [highlightItemId, setHighlightItemId] =
     React.useState<UUID | null>(null);
 
@@ -139,6 +141,7 @@ export default function EstimateDetailPage({ params }: Props) {
         onOpenValidate={() => setValidateOpen(true)}
         onOpenChat={() => setChatOpen(true)}
         onOpenImport={() => setImportOpen(true)}
+        onOpenPdfImport={() => setPdfImportOpen(true)}
       />
       <div className="flex flex-1 overflow-hidden">
         <SectionsPanel
@@ -187,6 +190,11 @@ export default function EstimateDetailPage({ params }: Props) {
         estimateId={id}
         open={importOpen}
         onOpenChange={setImportOpen}
+      />
+      <PdfImportDialog
+        estimateId={id}
+        open={pdfImportOpen}
+        onOpenChange={setPdfImportOpen}
       />
     </div>
   );

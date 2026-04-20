@@ -11,6 +11,8 @@ import type {
   ImportResult,
   MatchingResult,
   MatchingSession,
+  PdfImportPreview,
+  PdfItem,
   ProblemDetails,
   UUID,
   ValidationReport,
@@ -309,4 +311,27 @@ export const importApi = {
       },
     );
   },
+
+  uploadPdf: (estimateId: UUID, file: File, workspaceId: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<PdfImportPreview>(
+      `/estimates/${estimateId}/import/pdf/`,
+      {
+        method: "POST",
+        body: form,
+        workspaceId,
+      },
+    );
+  },
+
+  applyPdf: (estimateId: UUID, items: PdfItem[], workspaceId: string) =>
+    apiFetch<ImportResult>(
+      `/estimates/${estimateId}/import/pdf/apply/`,
+      {
+        method: "POST",
+        body: { items },
+        workspaceId,
+      },
+    ),
 };

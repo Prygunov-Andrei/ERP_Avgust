@@ -3,6 +3,7 @@
 import { FileSpreadsheet } from "lucide-react";
 
 import { ImportNewEstimateDialog } from "./import-new-dialog";
+import { ImportNewPdfEstimateDialog } from "./import-new-pdf-dialog";
 import { NewEstimateDialog } from "./new-estimate-dialog";
 
 export function EmptyEstimatesState() {
@@ -16,13 +17,15 @@ export function EmptyEstimatesState() {
         <FileSpreadsheet className="h-7 w-7" aria-hidden />
       </div>
       <h2 className="text-lg font-semibold">Создайте первую смету</h2>
-      <p className="max-w-sm text-sm text-muted-foreground">
-        Начните с пустой или загрузите свою смету из Excel — разделы
-        и позиции появятся в редакторе, ИИ подберёт работы и проверит цены.
+      <p className="max-w-md text-sm text-muted-foreground">
+        Начните с пустой, загрузите существующую смету из Excel или
+        спецификацию в PDF — ИИ распознает оборудование, подберёт работы
+        и проверит цены.
       </p>
       <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
         <NewEstimateDialog />
         <ImportNewEstimateDialog />
+        <ImportNewPdfEstimateDialog />
       </div>
     </div>
   );

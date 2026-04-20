@@ -303,6 +303,12 @@ function HeaderActions(props: HeaderActionsProps) {
         className="hidden items-center gap-2 lg:flex"
         data-testid="header-actions-desktop"
       >
+        {onOpenValidate ? (
+          <Button variant="outline" onClick={onOpenValidate}>
+            <Sparkles className="h-4 w-4" />
+            Проверить ИИ
+          </Button>
+        ) : null}
         {onOpenChat ? (
           <Button variant="outline" onClick={onOpenChat}>
             <MessageSquare className="h-4 w-4" />
@@ -383,6 +389,12 @@ function HeaderActions(props: HeaderActionsProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[14rem]">
+            {onOpenValidate ? (
+              <DropdownMenuItem onSelect={onOpenValidate}>
+                <Sparkles className="h-4 w-4" />
+                Проверить ИИ
+              </DropdownMenuItem>
+            ) : null}
             {onOpenChat ? (
               <DropdownMenuItem onSelect={onOpenChat}>
                 <MessageSquare className="h-4 w-4" />

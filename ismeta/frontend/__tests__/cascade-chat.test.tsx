@@ -195,20 +195,16 @@ describe("E26: Cascade — transmitted warning + recalc toast", () => {
     expect(keys).toContain("estimate");
   });
 
-  it("рендерит кнопки «Проверить ИИ» и «ИИ-помощник» и вызывает колбэки", () => {
-    const onValidate = vi.fn();
+  it("рендерит кнопку «ИИ-помощник» и вызывает колбэк (validate перенесён внутрь чата)", () => {
     const onChat = vi.fn();
     render(
       wrap(
         <EstimateHeader
           estimate={makeEstimate()}
-          onOpenValidate={onValidate}
           onOpenChat={onChat}
         />,
       ),
     );
-    fireEvent.click(screen.getByRole("button", { name: /Проверить ИИ/ }));
-    expect(onValidate).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("button", { name: /ИИ-помощник/ }));
     expect(onChat).toHaveBeenCalledTimes(1);
   });

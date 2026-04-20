@@ -194,6 +194,35 @@ export interface ImportResult {
   errors: string[];
 }
 
+export interface PdfItem {
+  raw_name: string;
+  model_name: string | null;
+  brand: string | null;
+  quantity: number;
+  unit: string;
+  section_name: string | null;
+  tech_specs: Record<string, string>;
+  confidence: number;
+  source_page: number | null;
+}
+
+export interface PdfDocumentMeta {
+  filenames: string[];
+  pages_total: number;
+  pages_processed: number;
+  confidence: number;
+  processing_time_ms: number;
+  tokens_total: number;
+  cost_usd: number;
+}
+
+export interface PdfImportPreview {
+  session_id: string;
+  document_meta: PdfDocumentMeta;
+  items: PdfItem[];
+  errors: string[];
+}
+
 export type IssueSeverity = "error" | "warning" | "info";
 export type IssueCategory =
   | "price_outlier"
