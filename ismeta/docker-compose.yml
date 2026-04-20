@@ -101,6 +101,23 @@ services:
       - /app/node_modules
       - /app/.next
 
+  recognition:
+    build:
+      context: ../recognition
+    container_name: ismeta-recognition
+    restart: unless-stopped
+    environment:
+      RECOGNITION_API_KEY: ${RECOGNITION_API_KEY:-dev-recognition-key}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${RECOGNITION_PORT:-8003}:8003"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8003/v1/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
 volumes:
   postgres-data:
   redis-data:
