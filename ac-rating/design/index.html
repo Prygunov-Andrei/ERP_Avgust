@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>hvac-info.com — вайрфреймы</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:Inter,system-ui,sans-serif}
+  :root{
+    --wf-ink:#141414;
+    --wf-ink-80:rgba(20,20,20,0.82);
+    --wf-ink-60:rgba(20,20,20,0.60);
+    --wf-ink-40:rgba(20,20,20,0.40);
+    --wf-ink-25:rgba(20,20,20,0.25);
+    --wf-ink-15:rgba(20,20,20,0.14);
+    --wf-border:rgba(20,20,20,0.25);
+    --wf-border-subtle:rgba(20,20,20,0.14);
+    --wf-chip:rgba(20,20,20,0.07);
+    --wf-btn:rgba(20,20,20,0.07);
+    --wf-line:rgba(20,20,20,0.12);
+    --wf-alt:#f3f1ed;
+    --wf-paper:#fcfbf9;
+    --wf-accent:#2856cc;
+    --wf-accent-bg:#e8edfb;
+    --wf-warn:#c87510;
+  }
+  [data-wf-scope="dark"]{
+    --wf-ink:#eeecea;
+    --wf-ink-80:rgba(238,236,234,0.82);
+    --wf-ink-60:rgba(238,236,234,0.58);
+    --wf-ink-40:rgba(238,236,234,0.35);
+    --wf-ink-15:rgba(238,236,234,0.14);
+    --wf-border:rgba(238,236,234,0.22);
+    --wf-border-subtle:rgba(238,236,234,0.12);
+    --wf-chip:rgba(238,236,234,0.08);
+    --wf-btn:rgba(238,236,234,0.10);
+    --wf-line:rgba(238,236,234,0.14);
+    --wf-alt:#1f1f1e;
+    --wf-paper:#171717;
+    --wf-accent-bg:rgba(40,86,204,0.20);
+  }
+  body[data-accent="teal"]{--wf-accent:#0e8385;--wf-accent-bg:#dbf1ef}
+  body[data-accent="amber"]{--wf-accent:#b65a00;--wf-accent-bg:#fbeeda}
+  body[data-accent="mono"]{--wf-accent:#2a2a2a;--wf-accent-bg:rgba(42,42,42,0.08)}
+  /* When body theme is dark, propagate to every artboard EXCEPT those explicitly kept light */
+  body[data-theme="dark"] [data-wf-scope="auto"]{
+    --wf-ink:#eeecea;
+    --wf-ink-80:rgba(238,236,234,0.82);
+    --wf-ink-60:rgba(238,236,234,0.58);
+    --wf-ink-40:rgba(238,236,234,0.35);
+    --wf-ink-15:rgba(238,236,234,0.14);
+    --wf-border:rgba(238,236,234,0.22);
+    --wf-border-subtle:rgba(238,236,234,0.12);
+    --wf-chip:rgba(238,236,234,0.08);
+    --wf-btn:rgba(238,236,234,0.10);
+    --wf-line:rgba(238,236,234,0.14);
+    --wf-alt:#1f1f1e;
+    --wf-paper:#171717;
+    --wf-accent:#6b8bff;
+    --wf-accent-bg:rgba(107,139,255,0.20);
+    color:var(--wf-ink);
+    background:var(--wf-paper);
+  }
+  body[data-theme="dark"][data-accent="teal"]  [data-wf-scope="auto"]{--wf-accent:#3fc7c9;--wf-accent-bg:rgba(63,199,201,0.18)}
+  body[data-theme="dark"][data-accent="amber"] [data-wf-scope="auto"]{--wf-accent:#ffb056;--wf-accent-bg:rgba(255,176,86,0.18)}
+  body[data-theme="dark"][data-accent="mono"]  [data-wf-scope="auto"]{--wf-accent:#eeecea;--wf-accent-bg:rgba(238,236,234,0.14)}
+  body[data-theme="dark"] [data-wf-scope="auto"] *:not(.wf-keep-border){border-color:var(--wf-border-subtle)!important}
+  body[data-theme="dark"]{background:#0f0f0f}
+  body[data-theme="dark"] .dc-bg{background:#0f0f0f!important}
+  /* Density: uniform scale applied to the content of each artboard via CSS zoom.
+     This hits every padding/margin/gap without retrofitting screens. */
+  [data-wf-scope]{zoom:1}
+  body[data-density="dense"] [data-wf-scope]{zoom:0.88}
+  body[data-density="air"]   [data-wf-scope]{zoom:1.08}
+  /* Logo in dark theme: invert just the near-black wordmark. Works because the red mark
+     has saturation, so hue-rotate + invert leaves it recognizable. Simpler: in dark,
+     use CSS filter to brighten the black strokes. */
+  body[data-theme="dark"] [data-wf-scope="auto"] .wf-brand img{
+    filter: invert(1) hue-rotate(180deg);
+  }
+  .tweaks{position:fixed;right:18px;bottom:18px;z-index:100;background:#fffffe;color:#222;border:1px solid rgba(0,0,0,0.1);border-radius:10px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,0.15);font-family:Inter,system-ui,sans-serif;font-size:12px;width:240px}
+  .tweaks h3{margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#777}
+  .tweaks label{display:block;font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.8px;margin:10px 0 4px}
+  .tweaks .row{display:flex;gap:4px;flex-wrap:wrap}
+  .tweaks button{flex:1;min-width:48px;padding:5px 8px;font-size:11px;background:#f1f0ed;border:1px solid transparent;border-radius:4px;cursor:pointer;font-family:inherit}
+  .tweaks button.on{background:#2856cc;color:#fff}
+  .tweaks .close{position:absolute;top:8px;right:8px;background:none;border:none;font-size:18px;cursor:pointer;color:#999;padding:0;width:18px;height:18px}
+  .tweaks.hidden{display:none}
+  .fab{position:fixed;right:18px;bottom:18px;z-index:100;background:#2856cc;color:#fff;border:none;border-radius:999px;padding:10px 16px;font-size:12px;cursor:pointer;box-shadow:0 4px 14px rgba(40,86,204,0.4);font-family:Inter,system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<button class="fab" id="fab" onclick="toggleTweaks()">Tweaks</button>
+<div class="tweaks hidden" id="tweaks">
+  <button class="close" onclick="toggleTweaks()">×</button>
+  <h3>Tweaks</h3>
+  <label>Тема</label>
+  <div class="row" id="tw-theme"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div>
+  <label>Акцент</label>
+  <div class="row" id="tw-accent"><button data-v="blue" class="on">Blue</button><button data-v="teal">Teal</button><button data-v="amber">Amber</button><button data-v="mono">Mono</button></div>
+  <label>Плотность</label>
+  <div class="row" id="tw-density"><button data-v="air">Air</button><button data-v="balanced" class="on">Balanced</button><button data-v="dense">Dense</button></div>
+  <label>Активная секция</label>
+  <div class="row" id="tw-section" style="flex-direction:column"><button data-v="all" class="on">Все секции</button><button data-v="nav">Навигация</button><button data-v="listing">Листинг рейтинга</button><button data-v="detail">Деталь модели</button><button data-v="long">Формы / статика</button><button data-v="tmpl">Шаблоны</button><button data-v="news">Новости</button></div>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script>
+function toggleTweaks(){
+  const t=document.getElementById('tweaks'),f=document.getElementById('fab');
+  if(t.classList.contains('hidden')){t.classList.remove('hidden');f.style.display='none'}
+  else{t.classList.add('hidden');f.style.display='block'}
+}
+function setState(key,val){
+  localStorage.setItem('hvac_wf_'+key,val);
+  if(key==='theme') document.body.dataset.theme=val;
+  if(key==='accent') document.body.dataset.accent=val;
+  if(key==='density') document.body.dataset.density=val;
+  if(key==='section') window.__wfSection=val, window.dispatchEvent(new Event('wf-section'));
+  document.querySelectorAll('#tw-'+key+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===val));
+}
+['theme','accent','density','section'].forEach(k=>{
+  const v=localStorage.getItem('hvac_wf_'+k)||{theme:'light',accent:'blue',density:'balanced',section:'all'}[k];
+  setState(k,v);
+  document.getElementById('tw-'+k).addEventListener('click',e=>{if(e.target.dataset.v)setState(k,e.target.dataset.v)});
+});
+</script>
+
+<script src="design-canvas.jsx" type="text/babel"></script>
+<script src="wf-primitives.jsx" type="text/babel"></script>
+<script src="wf-nav.jsx" type="text/babel"></script>
+<script src="wf-listing.jsx" type="text/babel"></script>
+<script src="wf-custom.jsx" type="text/babel"></script>
+<script src="wf-screens.jsx" type="text/babel"></script>
+<script src="wf-app.jsx" type="text/babel"></script>
+</body>
+</html>
