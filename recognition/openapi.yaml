@@ -1,0 +1,489 @@
+openapi: 3.1.0
+info:
+  title: ISMeta Recognition Service
+  description: PDF → structured items via LLM Vision
+  version: 0.1.0
+paths:
+  /v1/healthz:
+    get:
+      summary: Healthz
+      operationId: healthz_v1_healthz_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Healthz V1 Healthz Get
+  /v1/parse/spec:
+    post:
+      summary: Parse Spec
+      operationId: parse_spec_v1_parse_spec_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_parse_spec_v1_parse_spec_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecParseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/parse/invoice:
+    post:
+      summary: Parse Invoice
+      operationId: parse_invoice_v1_parse_invoice_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_parse_invoice_v1_parse_invoice_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceParseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/parse/quote:
+    post:
+      summary: Parse Quote
+      operationId: parse_quote_v1_parse_quote_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_parse_quote_v1_parse_quote_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteParseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    Body_parse_invoice_v1_parse_invoice_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_parse_invoice_v1_parse_invoice_post
+    Body_parse_quote_v1_parse_quote_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_parse_quote_v1_parse_quote_post
+    Body_parse_spec_v1_parse_spec_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_parse_spec_v1_parse_spec_post
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    InvoiceItem:
+      properties:
+        name:
+          type: string
+          title: Name
+        model_name:
+          type: string
+          title: Model Name
+          default: ''
+        brand:
+          type: string
+          title: Brand
+          default: ''
+        unit:
+          type: string
+          title: Unit
+          default: шт
+        quantity:
+          type: number
+          title: Quantity
+          default: 1.0
+        price_unit:
+          type: number
+          title: Price Unit
+          default: 0.0
+        price_total:
+          type: number
+          title: Price Total
+          default: 0.0
+        currency:
+          type: string
+          title: Currency
+          default: RUB
+        vat_rate:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Vat Rate
+        page_number:
+          type: integer
+          title: Page Number
+          default: 0
+        sort_order:
+          type: integer
+          title: Sort Order
+          default: 0
+      type: object
+      required:
+      - name
+      title: InvoiceItem
+    InvoiceMeta:
+      properties:
+        number:
+          type: string
+          title: Number
+          default: ''
+        date:
+          type: string
+          title: Date
+          default: ''
+        total_amount:
+          type: number
+          title: Total Amount
+          default: 0.0
+        vat_amount:
+          type: number
+          title: Vat Amount
+          default: 0.0
+        currency:
+          type: string
+          title: Currency
+          default: RUB
+      type: object
+      title: InvoiceMeta
+    InvoiceParseResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: done
+        items:
+          items:
+            $ref: '#/components/schemas/InvoiceItem'
+          type: array
+          title: Items
+        supplier:
+          $ref: '#/components/schemas/SupplierInfo'
+        invoice_meta:
+          $ref: '#/components/schemas/InvoiceMeta'
+        errors:
+          items:
+            type: string
+          type: array
+          title: Errors
+        pages_stats:
+          $ref: '#/components/schemas/PagesStats'
+      type: object
+      title: InvoiceParseResponse
+    PagesStats:
+      properties:
+        total:
+          type: integer
+          title: Total
+          default: 0
+        processed:
+          type: integer
+          title: Processed
+          default: 0
+        skipped:
+          type: integer
+          title: Skipped
+          default: 0
+        error:
+          type: integer
+          title: Error
+          default: 0
+      type: object
+      title: PagesStats
+    QuoteItem:
+      properties:
+        name:
+          type: string
+          title: Name
+        model_name:
+          type: string
+          title: Model Name
+          default: ''
+        brand:
+          type: string
+          title: Brand
+          default: ''
+        unit:
+          type: string
+          title: Unit
+          default: шт
+        quantity:
+          type: number
+          title: Quantity
+          default: 1.0
+        price_unit:
+          type: number
+          title: Price Unit
+          default: 0.0
+        price_total:
+          type: number
+          title: Price Total
+          default: 0.0
+        currency:
+          type: string
+          title: Currency
+          default: RUB
+        vat_rate:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Vat Rate
+        page_number:
+          type: integer
+          title: Page Number
+          default: 0
+        sort_order:
+          type: integer
+          title: Sort Order
+          default: 0
+        tech_specs:
+          type: string
+          title: Tech Specs
+          default: ''
+        lead_time_days:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Lead Time Days
+        warranty_months:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Warranty Months
+      type: object
+      required:
+      - name
+      title: QuoteItem
+    QuoteMeta:
+      properties:
+        number:
+          type: string
+          title: Number
+          default: ''
+        date:
+          type: string
+          title: Date
+          default: ''
+        valid_until:
+          type: string
+          title: Valid Until
+          default: ''
+        currency:
+          type: string
+          title: Currency
+          default: RUB
+        total_amount:
+          type: number
+          title: Total Amount
+          default: 0.0
+      type: object
+      title: QuoteMeta
+    QuoteParseResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: done
+        items:
+          items:
+            $ref: '#/components/schemas/QuoteItem'
+          type: array
+          title: Items
+        supplier:
+          $ref: '#/components/schemas/QuoteSupplier'
+        quote_meta:
+          $ref: '#/components/schemas/QuoteMeta'
+        errors:
+          items:
+            type: string
+          type: array
+          title: Errors
+        pages_stats:
+          $ref: '#/components/schemas/PagesStats'
+      type: object
+      title: QuoteParseResponse
+    QuoteSupplier:
+      properties:
+        name:
+          type: string
+          title: Name
+          default: ''
+        inn:
+          type: string
+          title: Inn
+          default: ''
+      type: object
+      title: QuoteSupplier
+      description: КП часто без банковских реквизитов — только name и опционально
+        ИНН.
+    SpecItem:
+      properties:
+        name:
+          type: string
+          title: Name
+        model_name:
+          type: string
+          title: Model Name
+          default: ''
+        brand:
+          type: string
+          title: Brand
+          default: ''
+        unit:
+          type: string
+          title: Unit
+          default: шт
+        quantity:
+          type: number
+          title: Quantity
+          default: 1.0
+        tech_specs:
+          type: string
+          title: Tech Specs
+          default: ''
+        section_name:
+          type: string
+          title: Section Name
+          default: ''
+        page_number:
+          type: integer
+          title: Page Number
+          default: 0
+        sort_order:
+          type: integer
+          title: Sort Order
+          default: 0
+      type: object
+      required:
+      - name
+      title: SpecItem
+    SpecParseResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          default: done
+        items:
+          items:
+            $ref: '#/components/schemas/SpecItem'
+          type: array
+          title: Items
+        errors:
+          items:
+            type: string
+          type: array
+          title: Errors
+        pages_stats:
+          $ref: '#/components/schemas/PagesStats'
+      type: object
+      title: SpecParseResponse
+    SupplierInfo:
+      properties:
+        name:
+          type: string
+          title: Name
+          default: ''
+        inn:
+          type: string
+          title: Inn
+          default: ''
+        kpp:
+          type: string
+          title: Kpp
+          default: ''
+        bank_account:
+          type: string
+          title: Bank Account
+          default: ''
+        bik:
+          type: string
+          title: Bik
+          default: ''
+        correspondent_account:
+          type: string
+          title: Correspondent Account
+          default: ''
+      type: object
+      title: SupplierInfo
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
