@@ -57,7 +57,23 @@ def test_list_returns_only_published(client, methodology):
     resp = client.get("/api/public/v1/rating/models/")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["count"] == 2
+    assert isinstance(body, list)
+    assert len(body) == 2
+
+
+@pytest.mark.django_db
+def test_list_returns_plain_array_not_paginated(client, methodology):
+    """M3: публичный list не обёрнут в {count, next, previous, results}."""
+    PublishedACModelFactory(brand=BrandFactory(name="A"))
+    PublishedACModelFactory(brand=BrandFactory(name="B"))
+
+    resp = client.get("/api/public/v1/rating/models/")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert isinstance(body, list)
+    assert len(body) == 2
+    # Явно проверяем отсутствие ключей пагинации.
+    assert not isinstance(body, dict)
 
 
 @pytest.mark.django_db
@@ -74,7 +90,7 @@ def test_list_filter_by_brand(client, methodology):
 
     resp = client.get("/api/public/v1/rating/models/?brand=Daik")
     assert resp.status_code == 200
-    items = resp.json()["results"]
+    items = resp.json()
     assert len(items) == 1
     assert items[0]["brand"] == "Daikin"
 
@@ -88,7 +104,7 @@ def test_list_filter_by_region(client, methodology):
 
     resp = client.get("/api/public/v1/rating/models/?region=ru")
     assert resp.status_code == 200
-    items = resp.json()["results"]
+    items = resp.json()
     assert len(items) == 1
     assert items[0]["brand"] == "RU"
 
@@ -101,7 +117,7 @@ def test_list_filter_by_capacity_range(client, methodology):
 
     resp = client.get("/api/public/v1/rating/models/?capacity_min=2500&capacity_max=4000")
     assert resp.status_code == 200
-    items = resp.json()["results"]
+    items = resp.json()
     assert len(items) == 1
     assert items[0]["brand"] == "Mid"
 
@@ -114,7 +130,7 @@ def test_list_filter_by_price_range(client, methodology):
 
     resp = client.get("/api/public/v1/rating/models/?price_min=20000&price_max=50000")
     assert resp.status_code == 200
-    items = resp.json()["results"]
+    items = resp.json()
     assert len(items) == 1
     assert items[0]["brand"] == "Mid"
 
@@ -165,7 +181,20 @@ def test_archive_returns_only_archived(client, methodology):
     resp = client.get("/api/public/v1/rating/models/archive/")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["count"] == 2
+    assert isinstance(body, list)
+    assert len(body) == 2
+
+
+@pytest.mark.django_db
+def test_archive_list_returns_plain_array(client, methodology):
+    """M3: архивный list тоже plain array (не {count, results, ...})."""
+    ArchivedACModelFactory(brand=BrandFactory(name="Old"))
+
+    resp = client.get("/api/public/v1/rating/models/archive/")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert isinstance(body, list)
+    assert len(body) == 1
 
 
 # ── Methodology ────────────────────────────────────────────────────────
@@ -223,7 +252,7 @@ def test_list_includes_rank_for_each_item(client, methodology):
 
     resp = client.get("/api/public/v1/rating/models/")
     assert resp.status_code == 200
-    items = resp.json()["results"]
+    items = resp.json()
     by_brand = {it["brand"]: it["rank"] for it in items}
     assert by_brand == {"A": 1, "B": 2, "C": 3}
 
@@ -238,7 +267,7 @@ def test_list_rank_handles_ties_with_same_rank_and_skip(client, methodology):
     PublishedACModelFactory(brand=BrandFactory(name="D"), total_index=40)
 
     resp = client.get("/api/public/v1/rating/models/")
-    items = resp.json()["results"]
+    items = resp.json()
     by_brand = {it["brand"]: it["rank"] for it in items}
     assert by_brand["A"] == 1
     assert by_brand["B"] == by_brand["C"] == 2
@@ -255,7 +284,7 @@ def test_list_rank_stays_absolute_when_filter_applied(client, methodology):
 
     # Фильтр оставляет только Mitsubishi (#2 в полном каталоге).
     resp = client.get("/api/public/v1/rating/models/?brand=Mitsubishi")
-    items = resp.json()["results"]
+    items = resp.json()
     assert len(items) == 1
     assert items[0]["rank"] == 2  # абсолютный, не «1 из 1 отфильтрованных»
 
@@ -331,5 +360,5 @@ def test_archive_list_rank_is_null(client, methodology):
     """У архивных моделей rank не аннотируется — поле приходит null."""
     ArchivedACModelFactory(total_index=50)
     resp = client.get("/api/public/v1/rating/models/archive/")
-    items = resp.json()["results"]
+    items = resp.json()
     assert items[0]["rank"] is None
