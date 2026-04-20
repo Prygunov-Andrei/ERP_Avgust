@@ -4,11 +4,12 @@
 def test_healthz(client):
     resp = client.get("/v1/healthz")
     assert resp.status_code == 200
-    assert resp.json()["status"] == "ok"
-    assert resp.json()["service"] == "recognition"
+    body = resp.json()
+    assert body["status"] == "ok"
+    assert "version" in body
+    assert "provider" in body
 
 
 def test_healthz_no_auth_required(client):
-    """Healthz does NOT require X-API-Key."""
-    resp = client.get("/v1/healthz")  # no headers
+    resp = client.get("/v1/healthz")
     assert resp.status_code == 200
