@@ -191,7 +191,10 @@ export interface MatchingSession {
 export interface ImportResult {
   created: number;
   updated: number;
+  sections?: number;
   errors: string[];
+  pages_total?: number;
+  pages_processed?: number;
 }
 
 export interface PdfItem {

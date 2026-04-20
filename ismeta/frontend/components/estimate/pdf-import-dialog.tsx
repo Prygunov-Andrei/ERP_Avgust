@@ -31,7 +31,7 @@ export function PdfImportDialog({ estimateId, open, onOpenChange }: Props) {
   const qc = useQueryClient();
   const [stage, setStage] = React.useState<Stage>("choose");
   const [file, setFile] = React.useState<File | null>(null);
-  const [result, setResult] = React.useState<(ImportResult & { pages_total?: number; pages_processed?: number }) | null>(null);
+  const [result, setResult] = React.useState<ImportResult | null>(null);
   const [elapsed, setElapsed] = React.useState(0);
   const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = React.useRef<HTMLInputElement | null>(null);

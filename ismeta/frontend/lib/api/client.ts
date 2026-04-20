@@ -315,7 +315,7 @@ export const importApi = {
   uploadPdf: (estimateId: UUID, file: File, workspaceId: string) => {
     const form = new FormData();
     form.append("file", file);
-    return apiFetch<ImportResult & { pages_total?: number; pages_processed?: number }>(
+    return apiFetch<ImportResult>(
       `/estimates/${estimateId}/import/pdf/`,
       {
         method: "POST",
