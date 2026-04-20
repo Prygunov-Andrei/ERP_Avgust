@@ -209,3 +209,127 @@ def test_export_csv_empty_db_returns_header_only(client, db):
     resp = client.get("/api/public/v1/rating/export/csv/")
     assert resp.status_code == 200
     assert resp.content.decode().strip() == "brand,model,nominal_capacity,total_index,publish_status"
+
+
+# ── M2: rank / median / stats ─────────────────────────────────────────
+
+
+@pytest.mark.django_db
+def test_list_includes_rank_for_each_item(client, methodology):
+    # 3 модели по убыванию total_index → ranks [1, 2, 3].
+    PublishedACModelFactory(brand=BrandFactory(name="A"), total_index=80)
+    PublishedACModelFactory(brand=BrandFactory(name="B"), total_index=60)
+    PublishedACModelFactory(brand=BrandFactory(name="C"), total_index=40)
+
+    resp = client.get("/api/public/v1/rating/models/")
+    assert resp.status_code == 200
+    items = resp.json()["results"]
+    by_brand = {it["brand"]: it["rank"] for it in items}
+    assert by_brand == {"A": 1, "B": 2, "C": 3}
+
+
+@pytest.mark.django_db
+def test_list_rank_handles_ties_with_same_rank_and_skip(client, methodology):
+    # Две модели с одинаковым total_index → один и тот же rank;
+    # следующая идёт через 2 (стандартный RANK, не DENSE_RANK).
+    PublishedACModelFactory(brand=BrandFactory(name="A"), total_index=80)
+    PublishedACModelFactory(brand=BrandFactory(name="B"), total_index=60)
+    PublishedACModelFactory(brand=BrandFactory(name="C"), total_index=60)
+    PublishedACModelFactory(brand=BrandFactory(name="D"), total_index=40)
+
+    resp = client.get("/api/public/v1/rating/models/")
+    items = resp.json()["results"]
+    by_brand = {it["brand"]: it["rank"] for it in items}
+    assert by_brand["A"] == 1
+    assert by_brand["B"] == by_brand["C"] == 2
+    assert by_brand["D"] == 4  # не 3 — это RANK, не DENSE_RANK
+
+
+@pytest.mark.django_db
+def test_list_rank_stays_absolute_when_filter_applied(client, methodology):
+    """Фильтр по brand не должен пересчитывать rank — модель остаётся
+    «№N в полном published-каталоге»."""
+    PublishedACModelFactory(brand=BrandFactory(name="Daikin"), total_index=80)
+    PublishedACModelFactory(brand=BrandFactory(name="Mitsubishi"), total_index=60)
+    PublishedACModelFactory(brand=BrandFactory(name="Other"), total_index=40)
+
+    # Фильтр оставляет только Mitsubishi (#2 в полном каталоге).
+    resp = client.get("/api/public/v1/rating/models/?brand=Mitsubishi")
+    items = resp.json()["results"]
+    assert len(items) == 1
+    assert items[0]["rank"] == 2  # абсолютный, не «1 из 1 отфильтрованных»
+
+
+@pytest.mark.django_db
+def test_detail_includes_rank_and_median(client, methodology):
+    PublishedACModelFactory(brand=BrandFactory(name="A"), total_index=80)
+    target = PublishedACModelFactory(brand=BrandFactory(name="B"), total_index=60)
+    PublishedACModelFactory(brand=BrandFactory(name="C"), total_index=40)
+    # Медиана из [40, 60, 80] = 60
+
+    resp = client.get(f"/api/public/v1/rating/models/{target.pk}/")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["rank"] == 2
+    assert body["median_total_index"] == 60.0
+
+
+@pytest.mark.django_db
+def test_detail_rank_with_ties(client, methodology):
+    # target имеет тот же total_index что и A → оба rank=1 (выше нет никого).
+    PublishedACModelFactory(brand=BrandFactory(name="A"), total_index=80)
+    target = PublishedACModelFactory(brand=BrandFactory(name="B"), total_index=80)
+    PublishedACModelFactory(brand=BrandFactory(name="C"), total_index=40)
+
+    resp = client.get(f"/api/public/v1/rating/models/{target.pk}/")
+    assert resp.json()["rank"] == 1
+
+
+@pytest.mark.django_db
+def test_detail_median_for_even_count(client, methodology):
+    # Чётное число → медиана = среднее двух центральных.
+    PublishedACModelFactory(total_index=80)
+    target = PublishedACModelFactory(total_index=60)
+    PublishedACModelFactory(total_index=40)
+    PublishedACModelFactory(total_index=20)
+    # отсортированный: [20, 40, 60, 80] → median=(40+60)/2=50
+
+    resp = client.get(f"/api/public/v1/rating/models/{target.pk}/")
+    assert resp.json()["median_total_index"] == 50.0
+
+
+@pytest.mark.django_db
+def test_methodology_includes_stats(client, methodology_with_noise):
+    # У methodology_with_noise один активный критерий (noise),
+    # 0 published моделей в начале.
+    PublishedACModelFactory(total_index=70)
+    PublishedACModelFactory(total_index=50)
+    PublishedACModelFactory(total_index=30)
+    # отсортированный: [30, 50, 70] → median=50
+
+    resp = client.get("/api/public/v1/rating/methodology/")
+    assert resp.status_code == 200
+    stats = resp.json()["stats"]
+    assert stats == {
+        "total_models": 3,
+        "active_criteria_count": 1,
+        "median_total_index": 50.0,
+    }
+
+
+@pytest.mark.django_db
+def test_methodology_stats_with_no_models(client, methodology_with_noise):
+    resp = client.get("/api/public/v1/rating/methodology/")
+    stats = resp.json()["stats"]
+    assert stats["total_models"] == 0
+    assert stats["active_criteria_count"] == 1
+    assert stats["median_total_index"] is None
+
+
+@pytest.mark.django_db
+def test_archive_list_rank_is_null(client, methodology):
+    """У архивных моделей rank не аннотируется — поле приходит null."""
+    ArchivedACModelFactory(total_index=50)
+    resp = client.get("/api/public/v1/rating/models/archive/")
+    items = resp.json()["results"]
+    assert items[0]["rank"] is None
