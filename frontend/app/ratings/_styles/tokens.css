@@ -1,0 +1,55 @@
+/* Scoped design tokens for the public rating section.
+   Prefix --rt-* (rating). Isolated under .rating-scope so they do not
+   affect the global shadcn palette used by ERP admin and HVAC news. */
+
+.rating-scope {
+  --rt-ink: 0 0% 8%;
+  --rt-ink-80: 0 0% 8% / 0.82;
+  --rt-ink-60: 0 0% 8% / 0.60;
+  --rt-ink-40: 0 0% 8% / 0.40;
+  --rt-ink-25: 0 0% 8% / 0.25;
+  --rt-ink-15: 0 0% 8% / 0.14;
+  --rt-ink-08: 0 0% 8% / 0.07;
+
+  --rt-border: 0 0% 8% / 0.25;
+  --rt-border-subtle: 0 0% 8% / 0.14;
+  --rt-chip: 0 0% 8% / 0.07;
+  --rt-btn: 0 0% 8% / 0.07;
+  --rt-line: 0 0% 8% / 0.12;
+
+  --rt-paper: 42 30% 98%;
+  --rt-alt: 42 20% 94%;
+
+  --rt-accent: 223 67% 48%;
+  --rt-accent-bg: 223 80% 95%;
+
+  --rt-warn: 31 85% 42%;
+  --rt-ok: 136 47% 35%;
+  --rt-bad: 8 62% 44%;
+
+  --rt-font-sans: var(--rt-font-sans-loaded), 'Inter', system-ui, sans-serif;
+  --rt-font-serif: var(--rt-font-serif-loaded), 'Source Serif 4', Georgia, serif;
+  --rt-font-mono: var(--rt-font-mono-loaded), 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+.dark .rating-scope {
+  --rt-ink: 40 8% 92%;
+  --rt-ink-80: 40 8% 92% / 0.82;
+  --rt-ink-60: 40 8% 92% / 0.58;
+  --rt-ink-40: 40 8% 92% / 0.35;
+  --rt-ink-25: 40 8% 92% / 0.25;
+  --rt-ink-15: 40 8% 92% / 0.14;
+  --rt-ink-08: 40 8% 92% / 0.08;
+
+  --rt-border: 40 8% 92% / 0.22;
+  --rt-border-subtle: 40 8% 92% / 0.12;
+  --rt-chip: 40 8% 92% / 0.08;
+  --rt-btn: 40 8% 92% / 0.10;
+  --rt-line: 40 8% 92% / 0.14;
+
+  --rt-paper: 0 0% 9%;
+  --rt-alt: 60 3% 12%;
+
+  --rt-accent: 225 100% 71%;
+  --rt-accent-bg: 225 100% 71% / 0.20;
+}
