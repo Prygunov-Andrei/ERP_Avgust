@@ -18,6 +18,14 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/app/estimates/status-badge";
 import { ApiError, estimateApi, matchingApi } from "@/lib/api/client";
@@ -37,6 +45,7 @@ export function EstimateHeader({ estimate, onOpenValidate, onOpenChat }: Props) 
   const workspaceId = getWorkspaceId();
   const [editing, setEditing] = React.useState(false);
   const [name, setName] = React.useState(estimate.name);
+  const [archiveOpen, setArchiveOpen] = React.useState(false);
 
   React.useEffect(() => {
     setName(estimate.name);
@@ -230,11 +239,7 @@ export function EstimateHeader({ estimate, onOpenValidate, onOpenChat }: Props) 
           <Button
             variant="ghost"
             className="text-destructive hover:bg-destructive/10"
-            onClick={() => {
-              if (window.confirm("Архивировать смету? Она исчезнет из списка.")) {
-                archive.mutate();
-              }
-            }}
+            onClick={() => setArchiveOpen(true)}
             disabled={archive.isPending || estimate.status === "transmitted"}
             title={estimate.status === "transmitted" ? "Переданная смета не может быть архивирована" : "Архивировать смету"}
           >
@@ -247,6 +252,30 @@ export function EstimateHeader({ estimate, onOpenValidate, onOpenChat }: Props) 
           </Button>
         </div>
       </div>
+      <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Архивировать смету?</DialogTitle>
+            <DialogDescription>
+              Смета &laquo;{estimate.name}&raquo; будет перемещена в архив и исчезнет
+              из списка. Данные не удаляются.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setArchiveOpen(false)} disabled={archive.isPending}>
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => archive.mutate()}
+              disabled={archive.isPending}
+            >
+              {archive.isPending ? "Архивируется..." : "Архивировать"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {estimate.status === "transmitted" ? (
         <div
           role="alert"
