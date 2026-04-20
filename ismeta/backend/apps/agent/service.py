@@ -7,6 +7,7 @@ from decimal import Decimal
 from apps.estimate.models import Estimate, EstimateItem
 from apps.llm.service import LLMService, calc_cost
 
+from .checks import run_pre_checks
 from .models import ChatMessage, ChatSession
 from .prompts.system_v1 import SYSTEM_PROMPT, VALIDATE_USER_PROMPT
 from .tools import TOOLS, execute_tool
@@ -19,22 +20,39 @@ MAX_REACT_STEPS = 5
 class AgentService:
     @staticmethod
     def validate(estimate_id: str, workspace_id: str) -> dict:
-        """Валидация сметы: одиночный LLM-вызов → список issues."""
+        """Валидация сметы: pre-checks (бесплатно) + LLM (платно)."""
         estimate = Estimate.objects.get(id=estimate_id, workspace_id=workspace_id)
-        items = EstimateItem.objects.filter(
+        items_qs = EstimateItem.objects.filter(
             estimate_id=estimate_id, workspace_id=workspace_id
         )
+        items_list = list(items_qs)
 
+        # --- Phase 1: детерминированные pre-checks (бесплатно) ---
+        pre_issues = run_pre_checks(items_list)
+
+        # --- Phase 2: LLM-проверка (платно) ---
         items_text = "\n".join(
             f"- {i.name} ({i.unit}): кол-во {i.quantity}, оборуд. {i.equipment_price}₽, "
-            f"мат. {i.material_price}₽, работы {i.work_price}₽, итого {i.total}₽"
-            for i in items
+            f"мат. {i.material_price}₽ (total {i.material_total}₽), "
+            f"работы {i.work_price}₽ (total {i.work_total}₽), "
+            f"итого {i.total}₽, match={i.match_source}"
+            for i in items_list
         )
+
+        pre_check_text = "\n".join(
+            f"- [{issue['severity']}] {issue['item_name']}: {issue['message']}"
+            for issue in pre_issues
+        ) or "(нет проблем)"
 
         user_prompt = VALIDATE_USER_PROMPT.format(
             estimate_name=estimate.name,
-            count=items.count(),
+            count=len(items_list),
+            total_amount=estimate.total_amount,
+            total_equipment=estimate.total_equipment,
+            total_materials=estimate.total_materials,
+            total_works=estimate.total_works,
             items_text=items_text or "(пусто)",
+            pre_check_text=pre_check_text,
         )
 
         svc = LLMService(workspace_id=workspace_id, task_type="validation", estimate_id=estimate_id)
@@ -45,22 +63,33 @@ class AgentService:
 
         try:
             data = json.loads(resp.content)
-            issues = data.get("issues", [])
+            llm_issues = data.get("issues", [])
             summary = data.get("summary", "")
         except (json.JSONDecodeError, TypeError, KeyError) as e:
             logger.warning("Validate: failed to parse LLM response: %s", e)
-            issues = []
+            llm_issues = []
             summary = "Не удалось проанализировать ответ ИИ"
 
-        # Связать item_id если можем
-        item_map = {i.name.lower(): str(i.id) for i in items}
-        for issue in issues:
+        # Merge: pre-checks + LLM issues
+        all_issues = pre_issues + llm_issues
+
+        # Связать item_id
+        item_map = {i.name.lower(): str(i.id) for i in items_list}
+        for issue in all_issues:
             name = issue.get("item_name", "").lower()
-            issue["item_id"] = item_map.get(name)
+            if "item_id" not in issue:
+                issue["item_id"] = item_map.get(name)
+
+        pre_count = len(pre_issues)
+        llm_count = len(llm_issues)
+        if not summary and pre_count > 0:
+            summary = f"Найдено {pre_count} проблем (pre-check)"
 
         return {
-            "issues": issues,
+            "issues": all_issues,
             "summary": summary,
+            "pre_check_count": pre_count,
+            "llm_count": llm_count,
             "tokens_used": resp.tokens_in + resp.tokens_out,
             "cost_usd": float(calc_cost(resp.model, resp.tokens_in, resp.tokens_out)),
         }

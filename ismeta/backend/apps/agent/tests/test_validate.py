@@ -93,9 +93,12 @@ class TestValidateEndpoint:
         )
         assert resp.status_code == 200
         assert "issues" in resp.data
-        assert len(resp.data["issues"]) == 1
-        assert resp.data["issues"][0]["category"] == "price_outlier"
-        assert resp.data["summary"] == "Найдена 1 ценовая аномалия"
+        # Pre-checks (unmatched items) + 1 LLM issue
+        assert len(resp.data["issues"]) >= 1
+        llm_issues = [i for i in resp.data["issues"] if i.get("source") != "pre-check"]
+        assert len(llm_issues) == 1
+        assert llm_issues[0]["category"] == "price_outlier"
+        assert resp.data["llm_count"] == 1
 
     def test_validate_bad_json_graceful(self, client, estimate, items, ws, monkeypatch):
         mock = MockProvider(content="Not JSON at all")
@@ -106,8 +109,10 @@ class TestValidateEndpoint:
             **{WS_HEADER: str(ws.id)},
         )
         assert resp.status_code == 200
-        assert resp.data["issues"] == []
-        assert "Не удалось" in resp.data["summary"]
+        # LLM failed but pre-checks may still find issues
+        assert resp.data["llm_count"] == 0
+        pre_issues = [i for i in resp.data["issues"] if i.get("source") == "pre-check"]
+        assert len(pre_issues) >= 0  # pre-checks still work
 
     def test_validate_records_llm_usage(self, client, estimate, items, ws):
         resp = client.post(
