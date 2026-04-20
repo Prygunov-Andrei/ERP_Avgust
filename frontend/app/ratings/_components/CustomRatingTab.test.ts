@@ -70,10 +70,7 @@ describe('computeIndex', () => {
 
 describe('buildPresetsFromCriteria', () => {
   it('«all» возвращает все коды', () => {
-    const c = [crit('x'), crit('y'), crit('z')].map((k, i) => ({
-      ...k,
-      weight: i + 1,
-    }));
+    const c = [crit('x', 1), crit('y', 2), crit('z', 3)];
     const presets = buildPresetsFromCriteria(c);
     const all = presets.find((p) => p.id === 'all');
     expect(all?.codes).toEqual(['x', 'y', 'z']);
