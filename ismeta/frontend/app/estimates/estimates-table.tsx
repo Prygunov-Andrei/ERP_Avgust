@@ -163,7 +163,7 @@ export function EstimatesTable({ data, isLoading }: Props) {
                 colSpan={columns.length}
                 className="h-24 text-center text-muted-foreground"
               >
-                Смет не найдено
+                Ничего не найдено. Попробуйте изменить фильтр или поиск.
               </TableCell>
             </TableRow>
           ) : (

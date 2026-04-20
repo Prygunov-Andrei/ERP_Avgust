@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { estimateApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
+import { EmptyEstimatesState } from "./empty-state";
 import { EstimatesTable } from "./estimates-table";
 import { NewEstimateDialog } from "./new-estimate-dialog";
 import { StatusFilter, type StatusTab } from "./status-filter";
@@ -70,7 +71,15 @@ export default function EstimatesPage() {
         </div>
       )}
 
-      <EstimatesTable data={filtered} isLoading={isLoading} />
+      {!isLoading &&
+      !isError &&
+      (data ?? []).length === 0 &&
+      search === "" &&
+      tab === "all" ? (
+        <EmptyEstimatesState />
+      ) : (
+        <EstimatesTable data={filtered} isLoading={isLoading} />
+      )}
     </div>
   );
 }

@@ -58,9 +58,11 @@ describe("EstimatesTable", () => {
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(1);
   });
 
-  it('показывает "Смет не найдено" при пустом списке', () => {
+  it("показывает подсказку про фильтр при пустом отфильтрованном списке", () => {
     render(wrap(<EstimatesTable data={[]} />));
-    expect(screen.getByText("Смет не найдено")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Ничего не найдено\. Попробуйте изменить фильтр/),
+    ).toBeInTheDocument();
   });
 
   it("показывает скелетоны при загрузке", () => {
