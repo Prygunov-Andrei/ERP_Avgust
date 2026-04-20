@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { ApiError, sectionApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { EstimateSection, UUID } from "@/lib/api/types";
 
 interface Props {
@@ -25,6 +25,12 @@ interface Props {
   sections: EstimateSection[];
   selectedId: UUID | null;
   onSelect: (id: UUID | null) => void;
+  /**
+   * Суммы по каждому section.id — рендерятся справа под именем раздела.
+   * Если не передано, subtotal не показывается.
+   */
+  subtotals?: Record<UUID, number>;
+  totalAll?: number;
 }
 
 export function SectionsPanel({
@@ -32,6 +38,8 @@ export function SectionsPanel({
   sections,
   selectedId,
   onSelect,
+  subtotals,
+  totalAll,
 }: Props) {
   const qc = useQueryClient();
   const workspaceId = getWorkspaceId();
@@ -108,13 +116,21 @@ export function SectionsPanel({
           type="button"
           onClick={() => onSelect(null)}
           className={cn(
-            "w-full rounded-md px-3 py-2 text-left text-sm transition-colors",
+            "flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
             selectedId === null
               ? "bg-accent text-accent-foreground font-medium"
               : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
           )}
         >
-          Все разделы
+          <span>Все разделы</span>
+          {totalAll !== undefined ? (
+            <span
+              className="tabular-nums text-xs text-muted-foreground"
+              data-testid="section-subtotal-all"
+            >
+              {formatCurrency(totalAll)}
+            </span>
+          ) : null}
         </button>
 
         <div className="mt-1 flex flex-col gap-0.5">
@@ -171,6 +187,15 @@ export function SectionsPanel({
                     {section.name}
                   </button>
                 )}
+                {!isRenaming && subtotals && subtotals[section.id] !== undefined ? (
+                  <span
+                    className="shrink-0 tabular-nums text-xs text-muted-foreground"
+                    data-testid={`section-subtotal-${section.id}`}
+                    title="Сумма позиций раздела"
+                  >
+                    {formatCurrency(subtotals[section.id]!)}
+                  </span>
+                ) : null}
                 <button
                   type="button"
                   onClick={(e) => {

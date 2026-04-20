@@ -12,6 +12,7 @@ import {
   GitBranch,
   Loader2,
   MessageSquare,
+  MoreHorizontal,
   Sparkles,
   Upload,
   Wand2,
@@ -27,6 +28,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/app/estimates/status-badge";
 import { ApiError, estimateApi, matchingApi } from "@/lib/api/client";
@@ -199,76 +207,17 @@ export function EstimateHeader({
           </span>
           <StatusBadge status={estimate.status} />
         </div>
-        <div className="flex items-center gap-2">
-          {onOpenValidate ? (
-            <Button variant="outline" onClick={onOpenValidate}>
-              <Sparkles className="h-4 w-4" />
-              Проверить ИИ
-            </Button>
-          ) : null}
-          {onOpenChat ? (
-            <Button variant="outline" onClick={onOpenChat}>
-              <MessageSquare className="h-4 w-4" />
-              ИИ-помощник
-            </Button>
-          ) : null}
-          <Button
-            variant="outline"
-            onClick={() => startMatching.mutate()}
-            disabled={startMatching.isPending}
-          >
-            {startMatching.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Wand2 className="h-4 w-4" />
-            )}
-            Подобрать работы
-          </Button>
-          {onOpenImport ? (
-            <Button variant="outline" onClick={onOpenImport}>
-              <Upload className="h-4 w-4" />
-              Импорт Excel
-            </Button>
-          ) : null}
-          <Button
-            variant="outline"
-            onClick={() => exportXlsx.mutate()}
-            disabled={exportXlsx.isPending}
-          >
-            {exportXlsx.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            Скачать Excel
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => createVersion.mutate()}
-            disabled={createVersion.isPending}
-          >
-            {createVersion.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <GitBranch className="h-4 w-4" />
-            )}
-            Создать версию
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-destructive hover:bg-destructive/10"
-            onClick={() => setArchiveOpen(true)}
-            disabled={archive.isPending || estimate.status === "transmitted"}
-            title={estimate.status === "transmitted" ? "Переданная смета не может быть архивирована" : "Архивировать смету"}
-          >
-            {archive.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Archive className="h-4 w-4" />
-            )}
-            Архивировать
-          </Button>
-        </div>
+        <HeaderActions
+          onOpenValidate={onOpenValidate}
+          onOpenChat={onOpenChat}
+          onOpenImport={onOpenImport}
+          startMatching={startMatching}
+          exportXlsx={exportXlsx}
+          createVersion={createVersion}
+          archive={archive}
+          onOpenArchive={() => setArchiveOpen(true)}
+          status={estimate.status}
+        />
       </div>
       <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
         <DialogContent>
@@ -308,5 +257,177 @@ export function EstimateHeader({
         </div>
       ) : null}
     </div>
+  );
+}
+
+interface HeaderActionsProps {
+  onOpenValidate?: () => void;
+  onOpenChat?: () => void;
+  onOpenImport?: () => void;
+  onOpenArchive: () => void;
+  startMatching: { mutate: () => void; isPending: boolean };
+  exportXlsx: { mutate: () => void; isPending: boolean };
+  createVersion: { mutate: () => void; isPending: boolean };
+  archive: { isPending: boolean };
+  status: Estimate["status"];
+}
+
+function HeaderActions(props: HeaderActionsProps) {
+  const {
+    onOpenValidate,
+    onOpenChat,
+    onOpenImport,
+    onOpenArchive,
+    startMatching,
+    exportXlsx,
+    createVersion,
+    archive,
+    status,
+  } = props;
+  const archiveDisabled = archive.isPending || status === "transmitted";
+  const archiveTitle =
+    status === "transmitted"
+      ? "Переданная смета не может быть архивирована"
+      : "Архивировать смету";
+
+  return (
+    <>
+      {/* Desktop: все действия развёрнуты */}
+      <div
+        className="hidden items-center gap-2 lg:flex"
+        data-testid="header-actions-desktop"
+      >
+        {onOpenValidate ? (
+          <Button variant="outline" onClick={onOpenValidate}>
+            <Sparkles className="h-4 w-4" />
+            Проверить ИИ
+          </Button>
+        ) : null}
+        {onOpenChat ? (
+          <Button variant="outline" onClick={onOpenChat}>
+            <MessageSquare className="h-4 w-4" />
+            ИИ-помощник
+          </Button>
+        ) : null}
+        <Button
+          variant="outline"
+          onClick={() => startMatching.mutate()}
+          disabled={startMatching.isPending}
+        >
+          {startMatching.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Wand2 className="h-4 w-4" />
+          )}
+          Подобрать работы
+        </Button>
+        {onOpenImport ? (
+          <Button variant="outline" onClick={onOpenImport}>
+            <Upload className="h-4 w-4" />
+            Импорт Excel
+          </Button>
+        ) : null}
+        <Button
+          variant="outline"
+          onClick={() => exportXlsx.mutate()}
+          disabled={exportXlsx.isPending}
+        >
+          {exportXlsx.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          Скачать Excel
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => createVersion.mutate()}
+          disabled={createVersion.isPending}
+        >
+          {createVersion.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <GitBranch className="h-4 w-4" />
+          )}
+          Создать версию
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-destructive hover:bg-destructive/10"
+          onClick={onOpenArchive}
+          disabled={archiveDisabled}
+          title={archiveTitle}
+        >
+          {archive.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Archive className="h-4 w-4" />
+          )}
+          Архивировать
+        </Button>
+      </div>
+
+      {/* Mobile: одна кнопка «Действия» → DropdownMenu */}
+      <div className="lg:hidden" data-testid="header-actions-mobile">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" aria-label="Действия со сметой">
+              <MoreHorizontal className="h-4 w-4" />
+              Действия
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[14rem]">
+            {onOpenValidate ? (
+              <DropdownMenuItem onSelect={onOpenValidate}>
+                <Sparkles className="h-4 w-4" />
+                Проверить ИИ
+              </DropdownMenuItem>
+            ) : null}
+            {onOpenChat ? (
+              <DropdownMenuItem onSelect={onOpenChat}>
+                <MessageSquare className="h-4 w-4" />
+                ИИ-помощник
+              </DropdownMenuItem>
+            ) : null}
+            <DropdownMenuItem
+              onSelect={() => startMatching.mutate()}
+              disabled={startMatching.isPending}
+            >
+              <Wand2 className="h-4 w-4" />
+              Подобрать работы
+            </DropdownMenuItem>
+            {onOpenImport ? (
+              <DropdownMenuItem onSelect={onOpenImport}>
+                <Upload className="h-4 w-4" />
+                Импорт Excel
+              </DropdownMenuItem>
+            ) : null}
+            <DropdownMenuItem
+              onSelect={() => exportXlsx.mutate()}
+              disabled={exportXlsx.isPending}
+            >
+              <Download className="h-4 w-4" />
+              Скачать Excel
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => createVersion.mutate()}
+              disabled={createVersion.isPending}
+            >
+              <GitBranch className="h-4 w-4" />
+              Создать версию
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={onOpenArchive}
+              disabled={archiveDisabled}
+              className="text-destructive focus:text-destructive"
+            >
+              <Archive className="h-4 w-4" />
+              Архивировать
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
   );
 }

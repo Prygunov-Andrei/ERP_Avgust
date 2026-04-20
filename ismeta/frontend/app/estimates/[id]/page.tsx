@@ -52,6 +52,30 @@ export default function EstimateDetailPage({ params }: Props) {
 
   const allItems = itemsQ.data ?? [];
 
+  // Отдельный запрос без section-фильтра — нужен для subtotals в sections
+  // panel и для ProcurementSummary. Дешевле, чем рефакторить items table
+  // на клиентскую фильтрацию.
+  const allItemsQ = useQuery({
+    queryKey: ["estimate-items", id, workspaceId, null],
+    queryFn: () => estimateApi.items(id, workspaceId),
+    enabled: sectionsQ.isSuccess && sectionId !== null,
+  });
+  const allEstimateItems = React.useMemo(
+    () => (sectionId === null ? allItems : (allItemsQ.data ?? allItems)),
+    [allItems, allItemsQ.data, sectionId],
+  );
+
+  const sectionSubtotals = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    let total = 0;
+    for (const it of allEstimateItems) {
+      const v = Number.parseFloat(it.total) || 0;
+      map[it.section] = (map[it.section] ?? 0) + v;
+      total += v;
+    }
+    return { map, total };
+  }, [allEstimateItems]);
+
   const trackCounts = React.useMemo<Record<EquipmentTrack, number>>(() => {
     let key = 0;
     for (const it of allItems) if (it.is_key_equipment) key++;
@@ -122,6 +146,8 @@ export default function EstimateDetailPage({ params }: Props) {
           sections={sections}
           selectedId={sectionId}
           onSelect={setSectionId}
+          subtotals={sectionSubtotals.map}
+          totalAll={sectionSubtotals.total}
         />
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="flex flex-wrap items-start justify-between gap-3 border-b bg-background px-6 py-3">

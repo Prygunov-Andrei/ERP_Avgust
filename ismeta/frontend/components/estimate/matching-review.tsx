@@ -185,10 +185,20 @@ export function MatchingReview({ estimateId, sessionId, session }: Props) {
         workspaceId,
       );
     },
-    onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ["estimate-items", estimateId] });
-      qc.invalidateQueries({ queryKey: ["estimate", estimateId] });
-      toast.success(`Применено: ${res.updated} позиций`);
+    onSuccess: async (res) => {
+      // refetchQueries (не просто invalidate) — чтобы badge «Подбор»
+      // в items-table был актуальным к моменту навигации на смету.
+      await Promise.all([
+        qc.refetchQueries({
+          queryKey: ["estimate-items", estimateId],
+          type: "active",
+        }),
+        qc.refetchQueries({
+          queryKey: ["estimate", estimateId],
+          type: "active",
+        }),
+      ]);
+      toast.success(`Подобрано ${res.updated} работ`);
       router.push(`/estimates/${estimateId}`);
     },
     onError: () => toast.error("Не удалось применить результаты"),

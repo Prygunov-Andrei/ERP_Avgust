@@ -2,6 +2,7 @@
 
 import { FileSpreadsheet } from "lucide-react";
 
+import { ImportNewEstimateDialog } from "./import-new-dialog";
 import { NewEstimateDialog } from "./new-estimate-dialog";
 
 export function EmptyEstimatesState() {
@@ -16,11 +17,12 @@ export function EmptyEstimatesState() {
       </div>
       <h2 className="text-lg font-semibold">Создайте первую смету</h2>
       <p className="max-w-sm text-sm text-muted-foreground">
-        Пока в workspace нет ни одной сметы. Начните с новой — разделы
-        и позиции добавите в редакторе, ИИ подберёт работы и проверит цены.
+        Начните с пустой или загрузите свою смету из Excel — разделы
+        и позиции появятся в редакторе, ИИ подберёт работы и проверит цены.
       </p>
-      <div className="mt-2">
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
         <NewEstimateDialog />
+        <ImportNewEstimateDialog />
       </div>
     </div>
   );
