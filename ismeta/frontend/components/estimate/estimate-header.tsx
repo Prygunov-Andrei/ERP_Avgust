@@ -13,6 +13,7 @@ import {
   Loader2,
   MessageSquare,
   Sparkles,
+  Upload,
   Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -37,9 +38,15 @@ interface Props {
   estimate: Estimate;
   onOpenValidate?: () => void;
   onOpenChat?: () => void;
+  onOpenImport?: () => void;
 }
 
-export function EstimateHeader({ estimate, onOpenValidate, onOpenChat }: Props) {
+export function EstimateHeader({
+  estimate,
+  onOpenValidate,
+  onOpenChat,
+  onOpenImport,
+}: Props) {
   const router = useRouter();
   const qc = useQueryClient();
   const workspaceId = getWorkspaceId();
@@ -212,6 +219,12 @@ export function EstimateHeader({ estimate, onOpenValidate, onOpenChat }: Props) 
             )}
             Подобрать работы
           </Button>
+          {onOpenImport ? (
+            <Button variant="outline" onClick={onOpenImport}>
+              <Upload className="h-4 w-4" />
+              Импорт Excel
+            </Button>
+          ) : null}
           <Button
             variant="outline"
             onClick={() => exportXlsx.mutate()}

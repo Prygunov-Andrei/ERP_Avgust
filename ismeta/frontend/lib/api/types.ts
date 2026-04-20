@@ -182,6 +182,12 @@ export interface MatchingSession {
   results: MatchingResult[];
 }
 
+export interface ImportResult {
+  created: number;
+  updated: number;
+  errors: string[];
+}
+
 export type IssueSeverity = "error" | "warning" | "info";
 export type IssueCategory =
   | "price_outlier"

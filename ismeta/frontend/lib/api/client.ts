@@ -8,6 +8,7 @@ import type {
   EstimateItem,
   EstimateListItem,
   EstimateSection,
+  ImportResult,
   MatchingResult,
   MatchingSession,
   ProblemDetails,
@@ -290,4 +291,19 @@ export const agentApi = {
       `/estimates/${estimateId}/chat/history/`,
       { workspaceId },
     ),
+};
+
+export const importApi = {
+  uploadExcel: (estimateId: UUID, file: File, workspaceId: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<ImportResult>(
+      `/estimates/${estimateId}/import/excel/`,
+      {
+        method: "POST",
+        body: form,
+        workspaceId,
+      },
+    );
+  },
 };
