@@ -7,7 +7,11 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
-from .services.pdf_import_service import PDFParseError, apply_parsed_items, parse_pdf_via_erp
+from .services.pdf_import_service import (
+    PDFParseError,
+    apply_parsed_items,
+    parse_pdf_via_recognition,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +37,14 @@ def import_pdf(request, estimate_pk):
     if not file.name.lower().endswith(".pdf"):
         return Response({"file": "Only PDF files"}, status=status.HTTP_400_BAD_REQUEST)
 
-    # 1. Parse через ERP
+    # 1. Parse через Recognition Service (E15.02b)
     try:
-        result = parse_pdf_via_erp(file.read(), file.name)
+        result = parse_pdf_via_recognition(file.read(), file.name)
     except PDFParseError as e:
         logger.error("PDF parse failed: %s", e)
-        return Response({"error": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+        # 401 invalid_api_key → 502 (upstream misconfigured, frontend ничего не
+        # может с этим сделать). Прочие — тоже 502.
+        return Response({"error": str(e), "code": e.code}, status=status.HTTP_502_BAD_GATEWAY)
 
     items = result.get("items", [])
     if not items:

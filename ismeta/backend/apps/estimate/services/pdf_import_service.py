@@ -1,55 +1,75 @@
-"""PDF import — вызов ERP SpecificationParser через HTTP, preview + apply."""
+"""PDF import — вызов Recognition Service (standalone FastAPI, E15.02b).
 
-import json
+Recognition возвращает по specs/15-recognition-api.md §1:
+  {status, items[], errors[], pages_stats: {total, processed, skipped, error}}
+
+Здесь маппим в легаси-контракт который ожидает pdf_views / apply_parsed_items:
+  {items, status, errors, pages_total, pages_processed, pages_skipped}
+"""
+
 import logging
-import uuid
 
-import httpx
-from django.conf import settings
+from asgiref.sync import async_to_sync
 from django.db import transaction
 
 from apps.estimate.models import Estimate, EstimateSection
 from apps.estimate.services.estimate_service import EstimateService
 from apps.estimate.services.markup_service import recalc_estimate_totals
+from apps.integration.recognition_client import (
+    RecognitionClient,
+    RecognitionClientError,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class PDFParseError(Exception):
-    pass
+    """Normalized failure from Recognition Service."""
+
+    def __init__(self, message: str, *, code: str = "", status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.code = code
+        self.status_code = status_code
 
 
-def parse_pdf_via_erp(pdf_bytes: bytes, filename: str) -> dict:
-    """Вызывает ERP SpecificationParser через HTTP.
+def parse_pdf_via_recognition(pdf_bytes: bytes, filename: str) -> dict:
+    """Вызывает Recognition /v1/parse/spec и переводит ответ в легаси формат.
 
-    Returns: {items, pages_total, pages_processed, pages_skipped, errors, status}
+    Returns: {items, status, errors, pages_total, pages_processed, pages_skipped}
+    Raises: PDFParseError при любых ошибках клиента (401/413/415/422/500/502/таймаут).
     """
-    erp_url = getattr(settings, "ISMETA_ERP_BASE_URL", "http://localhost:8000")
-    url = f"{erp_url}/api/v1/specifications/parse/"
-
-    headers = {"Host": "localhost"}
+    client = RecognitionClient()
     try:
-        with httpx.Client(timeout=300.0) as client:
-            resp = client.post(
-                url,
-                files={"file": (filename, pdf_bytes, "application/pdf")},
-                headers=headers,
-            )
-            resp.raise_for_status()
-        return resp.json()
-    except httpx.HTTPStatusError as e:
-        body = e.response.text[:500] if e.response else ""
-        raise PDFParseError(f"ERP parse error HTTP {e.response.status_code}: {body}")
-    except httpx.ConnectError as e:
-        raise PDFParseError(f"ERP недоступен: {e}")
-    except httpx.TimeoutException:
-        raise PDFParseError("ERP timeout (PDF слишком большой или LLM не отвечает)")
+        response = async_to_sync(client.parse_spec)(pdf_bytes, filename)
+    except RecognitionClientError as e:
+        logger.warning(
+            "recognition parse_spec failed: code=%s status=%s", e.code, e.status_code
+        )
+        raise PDFParseError(
+            f"Recognition {e.code}: {e.detail or ''}".rstrip(": "),
+            code=e.code,
+            status_code=e.status_code,
+        ) from e
+
+    stats = response.get("pages_stats") or {}
+    return {
+        "items": response.get("items", []),
+        "status": response.get("status", "error"),
+        "errors": response.get("errors", []),
+        "pages_total": stats.get("total", 0),
+        "pages_processed": stats.get("processed", 0),
+        "pages_skipped": stats.get("skipped", 0),
+    }
 
 
 def apply_parsed_items(
     estimate_id: str, workspace_id: str, parsed_items: list[dict]
 ) -> dict:
-    """Создать секции и позиции из распознанных items."""
+    """Создать секции и позиции из распознанных items Recognition-контракта.
+
+    Ожидаемые поля item (§1): name, model_name, brand, unit, quantity,
+    tech_specs, section_name, page_number, sort_order.
+    """
     estimate = Estimate.objects.get(id=estimate_id, workspace_id=workspace_id)
 
     sections_map: dict[str, EstimateSection] = {}
@@ -60,7 +80,9 @@ def apply_parsed_items(
         batches: dict[str, list[dict]] = {}
 
         for item in parsed_items:
-            section_name = item.get("section", "Импорт PDF") or "Импорт PDF"
+            section_name = (
+                item.get("section_name") or item.get("section") or "Импорт PDF"
+            )
 
             if section_name not in sections_map:
                 sec, _ = EstimateSection.objects.get_or_create(
@@ -74,18 +96,34 @@ def apply_parsed_items(
             section = sections_map[section_name]
             sort_order += 1
 
+            name = str(item.get("name", "")).strip()
+            if not name:
+                continue
+
+            # EstimateItem не имеет отдельных model_name/brand полей — пробрасываем
+            # их в tech_specs JSON (frontend редактор читает tech_specs для показа
+            # модели/бренда рядом с наименованием).
+            tech_specs: dict = dict(item.get("tech_specs") or {}) if isinstance(
+                item.get("tech_specs"), dict
+            ) else {}
+            if item.get("model_name"):
+                tech_specs["model_name"] = item["model_name"]
+            if item.get("brand"):
+                tech_specs["brand"] = item["brand"]
+            if item.get("page_number"):
+                tech_specs.setdefault("source_page", item["page_number"])
+
             data = {
-                "name": item.get("name", "").strip(),
+                "name": name,
                 "unit": item.get("unit", "шт"),
                 "quantity": item.get("quantity", 1),
+                # Recognition /parse/spec не возвращает цены — оставляем 0.
                 "equipment_price": item.get("equipment_price", 0),
                 "material_price": item.get("material_price", 0),
                 "work_price": 0,
                 "sort_order": sort_order,
+                "tech_specs": tech_specs,
             }
-
-            if not data["name"]:
-                continue
 
             batches.setdefault(str(section.id), []).append(data)
 
