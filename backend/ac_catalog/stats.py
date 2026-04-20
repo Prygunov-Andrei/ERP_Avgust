@@ -2,11 +2,38 @@
 
 Семантика rank совпадает с SQL RANK() OVER ORDER BY total_index DESC:
 ties → одинаковый rank, следующая модель идёт через число ties.
+
+`_median` и `published_median_total_index` — single source of truth для
+hero-метрики на /methodology/.stats и для контекста /models/<id>/.
 """
 from __future__ import annotations
 
+from typing import Iterable
+
 from django.db.models import Count, IntegerField, OuterRef, Subquery
 from django.db.models.functions import Coalesce
+
+
+def _median(values: Iterable[float]) -> float | None:
+    """Медиана; None для пустой последовательности."""
+    nums = sorted(v for v in values if v is not None)
+    n = len(nums)
+    if n == 0:
+        return None
+    mid = n // 2
+    if n % 2:
+        return float(nums[mid])
+    return (nums[mid - 1] + nums[mid]) / 2
+
+
+def published_median_total_index() -> float | None:
+    """Медиана total_index по всем published моделям."""
+    from ac_catalog.models import ACModel
+
+    values = ACModel.objects.filter(
+        publish_status=ACModel.PublishStatus.PUBLISHED,
+    ).values_list("total_index", flat=True)
+    return _median(values)
 
 
 def rank_subquery():

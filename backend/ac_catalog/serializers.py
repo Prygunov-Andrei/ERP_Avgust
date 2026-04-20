@@ -339,13 +339,14 @@ class MethodologyCriterionSerializer(serializers.ModelSerializer):
 
 class MethodologySerializer(serializers.ModelSerializer):
     criteria = serializers.SerializerMethodField()
+    stats = serializers.SerializerMethodField()
 
     class Meta:
         model = MethodologyVersion
         fields = [
             "version", "name", "description", "is_active",
             "tab_description_index", "tab_description_quiet", "tab_description_custom",
-            "criteria",
+            "criteria", "stats",
         ]
         read_only_fields = fields
 
@@ -361,3 +362,23 @@ class MethodologySerializer(serializers.ModelSerializer):
             .order_by("display_order", "criterion__code")
         )
         return MethodologyCriterionSerializer(qs, many=True, context=self.context).data
+
+    def get_stats(self, obj: MethodologyVersion) -> dict:
+        """Hero-агрегаты для публичного листинга (LIST-A) + внутренние метрики.
+
+        - total_models: count published-моделей в каталоге
+        - active_criteria_count: count активных критериев в *этой* методике
+        - median_total_index: медиана total_index по published-моделям
+        """
+        from ac_catalog.stats import published_median_total_index
+        from ac_catalog.models import ACModel
+
+        return {
+            "total_models": ACModel.objects.filter(
+                publish_status=ACModel.PublishStatus.PUBLISHED,
+            ).count(),
+            "active_criteria_count": obj.methodology_criteria.filter(
+                is_active=True,
+            ).count(),
+            "median_total_index": published_median_total_index(),
+        }
