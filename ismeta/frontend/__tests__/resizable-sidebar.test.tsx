@@ -218,11 +218,19 @@ describe("ResizableSidebar", () => {
     expect(window.localStorage.getItem(KEY)).not.toBe("300");
   });
 
-  it("focus outline: handle имеет focus-visible:outline-primary класс (видим фокус для keyboard)", () => {
+  it("focus outline: handle имеет focus-visible outline-primary + offset-0 + bg-подсветку (UI-03)", () => {
     setup();
     const handle = screen.getByTestId("resizable-sidebar-handle");
+    // handle 6px (w-1.5) — чтобы focus-ring 2px читался издалека.
+    expect(handle.className).toContain("w-1.5");
     expect(handle.className).toContain("focus-visible:outline");
+    expect(handle.className).toContain("focus-visible:outline-2");
     expect(handle.className).toContain("focus-visible:outline-primary");
+    // offset-0 — outline поверх границы handle, не клипится overflow-hidden
+    // и не прячется внутри.
+    expect(handle.className).toContain("focus-visible:outline-offset-0");
+    // bg-primary/60 при focus-visible — дополнительная подсветка.
+    expect(handle.className).toContain("focus-visible:bg-primary/60");
     // focus:outline-none — оставлен, чтобы браузер не рисовал default outline
     // поверх наших focus-visible стилей.
     expect(handle.className).toContain("focus:outline-none");

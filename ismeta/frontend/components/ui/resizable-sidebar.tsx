@@ -193,12 +193,12 @@ export function ResizableSidebar({
       onKeyUp={onKeyUp}
       title={handleLabel}
       className={cn(
-        "absolute top-0 z-10 h-full w-1 cursor-col-resize bg-transparent transition-colors",
+        "absolute top-0 z-10 h-full w-1.5 cursor-col-resize bg-transparent transition-colors",
         "hover:bg-primary/40",
         // focus-visible — виден при keyboard-навигации (Tab), не триггерится
-        // при клике мышкой. Outline 2px наружу влево от handle, чтобы не
-        // обрезалось overflow-hidden родителя.
-        "focus:outline-none focus-visible:bg-primary/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]",
+        // при клике мышкой. Outline offset=0, ring-цветом primary + bg-подсветка
+        // handle — чтобы фокус читался с расстояния (UI-03 review).
+        "focus:outline-none focus-visible:bg-primary/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0",
         side === "right" ? "right-0" : "left-0",
       )}
     />
