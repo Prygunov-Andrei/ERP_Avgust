@@ -15,5 +15,5 @@ venv
 .env.local
 .env.*.local
 media/
-data/
+data/knowledge/
 tests/
