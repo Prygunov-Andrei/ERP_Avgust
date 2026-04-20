@@ -9,6 +9,7 @@ import {
   Loader2,
   RefreshCw,
   Upload,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,9 +22,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PreviewTable } from "./preview-table";
 import { ApiError, importApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
+import { parseXlsxPreview, type PreviewResult } from "@/lib/excel/preview";
 import type { ImportResult, UUID } from "@/lib/api/types";
 
 interface Props {
@@ -42,18 +45,40 @@ function isXlsx(file: File): boolean {
   );
 }
 
+type Stage = "choose" | "preview" | "result";
+
 export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
   const workspaceId = getWorkspaceId();
   const qc = useQueryClient();
   const [file, setFile] = React.useState<File | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [stage, setStage] = React.useState<Stage>("choose");
+  const [preview, setPreview] = React.useState<PreviewResult | null>(null);
+  const [parseError, setParseError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<ImportResult | null>(null);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const parseMut = useMutation({
+    mutationFn: (f: File) => parseXlsxPreview(f),
+    onSuccess: (data) => {
+      setPreview(data);
+      setParseError(null);
+      setStage("preview");
+    },
+    onError: (e: unknown) => {
+      setParseError(
+        e instanceof Error ? e.message : "Не удалось прочитать файл",
+      );
+      setPreview(null);
+      setStage("preview");
+    },
+  });
 
   const upload = useMutation({
     mutationFn: (f: File) => importApi.uploadExcel(estimateId, f, workspaceId),
     onSuccess: (data) => {
       setResult(data);
+      setStage("result");
       qc.invalidateQueries({ queryKey: ["estimate-items", estimateId] });
       qc.invalidateQueries({ queryKey: ["estimate", estimateId] });
       if (data.created + data.updated > 0) {
@@ -63,8 +88,6 @@ export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
       }
     },
     onError: (e: unknown) => {
-      // Backend возвращает 400 с {created:0, updated:0, errors:[...]}
-      // когда все строки не прошли — показываем как результат, а не как фейл.
       if (
         e instanceof ApiError &&
         e.problem &&
@@ -77,6 +100,7 @@ export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
           updated: p.updated ?? 0,
           errors: p.errors,
         });
+        setStage("result");
         return;
       }
       if (e instanceof ApiError) {
@@ -89,10 +113,15 @@ export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
 
   const reset = React.useCallback(() => {
     setFile(null);
+    setPreview(null);
+    setParseError(null);
     setResult(null);
+    setStage("choose");
+    parseMut.reset();
     upload.reset();
     if (inputRef.current) inputRef.current.value = "";
-  }, [upload]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   React.useEffect(() => {
     if (!open) reset();
@@ -106,74 +135,105 @@ export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
       return;
     }
     setFile(first);
+    parseMut.mutate(first);
   };
 
-  const submit = () => {
+  const apply = () => {
     if (!file) return;
     upload.mutate(file);
   };
 
+  const changeFile = () => {
+    setFile(null);
+    setPreview(null);
+    setParseError(null);
+    setStage("choose");
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-testid="import-dialog">
+      <DialogContent
+        data-testid="import-dialog"
+        data-stage={stage}
+        className={stage === "preview" ? "max-w-3xl" : undefined}
+      >
         <DialogHeader>
           <DialogTitle>
-            {result ? "Результат импорта" : "Импорт Excel"}
+            {stage === "result"
+              ? "Результат импорта"
+              : stage === "preview"
+                ? "Предпросмотр импорта"
+                : "Импорт Excel"}
           </DialogTitle>
           <DialogDescription>
-            {result
+            {stage === "result"
               ? "Изменения применены к смете."
-              : "Загрузите .xlsx файл с позициями сметы."}
+              : stage === "preview"
+                ? "Проверьте, что будет создано и обновлено, перед применением."
+                : "Загрузите .xlsx файл с позициями сметы."}
           </DialogDescription>
         </DialogHeader>
 
-        {result ? (
-          <ResultView result={result} />
-        ) : (
-          <div className="flex flex-col gap-3">
-            <DropZone
-              file={file}
-              isDragging={isDragging}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsDragging(false);
-                handleFiles(e.dataTransfer.files);
-              }}
-              onClick={() => inputRef.current?.click()}
-            />
-            <input
-              ref={inputRef}
-              type="file"
-              accept={ACCEPT}
-              aria-label="Выбрать .xlsx файл"
-              onChange={(e) => handleFiles(e.target.files)}
-              className="sr-only"
-            />
-            <FormatHint />
-          </div>
-        )}
+        {stage === "choose" ? (
+          <ChooseView
+            file={file}
+            isDragging={isDragging}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              handleFiles(e.dataTransfer.files);
+            }}
+            onClick={() => inputRef.current?.click()}
+            isParsing={parseMut.isPending}
+            inputRef={inputRef}
+            onInputChange={(e) => handleFiles(e.target.files)}
+          />
+        ) : null}
+
+        {stage === "preview" ? (
+          parseError ? (
+            <div
+              role="alert"
+              data-testid="preview-parse-error"
+              className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
+              Не удалось прочитать файл: {parseError}
+            </div>
+          ) : preview ? (
+            <PreviewTable rows={preview.rows} summary={preview.summary} />
+          ) : null
+        ) : null}
+
+        {stage === "result" && result ? <ResultView result={result} /> : null}
 
         <DialogFooter>
-          {result ? (
+          {stage === "choose" ? (
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={parseMut.isPending}
+            >
+              Отмена
+            </Button>
+          ) : null}
+
+          {stage === "preview" ? (
             <>
               <Button
-                variant="outline"
-                onClick={() => {
-                  reset();
-                }}
+                variant="ghost"
+                onClick={changeFile}
+                disabled={upload.isPending}
+                data-testid="preview-cancel"
               >
-                <RefreshCw className="h-4 w-4" />
-                Импортировать ещё
+                <X className="h-4 w-4" />
+                Сменить файл
               </Button>
-              <Button onClick={() => onOpenChange(false)}>Закрыть</Button>
-            </>
-          ) : (
-            <>
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
@@ -182,81 +242,122 @@ export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
                 Отмена
               </Button>
               <Button
-                onClick={submit}
-                disabled={!file || upload.isPending}
-                data-testid="import-submit"
+                onClick={apply}
+                disabled={
+                  upload.isPending ||
+                  Boolean(parseError) ||
+                  !preview ||
+                  preview.rows.length === 0 ||
+                  preview.summary.create + preview.summary.update === 0
+                }
+                data-testid="preview-apply"
               >
                 {upload.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Upload className="h-4 w-4" />
                 )}
-                Загрузить
+                Применить{" "}
+                {preview
+                  ? `(${preview.summary.create + preview.summary.update})`
+                  : ""}
               </Button>
             </>
-          )}
+          ) : null}
+
+          {stage === "result" ? (
+            <>
+              <Button variant="outline" onClick={reset}>
+                <RefreshCw className="h-4 w-4" />
+                Импортировать ещё
+              </Button>
+              <Button onClick={() => onOpenChange(false)}>Закрыть</Button>
+            </>
+          ) : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-function DropZone({
+function ChooseView({
   file,
   isDragging,
+  isParsing,
   onDragOver,
   onDragLeave,
   onDrop,
   onClick,
+  inputRef,
+  onInputChange,
 }: {
   file: File | null;
   isDragging: boolean;
+  isParsing: boolean;
   onDragOver: React.DragEventHandler;
   onDragLeave: React.DragEventHandler;
   onDrop: React.DragEventHandler;
   onClick: () => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onInputChange: React.ChangeEventHandler<HTMLInputElement>;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
-      data-testid="import-dropzone"
-      data-dragging={isDragging || undefined}
-      className={cn(
-        "flex min-h-[140px] w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-6 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isDragging
-          ? "border-primary bg-primary/5"
-          : "border-muted-foreground/25 bg-muted/20 hover:border-muted-foreground/50",
-      )}
-    >
-      <FileSpreadsheet
+    <div className="flex flex-col gap-3">
+      <button
+        type="button"
+        onClick={onClick}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        data-testid="import-dropzone"
+        data-dragging={isDragging || undefined}
         className={cn(
-          "h-8 w-8",
-          file ? "text-primary" : "text-muted-foreground",
+          "flex min-h-[140px] w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-6 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          isDragging
+            ? "border-primary bg-primary/5"
+            : "border-muted-foreground/25 bg-muted/20 hover:border-muted-foreground/50",
         )}
-        aria-hidden
+      >
+        <FileSpreadsheet
+          className={cn(
+            "h-8 w-8",
+            file ? "text-primary" : "text-muted-foreground",
+          )}
+          aria-hidden
+        />
+        {isParsing ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <span className="text-xs text-muted-foreground">
+              Читаем файл…
+            </span>
+          </>
+        ) : file ? (
+          <>
+            <span className="font-medium">{file.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {Math.round(file.size / 1024)} КБ
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="font-medium">Перетащите .xlsx файл сюда</span>
+            <span className="text-xs text-muted-foreground">
+              или нажмите, чтобы выбрать
+            </span>
+          </>
+        )}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPT}
+        aria-label="Выбрать .xlsx файл"
+        onChange={onInputChange}
+        className="sr-only"
       />
-      {file ? (
-        <>
-          <span className="font-medium">{file.name}</span>
-          <span className="text-xs text-muted-foreground">
-            {Math.round(file.size / 1024)} КБ — нажмите «Загрузить»
-          </span>
-        </>
-      ) : (
-        <>
-          <span className="font-medium">
-            Перетащите .xlsx файл сюда
-          </span>
-          <span className="text-xs text-muted-foreground">
-            или нажмите, чтобы выбрать
-          </span>
-        </>
-      )}
-    </button>
+      <FormatHint />
+    </div>
   );
 }
 
@@ -269,8 +370,9 @@ function FormatHint() {
         работ
       </div>
       <div className="mt-1">
-        <strong>Жирная строка</strong> = название раздела. Строки с row_id
-        обновляются, без row_id — создаются.
+        Строки с <strong>row_id</strong> (7-я колонка) обновляются,
+        без row_id — создаются. Строки без цен/количества — названия
+        разделов.
       </div>
     </div>
   );
