@@ -13,7 +13,7 @@ from apps.workspace.models import Workspace
 User = get_user_model()
 
 WS_AVGUST_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
-DEMO_FILE = Path(__file__).resolve().parents[5] / "docs" / "samples" / "demo-estimate-ov2.xlsx"
+DEMO_FILE = Path(__file__).resolve().parents[4] / "data" / "samples" / "demo-estimate-ov2.xlsx"
 
 
 class Command(BaseCommand):
