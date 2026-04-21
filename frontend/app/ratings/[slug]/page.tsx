@@ -14,6 +14,10 @@ import DetailAnchorNav from '../_components/DetailAnchorNav';
 import DetailOverview from '../_components/DetailOverview';
 import DetailCriteria from '../_components/DetailCriteria';
 import DetailIndexViz from '../_components/DetailIndexViz';
+import DetailSpecs from '../_components/DetailSpecs';
+import DetailBuy from '../_components/DetailBuy';
+import DetailReviews from '../_components/DetailReviews';
+import DetailRelated from '../_components/DetailRelated';
 import { fallbackLede } from '../_components/detailHelpers';
 
 export const revalidate = 3600;
@@ -113,6 +117,10 @@ export default async function RatingDetailPage({ params }: Props) {
         rank={detail.rank}
         totalModels={totalModels}
       />
+      <DetailSpecs detail={detail} methodology={methodology} />
+      <DetailBuy detail={detail} />
+      <DetailReviews detail={detail} />
+      <DetailRelated detail={detail} models={list} />
     </>
   );
 }
