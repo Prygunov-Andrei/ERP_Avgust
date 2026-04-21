@@ -29,7 +29,7 @@ recognition/
       quote.py           QuoteItem / QuoteSupplier / QuoteMeta / QuoteParseResponse (§3)
     services/
       _common.py         vision_json (retry+JSON), determine_status, dedupe_by_key
-      spec_parser.py     async spec parser: classify → extract → dedup
+      spec_parser.py     async spec parser: classify → extract (без dedup, E15.03-hotfix)
       invoice_parser.py  async invoice parser: classify → header + items → dedup
       quote_parser.py    async quote parser (КП): + lead_time, warranty, valid_until
       pdf_render.py      PyMuPDF page → base64 PNG
@@ -116,6 +116,12 @@ curl -s -X POST http://localhost:8003/v1/parse/spec \
 ```
 
 Ответ: `{status, items[], errors[], pages_stats}`. `items[].tech_specs` — строка.
+
+**Дедупликация:** отключена с E15.03-hotfix. Позиции возвращаются 1:1 как в PDF
+(включая одинаковые `(name, model, brand)` из разных секций). Бизнес-правило —
+смета = точная копия PDF; суммирование quantity между секциями меняет смысл
+позиции. Если в будущем понадобится опциональный dedup — делать на UI-уровне с
+явным UX (подсветка конфликта) и `section_name` в ключе.
 
 **Hybrid path (E15.03):** парсер проверяет `page.get_text()` — если у страницы
 есть usable text layer (≥100 символов), извлечение идёт по эвристикам без вызова

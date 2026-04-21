@@ -88,16 +88,16 @@ class SpecParser:
         finally:
             doc.close()
 
-        state.items = self._deduplicate(state.items)
+        # Дедупликация отключена с E15.03-hotfix: смета = точная копия PDF,
+        # одинаковые (name, model, brand) из разных секций остаются отдельно.
         return self._finalize()
 
     def build_partial(self) -> SpecParseResponse:
         """Snapshot current state — used when the outer timeout fires."""
         state = self.state
-        items = self._deduplicate(list(state.items))
         return SpecParseResponse(
             status="partial",
-            items=items,
+            items=list(state.items),
             errors=(state.errors or []) + ["timeout: parser cancelled"],
             pages_stats=PagesStats(
                 total=state.pages_total,
@@ -230,23 +230,3 @@ class SpecParser:
                 error=len(state.errors),
             ),
         )
-
-    @staticmethod
-    def _deduplicate(items: list[SpecItem]) -> list[SpecItem]:
-        """Merge identical items (name+model+brand) → sum quantities."""
-        seen: dict[tuple[str, str, str], int] = {}
-        result: list[SpecItem] = []
-
-        for item in items:
-            key = (
-                item.name.lower().strip(),
-                item.model_name.lower().strip(),
-                item.brand.lower().strip(),
-            )
-            if key in seen:
-                result[seen[key]].quantity += item.quantity
-            else:
-                seen[key] = len(result)
-                result.append(item)
-
-        return result

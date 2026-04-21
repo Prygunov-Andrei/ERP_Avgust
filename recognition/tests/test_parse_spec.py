@@ -88,7 +88,10 @@ class TestSpecParserUnit:
         assert len(result.items) >= 1
 
     @pytest.mark.asyncio
-    async def test_deduplication(self):
+    async def test_no_dedup_keeps_duplicates_separate(self):
+        """E15.03-hotfix: dedup отключён, одинаковые (name, model, brand)
+        из разных страниц/секций остаются отдельными позициями — без
+        суммирования quantity. Бизнес-правило «смета = точная копия PDF»."""
         extract_resp = json.dumps(
             {
                 "items": [
@@ -108,8 +111,9 @@ class TestSpecParserUnit:
         result = await parser.parse(pdf, "test.pdf")
 
         cables = [i for i in result.items if "Кабель" in i.name]
-        assert len(cables) == 1
-        assert cables[0].quantity == 30.0
+        assert len(cables) == 3, "каждый item с каждой страницы должен остаться отдельным"
+        for c in cables:
+            assert c.quantity == 10.0, "quantity не должна суммироваться"
 
     @pytest.mark.asyncio
     async def test_drawing_pages_skipped(self):
@@ -331,14 +335,18 @@ class TestHybridTextLayer:
         assert result.status == "done"
         assert result.errors == []
         assert result.pages_stats.processed == 2
-        # 2 страницы × 2 items = 4, но dedup сложит одинаковые → 2 уникальных
-        # позиции с удвоенными количествами
-        assert len(result.items) == 2
-        assert result.items[0].name == "Вентилятор канальный"
-        assert result.items[0].quantity == 8.0  # 4 + 4
-        assert result.items[0].section_name == "Вентиляция"
-        assert result.items[1].name == "Воздуховод 200x200"
-        assert result.items[1].quantity == 300.0
+        # 2 страницы × 2 items = 4. E15.03-hotfix: dedup отключён —
+        # одинаковые items с разных страниц остаются отдельными позициями.
+        assert len(result.items) == 4
+        names = [it.name for it in result.items]
+        assert names.count("Вентилятор канальный") == 2
+        assert names.count("Воздуховод 200x200") == 2
+        for it in result.items:
+            if it.name == "Вентилятор канальный":
+                assert it.quantity == 4.0
+            elif it.name == "Воздуховод 200x200":
+                assert it.quantity == 150.0
+            assert it.section_name == "Вентиляция"
 
     @pytest.mark.asyncio
     async def test_text_layer_present_no_items_page_skipped(self, monkeypatch):
