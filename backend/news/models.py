@@ -16,7 +16,17 @@ class NewsPost(models.Model):
         ('scheduled', _('Scheduled')),
         ('published', _('Published')),
     ]
-    
+
+    class Category(models.TextChoices):
+        BUSINESS = "business", _("Деловые")
+        INDUSTRY = "industry", _("Индустрия")
+        MARKET = "market", _("Рынок")
+        REGULATION = "regulation", _("Регулирование")
+        REVIEW = "review", _("Обзор")
+        GUIDE = "guide", _("Гайд")
+        BRANDS = "brands", _("Бренды")
+        OTHER = "other", _("Прочее")
+
     title = models.CharField(_("Title"), max_length=255)
     body = models.TextField(_("Body")) # Markdown content
     source_url = models.URLField(_("Source URL"), blank=True, null=True, help_text=_("URL оригинального источника новости"))
@@ -55,6 +65,14 @@ class NewsPost(models.Model):
         _("Deleted"),
         default=False,
         help_text=_("Soft-delete: новость скрыта и не будет пересоздана discovery")
+    )
+
+    category = models.CharField(
+        _("Category"),
+        max_length=20,
+        choices=Category.choices,
+        default=Category.OTHER,
+        help_text=_("Категория новости. Показывается как eyebrow-label и chip-filter в ленте."),
     )
 
     # AI-рейтинг (звёзды 0-5)
