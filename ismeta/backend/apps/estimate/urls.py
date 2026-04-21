@@ -11,7 +11,7 @@ from .material_views import (
     match_materials_apply,
     materials_search_view,
 )
-from .pdf_views import import_pdf
+from .pdf_views import import_pdf, probe_pdf
 from .views import EstimateItemViewSet, EstimateSectionViewSet, EstimateViewSet
 
 router = DefaultRouter()
@@ -46,6 +46,8 @@ urlpatterns = [
     path("estimates/<uuid:estimate_pk>/import/excel/", import_excel, name="import-excel"),
     # PDF import (E32) — один endpoint, без preview/apply
     path("estimates/<uuid:estimate_pk>/import/pdf/", import_pdf, name="import-pdf"),
+    # PDF probe (E15.03) — inspection без LLM для progress bar
+    path("estimates/<uuid:estimate_pk>/probe/pdf/", probe_pdf, name="probe-pdf"),
     # Matching (E5.1)
     path("estimates/<uuid:estimate_pk>/match-works/", match_works, name="match-works"),
     path("estimates/<uuid:estimate_pk>/match-works/<str:session_id>/", match_works_progress, name="match-works-progress"),

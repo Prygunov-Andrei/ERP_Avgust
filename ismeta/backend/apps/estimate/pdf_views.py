@@ -2,10 +2,16 @@
 
 import logging
 
+from asgiref.sync import async_to_sync
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+
+from apps.integration.recognition_client import (
+    RecognitionClient,
+    RecognitionClientError,
+)
 
 from .services.pdf_import_service import (
     PDFParseError,
@@ -70,3 +76,36 @@ def import_pdf(request, estimate_pk):
         "pages_total": result.get("pages_total", 0),
         "pages_processed": result.get("pages_processed", 0),
     })
+
+
+@api_view(["POST"])
+@parser_classes([MultiPartParser])
+def probe_pdf(request, estimate_pk):
+    """POST /api/v1/estimates/{id}/probe/pdf/ — прокси в Recognition /v1/probe.
+
+    Дёшево (≤10с) считает pages_total/has_text_layer/estimated_seconds для
+    прогресс-бара UI перед вызовом /import/pdf/. LLM не задействуется.
+    """
+    workspace_id = _get_workspace_id(request)
+    if not workspace_id:
+        return Response({"workspace_id": "Required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    file = request.FILES.get("file")
+    if not file:
+        return Response({"file": "Required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not file.name.lower().endswith(".pdf"):
+        return Response({"file": "Only PDF files"}, status=status.HTTP_400_BAD_REQUEST)
+
+    client = RecognitionClient()
+    try:
+        result = async_to_sync(client.probe)(file.read(), file.name)
+    except RecognitionClientError as e:
+        logger.warning("recognition probe failed: code=%s status=%s", e.code, e.status_code)
+        # Как в import/pdf/ — любая ошибка upstream → 502 (frontend не может
+        # повлиять на recognition). Код ошибки пробрасываем для лога/отладки.
+        return Response(
+            {"error": str(e), "code": e.code},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    return Response(result)

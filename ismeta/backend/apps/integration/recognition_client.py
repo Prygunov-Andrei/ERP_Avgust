@@ -53,6 +53,14 @@ class RecognitionClient:
         self.api_key = api_key or str(getattr(settings, "RECOGNITION_API_KEY", "") or "")
         self.timeout = timeout
 
+    async def probe(self, pdf_bytes: bytes, filename: str) -> dict[str, Any]:
+        """Cheap PDF inspection без LLM — для прогресс-бара перед /parse/spec.
+
+        Возвращает: pages_total, has_text_layer, text_chars_total, estimated_seconds.
+        Серверный таймаут — 10с (recognition/app/api/parse.py PROBE_TIMEOUT_SECONDS).
+        """
+        return await self._post("/v1/probe", pdf_bytes, filename, timeout=15.0)
+
     async def parse_spec(self, pdf_bytes: bytes, filename: str) -> dict[str, Any]:
         return await self._post("/v1/parse/spec", pdf_bytes, filename)
 
@@ -80,13 +88,16 @@ class RecognitionClient:
     # Internal
     # ------------------------------------------------------------------
 
-    async def _post(self, path: str, pdf_bytes: bytes, filename: str) -> dict[str, Any]:
+    async def _post(
+        self, path: str, pdf_bytes: bytes, filename: str, timeout: float | None = None
+    ) -> dict[str, Any]:
         url = f"{self.base_url}{path}"
         headers: dict[str, str] = {"X-API-Key": self.api_key}
         files = {"file": (filename, pdf_bytes, "application/pdf")}
+        effective_timeout = timeout if timeout is not None else self.timeout
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(timeout=effective_timeout) as client:
                 resp = await client.post(url, headers=headers, files=files)
         except httpx.TimeoutException as e:
             logger.warning("recognition timeout", extra={"path": path, "error": str(e)})
