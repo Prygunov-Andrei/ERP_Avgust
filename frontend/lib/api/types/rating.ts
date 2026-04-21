@@ -29,6 +29,17 @@ export interface RatingParameterScore {
   above_reference: boolean;
 }
 
+export interface RatingRawValue {
+  criterion_code: string;
+  criterion_name: string;
+  raw_value: string;
+  numeric_value: number | null;
+  source: string;
+  source_url: string;
+  verification_status: string;
+  verification_display: string;
+}
+
 export interface RatingModelPhoto {
   id: number;
   image: string;
@@ -96,7 +107,7 @@ export interface RatingModelDetail {
   photos: RatingModelPhoto[];
   suppliers: RatingModelSupplier[];
   parameter_scores: RatingParameterScore[];
-  raw_values: unknown[];
+  raw_values: RatingRawValue[];
   methodology_version: string;
   rank: number | null;
   median_total_index: number | null;
@@ -147,7 +158,19 @@ export interface RatingMethodology {
 export interface RatingReview {
   id: number;
   author_name: string;
-  body: string;
-  stars: number;
+  rating: number;
+  pros: string;
+  cons: string;
+  comment: string;
   created_at: string;
+}
+
+export interface RatingReviewCreatePayload {
+  model: number;
+  author_name: string;
+  rating: number;
+  pros: string;
+  cons: string;
+  comment: string;
+  website: string;
 }
