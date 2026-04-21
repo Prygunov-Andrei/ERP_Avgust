@@ -22,6 +22,12 @@ from apps.integration.recognition_client import (
 
 logger = logging.getLogger(__name__)
 
+# EstimateItem.name = CharField(max_length=500). E15.03-hotfix: защитный
+# truncate на стороне импорта — пока парсер (E15.04) может отдать name с
+# «слипшейся» multi-line строкой, лучше обрезать и записать warning, чем
+# упасть 500-кой на всём импорте. См. QA-FINDINGS-2026-04-21 #4.
+MAX_ITEM_NAME_LEN = 500
+
 
 class PDFParseError(Exception):
     """Normalized failure from Recognition Service."""
@@ -99,6 +105,16 @@ def apply_parsed_items(
             name = str(item.get("name", "")).strip()
             if not name:
                 continue
+
+            if len(name) > MAX_ITEM_NAME_LEN:
+                logger.warning(
+                    "pdf_import: item name truncated from %d to %d chars (page=%s): %r...",
+                    len(name),
+                    MAX_ITEM_NAME_LEN,
+                    item.get("page_number"),
+                    name[:80],
+                )
+                name = name[:MAX_ITEM_NAME_LEN]
 
             # EstimateItem не имеет отдельных model_name/brand полей — пробрасываем
             # их в tech_specs JSON (frontend редактор читает tech_specs для показа
