@@ -10,7 +10,9 @@ import MobileListing from './_components/MobileListing';
 import SeoBlock from './_components/SeoBlock';
 import SectionFooter from './_components/SectionFooter';
 
-export const revalidate = 3600;
+// SSR каждый запрос — ISR snapshot при первом deploy ловит пустой backend
+// (Docker build context не видит compose-сервисы). Для 27 моделей overhead ~50ms.
+export const dynamic = 'force-dynamic';
 
 export default async function RatingHomePage() {
   let models: Awaited<ReturnType<typeof getRatingModels>> = [];
