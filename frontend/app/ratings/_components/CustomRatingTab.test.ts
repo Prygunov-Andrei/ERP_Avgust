@@ -12,12 +12,17 @@ const crit = (
 ): RatingMethodologyCriterion => ({
   code,
   name_ru,
+  description_ru: '',
   weight,
   unit: '',
   value_type: 'number',
   scoring_type: 'linear',
   group: 'other',
   group_display: 'Прочее',
+  display_order: 0,
+  min_value: null,
+  median_value: null,
+  max_value: null,
 });
 
 const mkModel = (

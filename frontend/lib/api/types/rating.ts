@@ -134,12 +134,17 @@ export type RatingCriterionGroup =
 export interface RatingMethodologyCriterion {
   code: string;
   name_ru: string;
+  description_ru: string;
   weight: number;
   unit: string;
   value_type: string;
   scoring_type: string;
   group: RatingCriterionGroup;
   group_display: string;
+  display_order: number;
+  min_value: number | null;
+  median_value: number | null;
+  max_value: number | null;
 }
 
 export interface RatingMethodologyStats {
@@ -163,6 +168,11 @@ export interface RatingReview {
   cons: string;
   comment: string;
   created_at: string;
+}
+
+export interface RatingBrandOption {
+  id: number;
+  name: string;
 }
 
 export interface RatingReviewCreatePayload {
