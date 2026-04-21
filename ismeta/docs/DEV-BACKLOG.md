@@ -105,9 +105,96 @@
 - **Приоритет:** 🔥 **критический** — блокер демо PDF-import с реальным OpenAI. Без фикса весь Recognition флоу неработоспособен вне моков.
 - **Исполнитель:** IS-Петя. Задача: `E-MAT-UI-02` или `recognition/fix-json-parsing`.
 
+### 11. UI inline-edit для `tech_specs.model_name` и `tech_specs.brand` — GAP редактирования
+
+**Контекст (вопрос Андрея 2026-04-21):**
+> «Что будет если в смете будет отдельно Наименование (один столбец) и Модель (другой столбец)?»
+
+Сегодня в редакторе (`items-table.tsx`) есть `EditableCell` для `name`, `unit`, `quantity`, `equipment_price`, `material_price`, `work_price`. Но `tech_specs.model_name` и `tech_specs.brand` — **только отображаются** (UI-02 подстрокой `Korf · WNK 100/1`), отредактировать через UI нельзя. Пользователь:
+- видит подстроку,
+- хочет поправить «MOB 2600/45-3а» на «MOB 2600/45-3b»,
+- не может — нужно идти в админку, SQL, или Excel импорт.
+
+**Решение (вариант A — минимальный UX, рекомендуется):**
+- Новый компонент `components/estimate/tech-specs-editor.tsx`:
+  - Клик по подстроке `{brand} · {model_name}` → превращается в два inline-input'а (brand + model_name).
+  - Blur / Enter → PATCH item с обновлённым `tech_specs` (merge, не replace — остальные ключи сохраняем).
+  - Escape → cancel.
+- Интеграция в `items-table.tsx`: заменить статический рендер подстроки на `<TechSpecsEditor>` с теми же пропсами (value, onCommit).
+- Если оба поля пустые и клик — показать placeholder-форму: `brand: ___ model: ___`.
+- API: существующий `PATCH /items/{id}/` принимает `tech_specs` dict — backend сливает с существующим (проверить `EstimateItem.serializer` что не replace а merge; если replace — исправить или использовать специальный patch endpoint).
+
+**Решение (вариант B — полная tech_specs модалка, на будущее):**
+- Клик → модалка с формой: `brand / model_name / + все произвольные ключи из tech_specs как key-value table`.
+- Даёт править flow / cooling / power и другие произвольные поля.
+- **Пока не делаем** — когда пользователь захочет править произвольные ТТХ, тогда добавим.
+
+**Решение (вариант C — отдельные колонки Модель/Бренд):**
+- Добавить опциональные колонки «Модель» и «Бренд» в `items-table` через column visibility toggle.
+- Более громоздко, но явно для пользователя. **Не делаем MVP** — подписи под именем достаточно.
+
+**Acceptance:**
+- Клик по подстроке → inline редактирование работает.
+- PATCH отправляет merge, не теряет произвольные ключи `tech_specs`.
+- Пустые brand/model → плейсхолдер, но клик работает.
+- Тесты: render существующих значений → редактирование → PATCH → UI обновился; отмена Escape не вызывает PATCH; стресс на специфические символы (кириллица, слэши, скобки в модели).
+
+**Исполнитель:** IS-Федя (UI) + IS-Петя (проверить merge-поведение сериализатора backend).
+**Файлы:**
+- `ismeta/frontend/components/estimate/tech-specs-editor.tsx` (новый)
+- `ismeta/frontend/components/estimate/items-table.tsx` (подстроки → редактор)
+- `ismeta/frontend/components/estimate/matching-review.tsx` (там тоже подстрока, можно оставить read-only)
+- `ismeta/backend/apps/estimate/serializers.py` (проверить merge для tech_specs)
+
+---
+
+### 12. Excel import — маппинг колонок «Модель / Марка / Бренд» в `tech_specs` — GAP двустороннего round-trip
+
+**Контекст:**
+Сейчас `ismeta/backend/apps/estimate/excel/importer.py` **не парсит** колонки «Модель», «Марка», «Артикул», «Бренд», «Производитель». Всё что в этих колонках — игнорируется или склеивается в `name`. Последствие:
+- Пользователь экспортирует смету в Excel (колонки есть).
+- Правит в Excel «Модель» на «RQ-71BV-A1».
+- Импортирует обратно → колонка игнорируется → правка потеряна.
+
+Плюс если в исходном Excel от поставщика/проектировщика отдельные колонки «Модель» и «Марка» (типично для ОВиК-спецификаций) — они тоже не попадут в `tech_specs.model_name`.
+
+**Что проверить первым:**
+- `excel/exporter.py` — действительно ли tech_specs.model_name / brand экспортируются отдельными колонками или их вообще нет в экспорте? Если нет в экспорте — round-trip ломается с обеих сторон.
+
+**Решение (importer.py):**
+1. Распознавание колонок — расширить header-matcher (регулярки + нормализация):
+   - `model_name` ← колонки с заголовками `Модель`, `Model`, `Марка`, `Артикул`, `Обозначение документа`, `Тип`, `SKU` (несколько вариантов ИБО в РФ спецификациях много разных заголовков).
+   - `brand` ← `Бренд`, `Brand`, `Производитель`, `Поставщик`, `Изготовитель`, `Вендор`.
+   - Нормализация: lowercase, strip пробелов и точек, ё→е.
+2. Если нашли соответствующую колонку → значение в `tech_specs.model_name` / `tech_specs.brand`.
+3. Если в одной строке и `Модель`, и `Марка` одновременно (бывает) → `model_name` = первое непустое, второе → в `tech_specs.marking` как доп. поле (через `extra="allow"` schema).
+4. Fallback при отсутствии — текущее поведение (всё в `name`). No regression.
+
+**Решение (exporter.py):**
+- Добавить колонки «Модель» (`tech_specs.model_name`) и «Бренд» (`tech_specs.brand`) в экспорт. Скрывать пустые? Нет — всегда показывать, чтобы пользователь мог заполнить в Excel.
+- Остальные произвольные ключи `tech_specs` — пока не экспортируем (они в tooltip UI-02 — достаточно для просмотра).
+
+**Acceptance:**
+- Excel с колонкой «Модель» → после импорта `tech_specs.model_name` заполнено.
+- Excel с колонками «Марка» + «Бренд» → обе попадают (model_name + brand).
+- Excel без этих колонок → no regression, существующие тесты зелёные.
+- Round-trip: export смету → edit в Excel → import обратно → model_name и brand сохранились.
+- 5+ новых тестов, включая edge cases (оба столбца есть, только один, пустые ячейки, кириллица с дефисами «ВВГнг-LS»).
+
+**Исполнитель:** IS-Петя.
+**Файлы:**
+- `ismeta/backend/apps/estimate/excel/importer.py`
+- `ismeta/backend/apps/estimate/excel/exporter.py`
+- `ismeta/backend/apps/estimate/tests/test_excel_import.py` (или как он называется)
+- `ismeta/backend/apps/estimate/tests/test_excel_export.py`
+- Обновить `ismeta/specs/05-excel-schema.md` если есть (документ Excel-контракта).
+
+---
+
 ## Записано
 - 2026-04-20: #1 seed_dev_data tech_specs (UI-03, Федя)
 - 2026-04-21: #2–5 (UI-PDF-verify, Федя)
 - 2026-04-21: #6–7 (E-SEED-01, Федя — TechSpecs schema drift, respx env)
 - 2026-04-21: #8–9 (E-MAT-01 минорные, Петя — apply_matches raw SQL, match_item top-3)
 - 2026-04-21: #10 (Live PDF-прогон Claude — Recognition JSON parsing BLOCKER)
+- 2026-04-21: #11–12 (Вопрос Андрея «что будет с отдельными столбцами Модель/Наименование» — UI-редактирование и Excel round-trip gaps)
