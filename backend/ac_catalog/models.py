@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.core.validators import MaxLengthValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 
 from core.models import TimestampedModel
@@ -68,6 +69,50 @@ class ACModel(TimestampedModel):
     ad_position = models.PositiveIntegerField(
         null=True, blank=True, verbose_name="Позиция в рейтинге",
         help_text="Номер позиции в списке (1 = первая). Пусто = не рекламная.",
+    )
+
+    # M4.1: editorial-обзор для секции «Обзор» на детальной странице.
+    editorial_lede = models.TextField(
+        blank=True, default="",
+        verbose_name="Обзор: вводный абзац",
+        help_text="Вводный абзац редакторского обзора. Показывается первым "
+                  "абзацем в секции «Обзор» на детальной странице.",
+    )
+    editorial_body = models.TextField(
+        blank=True, default="",
+        verbose_name="Обзор: основной текст",
+        validators=[MaxLengthValidator(5000)],
+        help_text="Основной текст обзора. Plain text с разделителями \\n\\n. "
+                  "Markdown не поддерживается. Длина ≤5000 символов.",
+    )
+    editorial_quote = models.TextField(
+        blank=True, default="",
+        verbose_name="Обзор: цитата",
+        help_text="Цитата-выноска редактора (pull quote).",
+    )
+    editorial_quote_author = models.CharField(
+        max_length=200, blank=True, default="",
+        verbose_name="Обзор: автор цитаты",
+        help_text="Например: «А. Петров, главред».",
+    )
+
+    # M4.2: габариты и вес внутреннего/наружного блоков для hero-секции.
+    inner_unit_dimensions = models.CharField(
+        max_length=100, blank=True, default="",
+        verbose_name="Габариты внутреннего блока",
+        help_text="Например: «850 × 295 × 189 мм». Свободная форма строки.",
+    )
+    inner_unit_weight_kg = models.DecimalField(
+        max_digits=5, decimal_places=1, null=True, blank=True,
+        verbose_name="Вес внутреннего блока (кг)",
+    )
+    outer_unit_dimensions = models.CharField(
+        max_length=100, blank=True, default="",
+        verbose_name="Габариты наружного блока",
+    )
+    outer_unit_weight_kg = models.DecimalField(
+        max_digits=5, decimal_places=1, null=True, blank=True,
+        verbose_name="Вес наружного блока (кг)",
     )
 
     class Meta:
@@ -234,6 +279,12 @@ class ACModelPhoto(TimestampedModel):
 
 
 class ACModelSupplier(TimestampedModel):
+    class Availability(models.TextChoices):
+        IN_STOCK = "in_stock", "В наличии"
+        LOW_STOCK = "low_stock", "Осталось мало"
+        OUT_OF_STOCK = "out_of_stock", "Нет в наличии"
+        UNKNOWN = "unknown", "Не известно"
+
     model = models.ForeignKey(
         ACModel, on_delete=models.CASCADE, related_name="suppliers",
         verbose_name="Модель",
@@ -241,6 +292,34 @@ class ACModelSupplier(TimestampedModel):
     name = models.CharField(max_length=200, verbose_name="Название поставщика")
     url = models.URLField(verbose_name="Ссылка")
     order = models.PositiveSmallIntegerField(default=0, verbose_name="Порядок")
+
+    # M4.3: enrichment-поля для блока «Где купить» на детальной странице.
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        verbose_name="Цена (руб.)",
+        help_text="Цена у поставщика. null = не известна.",
+    )
+    city = models.CharField(
+        max_length=100, blank=True, default="",
+        verbose_name="Город",
+        help_text="Город склада / магазина, например «Москва».",
+    )
+    rating = models.DecimalField(
+        max_digits=3, decimal_places=1, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name="Рейтинг магазина",
+        help_text="0.0–5.0.",
+    )
+    availability = models.CharField(
+        max_length=20, choices=Availability.choices,
+        default=Availability.UNKNOWN,
+        verbose_name="Наличие",
+    )
+    note = models.CharField(
+        max_length=200, blank=True, default="",
+        verbose_name="Пометка",
+        help_text="Например: «с монтажом · 2 дня», «самовывоз · завтра».",
+    )
 
     class Meta:
         ordering = ["order", "id"]
