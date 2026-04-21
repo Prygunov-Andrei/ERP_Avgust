@@ -1,16 +1,35 @@
-import RatingHeader from '../_components/RatingHeader';
-import ComingSoon from '../_components/ComingSoon';
+import type { Metadata } from 'next';
 
-export default function RatingMethodologyPage() {
+import RatingHeader from '../_components/RatingHeader';
+import { getRatingMethodology } from '@/lib/api/services/rating';
+
+import MethodologyHero from './MethodologyHero';
+import MethodologyTable from './MethodologyTable';
+
+export const metadata: Metadata = {
+  title: 'Методика рейтинга',
+  description:
+    'Методика расчёта индекса «Август-климат»: 30 параметров, веса, шкалы.',
+};
+
+export const revalidate = 3600;
+
+export default async function RatingMethodologyPage() {
+  const methodology = await getRatingMethodology();
+  const weightSum = methodology.criteria.reduce(
+    (sum, c) => sum + (c.weight ?? 0),
+    0,
+  );
   return (
     <>
       <RatingHeader />
-      <ComingSoon
-        title="Методика рейтинга"
-        phase="Фаза 6C"
-        designRef="ac-rating/design/wf-screens.jsx — Methodology"
-        description="Описание критериев и весов. Читает /api/public/v1/rating/methodology/."
+      <MethodologyHero
+        stats={methodology.stats}
+        criteriaCount={methodology.criteria.length}
+        version={methodology.version}
+        weightSum={weightSum}
       />
+      <MethodologyTable criteria={methodology.criteria} />
     </>
   );
 }

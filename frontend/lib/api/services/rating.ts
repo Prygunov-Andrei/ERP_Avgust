@@ -2,6 +2,7 @@ import type {
   RatingModelListItem,
   RatingModelDetail,
   RatingMethodology,
+  RatingBrandOption,
 } from '../types/rating';
 
 function resolveBase(): string {
@@ -30,4 +31,12 @@ export function getRatingModelBySlug(slug: string): Promise<RatingModelDetail> {
 
 export function getRatingMethodology(): Promise<RatingMethodology> {
   return ratingFetch<RatingMethodology>('/methodology/');
+}
+
+export function getRatingArchiveModels(): Promise<RatingModelListItem[]> {
+  return ratingFetch<RatingModelListItem[]>('/models/archive/');
+}
+
+export function getRatingBrands(): Promise<RatingBrandOption[]> {
+  return ratingFetch<RatingBrandOption[]>('/brands/');
 }

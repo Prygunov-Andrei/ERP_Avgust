@@ -13,12 +13,17 @@ const criterion = (
 ): RatingMethodology['criteria'][number] => ({
   code,
   name_ru: code,
+  description_ru: '',
   weight: 1,
   unit: '',
   value_type: 'numeric',
   scoring_type: 'min_median_max',
   group: 'climate',
   group_display: 'Климат',
+  display_order: 0,
+  min_value: null,
+  median_value: null,
+  max_value: null,
   ...overrides,
 });
 
