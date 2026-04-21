@@ -26,7 +26,7 @@ import { EditableCell } from "./editable-cell";
 import { MaterialPickerCell } from "./material-picker-cell";
 import { ProcurementStatusSelect } from "./procurement-status-select";
 import type { EquipmentTrack } from "./track-tabs";
-import { techSpecsSubLabel, techSpecsTitle } from "./tech-specs";
+import { techSpecsTitle } from "./tech-specs";
 import { ApiError, itemApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
 import { cn, formatCurrency, formatDecimal } from "@/lib/utils";
@@ -34,6 +34,7 @@ import {
   MATCH_SOURCE_LABELS,
   type CreateItemDto,
   type EstimateItem,
+  type EstimateItemTechSpecs,
   type ProcurementStatus,
   type UUID,
 } from "@/lib/api/types";
@@ -143,6 +144,17 @@ export function ItemsTable({
     [update],
   );
 
+  const commitTechSpec = React.useCallback(
+    (item: EstimateItem, key: keyof EstimateItemTechSpecs, raw: string) => {
+      // Клиентский merge: backend-сериализатор PATCH-ит JSONField как replace,
+      // поэтому читаем текущий tech_specs и отправляем объединённый объект,
+      // чтобы не потерять произвольные ключи (flow, power и т.п.).
+      const next: EstimateItemTechSpecs = { ...item.tech_specs, [key]: raw };
+      update.mutate({ item, patch: { tech_specs: next } });
+    },
+    [update],
+  );
+
   const toggleKeyEquipment = React.useCallback(
     (item: EstimateItem) => {
       update.mutate({
@@ -213,29 +225,33 @@ export function ItemsTable({
       {
         accessorKey: "name",
         header: "Наименование",
+        cell: ({ row }) => (
+          <EditableCell
+            value={row.original.name}
+            onCommit={(next) => commitField(row.original, "name", next)}
+          />
+        ),
+      },
+      {
+        id: "model_name",
+        header: () => (
+          <span title="Тип, марка, обозначение">Модель</span>
+        ),
         cell: ({ row }) => {
-          const sub = techSpecsSubLabel(row.original.tech_specs);
+          const value =
+            typeof row.original.tech_specs?.model_name === "string"
+              ? row.original.tech_specs.model_name
+              : "";
           return (
-            <div className="flex min-w-0 flex-col">
-              <EditableCell
-                value={row.original.name}
-                onCommit={(next) => commitField(row.original, "name", next)}
-              />
-              {sub ? (
-                <div
-                  className="truncate px-2 text-xs text-muted-foreground"
-                  data-testid="item-sub-label"
-                  // aria-hidden, чтобы screen reader читал кнопку имени
-                  // (accessible name = item.name), а model/brand не
-                  // попадали в её лейбл.
-                  aria-hidden="true"
-                >
-                  {sub}
-                </div>
-              ) : null}
-            </div>
+            <EditableCell
+              value={value}
+              onCommit={(next) =>
+                commitTechSpec(row.original, "model_name", next)
+              }
+            />
           );
         },
+        size: 160,
       },
       {
         accessorKey: "unit",
@@ -359,6 +375,31 @@ export function ItemsTable({
           ]
         : []),
       {
+        id: "comments",
+        header: "Примечание",
+        cell: ({ row }) => {
+          const value =
+            typeof row.original.tech_specs?.comments === "string"
+              ? row.original.tech_specs.comments
+              : "";
+          return (
+            <div
+              className="max-w-full whitespace-pre-wrap break-words"
+              title={value || undefined}
+              data-testid="item-comments"
+            >
+              <EditableCell
+                value={value}
+                onCommit={(next) =>
+                  commitTechSpec(row.original, "comments", next)
+                }
+              />
+            </div>
+          );
+        },
+        size: 200,
+      },
+      {
         id: "actions",
         header: "",
         cell: ({ row }) => (
@@ -375,7 +416,7 @@ export function ItemsTable({
         size: 48,
       },
     ],
-    [commitField, remove, toggleKeyEquipment, setProcurementStatus, track, update.isPending, workspaceId],
+    [commitField, commitTechSpec, remove, toggleKeyEquipment, setProcurementStatus, track, update.isPending, workspaceId],
   );
 
   const table = useReactTable({
