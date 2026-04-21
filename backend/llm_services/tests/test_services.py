@@ -1,6 +1,9 @@
 """
-Тесты для llm_services/services/ — DocumentParser, SpecificationParser, ExcelInvoiceParser.
-Все LLM и DB вызовы мокнуты.
+Тесты для llm_services/services/ — DocumentParser, ExcelInvoiceParser.
+
+SpecificationParser удалён в E28 (ISMeta перешла на Recognition Service).
+DocumentParser остаётся временно: (1) используется в parse_invoice view
+(ERP frontend InvoiceUploader); (2) fallback для PNG/JPG в InvoiceService.
 """
 import json
 import hashlib
@@ -18,7 +21,6 @@ from llm_services.services.document_parser import (
 )
 from llm_services.services.entity_matcher import CounterpartyMatcher, LegalEntityMatcher
 from llm_services.services.exceptions import RateLimitError
-from llm_services.services.specification_parser import SpecificationParser
 from llm_services.services.excel_parser import ExcelInvoiceParser
 
 
@@ -175,49 +177,6 @@ class DocumentParserBuildResponseTest(TestCase):
 
         result = self.parser._build_response(parsed_doc)
         self.assertTrue(any('неточно' in w for w in result['warnings']))
-
-
-# ============================================================================
-# SpecificationParser — _deduplicate_items
-# ============================================================================
-
-
-class SpecificationParserDeduplicateTest(TestCase):
-    """Тесты _deduplicate_items."""
-
-    def setUp(self):
-        with patch.object(SpecificationParser, '__init__', lambda self: None):
-            self.parser = SpecificationParser.__new__(SpecificationParser)
-
-    def test_deduplicate_identical_items(self):
-        items = [
-            {'name': 'Вентилятор ВКК-125', 'model_name': 'ВКК-125', 'brand': 'SystemAir', 'quantity': 2.0},
-            {'name': 'Вентилятор ВКК-125', 'model_name': 'ВКК-125', 'brand': 'SystemAir', 'quantity': 3.0},
-        ]
-        result = self.parser._deduplicate_items(items)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['quantity'], 5.0)
-
-    def test_deduplicate_different_items(self):
-        items = [
-            {'name': 'Вентилятор ВКК-125', 'model_name': 'ВКК-125', 'brand': 'A', 'quantity': 1.0},
-            {'name': 'Вентилятор ВКК-200', 'model_name': 'ВКК-200', 'brand': 'A', 'quantity': 2.0},
-        ]
-        result = self.parser._deduplicate_items(items)
-        self.assertEqual(len(result), 2)
-
-    def test_deduplicate_case_insensitive(self):
-        items = [
-            {'name': 'Болт М6', 'model_name': '', 'brand': '', 'quantity': 10.0},
-            {'name': 'болт м6', 'model_name': '', 'brand': '', 'quantity': 5.0},
-        ]
-        result = self.parser._deduplicate_items(items)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['quantity'], 15.0)
-
-    def test_deduplicate_empty_list(self):
-        result = self.parser._deduplicate_items([])
-        self.assertEqual(result, [])
 
 
 # ============================================================================

@@ -31,7 +31,7 @@ def process_public_estimate_request(self, request_id: int):
     """Полный пайплайн обработки публичного запроса.
 
     Поток:
-    files → SpecificationParser → SpecificationItem → Estimate → AutoMatcher → Excel
+    files → Recognition Service (/v1/parse/spec) → SpecificationItem → Estimate → AutoMatcher → Excel
 
     Идемпотентность: при retry пропускаются уже обработанные файлы/этапы.
     """
@@ -114,11 +114,19 @@ def process_public_estimate_request(self, request_id: int):
 
 
 def _parse_all_files(request: EstimateRequest):
-    """Парсинг всех файлов запроса. Идемпотентный — пропускает уже обработанные."""
-    from llm_services.services.specification_parser import SpecificationParser
+    """Парсинг всех файлов запроса. Идемпотентный — пропускает уже обработанные.
+
+    Использует Recognition Service (ADR-0023, E15.01+). Обновление прогресса
+    per-page невозможно (Recognition — один sync HTTP-запрос), pages_total/processed
+    выставляются после завершения парсинга файла.
+    """
+    from payments.services.recognition_client import (
+        RecognitionClient,
+        RecognitionClientError,
+    )
     from estimates.models import SpecificationItem
 
-    parser = SpecificationParser()
+    client = RecognitionClient()
 
     files = request.files.exclude(
         parse_status__in=[
@@ -143,18 +151,22 @@ def _parse_all_files(request: EstimateRequest):
                 req_file.save(update_fields=['parse_status', 'parse_error'])
                 continue
 
-            def on_progress(page, total):
-                req_file.pages_total = total
-                req_file.pages_processed = page
-                req_file.save(update_fields=['pages_total', 'pages_processed'])
+            try:
+                response = client.parse_spec(
+                    file_content, req_file.original_filename,
+                )
+            except RecognitionClientError as exc:
+                logger.warning(
+                    'recognition parse_spec failed: file=%s code=%s',
+                    req_file.original_filename, exc.code,
+                )
+                req_file.parse_status = EstimateRequestFile.ParseStatus.ERROR
+                req_file.parse_error = f'Recognition {exc.code}: {exc.detail or ""}'
+                req_file.save(update_fields=['parse_status', 'parse_error'])
+                continue
 
-            result = parser.parse_pdf(
-                file_content, filename=req_file.original_filename,
-                on_page_progress=on_progress,
-            )
-
-            # Сохраняем SpecificationItem
-            for item_data in result['items']:
+            items = response.get('items', []) or []
+            for item_data in items:
                 SpecificationItem.objects.create(
                     request=request,
                     source_file=req_file,
@@ -169,20 +181,21 @@ def _parse_all_files(request: EstimateRequest):
                     sort_order=item_data.get('sort_order', 0),
                 )
 
-            # Статус файла
+            stats = response.get('pages_stats') or {}
             status_map = {
                 'done': EstimateRequestFile.ParseStatus.DONE,
                 'partial': EstimateRequestFile.ParseStatus.PARTIAL,
                 'error': EstimateRequestFile.ParseStatus.ERROR,
             }
             req_file.parse_status = status_map.get(
-                result['status'], EstimateRequestFile.ParseStatus.ERROR,
+                response.get('status', 'error'),
+                EstimateRequestFile.ParseStatus.ERROR,
             )
-            req_file.parsed_data = result
-            req_file.pages_total = result['pages_total']
-            req_file.pages_processed = result['pages_processed']
-            if result['errors']:
-                req_file.parse_error = '\n'.join(result['errors'])
+            req_file.parsed_data = response
+            req_file.pages_total = stats.get('total', 0)
+            req_file.pages_processed = stats.get('processed', 0)
+            if response.get('errors'):
+                req_file.parse_error = '\n'.join(response['errors'])
             req_file.save()
 
         except Exception as exc:
