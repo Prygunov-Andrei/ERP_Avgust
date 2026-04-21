@@ -96,6 +96,25 @@ class ACModel(TimestampedModel):
         help_text="Например: «А. Петров, главред».",
     )
 
+    # M4.2: габариты и вес внутреннего/наружного блоков для hero-секции.
+    inner_unit_dimensions = models.CharField(
+        max_length=100, blank=True, default="",
+        verbose_name="Габариты внутреннего блока",
+        help_text="Например: «850 × 295 × 189 мм». Свободная форма строки.",
+    )
+    inner_unit_weight_kg = models.DecimalField(
+        max_digits=5, decimal_places=1, null=True, blank=True,
+        verbose_name="Вес внутреннего блока (кг)",
+    )
+    outer_unit_dimensions = models.CharField(
+        max_length=100, blank=True, default="",
+        verbose_name="Габариты наружного блока",
+    )
+    outer_unit_weight_kg = models.DecimalField(
+        max_digits=5, decimal_places=1, null=True, blank=True,
+        verbose_name="Вес наружного блока (кг)",
+    )
+
     class Meta:
         ordering = ["-total_index"]
         verbose_name = "Модель кондиционера"
