@@ -1,8 +1,11 @@
 // =========================================================================
 // AC Rating (public) — types for /api/public/v1/rating/*
-// Shape aligned with backend/ac_catalog/serializers.py after M2.
+// Shape aligned with backend/ac_catalog/serializers.py after M2 + M4.
 // ВАЖНО: в list-эндпоинте `brand` — string (название), в detail — объект.
 // Легаси-решение из бекэнда, мы его не переделываем.
+// Поля M4 (editorial_*, inner_unit_dimensions, supplier.price/city/rating, criterion.group)
+// могут приходить пустыми ("" / null / 'other') если бекенд M4 ещё не смержен — фронт
+// строит graceful fallback, ни одна секция не должна падать.
 // =========================================================================
 
 export interface RatingBrand {
@@ -32,10 +35,21 @@ export interface RatingModelPhoto {
   alt: string;
 }
 
+export type RatingSupplierAvailability =
+  | 'in_stock'
+  | 'low_stock'
+  | 'out_of_stock'
+  | 'unknown';
+
 export interface RatingModelSupplier {
   id: number;
   name: string;
   url: string;
+  price: string | null;
+  city: string;
+  rating: string | null;
+  availability: RatingSupplierAvailability;
+  note: string;
 }
 
 export interface RatingModelListItem {
@@ -67,10 +81,11 @@ export interface RatingModelDetail {
   inner_unit: string;
   outer_unit: string;
   nominal_capacity: number | null;
-  price: string | null;
   total_index: number;
-  rank: number;
-  regions: RatingRegion[];
+  index_max: number;
+  publish_status: string;
+  region_availability: RatingRegion[];
+  price: string | null;
   pros_text: string;
   cons_text: string;
   youtube_url: string;
@@ -79,8 +94,28 @@ export interface RatingModelDetail {
   photos: RatingModelPhoto[];
   suppliers: RatingModelSupplier[];
   parameter_scores: RatingParameterScore[];
-  median_total_index: number;
+  methodology_version: string;
+  rank: number | null;
+  median_total_index: number | null;
+
+  // M4 — могут быть "" или null до мержа M4.
+  editorial_lede: string;
+  editorial_body: string;
+  editorial_quote: string;
+  editorial_quote_author: string;
+  inner_unit_dimensions: string;
+  inner_unit_weight_kg: string | null;
+  outer_unit_dimensions: string;
+  outer_unit_weight_kg: string | null;
 }
+
+export type RatingCriterionGroup =
+  | 'climate'
+  | 'compressor'
+  | 'acoustics'
+  | 'control'
+  | 'dimensions'
+  | 'other';
 
 export interface RatingMethodologyCriterion {
   code: string;
@@ -89,6 +124,7 @@ export interface RatingMethodologyCriterion {
   unit: string;
   value_type: string;
   scoring_type: string;
+  group: RatingCriterionGroup;
 }
 
 export interface RatingMethodologyStats {
