@@ -35,17 +35,19 @@ export default async function RatingHomePage() {
   return (
     <>
       <HvacInfoHeader />
-      <Suspense fallback={null}>
-        <div className="hidden md:block">
-          <HeroBlock stats={methodology.stats} />
-          <DesktopListing models={publishedModels} methodology={methodology} />
-        </div>
-        <div className="md:hidden">
-          <MobileListing models={publishedModels} methodology={methodology} />
-        </div>
-      </Suspense>
-      <SeoBlock />
-      <SectionFooter />
+      <main className="hvac-content">
+        <Suspense fallback={null}>
+          <div className="hidden md:block">
+            <HeroBlock stats={methodology.stats} />
+            <DesktopListing models={publishedModels} methodology={methodology} />
+          </div>
+          <div className="md:hidden">
+            <MobileListing models={publishedModels} methodology={methodology} />
+          </div>
+        </Suspense>
+        <SeoBlock />
+        <SectionFooter />
+      </main>
     </>
   );
 }

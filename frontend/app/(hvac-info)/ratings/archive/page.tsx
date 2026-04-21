@@ -24,8 +24,10 @@ export default async function RatingArchivePage() {
   return (
     <>
       <HvacInfoHeader />
-      <ArchiveHero count={models.length} />
-      <ArchiveTable models={models} />
+      <main className="hvac-content">
+        <ArchiveHero count={models.length} />
+        <ArchiveTable models={models} />
+      </main>
     </>
   );
 }

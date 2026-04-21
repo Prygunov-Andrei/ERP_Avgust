@@ -24,7 +24,7 @@ export default async function NewsFeedPage() {
   return (
     <>
       <HvacInfoHeader />
-      <main>
+      <main className="hvac-content">
         <NewsFeedHero items={items} />
         <Suspense fallback={null}>
           <NewsCategoryFilter />

@@ -96,33 +96,35 @@ export default async function RatingDetailPage({ params }: Props) {
   return (
     <>
       <HvacInfoHeader />
-      <DetailBreadcrumb />
-      <DetailHero
-        detail={detail}
-        stats={{
-          total_models: totalModels,
-          active_criteria_count:
-            methodology?.stats.active_criteria_count ?? detail.parameter_scores.length,
-          median_total_index: median,
-        }}
-        median={median}
-      />
-      <DetailMedia detail={detail} />
-      <DetailAnchorNav />
-      <DetailOverview detail={detail} />
-      <DetailCriteria detail={detail} />
-      <DetailNewsMentions mentions={detail.news_mentions} />
-      <DetailIndexViz
-        totalIndex={detail.total_index}
-        median={median}
-        allScores={allScores}
-        rank={detail.rank}
-        totalModels={totalModels}
-      />
-      <DetailSpecs detail={detail} methodology={methodology} />
-      <DetailBuy detail={detail} />
-      <DetailReviews detail={detail} />
-      <DetailRelated detail={detail} models={list} />
+      <main className="hvac-content">
+        <DetailBreadcrumb />
+        <DetailHero
+          detail={detail}
+          stats={{
+            total_models: totalModels,
+            active_criteria_count:
+              methodology?.stats.active_criteria_count ?? detail.parameter_scores.length,
+            median_total_index: median,
+          }}
+          median={median}
+        />
+        <DetailMedia detail={detail} />
+        <DetailAnchorNav />
+        <DetailOverview detail={detail} />
+        <DetailCriteria detail={detail} />
+        <DetailNewsMentions mentions={detail.news_mentions} />
+        <DetailIndexViz
+          totalIndex={detail.total_index}
+          median={median}
+          allScores={allScores}
+          rank={detail.rank}
+          totalModels={totalModels}
+        />
+        <DetailSpecs detail={detail} methodology={methodology} />
+        <DetailBuy detail={detail} />
+        <DetailReviews detail={detail} />
+        <DetailRelated detail={detail} models={list} />
+      </main>
     </>
   );
 }

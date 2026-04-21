@@ -23,7 +23,9 @@ export default async function RatingSubmitPage() {
   return (
     <>
       <HvacInfoHeader />
-      <SubmitForm brands={brands} />
+      <main className="hvac-content">
+        <SubmitForm brands={brands} />
+      </main>
     </>
   );
 }

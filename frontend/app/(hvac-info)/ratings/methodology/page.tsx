@@ -33,13 +33,15 @@ export default async function RatingMethodologyPage() {
   return (
     <>
       <HvacInfoHeader />
-      <MethodologyHero
-        stats={methodology.stats}
-        criteriaCount={methodology.criteria.length}
-        version={methodology.version}
-        weightSum={weightSum}
-      />
-      <MethodologyTable criteria={methodology.criteria} />
+      <main className="hvac-content">
+        <MethodologyHero
+          stats={methodology.stats}
+          criteriaCount={methodology.criteria.length}
+          version={methodology.version}
+          weightSum={weightSum}
+        />
+        <MethodologyTable criteria={methodology.criteria} />
+      </main>
     </>
   );
 }
