@@ -87,8 +87,27 @@
   Frontend UI (Федя): выпадающий список с вариантами для yellow.
 - Исполнитель: backend (Петя), когда Федя начнёт делать UI подтверждения.
 
+### 10. 🔥 Recognition: gpt-4o-mini возвращает JSON в markdown wrapper — классификация страниц всегда падает
+
+- **Симптом:** на live-прогоне (2026-04-21) PDF-import 4-страничной спецификации через OpenAI → pages_processed=0, 8 classify_failed в логах: `Expecting value: line 1 column 1 (char 0)`.
+- **Причина:** gpt-4o-mini игнорирует инструкцию «Ответь строго JSON (без markdown)» и оборачивает ответ в ` ```json\n{...}\n``` `. `json.loads` на таком ответе падает.
+- **Почему не заметили в тестах:** unit-тесты используют `MockProvider` который возвращает чистый `json.dumps({...})`. На живом LLM поведение другое.
+- **Решение (любое из):**
+  - (a) В `recognition/app/providers/openai_vision.py` добавить `response_format={"type": "json_object"}` в `payload` — OpenAI JSON mode гарантирует валидный JSON без markdown.
+  - (b) В `_common.py::vision_json` перед `json.loads` делать strip:
+    ```python
+    response = response.strip()
+    if response.startswith("```"):
+        response = response.strip("`").removeprefix("json").strip()
+    ```
+    (защита и для других провайдеров, которые могут так же оборачивать).
+  - Обе одновременно — идеально. (a) — primary, (b) — defensive.
+- **Приоритет:** 🔥 **критический** — блокер демо PDF-import с реальным OpenAI. Без фикса весь Recognition флоу неработоспособен вне моков.
+- **Исполнитель:** IS-Петя. Задача: `E-MAT-UI-02` или `recognition/fix-json-parsing`.
+
 ## Записано
 - 2026-04-20: #1 seed_dev_data tech_specs (UI-03, Федя)
 - 2026-04-21: #2–5 (UI-PDF-verify, Федя)
 - 2026-04-21: #6–7 (E-SEED-01, Федя — TechSpecs schema drift, respx env)
 - 2026-04-21: #8–9 (E-MAT-01 минорные, Петя — apply_matches raw SQL, match_item top-3)
+- 2026-04-21: #10 (Live PDF-прогон Claude — Recognition JSON parsing BLOCKER)
