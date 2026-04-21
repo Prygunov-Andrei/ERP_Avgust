@@ -14,6 +14,7 @@ import {
   Loader2,
   MessageSquare,
   MoreHorizontal,
+  Package,
   Sparkles,
   Upload,
   Wand2,
@@ -49,6 +50,7 @@ interface Props {
   onOpenChat?: () => void;
   onOpenImport?: () => void;
   onOpenPdfImport?: () => void;
+  onOpenMaterialsMatch?: () => void;
 }
 
 export function EstimateHeader({
@@ -57,6 +59,7 @@ export function EstimateHeader({
   onOpenChat,
   onOpenImport,
   onOpenPdfImport,
+  onOpenMaterialsMatch,
 }: Props) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -215,6 +218,7 @@ export function EstimateHeader({
           onOpenChat={onOpenChat}
           onOpenImport={onOpenImport}
           onOpenPdfImport={onOpenPdfImport}
+          onOpenMaterialsMatch={onOpenMaterialsMatch}
           startMatching={startMatching}
           exportXlsx={exportXlsx}
           createVersion={createVersion}
@@ -269,6 +273,7 @@ interface HeaderActionsProps {
   onOpenChat?: () => void;
   onOpenImport?: () => void;
   onOpenPdfImport?: () => void;
+  onOpenMaterialsMatch?: () => void;
   onOpenArchive: () => void;
   startMatching: { mutate: () => void; isPending: boolean };
   exportXlsx: { mutate: () => void; isPending: boolean };
@@ -283,6 +288,7 @@ function HeaderActions(props: HeaderActionsProps) {
     onOpenChat,
     onOpenImport,
     onOpenPdfImport,
+    onOpenMaterialsMatch,
     onOpenArchive,
     startMatching,
     exportXlsx,
@@ -321,6 +327,16 @@ function HeaderActions(props: HeaderActionsProps) {
           )}
           Подобрать работы
         </Button>
+        {onOpenMaterialsMatch ? (
+          <Button
+            variant="outline"
+            onClick={onOpenMaterialsMatch}
+            data-testid="materials-match-trigger"
+          >
+            <Package className="h-4 w-4" />
+            Подобрать материалы
+          </Button>
+        ) : null}
         {onOpenImport ? (
           <Button variant="outline" onClick={onOpenImport}>
             <Upload className="h-4 w-4" />
@@ -396,6 +412,12 @@ function HeaderActions(props: HeaderActionsProps) {
               <Wand2 className="h-4 w-4" />
               Подобрать работы
             </DropdownMenuItem>
+            {onOpenMaterialsMatch ? (
+              <DropdownMenuItem onSelect={onOpenMaterialsMatch}>
+                <Package className="h-4 w-4" />
+                Подобрать материалы
+              </DropdownMenuItem>
+            ) : null}
             {onOpenImport ? (
               <DropdownMenuItem onSelect={onOpenImport}>
                 <Upload className="h-4 w-4" />
