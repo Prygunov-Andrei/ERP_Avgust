@@ -4,13 +4,16 @@ import asyncio
 import logging
 from typing import Any, cast
 
+import fitz
 from fastapi import APIRouter, Depends, File, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
 from ..auth import verify_api_key
 from ..config import settings
 from ..providers.base import BaseLLMProvider
 from ..schemas.invoice import InvoiceParseResponse
+from ..schemas.probe import ProbeResponse
 from ..schemas.quote import QuoteParseResponse
 from ..schemas.spec import SpecParseResponse
 from ..services.invoice_parser import InvoiceParser
@@ -23,6 +26,12 @@ from .errors import (
     ParseFailedError,
     UnsupportedMediaTypeError,
 )
+
+PROBE_TIMEOUT_SECONDS = 10
+# Порог в символах на страницу — выше считаем что есть нормальный text layer.
+# 50 пришло из наблюдения: у «сканов» PDF get_text обычно возвращает 0-10 символов
+# (штампы/watermark), у нативно экспортированных — сотни-тысячи.
+TEXT_LAYER_CHARS_PER_PAGE = 50
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +109,74 @@ def _log_done(kind: str, filename: str, result: BaseModel) -> None:
             "pages_processed": (data.get("pages_stats") or {}).get("processed", 0),
             "items_count": len(data.get("items") or []),
         },
+    )
+
+
+def _probe_pdf_sync(content: bytes) -> tuple[int, int]:
+    """Open PDF and return (pages_total, text_chars_total)."""
+    doc = fitz.open(stream=content, filetype="pdf")
+    try:
+        pages_total = len(doc)
+        chars_total = 0
+        for page in doc:
+            chars_total += len(page.get_text().strip())
+        return pages_total, chars_total
+    finally:
+        doc.close()
+
+
+def _estimate_seconds(pages: int, has_text_layer: bool) -> int:
+    """Heuristic: text-layer path ~ 2s + 0.1s/page; vision path ~ 5s/page."""
+    if has_text_layer:
+        return max(1, round(2 + 0.1 * pages))
+    return max(1, 5 * pages)
+
+
+@router.post("/v1/probe", response_model=ProbeResponse)
+async def probe(
+    file: UploadFile = File(...),
+    _auth: None = Depends(verify_api_key),
+) -> ProbeResponse:
+    """Cheap PDF inspection — same validation as /parse/spec, но без LLM.
+
+    Используется фронтом перед POST /v1/parse/spec, чтобы показать пользователю
+    оценку времени (text-layer — быстро, vision — медленно) и pages_total для
+    progress bar. Таймаут 10с — на гигантских PDF (500+ страниц) лучше отвалиться.
+    """
+    content, filename = await _read_pdf(file)
+
+    try:
+        pages_total, chars_total = await asyncio.wait_for(
+            run_in_threadpool(_probe_pdf_sync, content),
+            timeout=PROBE_TIMEOUT_SECONDS,
+        )
+    except TimeoutError as e:
+        raise ParseFailedError(
+            detail=f"probe timeout after {PROBE_TIMEOUT_SECONDS}s — PDF too large"
+        ) from e
+    except (ValueError, RuntimeError) as e:
+        # PyMuPDF бросает fitz.FileDataError (наследник RuntimeError) на
+        # битый PDF — отдаём 415, т.к. файл не является валидным PDF.
+        raise UnsupportedMediaTypeError(detail=f"cannot open PDF: {e}") from e
+
+    has_text_layer = chars_total >= pages_total * TEXT_LAYER_CHARS_PER_PAGE
+    est = _estimate_seconds(pages_total, has_text_layer)
+
+    logger.info(
+        "probe done",
+        extra={
+            "doc_filename": filename,
+            "pages_total": pages_total,
+            "text_chars_total": chars_total,
+            "has_text_layer": has_text_layer,
+            "estimated_seconds": est,
+        },
+    )
+    return ProbeResponse(
+        pages_total=pages_total,
+        has_text_layer=has_text_layer,
+        text_chars_total=chars_total,
+        estimated_seconds=est,
     )
 
 

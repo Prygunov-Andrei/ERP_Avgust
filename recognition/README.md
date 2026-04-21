@@ -72,6 +72,34 @@ PYTHONPATH=. .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8003
 curl -s http://localhost:8003/v1/healthz | jq
 ```
 
+### Предварительная проверка PDF — `/v1/probe`
+
+Быстрая (≤10с) инспекция PDF без вызова LLM — для frontend progress bar и выбора
+стратегии показа пользователю.
+
+```bash
+curl -s -X POST http://localhost:8003/v1/probe \
+  -H "X-API-Key: $RECOGNITION_API_KEY" \
+  -F "file=@/path/to/spec.pdf" | jq
+```
+
+Ответ:
+
+```json
+{
+  "pages_total": 9,
+  "has_text_layer": true,
+  "text_chars_total": 12994,
+  "estimated_seconds": 3
+}
+```
+
+- `has_text_layer = true` — PDF экспортирован нативно, парсер пойдёт быстрым text-layer путём (~2s + 0.1s/page).
+- `has_text_layer = false` — сканированный PDF, потребуется Vision LLM (~5s/page).
+- `estimated_seconds` — грубая оценка времени `/v1/parse/spec` для progress UI.
+
+Таймаут `/probe` = 10с — гигантские PDF отрубаются с `422 parse_failed`.
+
 ### Парсинг спецификации — §1
 
 ```bash

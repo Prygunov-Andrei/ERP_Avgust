@@ -18,6 +18,38 @@ paths:
                   type: string
                 type: object
                 title: Response Healthz V1 Healthz Get
+  /v1/probe:
+    post:
+      summary: Probe
+      description: 'Cheap PDF inspection — same validation as /parse/spec, но без
+        LLM.
+
+
+        Используется фронтом перед POST /v1/parse/spec, чтобы показать пользователю
+
+        оценку времени (text-layer — быстро, vision — медленно) и pages_total для
+
+        progress bar. Таймаут 10с — на гигантских PDF (500+ страниц) лучше отвалиться.'
+      operationId: probe_v1_probe_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_probe_v1_probe_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProbeResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/parse/spec:
     post:
       summary: Parse Spec
@@ -119,6 +151,16 @@ components:
       required:
       - file
       title: Body_parse_spec_v1_parse_spec_post
+    Body_probe_v1_probe_post:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_probe_v1_probe_post
     HTTPValidationError:
       properties:
         detail:
@@ -246,6 +288,27 @@ components:
           default: 0
       type: object
       title: PagesStats
+    ProbeResponse:
+      properties:
+        pages_total:
+          type: integer
+          title: Pages Total
+        has_text_layer:
+          type: boolean
+          title: Has Text Layer
+        text_chars_total:
+          type: integer
+          title: Text Chars Total
+        estimated_seconds:
+          type: integer
+          title: Estimated Seconds
+      type: object
+      required:
+      - pages_total
+      - has_text_layer
+      - text_chars_total
+      - estimated_seconds
+      title: ProbeResponse
     QuoteItem:
       properties:
         name:
