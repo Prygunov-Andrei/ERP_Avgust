@@ -35,12 +35,7 @@ class NewsAuthorLiteSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_avatar_url(self, obj):
-        if not obj.avatar:
-            return ""
-        request = self.context.get("request")
-        if request:
-            return request.build_absolute_uri(obj.avatar.url)
-        return obj.avatar.url
+        return obj.avatar.url if obj.avatar else ""
 
 
 class NewsPostSerializer(serializers.ModelSerializer):

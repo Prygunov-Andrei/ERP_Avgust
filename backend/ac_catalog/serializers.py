@@ -21,12 +21,9 @@ class BrandSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "name"]
 
     def get_logo(self, obj: Brand) -> str:
-        if not obj.logo:
-            return ""
-        request = self.context.get("request")
-        if request:
-            return request.build_absolute_uri(obj.logo.url)
-        return obj.logo.url
+        # Относительный URL — фронт-портал на другом hostname (hvac-info.com),
+        # browser подставит текущий origin. build_absolute_uri вернул бы localhost:8000.
+        return obj.logo.url if obj.logo else ""
 
 
 class RegionSerializer(serializers.ModelSerializer):
@@ -87,11 +84,7 @@ class ACModelPhotoSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_image_url(self, obj: ACModelPhoto) -> str:
-        request = self.context.get("request")
-        if obj.image and request:
-            return request.build_absolute_uri(obj.image.url)
-        if obj.image:
-            return obj.image.url
+        return obj.image.url if obj.image else ""
         return ""
 
 
@@ -152,12 +145,7 @@ class ACModelListSerializer(serializers.ModelSerializer):
         return int(rank) if rank is not None else None
 
     def get_brand_logo(self, obj: ACModel) -> str:
-        if not obj.brand.logo:
-            return ""
-        request = self.context.get("request")
-        if request:
-            return request.build_absolute_uri(obj.brand.logo.url)
-        return obj.brand.logo.url
+        return obj.brand.logo.url if obj.brand.logo else ""
 
     def get_index_max(self, _obj: ACModel) -> float:
         return float(self.context.get("index_max", 100.0))
@@ -398,13 +386,7 @@ class MethodologyCriterionSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_photo_url(self, obj: MethodologyCriterion) -> str:
-        photo = obj.criterion.photo
-        if not photo:
-            return ""
-        request = self.context.get("request")
-        if request:
-            return request.build_absolute_uri(photo.url)
-        return photo.url
+        return obj.criterion.photo.url if obj.criterion.photo else ""
 
 
 class MethodologySerializer(serializers.ModelSerializer):
