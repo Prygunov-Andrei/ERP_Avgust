@@ -278,6 +278,91 @@ class TestMarkdownFenceRecovery:
         assert result.items[0].name == "Гибкая вставка"
 
 
+class TestHybridTextLayer:
+    """SpecParser идёт text-layer путём на нативных PDF — LLM не вызывается."""
+
+    @pytest.mark.asyncio
+    async def test_text_layer_parser_skips_llm(self, monkeypatch):
+        """PDF с text layer → hybrid путь → провайдер не вызывается."""
+        # Монkeypatch has_usable_text_layer чтобы всегда True, затем
+        # подмена parse_page_items чтобы вернуть известные items (fitz не пишет
+        # кириллицу без кастомного шрифта, формируем через stub).
+        import app.services.spec_parser as sp
+
+        def fake_text_layer(_page, **_kw):
+            return True
+
+        def fake_parse(_page, current_section="", sticky_parent_name=""):
+            return (
+                [
+                    {
+                        "name": "Вентилятор канальный",
+                        "model_name": "VKR-200",
+                        "unit": "шт",
+                        "quantity": 4,
+                        "section_name": "Вентиляция",
+                    },
+                    {
+                        "name": "Воздуховод 200x200",
+                        "model_name": "",
+                        "unit": "м.п.",
+                        "quantity": 150,
+                        "section_name": "Вентиляция",
+                    },
+                ],
+                "Вентиляция",
+                "Воздуховод 200x200",
+            )
+
+        monkeypatch.setattr(sp, "has_usable_text_layer", fake_text_layer)
+        monkeypatch.setattr(sp, "parse_page_items", fake_parse)
+
+        class FailingProvider(BaseLLMProvider):
+            async def vision_complete(self, image_b64, prompt):  # noqa: ARG002
+                raise AssertionError("LLM should NOT be called on text-layer PDF")
+
+            async def aclose(self):
+                return None
+
+        parser = SpecParser(FailingProvider())
+        pdf = _make_real_pdf(2)
+        result = await parser.parse(pdf, "native.pdf")
+
+        assert result.status == "done"
+        assert result.errors == []
+        assert result.pages_stats.processed == 2
+        # 2 страницы × 2 items = 4, но dedup сложит одинаковые → 2 уникальных
+        # позиции с удвоенными количествами
+        assert len(result.items) == 2
+        assert result.items[0].name == "Вентилятор канальный"
+        assert result.items[0].quantity == 8.0  # 4 + 4
+        assert result.items[0].section_name == "Вентиляция"
+        assert result.items[1].name == "Воздуховод 200x200"
+        assert result.items[1].quantity == 300.0
+
+    @pytest.mark.asyncio
+    async def test_text_layer_present_no_items_page_skipped(self, monkeypatch):
+        """Titlesheet с text layer, но без позиций → pages_skipped++."""
+        import app.services.spec_parser as sp
+
+        monkeypatch.setattr(sp, "has_usable_text_layer", lambda *_a, **_kw: True)
+        monkeypatch.setattr(sp, "parse_page_items", lambda *_a, **_kw: ([], "", ""))
+
+        class FailingProvider(BaseLLMProvider):
+            async def vision_complete(self, image_b64, prompt):  # noqa: ARG002
+                raise AssertionError("LLM should NOT be called")
+
+            async def aclose(self):
+                return None
+
+        parser = SpecParser(FailingProvider())
+        pdf = _make_real_pdf(1)
+        result = await parser.parse(pdf, "titlesheet.pdf")
+        assert result.status == "done"
+        assert result.items == []
+        assert result.pages_stats.skipped == 1
+
+
 class TestStripMarkdownFenceUnit:
     """Прямые unit-тесты на _strip_markdown_fence — edge cases."""
 

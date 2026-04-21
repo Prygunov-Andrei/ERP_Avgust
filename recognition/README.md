@@ -72,6 +72,41 @@ PYTHONPATH=. .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8003
 curl -s http://localhost:8003/v1/healthz | jq
 ```
 
+### Предварительная проверка PDF — `/v1/probe`
+
+Быстрая (≤10с) инспекция PDF без вызова LLM — для frontend progress bar и выбора
+стратегии показа пользователю.
+
+```bash
+curl -s -X POST http://localhost:8003/v1/probe \
+  -H "X-API-Key: $RECOGNITION_API_KEY" \
+  -F "file=@/path/to/spec.pdf" | jq
+```
+
+Ответ:
+
+```json
+{
+  "pages_total": 9,
+  "text_layer_pages": 9,
+  "has_text_layer": true,
+  "text_chars_total": 12994,
+  "estimated_seconds": 3
+}
+```
+
+- `text_layer_pages` — сколько страниц проходят per-page порог
+  (50 символов, константа `TEXT_LAYER_MIN_CHARS_PER_PAGE` в `pdf_text.py`).
+- `has_text_layer = true` — **все** страницы пригодны для text-layer пути,
+  парсер идёт по быстрому hybrid-пути (~0.1s/page). Симметрично per-page
+  решению в `SpecParser` — исключает UX-регрессию «probe=true, но Spec уходит
+  в Vision на части страниц».
+- `has_text_layer = false` + `text_layer_pages < pages_total` — mixed PDF
+  (частично сканирован). `estimated_seconds` смешан: `2 + 0.1 × text_pages +
+  5 × vision_pages`.
+
+Таймаут `/probe` = 10с — гигантские PDF отрубаются с `422 parse_failed`.
+
 ### Парсинг спецификации — §1
 
 ```bash
@@ -81,6 +116,12 @@ curl -s -X POST http://localhost:8003/v1/parse/spec \
 ```
 
 Ответ: `{status, items[], errors[], pages_stats}`. `items[].tech_specs` — строка.
+
+**Hybrid path (E15.03):** парсер проверяет `page.get_text()` — если у страницы
+есть usable text layer (≥100 символов), извлечение идёт по эвристикам без вызова
+LLM (см. `app/services/pdf_text.py`). На нативно-экспортированных PDF-спецификациях
+это даёт recall ≈95% за ~0.1s/страницу вместо ~5s/стр через Vision. Страницы без
+text layer (сканы, фото) идут Vision fallback по прежней логике (classify → extract).
 
 ### Парсинг счёта поставщика — §2
 
@@ -126,13 +167,16 @@ curl -s -X POST http://localhost:8003/v1/parse/quote \
 
 ```bash
 cd recognition
-PYTHONPATH=. .venv/bin/python -m pytest -q
+PYTHONPATH=. .venv/bin/python -m pytest -q                          # обычный прогон, golden пропускаются
+PYTHONPATH=. .venv/bin/python -m pytest -m golden -v                # только golden-тесты на реальных PDF
 PYTHONPATH=. .venv/bin/python -m pytest --cov=app --cov-report=term-missing
 .venv/bin/python -m mypy app/ --disallow-untyped-defs
 .venv/bin/python -m ruff check .
 ```
 
-Ожидания: pytest 17 passed, coverage ≥ 80%, mypy/ruff clean.
+Ожидания: pytest 73 passed, coverage ≥ 80%, mypy/ruff clean. Golden suite (2
+теста) идёт по реальной ОВ2-спецификации из `ismeta/tests/fixtures/golden/` —
+recall ≥ 85%, Vision не вызывается.
 
 ## Логи
 

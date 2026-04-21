@@ -21,3 +21,9 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# По умолчанию golden-тесты пропускаем (тяжёлые, тянут фикстуру из ismeta/).
+# Запуск вручную: `pytest -m golden` (в этом случае все остальные тесты НЕ запустятся).
+addopts = "-m 'not golden'"
+markers = [
+    "golden: тесты на реальных PDF-фикстурах — не входят в обычный прогон",
+]

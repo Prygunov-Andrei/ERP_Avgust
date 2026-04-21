@@ -222,3 +222,91 @@ class TestPDFImportEndpoint:
             **{WS_HEADER: str(ws.id)},
         )
         assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+class TestProbePDFEndpoint:
+    """POST /api/v1/estimates/{id}/probe/pdf/ — прокси в Recognition /v1/probe (E15.03)."""
+
+    URL = "/api/v1/estimates/{}/probe/pdf/"
+    PROBE_OK = {
+        "pages_total": 9,
+        "text_layer_pages": 9,
+        "has_text_layer": True,
+        "text_chars_total": 12985,
+        "estimated_seconds": 3,
+    }
+
+    def _pdf_file(self):
+        return SimpleUploadedFile("spec.pdf", b"%PDF-fake", content_type="application/pdf")
+
+    def test_happy_returns_probe_dict(self, client, estimate, ws):
+        with respx.mock() as mock:
+            route = mock.post(f"{RECOGNITION_URL}/v1/probe").mock(
+                return_value=httpx.Response(200, json=self.PROBE_OK)
+            )
+            resp = client.post(
+                self.URL.format(estimate.id),
+                {"file": self._pdf_file()},
+                format="multipart",
+                **{WS_HEADER: str(ws.id)},
+            )
+        assert route.called
+        assert resp.status_code == 200
+        assert resp.data == self.PROBE_OK
+
+    def test_missing_workspace_400(self, client, estimate):
+        resp = client.post(
+            self.URL.format(estimate.id),
+            {"file": self._pdf_file()},
+            format="multipart",
+        )
+        assert resp.status_code == 400
+
+    def test_missing_file_400(self, client, estimate, ws):
+        resp = client.post(
+            self.URL.format(estimate.id),
+            format="multipart",
+            **{WS_HEADER: str(ws.id)},
+        )
+        assert resp.status_code == 400
+
+    def test_non_pdf_400(self, client, estimate, ws):
+        txt = SimpleUploadedFile("x.txt", b"not pdf", content_type="text/plain")
+        resp = client.post(
+            self.URL.format(estimate.id),
+            {"file": txt},
+            format="multipart",
+            **{WS_HEADER: str(ws.id)},
+        )
+        assert resp.status_code == 400
+
+    def test_recognition_415_returns_502(self, client, estimate, ws):
+        with respx.mock() as mock:
+            mock.post(f"{RECOGNITION_URL}/v1/probe").mock(
+                return_value=httpx.Response(
+                    415, json={"error": "unsupported_media_type", "detail": "bad magic"}
+                )
+            )
+            resp = client.post(
+                self.URL.format(estimate.id),
+                {"file": self._pdf_file()},
+                format="multipart",
+                **{WS_HEADER: str(ws.id)},
+            )
+        assert resp.status_code == 502
+        assert resp.data["code"] == "unsupported_media_type"
+
+    def test_recognition_unavailable_network_502(self, client, estimate, ws):
+        with respx.mock() as mock:
+            mock.post(f"{RECOGNITION_URL}/v1/probe").mock(
+                side_effect=httpx.ConnectError("Connection refused")
+            )
+            resp = client.post(
+                self.URL.format(estimate.id),
+                {"file": self._pdf_file()},
+                format="multipart",
+                **{WS_HEADER: str(ws.id)},
+            )
+        assert resp.status_code == 502
+        assert resp.data["code"] == "network_error"

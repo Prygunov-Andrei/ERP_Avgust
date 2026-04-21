@@ -92,6 +92,25 @@ class TestHappyPath:
             assert result["items"][0]["lead_time_days"] == 14
 
     @pytest.mark.asyncio
+    async def test_probe(self, client):
+        probe_ok = {
+            "pages_total": 9,
+            "text_layer_pages": 9,
+            "has_text_layer": True,
+            "text_chars_total": 12985,
+            "estimated_seconds": 3,
+        }
+        with respx.mock() as mock:
+            route = mock.post(f"{BASE_URL}/v1/probe").mock(
+                return_value=httpx.Response(200, json=probe_ok)
+            )
+            result = await client.probe(b"%PDF-1.4...", "spec.pdf")
+            assert result == probe_ok
+            assert route.called
+            sent = route.calls.last.request.headers
+            assert sent["x-api-key"] == API_KEY
+
+    @pytest.mark.asyncio
     async def test_healthz(self, client):
         with respx.mock() as mock:
             mock.get(f"{BASE_URL}/v1/healthz").mock(

@@ -15,6 +15,11 @@ from ..providers.base import BaseLLMProvider
 from ..schemas.spec import PagesStats, SpecItem, SpecParseResponse
 from ._common import _strip_markdown_fence
 from .pdf_render import render_page_to_b64
+from .pdf_text import (
+    TEXT_LAYER_MIN_CHARS_PER_PAGE,
+    has_usable_text_layer,
+    parse_page_items,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +62,7 @@ class _ParseState:
     pages_processed: int = 0
     pages_skipped: int = 0
     current_section: str = ""
+    sticky_parent_name: str = ""
     sort_order: int = 0
 
 
@@ -104,6 +110,45 @@ class SpecParser:
     async def _process_page(self, doc: fitz.Document, page_num: int) -> None:
         state = self.state
         try:
+            page = doc[page_num]
+
+            # Hybrid path: у страницы есть полезный text layer → парсим без LLM.
+            # Live прогон на golden ОВ2 spec (9 A3 страниц, 152 позиции) показал
+            # recall ≈98% при времени ≈0.1s/стр — vision-путь давал ~4% за ~10s/стр.
+            if has_usable_text_layer(page, min_chars=TEXT_LAYER_MIN_CHARS_PER_PAGE):
+                parsed_items, new_section, new_sticky = await run_in_threadpool(
+                    parse_page_items,
+                    page,
+                    state.current_section,
+                    state.sticky_parent_name,
+                )
+                if new_section:
+                    state.current_section = new_section
+                state.sticky_parent_name = new_sticky
+                if parsed_items:
+                    for item_data in parsed_items:
+                        state.sort_order += 1
+                        state.items.append(
+                            SpecItem(
+                                name=str(item_data.get("name", "")).strip(),
+                                model_name=str(item_data.get("model_name", "")),
+                                brand="",
+                                unit=str(item_data.get("unit", "шт")),
+                                quantity=float(item_data.get("quantity", 1) or 1),
+                                tech_specs="",
+                                section_name=str(item_data.get("section_name", "")),
+                                page_number=page_num + 1,
+                                sort_order=state.sort_order,
+                            )
+                        )
+                    state.pages_processed += 1
+                else:
+                    # text layer есть, но позиций не извлекли — например титульный
+                    # лист, лист общих данных, раздел текста без таблиц.
+                    state.pages_skipped += 1
+                return
+
+            # Vision fallback — для сканов/битого text layer.
             page_b64 = await run_in_threadpool(render_page_to_b64, doc, page_num)
 
             classification = await self._classify_page(page_b64, page_num)
@@ -114,8 +159,8 @@ class SpecParser:
                 state.pages_skipped += 1
                 return
 
-            items = await self._extract_items(page_b64, page_num)
-            for item_data in items:
+            items_llm = await self._extract_items(page_b64, page_num)
+            for item_data in items_llm:
                 state.sort_order += 1
                 state.items.append(
                     SpecItem(
