@@ -15,5 +15,35 @@
 - Один item — с дополнительными произвольными полями (flow/power/class/cooling) — чтобы tooltip tech_specs тоже было чем тестировать.
 - Реализация: `backend/apps/estimates/management/commands/seed_dev_data.py` — в цикле создания items прописать `tech_specs=...`.
 
+## Средний приоритет
+
+### 2. PDF import end-to-end с реальным Recognition
+
+- UI-PDF-verify проверен через Playwright MCP + `window.fetch` override (unit-level). Реальный запуск Recognition Service требует `OPENAI_API_KEY` — в dev-среде Феди ключа не было.
+- Нужна верификация на stand (prod-like): смета → загрузка реального PDF → Recognition → items с `tech_specs.brand/model_name` → UI-02 подстроки.
+- Исполнитель: Андрей (на prod) или любой агент при наличии ключа.
+
+### 3. Унификация контракта ImportResult (Excel vs PDF)
+
+- Сейчас Excel отдаёт `{created, updated, errors}`, PDF через Recognition — `{created, sections, errors, pages_total, pages_processed}`.
+- MVP-решение: `updated?: number` optional в общем `ImportResult` type.
+- Tech debt: разделить на два type — `ExcelImportResult` и `PdfImportResult`. Разные операции, разные смыслы, общий type вносит путаницу.
+- Реализация: `ismeta/frontend/lib/api/types.ts` + соответствующие mappers в `ExcelImportDialog` / `PdfImportDialog`.
+
+## Низкий приоритет
+
+### 4. Playwright MCP screenshot зависание с Radix Dialog
+
+- Стабильно «waiting for fonts to load» после нескольких взаимодействий с открытым Radix Dialog.
+- Workaround для ручных верификаций: закрывать Dialog перед `browser_take_screenshot`.
+- Долгосрочное решение: прямые Playwright-скрипты (без MCP) для тяжёлых UI-проверок. Или PR в Playwright MCP.
+
+### 5. Mid-session 400 на GET /api/v1/estimates/{id}/ в dev ISMeta backend
+
+- После сотен запросов в одной dev-сессии endpoint детали сметы начинает отвечать 400 Bad Request, хотя endpoint списка возвращает смету с тем же id.
+- Возможные причины: workspace-middleware, session state, connection pool exhaustion, cache drift.
+- Исполнитель: backend (Петя). Расследовать — нужны логи с момента 400, state middleware, БД-сессии.
+
 ## Записано
-- 2026-04-20: seed_dev_data tech_specs (UI-03 review, Федя)
+- 2026-04-20: #1 seed_dev_data tech_specs (UI-03, Федя)
+- 2026-04-21: #2–5 (UI-PDF-verify, Федя — открытые вопросы из ручной проверки)
