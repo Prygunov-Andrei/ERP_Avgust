@@ -99,9 +99,12 @@ class NewsPostViewSet(viewsets.ModelViewSet):
 
         # Если пользователь не админ, показываем только опубликованные новости с рейтингом 5
         if not self.request.user.is_staff:
+            # is_no_news_found — служебная пометка «новостей не найдено» из discovery;
+            # на публичном HVAC-портале эти записи не должны светиться (M5.5).
             queryset = queryset.filter(
                 status='published',
-                pub_date__lte=timezone.now()
+                pub_date__lte=timezone.now(),
+                is_no_news_found=False,
             )
             # По умолчанию показываем только 5★, если star_rating не указан явно
             star_rating_param = self.request.query_params.get('star_rating', None)

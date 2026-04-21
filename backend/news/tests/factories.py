@@ -28,6 +28,9 @@ class NewsPostFactory(DjangoModelFactory):
     source_language = "ru"
     pub_date = factory.LazyFunction(timezone.now)
     category = NewsPost.Category.INDUSTRY
+    # star_rating=5 — NewsPostViewSet для anonymous users показывает только 5★;
+    # дефолт облегчает тесты публичного API.
+    star_rating = 5
 
     @factory.post_generation
     def mentioned_ac_models(self, create, extracted, **kwargs):
