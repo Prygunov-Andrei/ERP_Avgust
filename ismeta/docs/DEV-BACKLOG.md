@@ -233,6 +233,21 @@
 
 ---
 
+### 17. dedup убран — E15.03-hotfix (2026-04-21)
+
+Контекст: бизнес-правило «смета = точная копия PDF». Раньше `_deduplicate` суммировал
+одинаковые (name, model, brand) из разных секций → неверные количества в итоге (golden
+QA-сессия 2: Kleber 140кг Общеобменная + 40кг Противодымная сливались в 180кг).
+
+Решение: `SpecParser._deduplicate` удалён. Вызовы из `parse` и `build_partial`
+убраны. Defensive truncate name >500 символов в `apply_parsed_items` — предотвращает
+500 при багнутом multi-line name из парсера (до E15.04).
+
+Если в будущем понадобится опциональная дедупликация — делать на UI-уровне с явным
+UX (конфликт позиций) + section_name в ключе.
+
+---
+
 ### 16. spec_parser._process_page — except Exception без traceback
 
 **Контекст:** `recognition/app/services/spec_parser.py:_process_page` ловит `Exception` на уровне страницы и пишет `logger.warning(...)` со `str(e)`. Traceback теряется — регрессию в `parse_page_items` (например падение на edge-case строк) поймаем только по items, не по stack.

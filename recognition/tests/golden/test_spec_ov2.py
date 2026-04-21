@@ -8,6 +8,10 @@
 
 Цель: catch regressions in text-layer parser (pdf_text.py) — если эвристика
 колонок/штампов поломается, recall упадёт ниже 85% и тест не пройдёт.
+
+Дедупликация отключена с E15.03-hotfix (смета = точная копия PDF). Одинаковые
+(name, model, brand) из разных секций остаются отдельными позициями — поэтому
+фактическое число items может быть больше уникальных троек.
 """
 
 from pathlib import Path
@@ -28,8 +32,9 @@ FIXTURE_PDF = (
 
 # Базовые ожидания.
 EXPECTED_PAGES_TOTAL = 9
-# 90% от 152 — после E15.03 sticky-parent fix текущий baseline 142.
-# Запас на ±1-2 позиции от незначительных правок эвристик.
+# 90% от 152 — после E15.03 sticky-parent fix + E15.03-hotfix (dedup отключён).
+# Без дедупа число позиций может быть больше уникальных троек — порог 138 остаётся
+# как нижняя граница recall (≥ 138 строк было успешно распознано).
 MIN_ITEMS = 138
 MIN_SECTIONS = 4
 
@@ -64,9 +69,9 @@ async def test_ov2_spec_text_layer_recall():
         f"(text layer должен покрывать все страницы)"
     )
 
-    # Recall ≥ 85% от 152 позиций. Реальная цифра на момент написания ≈141
-    # уникальная (после дедупликации name+model+brand). Если цифра уедет вниз
-    # на регрессии — тест упадёт.
+    # Recall ≥ 85% от 152 позиций. После E15.03-hotfix dedup отключён —
+    # одинаковые (name, model, brand) из разных секций остаются отдельно,
+    # поэтому фактическое число может быть больше уникальных троек.
     assert len(result.items) >= MIN_ITEMS, (
         f"recall too low: items={len(result.items)} < {MIN_ITEMS}"
     )
@@ -76,14 +81,6 @@ async def test_ov2_spec_text_layer_recall():
         f"section detection too coarse: {len(sections)} sections, "
         f"expected ≥{MIN_SECTIONS}. got: {sections}"
     )
-
-    # Dedup должен выдавать уникальные (name, model, brand) — проверяем что
-    # в items нет одинаковых троек.
-    seen: set[tuple[str, str, str]] = set()
-    for it in result.items:
-        key = (it.name.lower().strip(), it.model_name.lower().strip(), it.brand.lower().strip())
-        assert key not in seen, f"duplicate after dedup: {key}"
-        seen.add(key)
 
 
 @pytest.mark.golden

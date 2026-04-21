@@ -110,6 +110,32 @@ class TestApplyParsedItems:
         result = apply_parsed_items(str(estimate.id), str(ws.id), items)
         assert result["created"] == 0
 
+    def test_apply_truncates_oversized_name(self, estimate, ws, caplog):
+        """E15.03-hotfix: name >500 символов обрезается до 500 + warning,
+        а не падает с VARCHAR overflow на весь import."""
+        import logging
+
+        long_name = "Вентилятор канальный " + "ТТХ " * 200  # ~820 символов
+        assert len(long_name) > 500
+        items = [
+            {
+                "name": long_name,
+                "unit": "шт",
+                "quantity": 1,
+                "section_name": "Вентиляция",
+                "page_number": 3,
+            }
+        ]
+        with caplog.at_level(logging.WARNING, logger="apps.estimate.services.pdf_import_service"):
+            result = apply_parsed_items(str(estimate.id), str(ws.id), items)
+        assert result["created"] == 1
+        item = EstimateItem.objects.get(estimate=estimate)
+        assert len(item.name) == 500
+        assert item.name == long_name[:500]
+        assert any("truncated" in rec.message for rec in caplog.records), (
+            f"expected warning with 'truncated': {[r.message for r in caplog.records]}"
+        )
+
 
 @pytest.mark.django_db
 class TestPDFImportEndpoint:
