@@ -111,6 +111,19 @@ class ACModelSupplierSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class ACModelMentionLiteSerializer(serializers.ModelSerializer):
+    """Лёгкий shape ACModel для секции «Упомянутая модель» в news-detail
+    (Ф7A). Не тащит photos/scores/raw_values — только идентификатор
+    и минимум полей для card."""
+
+    brand = serializers.CharField(source="brand.name", read_only=True)
+
+    class Meta:
+        model = ACModel
+        fields = ["id", "slug", "brand", "inner_unit", "total_index", "price"]
+        read_only_fields = fields
+
+
 class ACModelListSerializer(serializers.ModelSerializer):
     brand = serializers.CharField(source="brand.name", read_only=True)
     brand_logo = serializers.SerializerMethodField()
