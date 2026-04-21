@@ -1,23 +1,28 @@
-export const dynamic = "force-dynamic";
-import { PublicLayout } from '@/components/public/PublicLayout';
-import { LoadMoreNews } from '@/components/public/LoadMoreNews';
+import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
 import { getNews } from '@/lib/hvac-api';
+import NewsFeedHero from './_components/NewsFeedHero';
+import NewsCategoryFilter from './_components/NewsCategoryFilter';
+import NewsFeedList from './_components/NewsFeedList';
 
-export default async function HomePage() {
-  const data = await getNews(1);
+export const revalidate = 300;
+
+export default async function NewsFeedPage() {
+  const firstPage = await getNews(1);
+  const items = firstPage.results ?? [];
 
   return (
-    <PublicLayout>
-      <section>
-        <h1 className="mb-8 text-3xl font-bold text-foreground">
-          Новости HVAC-индустрии
-        </h1>
-        <LoadMoreNews
-          initialNews={data.results}
-          hasMore={!!data.next}
-          totalCount={data.count}
+    <>
+      <HvacInfoHeader />
+      <main>
+        <NewsFeedHero items={items} />
+        <NewsCategoryFilter />
+        <NewsFeedList
+          items={items}
+          hasMore={!!firstPage.next}
+          totalCount={firstPage.count ?? items.length}
+          skipFirst={5}
         />
-      </section>
-    </PublicLayout>
+      </main>
+    </>
   );
 }

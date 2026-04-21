@@ -23,6 +23,22 @@ export interface HvacManufacturerRef {
   name: string;
 }
 
+export interface HvacNewsEditorialAuthor {
+  name: string;
+  role?: string;
+  avatar_url?: string;
+}
+
+export interface HvacNewsMentionedAcModel {
+  id: number;
+  slug: string;
+  brand: string;
+  brand_logo?: string;
+  inner_unit: string;
+  total_index?: number;
+  price?: string | null;
+}
+
 export interface HvacNews {
   id: number;
   title: string;
@@ -53,6 +69,14 @@ export interface HvacNews {
   // Асинхронный перевод
   translation_status?: HvacTranslationStatus | null;
   translation_error?: string | null;
+  // M5 (редизайн ленты, Ф7A). Могут приходить пустыми до мержа M5 —
+  // фронт строит graceful fallback.
+  category?: string;
+  category_display?: string;
+  lede?: string;
+  reading_time_minutes?: number;
+  editorial_author?: HvacNewsEditorialAuthor | null;
+  mentioned_ac_models?: HvacNewsMentionedAcModel[];
 }
 
 export interface HvacManufacturer {
