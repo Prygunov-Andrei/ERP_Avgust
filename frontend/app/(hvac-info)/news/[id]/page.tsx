@@ -7,7 +7,13 @@ import { getNewsPrimaryImageUrl, stripHtml, truncate } from '@/lib/utils';
 import NewsBreadcrumb from './_components/NewsBreadcrumb';
 import NewsArticleHero from './_components/NewsArticleHero';
 import NewsArticleBody from './_components/NewsArticleBody';
-import { getNewsCategoryLabel, getNewsLede } from '../../_components/newsHelpers';
+import NewsMentionedModelCard from './_components/NewsMentionedModelCard';
+import NewsPrevNextNav from './_components/NewsPrevNextNav';
+import {
+  getNewsCategoryLabel,
+  getNewsLede,
+  prevNextFromIndex,
+} from '../../_components/newsHelpers';
 
 export const revalidate = 3600;
 
@@ -56,12 +62,17 @@ export default async function NewsDetailPage({ params }: Props) {
   const numericId = Number(id);
 
   let news;
+  let allNews: Awaited<ReturnType<typeof getAllNews>> = [];
   try {
-    news = await getNewsById(numericId);
+    [news, allNews] = await Promise.all([
+      getNewsById(numericId),
+      getAllNews().catch(() => []),
+    ]);
   } catch {
     notFound();
   }
 
+  const { prev, next } = prevNextFromIndex(allNews, news.id);
   const imageUrl = getNewsPrimaryImageUrl(news);
 
   return (
@@ -104,6 +115,12 @@ export default async function NewsDetailPage({ params }: Props) {
         <NewsBreadcrumb category={getNewsCategoryLabel(news)} />
         <NewsArticleHero news={news} />
         <NewsArticleBody body={news.body || ''} />
+
+        {news.mentioned_ac_models && news.mentioned_ac_models.length > 0 && (
+          <NewsMentionedModelCard models={news.mentioned_ac_models} />
+        )}
+
+        <NewsPrevNextNav prev={prev} next={next} />
 
         {news.source_url && (
           <footer
