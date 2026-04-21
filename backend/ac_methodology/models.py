@@ -71,6 +71,14 @@ class Criterion(TimestampedModel):
         FALLBACK = "fallback", "С fallback-логикой"
         BRAND_AGE = "brand_age", "Возраст бренда в РФ"
 
+    class Group(models.TextChoices):
+        CLIMATE = "climate", "Климат"
+        COMPRESSOR = "compressor", "Компрессор и контур"
+        ACOUSTICS = "acoustics", "Акустика"
+        CONTROL = "control", "Управление и датчики"
+        DIMENSIONS = "dimensions", "Габариты и комплектация"
+        OTHER = "other", "Прочее"
+
     code = models.CharField(
         max_length=50, unique=True, verbose_name="Код",
         help_text="Уникальный код параметра, напр. noise_min",
@@ -95,6 +103,14 @@ class Criterion(TimestampedModel):
 
     value_type = models.CharField(
         max_length=30, choices=ValueType.choices, verbose_name="Тип значения",
+    )
+
+    # M4.4: группа параметра в таблице «Характеристики» на детальной странице.
+    # «other» — без группы, показывается последним блоком.
+    group = models.CharField(
+        max_length=20, choices=Group.choices, default=Group.OTHER,
+        verbose_name="Группа",
+        help_text="Группа в таблице «Характеристики». «Прочее» — без группы.",
     )
 
     is_active = models.BooleanField(default=True, verbose_name="Активен")
