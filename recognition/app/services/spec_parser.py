@@ -22,6 +22,7 @@ from ._common import _strip_markdown_fence
 from .pdf_render import render_page_to_b64
 from .pdf_text import (
     TEXT_LAYER_MIN_CHARS_PER_PAGE,
+    TableRow,
     extract_structured_rows,
     has_usable_text_layer,
     parse_page_items,
@@ -136,14 +137,14 @@ class SpecParser:
         self._processed_pages: set[int] = getattr(self, "_processed_pages", set())
 
         # Фаза 1 — extract rows per page (sync, быстро).
-        pages_rows: list[list[object]] = []
+        pages_rows: list[list[TableRow]] = []
         for page_num in range(state.pages_total):
             try:
                 page = doc[page_num]
                 if not has_usable_text_layer(page, min_chars=TEXT_LAYER_MIN_CHARS_PER_PAGE):
                     pages_rows.append([])
                     continue
-                rows = await run_in_threadpool(extract_structured_rows, page)
+                rows: list[TableRow] = await run_in_threadpool(extract_structured_rows, page)
                 pages_rows.append(rows)
             except Exception as e:  # pragma: no cover - защита от fitz-exceptions
                 logger.warning(
@@ -166,13 +167,13 @@ class SpecParser:
                     cur_sticky = name
 
         # Фаза 3 — параллельные LLM calls (только для непустых rows).
-        async def run_one(page_num: int, rows: list[object], section: str, sticky: str):
+        async def run_one(page_num: int, rows: list[TableRow], section: str, sticky: str):
             if not rows:
                 return page_num, None
             try:
                 norm = await normalize_via_llm(
                     self.provider,
-                    rows,  # type: ignore[arg-type]
+                    rows,
                     page_number=page_num + 1,
                     current_section=section,
                     sticky_parent_name=sticky,
@@ -190,7 +191,9 @@ class SpecParser:
 
         tasks = [
             run_one(pn, rows, section, sticky)
-            for pn, (rows, (section, sticky)) in enumerate(zip(pages_rows, stickies))
+            for pn, (rows, (section, sticky)) in enumerate(
+                zip(pages_rows, stickies, strict=True)
+            )
         ]
         import asyncio as _asyncio
         outcomes = await _asyncio.gather(*tasks)
