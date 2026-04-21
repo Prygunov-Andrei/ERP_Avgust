@@ -110,6 +110,12 @@ curl -s -X POST http://localhost:8003/v1/parse/spec \
 
 Ответ: `{status, items[], errors[], pages_stats}`. `items[].tech_specs` — строка.
 
+**Hybrid path (E15.03):** парсер проверяет `page.get_text()` — если у страницы
+есть usable text layer (≥100 символов), извлечение идёт по эвристикам без вызова
+LLM (см. `app/services/pdf_text.py`). На нативно-экспортированных PDF-спецификациях
+это даёт recall ≈95% за ~0.1s/страницу вместо ~5s/стр через Vision. Страницы без
+text layer (сканы, фото) идут Vision fallback по прежней логике (classify → extract).
+
 ### Парсинг счёта поставщика — §2
 
 ```bash
