@@ -160,13 +160,16 @@ curl -s -X POST http://localhost:8003/v1/parse/quote \
 
 ```bash
 cd recognition
-PYTHONPATH=. .venv/bin/python -m pytest -q
+PYTHONPATH=. .venv/bin/python -m pytest -q                          # обычный прогон, golden пропускаются
+PYTHONPATH=. .venv/bin/python -m pytest -m golden -v                # только golden-тесты на реальных PDF
 PYTHONPATH=. .venv/bin/python -m pytest --cov=app --cov-report=term-missing
 .venv/bin/python -m mypy app/ --disallow-untyped-defs
 .venv/bin/python -m ruff check .
 ```
 
-Ожидания: pytest 17 passed, coverage ≥ 80%, mypy/ruff clean.
+Ожидания: pytest 73 passed, coverage ≥ 80%, mypy/ruff clean. Golden suite (2
+теста) идёт по реальной ОВ2-спецификации из `ismeta/tests/fixtures/golden/` —
+recall ≥ 85%, Vision не вызывается.
 
 ## Логи
 
