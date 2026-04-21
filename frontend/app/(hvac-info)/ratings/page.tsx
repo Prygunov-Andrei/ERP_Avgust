@@ -3,7 +3,7 @@ import {
   getRatingMethodology,
   getRatingModels,
 } from '@/lib/api/services/rating';
-import RatingHeader from './_components/RatingHeader';
+import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
 import HeroBlock from './_components/HeroBlock';
 import DesktopListing from './_components/DesktopListing';
 import MobileListing from './_components/MobileListing';
@@ -19,7 +19,7 @@ export default async function RatingHomePage() {
 
   return (
     <>
-      <RatingHeader />
+      <HvacInfoHeader />
       <Suspense fallback={null}>
         <div className="hidden md:block">
           <HeroBlock stats={methodology.stats} />

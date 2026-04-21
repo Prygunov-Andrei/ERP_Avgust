@@ -121,6 +121,18 @@ export interface RatingModelDetail {
   inner_unit_weight_kg: string | null;
   outer_unit_dimensions: string;
   outer_unit_weight_kg: string | null;
+
+  // M5 — до 5 упоминаний модели в новостях. Могут отсутствовать до мержа M5.
+  news_mentions?: RatingNewsMention[];
+}
+
+export interface RatingNewsMention {
+  id: number;
+  title: string;
+  pub_date: string;
+  category?: string;
+  category_display?: string;
+  reading_time_minutes?: number | null;
 }
 
 export type RatingCriterionGroup =

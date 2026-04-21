@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import RatingHeader from '../_components/RatingHeader';
+import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
 import { getRatingMethodology } from '@/lib/api/services/rating';
 
 import MethodologyHero from './MethodologyHero';
@@ -22,7 +22,7 @@ export default async function RatingMethodologyPage() {
   );
   return (
     <>
-      <RatingHeader />
+      <HvacInfoHeader />
       <MethodologyHero
         stats={methodology.stats}
         criteriaCount={methodology.criteria.length}

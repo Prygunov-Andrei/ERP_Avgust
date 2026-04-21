@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import RatingHeader from '../_components/RatingHeader';
+import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
 import { getRatingArchiveModels } from '@/lib/api/services/rating';
 
 import ArchiveHero from './ArchiveHero';
@@ -18,7 +18,7 @@ export default async function RatingArchivePage() {
   const models = await getRatingArchiveModels();
   return (
     <>
-      <RatingHeader />
+      <HvacInfoHeader />
       <ArchiveHero count={models.length} />
       <ArchiveTable models={models} />
     </>

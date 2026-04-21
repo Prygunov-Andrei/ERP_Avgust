@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import RatingHeader from '../_components/RatingHeader';
+import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
 import { getRatingBrands } from '@/lib/api/services/rating';
 
 import SubmitForm from './SubmitForm';
@@ -17,7 +17,7 @@ export default async function RatingSubmitPage() {
   const brands = await getRatingBrands();
   return (
     <>
-      <RatingHeader />
+      <HvacInfoHeader />
       <SubmitForm brands={brands} />
     </>
   );

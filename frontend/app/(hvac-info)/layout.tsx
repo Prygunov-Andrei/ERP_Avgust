@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Source_Serif_4, JetBrains_Mono } from 'next/font/google';
-import './_styles/tokens.css';
+import './ratings/_styles/tokens.css';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -25,21 +25,26 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Рейтинг кондиционеров — hvac-info.com',
-    template: '%s | Рейтинг кондиционеров',
+    default: 'HVAC Info — независимый портал о кондиционерах',
+    template: '%s | HVAC Info',
   },
   description:
-    'Независимый рейтинг бытовых кондиционеров: методика, параметры, отзывы, сравнение моделей.',
+    'Рейтинг кондиционеров, новости HVAC-индустрии, методика, франшиза Август-Климат.',
 };
 
-export default function RatingLayout({ children }: { children: React.ReactNode }) {
+export default function HvacInfoLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div
-      className={`rating-scope ${inter.variable} ${serif.variable} ${mono.variable} min-h-screen`}
+      className={`hvac-info-scope rating-scope ${inter.variable} ${serif.variable} ${mono.variable}`}
       style={{
         background: 'hsl(var(--rt-paper))',
         color: 'hsl(var(--rt-ink))',
-        fontFamily: 'var(--rt-font-sans)',
+        fontFamily: 'var(--rt-font-sans), Inter, system-ui, sans-serif',
+        minHeight: '100vh',
       }}
     >
       {children}
