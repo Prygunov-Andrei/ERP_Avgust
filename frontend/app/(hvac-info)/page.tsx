@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
 import { getNews } from '@/lib/hvac-api';
 import NewsFeedHero from './_components/NewsFeedHero';
@@ -15,13 +16,17 @@ export default async function NewsFeedPage() {
       <HvacInfoHeader />
       <main>
         <NewsFeedHero items={items} />
-        <NewsCategoryFilter />
-        <NewsFeedList
-          items={items}
-          hasMore={!!firstPage.next}
-          totalCount={firstPage.count ?? items.length}
-          skipFirst={5}
-        />
+        <Suspense fallback={null}>
+          <NewsCategoryFilter />
+        </Suspense>
+        <Suspense fallback={null}>
+          <NewsFeedList
+            items={items}
+            hasMore={!!firstPage.next}
+            totalCount={firstPage.count ?? items.length}
+            skipFirst={5}
+          />
+        </Suspense>
       </main>
     </>
   );
