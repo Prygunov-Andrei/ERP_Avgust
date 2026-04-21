@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EditableCell } from "./editable-cell";
+import { MaterialPickerCell } from "./material-picker-cell";
 import { ProcurementStatusSelect } from "./procurement-status-select";
 import type { EquipmentTrack } from "./track-tabs";
 import { techSpecsSubLabel, techSpecsTitle } from "./tech-specs";
@@ -279,12 +280,23 @@ export function ItemsTable({
         accessorKey: "material_price",
         header: () => <span className="block text-right">Цена мат.</span>,
         cell: ({ row }) => (
-          <EditableCell
+          <MaterialPickerCell
             value={row.original.material_price}
-            type="number"
-            align="right"
-            display={(v) => formatCurrency(v)}
-            onCommit={(next) => commitField(row.original, "material_price", next)}
+            workspaceId={workspaceId}
+            initialQuery={row.original.name}
+            onCommitPrice={(next) =>
+              commitField(row.original, "material_price", next)
+            }
+            onPick={(material) => {
+              // При выборе из справочника — сохраняем цену. Название/бренд
+              // позиции не перезаписываем: оператор искал под существующий
+              // item.name, сам выбрал конкретный материал из справочника,
+              // значит цена — единственное что точно надо синхронизировать.
+              // material_id логически — source-of-truth, но текущая модель
+              // EstimateItem не хранит FK на Material, поэтому пробрасываем
+              // только price.
+              commitField(row.original, "material_price", material.price);
+            }}
           />
         ),
         size: 120,
@@ -363,7 +375,7 @@ export function ItemsTable({
         size: 48,
       },
     ],
-    [commitField, remove, toggleKeyEquipment, setProcurementStatus, track, update.isPending],
+    [commitField, remove, toggleKeyEquipment, setProcurementStatus, track, update.isPending, workspaceId],
   );
 
   const table = useReactTable({

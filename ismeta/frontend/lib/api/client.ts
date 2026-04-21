@@ -9,6 +9,10 @@ import type {
   EstimateListItem,
   EstimateSection,
   ImportResult,
+  MaterialApplyResponse,
+  MaterialMatchResult,
+  MaterialMatchSession,
+  MaterialSearchResponse,
   MatchingResult,
   MatchingSession,
   PdfImportPreview,
@@ -324,4 +328,34 @@ export const importApi = {
       },
     );
   },
+};
+
+export const materialApi = {
+  search: (query: string, workspaceId: string, limit = 20) => {
+    const params = new URLSearchParams({
+      q: query,
+      limit: String(limit),
+      workspace_id: workspaceId,
+    });
+    return apiFetch<MaterialSearchResponse>(
+      `/materials/search/?${params.toString()}`,
+      { workspaceId },
+    );
+  },
+
+  match: (estimateId: UUID, workspaceId: string) =>
+    apiFetch<MaterialMatchSession>(
+      `/estimates/${estimateId}/match-materials/`,
+      { method: "POST", workspaceId },
+    ),
+
+  apply: (
+    estimateId: UUID,
+    matches: Pick<MaterialMatchResult, "item_id" | "material_price">[],
+    workspaceId: string,
+  ) =>
+    apiFetch<MaterialApplyResponse>(
+      `/estimates/${estimateId}/match-materials/apply/`,
+      { method: "POST", body: { matches }, workspaceId },
+    ),
 };

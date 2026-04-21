@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChatPanel } from "@/components/estimate/chat-panel";
 import { EstimateHeader } from "@/components/estimate/estimate-header";
 import { ImportDialog } from "@/components/estimate/import-dialog";
+import { MaterialsMatchingDialog } from "@/components/estimate/materials-matching-dialog";
 import { PdfImportDialog } from "@/components/estimate/pdf-import-dialog";
 import { ItemsTable } from "@/components/estimate/items-table";
 import { ProcurementSummary } from "@/components/estimate/procurement-summary";
@@ -32,6 +33,7 @@ export default function EstimateDetailPage({ params }: Props) {
   const [chatOpen, setChatOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
   const [pdfImportOpen, setPdfImportOpen] = React.useState(false);
+  const [materialsMatchOpen, setMaterialsMatchOpen] = React.useState(false);
   const [highlightItemId, setHighlightItemId] =
     React.useState<UUID | null>(null);
 
@@ -142,6 +144,7 @@ export default function EstimateDetailPage({ params }: Props) {
         onOpenChat={() => setChatOpen(true)}
         onOpenImport={() => setImportOpen(true)}
         onOpenPdfImport={() => setPdfImportOpen(true)}
+        onOpenMaterialsMatch={() => setMaterialsMatchOpen(true)}
       />
       <div className="flex flex-1 overflow-hidden">
         <SectionsPanel
@@ -195,6 +198,12 @@ export default function EstimateDetailPage({ params }: Props) {
         estimateId={id}
         open={pdfImportOpen}
         onOpenChange={setPdfImportOpen}
+      />
+      <MaterialsMatchingDialog
+        estimateId={id}
+        items={allItems}
+        open={materialsMatchOpen}
+        onOpenChange={setMaterialsMatchOpen}
       />
     </div>
   );

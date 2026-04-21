@@ -188,6 +188,48 @@ export interface MatchingSession {
   results: MatchingResult[];
 }
 
+// =============================================================================
+// Материалы (E-MAT-01): справочник + matching
+// =============================================================================
+
+export interface MaterialSearchHit {
+  id: UUID;
+  name: string;
+  unit: string;
+  price: string;
+  brand: string | null;
+  model_name: string | null;
+  score: string;
+}
+
+export interface MaterialSearchResponse {
+  query: string;
+  results: MaterialSearchHit[];
+}
+
+export type MaterialMatchBucket = "green" | "yellow" | "red";
+
+export interface MaterialMatchResult {
+  item_id: UUID;
+  material_id: UUID;
+  material_name: string;
+  material_unit: string;
+  material_price: string;
+  confidence: string;
+  bucket: MaterialMatchBucket;
+}
+
+export interface MaterialMatchSession {
+  session_id: string;
+  total_items: number;
+  matched: number;
+  results: MaterialMatchResult[];
+}
+
+export interface MaterialApplyResponse {
+  updated: number;
+}
+
 export interface ImportResult {
   created: number;
   // updated — только Excel-импорт возвращает это поле (update-aware по row_id).
