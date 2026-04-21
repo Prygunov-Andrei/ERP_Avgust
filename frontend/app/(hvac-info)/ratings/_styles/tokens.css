@@ -1,8 +1,10 @@
-/* Scoped design tokens for the public rating section.
-   Prefix --rt-* (rating). Isolated under .rating-scope so they do not
-   affect the global shadcn palette used by ERP admin and HVAC news. */
+/* Scoped design tokens for the public hvac-info portal.
+   Prefix --rt-* (rating, historic). Isolated under .hvac-info-scope so
+   they do not affect the global shadcn palette used by ERP admin.
+   .rating-scope остаётся alias-классом до Ф7B (облегчает миграцию). */
 
-.rating-scope {
+.rating-scope,
+.hvac-info-scope {
   --rt-ink: 0 0% 8%;
   --rt-ink-80: 0 0% 8% / 0.82;
   --rt-ink-60: 0 0% 8% / 0.60;
@@ -32,7 +34,8 @@
   --rt-font-mono: var(--rt-font-mono-loaded), 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
-.dark .rating-scope {
+.dark .rating-scope,
+.dark .hvac-info-scope {
   --rt-ink: 40 8% 92%;
   --rt-ink-80: 40 8% 92% / 0.82;
   --rt-ink-60: 40 8% 92% / 0.58;

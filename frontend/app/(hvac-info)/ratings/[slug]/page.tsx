@@ -6,7 +6,7 @@ import {
   getRatingModels,
 } from '@/lib/api/services/rating';
 import type { RatingModelDetail } from '@/lib/api/types/rating';
-import RatingHeader from '../_components/RatingHeader';
+import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
 import DetailBreadcrumb from '../_components/DetailBreadcrumb';
 import DetailHero from '../_components/DetailHero';
 import DetailMedia from '../_components/DetailMedia';
@@ -94,7 +94,7 @@ export default async function RatingDetailPage({ params }: Props) {
 
   return (
     <>
-      <RatingHeader />
+      <HvacInfoHeader />
       <DetailBreadcrumb />
       <DetailHero
         detail={detail}
