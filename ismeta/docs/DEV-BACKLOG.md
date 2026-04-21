@@ -44,6 +44,25 @@
 - Возможные причины: workspace-middleware, session state, connection pool exhaustion, cache drift.
 - Исполнитель: backend (Петя). Расследовать — нужны логи с момента 400, state middleware, БД-сессии.
 
+## Высокий приоритет
+
+### 6. TechSpecs Pydantic schema drift
+
+- **Контракт schema** (`ismeta/backend/apps/estimate/schemas.py::TechSpecs`): whitelist `manufacturer / model / power_kw / weight_kg / dimensions`.
+- **Runtime данные** (Recognition + pdf_import_service + UI-02): `brand / model_name / flow / cooling / source_page / ...` произвольные ключи.
+- Сейчас spared только тем, что Pydantic v2 по default делает `extra="ignore"` — но поле `CONTRIBUTING §10.1` декларирует whitelist как контракт, хотя он не соблюдается. Любая смена на `extra="forbid"` или явный `.model_dump()` после `.model_validate()` сломает всё.
+- **Решение:**
+  - (a) Обновить TechSpecs под реальные поля Recognition (brand, model_name, flow, cooling, power, class, section, material, manufacturer как alias ...) + explicit `model_config = ConfigDict(extra="allow")` для будущих расширений.
+  - (b) Или удалить schema если она не даёт ценности (всё равно dict JSONB).
+- **Исполнитель:** IS-Петя (backend). Проверить использование `.model_validate` — возможно `.clean()` не вызывается при save через ORM и это мёртвая валидация.
+
+### 7. respx в dev venv пропадает
+
+- При повторных reset/make ismeta-setup пакет `respx>=0.21` в requirements.txt не устанавливается в главный venv (проявлялось у Феди в worktree `ERP_Avgust_is_fedya_seed`).
+- Причина неясна — возможно Makefile ismeta-setup использует старый lock или разные venvs в worktrees.
+- **Решение:** поправить Makefile / requirements lock, чтобы `make ismeta-backend-install` надёжно тянул все test deps.
+
 ## Записано
 - 2026-04-20: #1 seed_dev_data tech_specs (UI-03, Федя)
-- 2026-04-21: #2–5 (UI-PDF-verify, Федя — открытые вопросы из ручной проверки)
+- 2026-04-21: #2–5 (UI-PDF-verify, Федя)
+- 2026-04-21: #6–7 (E-SEED-01, Федя — TechSpecs schema drift, respx env)
