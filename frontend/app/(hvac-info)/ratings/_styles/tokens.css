@@ -64,3 +64,13 @@
   --rt-accent: 181 56% 52%;       /* #3fc7c9 teal-300 — HVAC Info brand dark */
   --rt-accent-bg: 181 56% 52% / 0.18;
 }
+
+/* Brand-логотипы: переключение light/dark версий.
+   - <BrandLogo srcDark={...}/> рендерит оба <img>, CSS скрывает не-активный.
+   - Если у бренда нет dark-версии, BrandLogo рендерит один <img class="rt-brand-logo-single">
+     и в dark-теме накладывается invert-фоллбек (работает для monochromatic
+     логотипов без потери читаемости). */
+.rt-brand-logo-dark { display: none; }
+.dark .rt-brand-logo-light { display: none !important; }
+.dark .rt-brand-logo-dark { display: block !important; }
+.dark .rt-brand-logo-single { filter: invert(1) hue-rotate(180deg); }
