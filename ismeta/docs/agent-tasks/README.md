@@ -23,6 +23,9 @@
 | Файл | Кому | Статус | Ветка |
 |---|---|---|---|
 | [E16-it1-invoice-hybrid-petya.md](./E16-it1-invoice-hybrid-petya.md) | Петя | 🔴 E16 итерация 1 — Invoice гибрид | `recognition/09-e16-it1-invoice-hybrid` |
+| [E17-quote-xlsx-parser-petya.md](./E17-quote-xlsx-parser-petya.md) | Петя | 🟡 **DRAFT** — не стартовать без явного go PO | (pending) |
+
+**Примечание:** E17 в draft — scope проектировался до обсуждения с PO. Workflow КП в ERP — отдельная продуктовая тема (см. `ismeta/docs/OPEN-QUESTIONS-procurement-ux.md`). Backend-расширение Recognition полезно само по себе, но запускаем только по явному согласию.
 
 ## Выполнено
 
