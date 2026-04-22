@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import SearchDialog from './SearchDialog';
 
 type NavItem =
   | { label: string; href: string; match: (path: string) => boolean }
@@ -29,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function HvacInfoHeader() {
   const pathname = usePathname() ?? '/';
+  const [searchOpen, setSearchOpen] = useState(false);
   return (
     <header
       style={{
@@ -148,26 +151,29 @@ export default function HvacInfoHeader() {
         <div
           style={{
             display: 'none',
-            gap: 14,
+            gap: 8,
             alignItems: 'center',
           }}
           className="rt-actions-desktop"
         >
+          <SearchButton onClick={() => setSearchOpen(true)} />
           <ThemeToggle />
         </div>
 
         <div
           style={{
             display: 'flex',
-            gap: 14,
+            gap: 8,
             alignItems: 'center',
             marginLeft: 'auto',
           }}
           className="rt-actions-mobile"
         >
+          <SearchButton onClick={() => setSearchOpen(true)} />
           <ThemeToggle />
         </div>
       </div>
+      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <style>{`
         @media (min-width: 1024px) {
@@ -183,32 +189,13 @@ export default function HvacInfoHeader() {
 }
 
 function ThemeToggle() {
-  const [dark, setDark] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    const saved =
-      typeof localStorage !== 'undefined' ? localStorage.getItem('hvac-theme') : null;
-    const prefersDark =
-      typeof window !== 'undefined' &&
-      window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-    const isDark = saved === 'dark' || (!saved && !!prefersDark);
-    setDark(isDark);
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark', isDark);
-    }
     setMounted(true);
   }, []);
-  const onClick = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle('dark', next);
-    try {
-      localStorage.setItem('hvac-theme', next ? 'dark' : 'light');
-    } catch {
-      /* storage unavailable — ok, persist на следующий tick не важен */
-    }
-  };
-  // До mount рендерим dimmed-иконку чтобы не было flash на SSR
+  const dark = resolvedTheme === 'dark';
+  const onClick = () => setTheme(dark ? 'light' : 'dark');
   return (
     <button
       type="button"
@@ -239,6 +226,44 @@ function ThemeToggle() {
           <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
         </svg>
       )}
+    </button>
+  );
+}
+
+function SearchButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Поиск"
+      data-testid="search-button"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 32,
+        height: 32,
+        background: 'transparent',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer',
+        color: 'hsl(var(--rt-ink-60))',
+      }}
+    >
+      <svg
+        width={16}
+        height={16}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <circle cx={11} cy={11} r={7} />
+        <path d="M21 21l-4.35-4.35" />
+      </svg>
     </button>
   );
 }
