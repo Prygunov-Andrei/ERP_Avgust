@@ -31,6 +31,14 @@ class Brand(TimestampedModel):
         upload_to="ac_rating/brands/", blank=True, default="",
         verbose_name="Логотип",
     )
+    logo_dark = models.ImageField(
+        upload_to="ac_rating/brands/dark/", blank=True, null=True,
+        verbose_name="Логотип (тёмная тема)",
+        help_text=(
+            "Автоматически генерируется из `logo` (recolor monochromatic → white)."
+            " Пусто для цветных логотипов — фронт использует оригинал."
+        ),
+    )
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     origin_class = models.ForeignKey(
         BrandOriginClass, on_delete=models.SET_NULL, null=True, blank=True,
