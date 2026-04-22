@@ -31,7 +31,9 @@ from .spec_normalizer import (
     LLMNormalizationError,
     NormalizedItem,
     NormalizedPage,
+    compute_confidence,
     normalize_via_llm,
+    normalize_via_llm_multimodal,
 )
 
 logger = logging.getLogger(__name__)
@@ -82,6 +84,12 @@ class _ParseState:
     llm_prompt_tokens: int = 0
     llm_completion_tokens: int = 0
     llm_warnings: list[str] = field(default_factory=list)
+    # E15.05 it2 (R27): метрики multimodal retry.
+    multimodal_retries: int = 0
+    multimodal_prompt_tokens: int = 0
+    multimodal_completion_tokens: int = 0
+    # Per-page confidence — сохраняется для отчёта/логов.
+    confidence_scores: list[tuple[int, float, bool]] = field(default_factory=list)
 
 
 class SpecParser:
@@ -198,21 +206,77 @@ class SpecParser:
         import asyncio as _asyncio
         outcomes = await _asyncio.gather(*tasks)
 
-        # Фаза 4 — слияние результатов в порядке страниц + финализация
-        # sequential state (sticky/section для возможного legacy fallback).
+        # Фаза 4 — Phase 1 results в порядке страниц + R27 conditional
+        # multimodal retry на страницах с низким confidence.
+        phase1_by_page: dict[int, NormalizedPage] = {}
         for page_num, norm in outcomes:
             if norm == "no_text_complete":
-                # Провайдер не поддерживает text_complete — все страницы пойдут
-                # в sequential fallback.
-                return
+                return  # провайдер без text_complete → fallback на sequential
             if norm is None:
-                continue  # rows пустые / LLM упал → sequential-fallback на этой странице
+                continue
+            phase1_by_page[page_num] = norm
             state.llm_calls += 1
             state.llm_prompt_tokens += norm.prompt_tokens
             state.llm_completion_tokens += norm.completion_tokens
             state.llm_warnings.extend(
                 f"page {page_num + 1}: {w}" for w in norm.warnings
             )
+
+        # R27 Phase 2 — параллельный multimodal retry для pages с confidence < threshold.
+        final_by_page: dict[int, NormalizedPage] = dict(phase1_by_page)
+        if settings.llm_multimodal_retry_enabled:
+            retry_jobs = []
+            for page_num, norm in phase1_by_page.items():
+                rows = pages_rows[page_num]
+                conf = compute_confidence(norm, rows)
+                retried = False
+                if conf < settings.llm_multimodal_retry_threshold and rows:
+                    retried = True
+                    retry_jobs.append(
+                        self._run_multimodal_retry(
+                            doc, page_num, rows, norm, stickies[page_num]
+                        )
+                    )
+                state.confidence_scores.append((page_num + 1, conf, retried))
+
+            if retry_jobs:
+                retry_outcomes = await _asyncio.gather(
+                    *retry_jobs, return_exceptions=True
+                )
+                for outcome in retry_outcomes:
+                    if isinstance(outcome, BaseException):
+                        logger.warning(
+                            "multimodal retry crashed: %s", outcome
+                        )
+                        continue
+                    page_num, norm_p2 = outcome  # type: ignore[misc]
+                    if norm_p2 is None:
+                        continue
+                    # Broker-selection: принимаем P2 только если confidence
+                    # реально вырос vs P1 (иначе LLM мог выдать мусор на picture).
+                    p1 = phase1_by_page[page_num]
+                    rows = pages_rows[page_num]
+                    conf_p1 = compute_confidence(p1, rows)
+                    conf_p2 = compute_confidence(norm_p2, rows)
+                    if conf_p2 > conf_p1:
+                        final_by_page[page_num] = norm_p2
+                        # Обновляем метрики confidence для отчёта (заменяем tuple).
+                        state.confidence_scores = [
+                            (pn, conf_p2 if pn == page_num + 1 else c, r)
+                            for pn, c, r in state.confidence_scores
+                        ]
+                    state.multimodal_retries += 1
+                    state.multimodal_prompt_tokens += norm_p2.prompt_tokens
+                    state.multimodal_completion_tokens += norm_p2.completion_tokens
+                    state.llm_warnings.extend(
+                        f"page {page_num + 1} [multimodal]: {w}"
+                        for w in norm_p2.warnings
+                    )
+
+        # Фаза 5 — применяем финальные результаты (после возможного retry) в
+        # порядке страниц + обновление sequential state.
+        for page_num in sorted(final_by_page.keys()):
+            norm = final_by_page[page_num]
             state.current_section = norm.new_section or state.current_section
             state.sticky_parent_name = norm.new_sticky or state.sticky_parent_name
             self._append_normalized_items(norm, page_num)
@@ -221,6 +285,60 @@ class SpecParser:
             else:
                 state.pages_skipped += 1
             self._processed_pages.add(page_num)
+
+    async def _run_multimodal_retry(
+        self,
+        doc: "fitz.Document",
+        page_num: int,
+        rows: list[TableRow],
+        phase1: NormalizedPage,
+        sticky_ctx: tuple[str, str],
+    ) -> tuple[int, NormalizedPage | None]:
+        """Выполнить Phase 2: render page → base64 PNG → multimodal normalize."""
+        try:
+            img_b64 = await run_in_threadpool(render_page_to_b64, doc, page_num)
+        except Exception as e:  # pragma: no cover
+            logger.warning(
+                "multimodal render failed",
+                extra={"page": page_num + 1, "error": str(e)},
+            )
+            return page_num, None
+
+        section, sticky = sticky_ctx
+        try:
+            norm_p2 = await normalize_via_llm_multimodal(
+                self.provider,
+                rows,
+                image_b64=img_b64,
+                page_number=page_num + 1,
+                current_section=section,
+                sticky_parent_name=sticky,
+                max_tokens=settings.llm_normalize_max_tokens,
+            )
+        except NotImplementedError:
+            logger.info(
+                "provider has no multimodal_complete, skip retry",
+                extra={"page": page_num + 1},
+            )
+            return page_num, None
+        except LLMNormalizationError as e:
+            logger.warning(
+                "multimodal LLM normalize failed",
+                extra={"page": page_num + 1, "error": str(e)},
+            )
+            return page_num, None
+
+        # Unused var avoided — phase1 logged for debug only.
+        if phase1 is not None and phase1.items:
+            logger.debug(
+                "multimodal retry finished",
+                extra={
+                    "page": page_num + 1,
+                    "p1_items": len(phase1.items),
+                    "p2_items": len(norm_p2.items),
+                },
+            )
+        return page_num, norm_p2
 
     async def _process_page_sequential(self, doc: fitz.Document, page_num: int) -> None:
         """Обработка страницы по старой (pre-batch) последовательной схеме —
@@ -375,6 +493,7 @@ class SpecParser:
                     name=final_name[:500],
                     model_name=item_data.model_name,
                     brand=item_data.brand,
+                    manufacturer=item_data.manufacturer,
                     unit=item_data.unit or "шт",
                     quantity=item_data.quantity,
                     tech_specs="",  # comments теперь отдельное поле
@@ -468,7 +587,11 @@ class SpecParser:
                     "llm_calls": state.llm_calls,
                     "prompt_tokens": state.llm_prompt_tokens,
                     "completion_tokens": state.llm_completion_tokens,
+                    "multimodal_retries": state.multimodal_retries,
+                    "multimodal_prompt_tokens": state.multimodal_prompt_tokens,
+                    "multimodal_completion_tokens": state.multimodal_completion_tokens,
                     "warnings_count": len(state.llm_warnings),
+                    "confidence_scores": state.confidence_scores,
                 },
             )
         return SpecParseResponse(
