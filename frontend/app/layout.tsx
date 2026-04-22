@@ -55,7 +55,13 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen antialiased bg-background text-foreground">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          storageKey="hvac-theme"
+          disableTransitionOnChange
+        >
           <ChunkErrorHandler />
           {children}
         </ThemeProvider>
