@@ -254,7 +254,12 @@ function MobileRows({
                 </span>
                 <span style={{ minWidth: 0, display: 'block' }}>
                   <span style={{ marginBottom: 3, display: 'block' }}>
-                    <BrandLogo src={m.brand_logo} name={m.brand} size={28} />
+                    <BrandLogo
+                      src={m.brand_logo}
+                      srcDark={m.brand_logo_dark}
+                      name={m.brand}
+                      size={28}
+                    />
                   </span>
                   <span
                     style={{

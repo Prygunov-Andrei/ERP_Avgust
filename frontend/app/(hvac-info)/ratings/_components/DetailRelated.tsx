@@ -93,7 +93,12 @@ function RelatedCard({ model }: { model: RatingModelListItem }) {
         </span>
       </div>
       <div style={{ height: 24, display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-        <BrandLogo src={model.brand_logo} name={model.brand} size={28} />
+        <BrandLogo
+          src={model.brand_logo}
+          srcDark={model.brand_logo_dark}
+          name={model.brand}
+          size={28}
+        />
       </div>
       <T size={12} color="hsl(var(--rt-ink-60))" style={{ display: 'block' }}>
         {model.inner_unit}

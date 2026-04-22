@@ -35,26 +35,53 @@ export function Meter({
 
 export function BrandLogo({
   src,
+  srcDark,
   name,
   size = 28,
 }: {
   src: string;
+  /** Dark-theme версия логотипа. Если не передана или пустая — используется
+   *  CSS-фоллбек `filter: invert(1) hue-rotate(180deg)` на `src` в `.dark`. */
+  srcDark?: string | null;
   name: string;
   size?: 28 | 32;
 }) {
   if (src) {
+    const imgStyle: CSSProperties = {
+      maxHeight: size,
+      maxWidth: size * 4,
+      objectFit: 'contain',
+    };
+    const hasDark = Boolean(srcDark);
+    if (!hasDark) {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={name}
+          className="rt-brand-logo-single"
+          style={{ ...imgStyle, display: 'block' }}
+        />
+      );
+    }
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt={name}
-        style={{
-          maxHeight: size,
-          maxWidth: size * 4,
-          objectFit: 'contain',
-          display: 'block',
-        }}
-      />
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={name}
+          className="rt-brand-logo-light"
+          style={{ ...imgStyle, display: 'block' }}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={srcDark as string}
+          alt={name}
+          aria-hidden="true"
+          className="rt-brand-logo-dark"
+          style={{ ...imgStyle, display: 'none' }}
+        />
+      </>
     );
   }
   const letter = name ? name.trim().charAt(0).toUpperCase() : '·';

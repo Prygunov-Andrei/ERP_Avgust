@@ -106,7 +106,12 @@ export function DetailHeroCollapsed({ detail, stats }: { detail: RatingModelDeta
         }}
         className="rt-detail-hero-collapsed-inner"
       >
-        <BrandLogo src={detail.brand.logo} name={detail.brand.name} size={28} />
+        <BrandLogo
+          src={detail.brand.logo}
+          srcDark={detail.brand.logo_dark}
+          name={detail.brand.name}
+          size={28}
+        />
         <span
           style={{
             fontSize: 13,
@@ -225,7 +230,12 @@ function HeroLeft({
           flexWrap: 'wrap',
         }}
       >
-        <BrandLogo src={detail.brand.logo} name={detail.brand.name} size={32} />
+        <BrandLogo
+          src={detail.brand.logo}
+          srcDark={detail.brand.logo_dark}
+          name={detail.brand.name}
+          size={32}
+        />
         {seriesLabel && (
           <>
             <span
@@ -439,7 +449,12 @@ function HeroMobile({
           gap: 12,
         }}
       >
-        <BrandLogo src={detail.brand.logo} name={detail.brand.name} size={32} />
+        <BrandLogo
+          src={detail.brand.logo}
+          srcDark={detail.brand.logo_dark}
+          name={detail.brand.name}
+          size={32}
+        />
         <div
           style={{
             display: 'flex',
