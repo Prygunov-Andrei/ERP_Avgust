@@ -8,9 +8,17 @@ const ABOUT_LINKS: Array<{ label: string; href: string; primary?: boolean }> = [
   { label: 'Добавить модель', href: '/ratings/submit/' },
 ];
 
-const AUTHORS: Array<[string, string]> = [
-  ['Андрей Петров', 'главный редактор, инженер-теплотехник'],
-  ['Ирина Соколова', 'лаборатория акустики, к. т. н.'],
+const AUTHORS: Array<{ name: string; role: string; photo: string }> = [
+  {
+    name: 'Савинов Максим',
+    role: 'главный редактор, автор методики',
+    photo: '/rating-authors/savinov.jpg',
+  },
+  {
+    name: 'Прыгунов Андрей',
+    role: 'редактор',
+    photo: '/rating-authors/prygunov.jpg',
+  },
 ];
 
 export default function HeroBlock({ stats }: { stats: RatingMethodologyStats }) {
@@ -129,28 +137,23 @@ function AuthorsBlock() {
     >
       <Eyebrow style={{ display: 'block', marginBottom: 12 }}>Авторы методики</Eyebrow>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {AUTHORS.map(([name, role]) => (
+        {AUTHORS.map(({ name, role, photo }) => (
           <div key={name} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <div
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo}
+              alt={name}
+              width={44}
+              height={44}
               style={{
                 width: 44,
                 height: 44,
                 borderRadius: '50%',
-                background: 'hsl(var(--rt-chip))',
-                overflow: 'hidden',
+                objectFit: 'cover',
                 flexShrink: 0,
-                position: 'relative',
+                display: 'block',
               }}
-            >
-              <svg width="44" height="44" viewBox="0 0 44 44" style={{ display: 'block' }} aria-hidden>
-                <circle cx="22" cy="17" r="7" fill="hsl(var(--rt-ink-40))" opacity="0.5" />
-                <path
-                  d="M 8 44 Q 8 30 22 30 Q 36 30 36 44 Z"
-                  fill="hsl(var(--rt-ink-40))"
-                  opacity="0.5"
-                />
-              </svg>
-            </div>
+            />
             <div style={{ minWidth: 0 }}>
               <T size={12} weight={600} style={{ letterSpacing: -0.1, display: 'block' }}>
                 {name}
