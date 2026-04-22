@@ -54,7 +54,12 @@ function SingleCard({ model }: { model: HvacNewsMentionedAcModel }) {
       className="rt-mentioned-single"
     >
       <div style={{ flexShrink: 0 }}>
-        <BrandLogo src={model.brand_logo || ''} name={model.brand || ''} size={32} />
+        <BrandLogo
+          src={model.brand_logo || ''}
+          srcDark={model.brand_logo_dark}
+          name={model.brand || ''}
+          size={32}
+        />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <Eyebrow>Упомянутая модель</Eyebrow>
@@ -112,7 +117,12 @@ function CompactCard({ model }: { model: HvacNewsMentionedAcModel }) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <BrandLogo src={model.brand_logo || ''} name={model.brand || ''} size={28} />
+        <BrandLogo
+          src={model.brand_logo || ''}
+          srcDark={model.brand_logo_dark}
+          name={model.brand || ''}
+          size={28}
+        />
         <T size={13} weight={600} style={{ lineHeight: 1.3 }}>
           {model.brand} {model.inner_unit}
         </T>

@@ -160,7 +160,12 @@ function ModelRow({
           justifyContent: 'center',
         }}
       >
-        <BrandLogo src={model.brand_logo} name={model.brand} size={28} />
+        <BrandLogo
+          src={model.brand_logo}
+          srcDark={model.brand_logo_dark}
+          name={model.brand}
+          size={28}
+        />
       </div>
       <div />
       <T size={13} weight={600} style={{ letterSpacing: -0.1 }}>

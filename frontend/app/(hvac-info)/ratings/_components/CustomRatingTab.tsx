@@ -724,7 +724,12 @@ function DesktopCustomRow({
           justifyContent: 'center',
         }}
       >
-        <BrandLogo src={model.brand_logo} name={model.brand} size={28} />
+        <BrandLogo
+          src={model.brand_logo}
+          srcDark={model.brand_logo_dark}
+          name={model.brand}
+          size={28}
+        />
       </span>
       <span />
       <T size={13} weight={600} style={{ letterSpacing: -0.1 }}>
@@ -870,7 +875,12 @@ function MobileCustomList({
                 </span>
                 <span style={{ minWidth: 0, display: 'block' }}>
                   <span style={{ marginBottom: 3, display: 'block' }}>
-                    <BrandLogo src={r.model.brand_logo} name={r.model.brand} size={28} />
+                    <BrandLogo
+                      src={r.model.brand_logo}
+                      srcDark={r.model.brand_logo_dark}
+                      name={r.model.brand}
+                      size={28}
+                    />
                   </span>
                   <span
                     style={{
