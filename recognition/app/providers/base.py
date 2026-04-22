@@ -32,7 +32,7 @@ class BaseLLMProvider(ABC):
         temperature: float = 0.0,
     ) -> TextCompletion:
         """Text-in → text-out completion. Используется для column-aware
-        нормализации структурированных rows (E15.04, gpt-4o-mini).
+        нормализации структурированных rows (E15.04, gpt-4o с it2).
 
         Default-имплементация падает с NotImplementedError — конкретный
         провайдер обязан переопределить, если планирует обрабатывать
@@ -41,6 +41,29 @@ class BaseLLMProvider(ABC):
         """
         raise NotImplementedError(
             f"{type(self).__name__} does not implement text_complete"
+        )
+
+    async def multimodal_complete(
+        self,
+        prompt: str,
+        *,
+        image_b64: str,
+        max_tokens: int | None = None,
+        temperature: float = 0.0,
+    ) -> TextCompletion:
+        """E15.05 it2 (R27) — text-prompt + PNG image → structured JSON.
+
+        Отличается от `vision_complete` тем, что возвращает `TextCompletion`
+        с usage-метриками (для корректного cost tracking), принимает
+        max_tokens/temperature kwargs и ДОЛЖЕН использовать vision-качественную
+        модель (gpt-4o full, не mini) — Phase 2 retry после низкого confidence
+        требует максимум доступного качества.
+
+        Default — NotImplementedError: провайдер обязан переопределить для
+        работы multimodal-fallback пути в SpecParser.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement multimodal_complete"
         )
 
     async def aclose(self) -> None:  # pragma: no cover - default no-op

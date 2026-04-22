@@ -1,8 +1,13 @@
 """OpenAI Vision provider (async, with retry on 429/5xx).
 
 E15.04 — расширен `text_complete` для column-aware LLM-нормализации:
-text-in → JSON-out на gpt-4o-mini, без vision-payload (раз в 6× дешевле
-+ 3-5× быстрее vision-роута).
+text-in → JSON-out.
+
+E15.05 it2:
+- `text_complete` переключён с gpt-4o-mini на gpt-4o full (settings.llm_extract_model)
+  по решению PO — качество на ЕСКД-таблицах приоритет № 1.
+- Добавлен `multimodal_complete` — text prompt + PNG image → JSON. Используется
+  SpecParser'ом как Phase 2 retry при низком confidence (R27).
 """
 
 import asyncio
@@ -22,8 +27,10 @@ OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 class OpenAIVisionProvider(BaseLLMProvider):
     def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         self.api_key = api_key if api_key is not None else settings.openai_api_key
+        # `model` kwarg оставлен для backward-compat (старые тесты); в runtime
+        # text_complete/vision/multimodal читают settings.llm_*_model напрямую.
         self.model = model or settings.llm_model
-        self._client = httpx.AsyncClient(timeout=60.0)
+        self._client = httpx.AsyncClient(timeout=120.0)
 
     async def aclose(self) -> None:
         await self._client.aclose()
@@ -35,17 +42,18 @@ class OpenAIVisionProvider(BaseLLMProvider):
         max_tokens: int | None = None,
         temperature: float = 0.0,
     ) -> TextCompletion:
-        """Text completion для column-aware нормализации (E15.04).
+        """Text completion для column-aware нормализации.
 
         Контракт: prompt должен содержать инструкцию выдать строгий JSON.
         Включён `response_format=json_object` (см. комментарий в
         vision_complete про DEV-BACKLOG #10) — обязательно нужно слово
         "json"/"JSON" в промпте, иначе OpenAI откажет.
 
+        Модель: `settings.llm_extract_model` (E15.05 it2 default = gpt-4o).
         temperature=0 — детерминизм для golden-теста.
         """
         payload = {
-            "model": self.model,
+            "model": settings.llm_extract_model,
             "response_format": {"type": "json_object"},
             "temperature": temperature,
             "messages": [{"role": "user", "content": prompt}],
@@ -67,8 +75,11 @@ class OpenAIVisionProvider(BaseLLMProvider):
         # Обнаружено на live PDF-прогоне 2026-04-21, DEV-BACKLOG #10.
         # Требование OpenAI: хотя бы одно упоминание "json"/"JSON" в messages.
         # Наши prompts уже содержат "Ответь строго JSON", поэтому безопасно.
+        #
+        # Этот метод используется legacy Vision-route (classify_page /
+        # extract_items) — на нём оставляем classify-модель (mini).
         payload = {
-            "model": self.model,
+            "model": settings.llm_classify_model,
             "response_format": {"type": "json_object"},
             "messages": [
                 {
@@ -86,6 +97,53 @@ class OpenAIVisionProvider(BaseLLMProvider):
         }
         data = await self._post_with_retry(payload)
         return str(data["choices"][0]["message"]["content"])
+
+    async def multimodal_complete(
+        self,
+        prompt: str,
+        *,
+        image_b64: str,
+        max_tokens: int | None = None,
+        temperature: float = 0.0,
+    ) -> TextCompletion:
+        """E15.05 it2 (R27) — Phase 2 retry: prompt + PNG → structured JSON.
+
+        Всегда gpt-4o full (settings.llm_multimodal_model) — картинка + длинный
+        prompt требуют максимума доступного качества. `detail=high` заставляет
+        OpenAI обработать изображение в полном разрешении (важно для ЕСКД-шапки
+        с мелким 8pt шрифтом).
+
+        Возвращает `TextCompletion` с usage — SpecParser считает multimodal
+        tokens в отдельной статье статистики.
+        """
+        payload = {
+            "model": settings.llm_multimodal_model,
+            "response_format": {"type": "json_object"},
+            "temperature": temperature,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{image_b64}",
+                                "detail": "high",
+                            },
+                        },
+                    ],
+                }
+            ],
+            "max_tokens": max_tokens or settings.llm_normalize_max_tokens,
+        }
+        data = await self._post_with_retry(payload)
+        usage = data.get("usage") or {}
+        return TextCompletion(
+            content=str(data["choices"][0]["message"]["content"]),
+            prompt_tokens=int(usage.get("prompt_tokens") or 0),
+            completion_tokens=int(usage.get("completion_tokens") or 0),
+        )
 
     async def _post_with_retry(self, payload: dict) -> dict:
         """POST в OpenAI с retry на 429/5xx и сетевых ошибках (общий код

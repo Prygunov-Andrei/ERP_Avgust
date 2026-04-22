@@ -12,13 +12,16 @@
 4. Префикс-колонка «ПВ-ИТП»: склейка к name через `-`.
 5. Фильтр шапки/штампа (residual rows которые bbox-фильтр не поймал).
 
-Один LLM-call на страницу: gpt-4o-mini, temperature=0, response_format=json.
+Один LLM-call на страницу: gpt-4o (E15.05 it2 — был gpt-4o-mini), temperature=0,
+response_format=json. E15.05 it2 — conditional multimodal retry при низком
+confidence score (см. `normalize_via_llm_multimodal` + `compute_confidence`).
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import asdict, dataclass, field
 
 from ..providers.base import BaseLLMProvider, TextCompletion
@@ -33,6 +36,9 @@ class NormalizedItem:
     name: str
     model_name: str = ""
     brand: str = ""
+    # E15.05 it2 (R22): отдельное поле под «Завод-изготовитель» / «Производитель».
+    # LLM получает колонку cells.manufacturer из bbox-parser и маппит 1:1.
+    manufacturer: str = ""
     unit: str = "шт"
     quantity: float = 1.0
     comments: str = ""
@@ -56,8 +62,8 @@ class NormalizedPage:
 
 NORMALIZE_PROMPT_TEMPLATE = """Ты обрабатываешь страницу проектной спецификации ОВиК/ЭОМ (форма 1а ГОСТ 21.110).
 Я уже извлёк строки таблицы по bbox из text-layer PDF. Каждая строка — словарь
-с колонками: pos, name, model, brand, unit, qty, mass, comments. Плюс raw_blocks
-(все исходные текст-блоки строки, на случай если cells пустоваты).
+с колонками: pos, name, model, brand, manufacturer, unit, qty, mass, comments.
+Плюс raw_blocks (все исходные текст-блоки строки, на случай если cells пустоваты).
 
 Твоя задача — вернуть финальный список items этой страницы в JSON.
 
@@ -66,17 +72,19 @@ NORMALIZE_PROMPT_TEMPLATE = """Ты обрабатываешь страницу 
 КРИТИЧЕСКОЕ ПРАВИЛО 0 — маппинг cells → output (НЕ ПЕРЕСТАВЛЯЙ КОЛОНКИ):
 
 Для каждой row копируй значения строго 1:1 по ключам:
-  cells.name     → items[].name (с учётом sticky/multi-line, см. ниже)
-  cells.model    → items[].model_name
-  cells.brand    → items[].brand
-  cells.unit     → items[].unit
-  cells.qty      → items[].quantity (распарсенное число)
-  cells.comments → items[].comments
-  cells.pos      → items[].system_prefix (см. правило 5)
+  cells.name         → items[].name (с учётом sticky/multi-line, см. ниже)
+  cells.model        → items[].model_name
+  cells.brand        → items[].brand
+  cells.manufacturer → items[].manufacturer
+  cells.unit         → items[].unit
+  cells.qty          → items[].quantity (распарсенное число)
+  cells.comments     → items[].comments
+  cells.pos          → items[].system_prefix (см. правило 5)
 
 Если в row какое-то поле отсутствует в cells — ставь пустую строку / default:
   - model_name = ""
   - brand = ""
+  - manufacturer = ""
   - unit = "шт" (default)
   - quantity = 1 (default)
   - comments = ""
@@ -102,14 +110,51 @@ cells.unit → brand, cells.qty → unit) ЛОМАЕТ структуру сме
      "3.2 Кабели и провода"          → new_section = "Кабели и провода"
    Префикс оставь только если без него имя становится бессмысленным.
 
+1d. Normalize section_name. ВСЕГДА удаляй с конца section_name и new_section
+    пробелы, двоеточия (`:`), тире (`—`), дефисы (`-`). Примеры:
+      "Вентиляция :"         → "Вентиляция"
+      "Кондиционирование : " → "Кондиционирование"
+      "Отопление: "          → "Отопление"
+    Если две подряд секции после нормализации дают одинаковый текст
+    («Вентиляция» + «Вентиляция :») — это ТА ЖЕ секция, не создавай дубль,
+    items второй секции получают то же section_name.
+
 2. Sticky parent. Если name пуст в текущей row, но model/unit/qty заполнены —
    это «вариант» предыдущего item: используй sticky_parent_name (на входе
    страницы или установленный в предыдущих rows этой страницы) как name.
    Sticky обновляется на каждый item с явным name.
 
-3. Multi-line name. Если в row name присутствует, а unit/qty пусты, и в
-   следующей row name тоже присутствует с продолжением — склей name через
-   пробел. Пример: «Дефлектор Цаги» + «на узле прохода УП1» = одно имя.
+3. КРИТИЧЕСКИ-ВАЖНОЕ ПРАВИЛО — orphan-name rows (E15.05 it2, R18-strict).
+
+   Если в row ЗАПОЛНЕН ТОЛЬКО `cells.name` (cells.pos, cells.model,
+   cells.brand, cells.manufacturer, cells.unit, cells.qty, cells.mass,
+   cells.comments — ВСЕ пусты или отсутствуют) — это ВСЕГДА continuation
+   предыдущего item (продолжение многострочного name через перенос).
+
+   НИКОГДА не создавай из такой row отдельный item. Склей `cells.name`
+   с name предыдущего item через пробел.
+
+   Если перед orphan-row нет предыдущего item на этой странице:
+     a) используй `sticky_parent_name` из входа (продолжение со вчерашней
+        страницы);
+     b) если текст соответствует section-heading (правило 1) — положи в
+        new_section, не создавай item;
+     c) иначе — пропусти row (не изобретай item из одного поля).
+
+   Это правило самое важное из всех после Правила 0. Проверяй его перед
+   созданием КАЖДОГО item: «есть ли тут заполненные поля кроме name? если
+   нет — это НЕ item, это продолжение».
+
+   Пример (spec-tabs-116-ov.pdf page 1):
+     r7: {pos: "П1/В 1", name: "Приточно-вытяжная установка...",
+          brand: "LUFT MEER", qty: "1", comments: "подвесная"}
+     r8: {name: "комплектно со см. узлом, пластинчатым рекуператором"}
+     r9: {name: "комплектом автоматики"}
+
+     ПРАВИЛЬНО: ОДИН item с name =
+       "Приточно-вытяжная установка... комплектно со см. узлом,
+        пластинчатым рекуператором комплектом автоматики"
+     НЕПРАВИЛЬНО: 3 отдельных items.
 
 4. Артикульные варианты. «Выбросной колпак» (отдельная row только с name) +
    6 строк где есть только model «РЭД-ВВШ-SP-1000х550-10» с brand/unit/qty —
@@ -176,10 +221,11 @@ cells.unit → brand, cells.qty → unit) ЛОМАЕТ структуру сме
     Сохрани читаемую модель в name, а артикул в model_name.
 
 ВЫХОДНОЙ JSON (строго один объект, ничего вокруг):
-- new_section: str — секция по окончании страницы (без числового префикса)
+- new_section: str — секция по окончании страницы (без числового префикса,
+  без trailing `:`/`—`/`-`, см. правило 1d)
 - new_sticky: str — sticky parent name по окончании страницы
-- items: array of {name, model_name, brand, unit, quantity, comments,
-  system_prefix, section_name}
+- items: array of {name, model_name, brand, manufacturer, unit, quantity,
+  comments, system_prefix, section_name}
 
 Поле system_prefix = значение pos из row если был системный код (правило 5b);
 иначе "".
@@ -213,6 +259,19 @@ def _build_prompt(current_section: str, sticky_parent_name: str, rows_json: str)
         .replace("__STICKY__", json.dumps(sticky_parent_name, ensure_ascii=False))
         .replace("__ROWS_JSON__", rows_json)
     )
+
+
+# R26 post-processing: нормализация section_name (страховка на случай если
+# LLM проигнорировал правило 1d). Удаляет хвост из пробелов, двоеточий, тире,
+# дефисов. Важно: не трогает начало строки — там возможны осмысленные
+# префиксы вроде «Клапаны на кровле (снаружи)».
+_SECTION_TAIL_CLEANUP_RE = re.compile(r"[\s:—\-]+$")
+
+
+def _normalize_section_name(s: str) -> str:
+    if not s:
+        return ""
+    return _SECTION_TAIL_CLEANUP_RE.sub("", s.strip())
 
 
 def _row_to_dict(row: TableRow) -> dict:
@@ -292,15 +351,20 @@ async def normalize_via_llm(
                 name=name[:500],  # parallel to E15.03-hotfix защитный truncate
                 model_name=str(entry.get("model_name") or "").strip(),
                 brand=str(entry.get("brand") or "").strip(),
+                manufacturer=str(entry.get("manufacturer") or "").strip(),
                 unit=str(entry.get("unit") or "шт").strip() or "шт",
                 quantity=quantity,
                 comments=str(entry.get("comments") or "").strip(),
                 system_prefix=str(entry.get("system_prefix") or "").strip(),
-                section_name=str(entry.get("section_name") or "").strip(),
+                section_name=_normalize_section_name(
+                    str(entry.get("section_name") or "")
+                ),
             )
         )
 
-    new_section = str(data.get("new_section") or current_section)
+    new_section = _normalize_section_name(
+        str(data.get("new_section") or current_section)
+    )
     new_sticky = str(data.get("new_sticky") or sticky_parent_name)
 
     if len(items) > len(rows) * 2:
@@ -327,3 +391,178 @@ class LLMNormalizationError(Exception):
 def asdict_table_rows(rows: list[TableRow]) -> list[dict]:
     """Утилита для отладки/тестов: list[TableRow] → list[dict]."""
     return [asdict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# E15.05 it2 (R27) — multimodal Vision fallback + confidence score
+# ---------------------------------------------------------------------------
+
+
+def compute_confidence(norm: NormalizedPage, rows: list[TableRow]) -> float:
+    """Эвристика качества нормализации для conditional multimodal retry.
+
+    Возвращает [0.0 … 1.0]. Thresholds подобраны эмпирически на 3 goldens:
+      - 0.9-1.0: column detection отработал идеально (ов2, aov baseline);
+      - 0.6-0.9: частичные потери model/brand, но секции и count в норме;
+      - <0.6:  column detection сломался (ТАБС — все model_name=""), требуется
+              retry через multimodal Vision.
+
+    Слагаемые (веса суммируются в 1.0):
+      - model_ratio   0.40 — доля items с непустым model_name (главный сигнал)
+      - brand_ratio   0.20 — доля items с brand/manufacturer непустым
+      - section_score 0.20 — количество распознанных секций (2+ → 1.0)
+      - count_score   0.20 — items.count ∈ [30%, 90%] от rows.count
+
+    Если items пусты → 0.0. Если на странице нет rows (text-layer пуст) —
+    confidence не применяется вообще (multimodal retry тоже ничего не даст).
+    """
+    if not norm.items:
+        return 0.0
+
+    total = len(norm.items)
+    items_with_model = sum(1 for it in norm.items if it.model_name)
+    model_ratio = items_with_model / total
+
+    items_with_brand = sum(1 for it in norm.items if it.brand or it.manufacturer)
+    brand_ratio = items_with_brand / total
+
+    sections = {it.section_name for it in norm.items if it.section_name}
+    section_score = min(len(sections) / 2.0, 1.0)
+
+    row_count_ratio = total / max(len(rows), 1)
+    count_score = 1.0 if 0.3 <= row_count_ratio <= 0.9 else 0.5
+
+    return (
+        model_ratio * 0.40
+        + brand_ratio * 0.20
+        + section_score * 0.20
+        + count_score * 0.20
+    )
+
+
+MULTIMODAL_PROMPT_PREFIX = """У тебя есть ДВА источника данных для этой страницы:
+
+1. JSON rows с bbox-cells — АВТОРИТЕТНЫЙ источник ТЕКСТА.
+2. PNG-изображение страницы — для ВИЗУАЛЬНОЙ structure (колонки, секции, bold).
+
+ПРАВИЛО: текст бери ИЗ JSON (там точный text layer). Картинку используй только
+для:
+  - правильного разделения name и model (если в JSON они попали в одну cell
+    или разъехались по ошибке column-detection);
+  - детекции секционных заголовков (bold font / центрированный текст);
+  - понимания границ row при переносах (visual row boundaries).
+
+НИКОГДА не бери цифры/слова/артикулы из картинки — только из JSON. OCR может
+ошибаться в русском тексте, а у нас text layer точный.
+
+Типичный сценарий: column detection в JSON сработал частично (например, все
+model_name = ""), и ты по картинке видишь, что в PDF есть отдельная колонка
+«Тип, марка». Тогда — визуально определи, какой текст в JSON принадлежит
+колонке model (он уже присутствует в cells.name или raw_blocks) и переложи
+в items[].model_name.
+
+--- ДАЛЕЕ идёт стандартный промпт нормализации ---
+
+"""
+
+
+async def normalize_via_llm_multimodal(
+    provider: BaseLLMProvider,
+    rows: list[TableRow],
+    image_b64: str,
+    *,
+    page_number: int,
+    current_section: str = "",
+    sticky_parent_name: str = "",
+    max_tokens: int | None = None,
+) -> NormalizedPage:
+    """R27 phase 2: retry через multimodal Vision с JSON rows в промпте.
+
+    Вызывается только когда `compute_confidence(phase1_result) < threshold`.
+    Требует `provider.multimodal_complete` — для тестовых stubs без imp
+    бросит NotImplementedError → SpecParser оставит phase1_result.
+    """
+    if not rows:
+        return NormalizedPage(
+            items=[], new_section=current_section, new_sticky=sticky_parent_name
+        )
+
+    rows_json = json.dumps([_row_to_dict(r) for r in rows], ensure_ascii=False)
+    base = _build_prompt(current_section, sticky_parent_name, rows_json)
+    prompt = MULTIMODAL_PROMPT_PREFIX + base
+
+    completion: TextCompletion = await provider.multimodal_complete(
+        prompt,
+        image_b64=image_b64,
+        max_tokens=max_tokens,
+        temperature=0.0,
+    )
+    raw = completion.content
+
+    try:
+        data = json.loads(_strip_markdown_fence(raw))
+    except json.JSONDecodeError as e:
+        logger.warning(
+            "llm multimodal JSON parse error",
+            extra={"page": page_number, "error": str(e), "raw_head": raw[:200]},
+        )
+        raise LLMNormalizationError(
+            f"page {page_number}: multimodal invalid JSON"
+        ) from e
+
+    if not isinstance(data, dict):
+        raise LLMNormalizationError(
+            f"page {page_number}: multimodal expected JSON object"
+        )
+
+    items_raw = data.get("items")
+    if not isinstance(items_raw, list):
+        raise LLMNormalizationError(
+            f"page {page_number}: multimodal missing 'items' array"
+        )
+
+    warnings: list[str] = []
+    items: list[NormalizedItem] = []
+    for entry in items_raw:
+        if not isinstance(entry, dict):
+            warnings.append(f"item is not dict: {type(entry).__name__}")
+            continue
+        name = str(entry.get("name") or "").strip()
+        if not name:
+            warnings.append(f"item without name skipped: {entry}")
+            continue
+        try:
+            quantity = float(entry.get("quantity") or 1)
+        except (TypeError, ValueError):
+            warnings.append(f"item bad quantity: {entry.get('quantity')!r}, default 1")
+            quantity = 1.0
+        items.append(
+            NormalizedItem(
+                name=name[:500],
+                model_name=str(entry.get("model_name") or "").strip(),
+                brand=str(entry.get("brand") or "").strip(),
+                manufacturer=str(entry.get("manufacturer") or "").strip(),
+                unit=str(entry.get("unit") or "шт").strip() or "шт",
+                quantity=quantity,
+                comments=str(entry.get("comments") or "").strip(),
+                system_prefix=str(entry.get("system_prefix") or "").strip(),
+                section_name=_normalize_section_name(
+                    str(entry.get("section_name") or "")
+                ),
+            )
+        )
+
+    new_section = _normalize_section_name(
+        str(data.get("new_section") or current_section)
+    )
+    new_sticky = str(data.get("new_sticky") or sticky_parent_name)
+
+    return NormalizedPage(
+        items=items,
+        new_section=new_section,
+        new_sticky=new_sticky,
+        prompt_tokens=completion.prompt_tokens,
+        completion_tokens=completion.completion_tokens,
+        raw_response=raw,
+        warnings=warnings,
+    )
