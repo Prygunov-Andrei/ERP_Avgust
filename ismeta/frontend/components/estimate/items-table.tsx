@@ -8,7 +8,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Plus, Star, Trash2 } from "lucide-react";
+import { Plus, Search, Star, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,7 @@ import {
   type CreateItemDto,
   type EstimateItem,
   type EstimateItemTechSpecs,
+  type EstimateSection,
   type ProcurementStatus,
   type UUID,
 } from "@/lib/api/types";
@@ -56,6 +57,57 @@ interface Props {
   fallbackSectionId: UUID | null;
   track?: EquipmentTrack;
   highlightItemId?: UUID | null;
+  /** Список секций сметы — нужен для поиска по section.name и для рендера hint про другие разделы. */
+  sections?: EstimateSection[];
+  /**
+   * Items по всем секциям (уже с применённым track-фильтром) — нужен для
+   * подсчёта «+N совпадений в других разделах». Если не передано —
+   * hint не показывается.
+   */
+  allItemsForSearch?: EstimateItem[];
+  /** Сброс выбранной секции (переключение на «Все разделы»). Вызывается по клику на hint. */
+  onClearSection?: () => void;
+}
+
+function highlightMatch(
+  text: string,
+  normalizedQuery: string,
+): React.ReactNode {
+  if (!normalizedQuery || !text) return text;
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(normalizedQuery);
+  if (idx < 0) return text;
+  const end = idx + normalizedQuery.length;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="rounded-sm bg-yellow-200 px-0.5 text-foreground dark:bg-yellow-700/70">
+        {text.slice(idx, end)}
+      </mark>
+      {text.slice(end)}
+    </>
+  );
+}
+
+function itemMatches(
+  item: EstimateItem,
+  sectionName: string | undefined,
+  normalizedQuery: string,
+): boolean {
+  if (!normalizedQuery) return true;
+  const specs = item.tech_specs ?? {};
+  const parts: string[] = [
+    item.name,
+    item.unit,
+    typeof specs.model_name === "string" ? specs.model_name : "",
+    typeof specs.brand === "string" ? specs.brand : "",
+    typeof specs.manufacturer === "string" ? (specs.manufacturer as string) : "",
+    typeof specs.comments === "string" ? specs.comments : "",
+    typeof specs.system === "string" ? specs.system : "",
+    sectionName ?? "",
+  ];
+  const haystack = parts.filter(Boolean).join(" ").toLowerCase();
+  return haystack.includes(normalizedQuery);
 }
 
 export function ItemsTable({
@@ -66,9 +118,56 @@ export function ItemsTable({
   fallbackSectionId,
   track = "all",
   highlightItemId = null,
+  sections,
+  allItemsForSearch,
+  onClearSection,
 }: Props) {
   const qc = useQueryClient();
   const workspaceId = getWorkspaceId();
+
+  // UI-07 Items Search: локальный query + 200ms debounce. URL state
+  // намеренно не трогаем — поиск только на клиенте, чтобы не плодить
+  // истории браузера при каждом нажатии.
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [debouncedQuery, setDebouncedQuery] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  React.useEffect(() => {
+    const handle = window.setTimeout(() => setDebouncedQuery(searchQuery), 200);
+    return () => window.clearTimeout(handle);
+  }, [searchQuery]);
+
+  const normalizedQuery = debouncedQuery.toLowerCase().trim();
+  const hasQuery = normalizedQuery.length > 0;
+
+  const sectionsById = React.useMemo(() => {
+    const m = new Map<UUID, EstimateSection>();
+    for (const s of sections ?? []) m.set(s.id, s);
+    return m;
+  }, [sections]);
+
+  const matches = React.useCallback(
+    (item: EstimateItem) =>
+      itemMatches(item, sectionsById.get(item.section)?.name, normalizedQuery),
+    [sectionsById, normalizedQuery],
+  );
+
+  const visibleItems = React.useMemo(
+    () => (hasQuery ? items.filter(matches) : items),
+    [items, matches, hasQuery],
+  );
+
+  // Hint «+N совпадений в других разделах» — только когда выбрана конкретная
+  // секция и есть что-то найденное за её пределами (в рамках активного track).
+  const otherSectionMatches = React.useMemo(() => {
+    if (!hasQuery || !activeSectionId || !allItemsForSearch) return 0;
+    let n = 0;
+    for (const it of allItemsForSearch) {
+      if (it.section === activeSectionId) continue;
+      if (matches(it)) n++;
+    }
+    return n;
+  }, [hasQuery, activeSectionId, allItemsForSearch, matches]);
 
   const invalidate = React.useCallback(() => {
     qc.invalidateQueries({ queryKey: ["estimate-items", estimateId] });
@@ -187,10 +286,11 @@ export function ItemsTable({
   const [lastClickedId, setLastClickedId] = React.useState<UUID | null>(null);
   const [mergeDialogOpen, setMergeDialogOpen] = React.useState(false);
 
-  // Чистим выделение если строка выделения исчезла из items (после merge/delete/
-  // смены track/section). Оставляем только валидные id.
+  // Чистим выделение если строка выделения исчезла из visibleItems (после
+  // merge/delete/смены track/section или когда элемент скрылся по search-
+  // фильтру). Оставляем только валидные id.
   React.useEffect(() => {
-    const valid = new Set(items.map((it) => it.id));
+    const valid = new Set(visibleItems.map((it) => it.id));
     setSelectedIds((prev) => {
       let changed = false;
       const next = new Set<UUID>();
@@ -200,21 +300,22 @@ export function ItemsTable({
       }
       return changed ? next : prev;
     });
-  }, [items]);
+  }, [visibleItems]);
 
   const selectedItems = React.useMemo(
-    () => items.filter((it) => selectedIds.has(it.id)),
-    [items, selectedIds],
+    () => visibleItems.filter((it) => selectedIds.has(it.id)),
+    [visibleItems, selectedIds],
   );
 
   const allSelected =
-    items.length > 0 && items.every((it) => selectedIds.has(it.id));
+    visibleItems.length > 0 &&
+    visibleItems.every((it) => selectedIds.has(it.id));
   const someSelected =
-    selectedIds.size > 0 && selectedIds.size < items.length;
+    selectedIds.size > 0 && selectedIds.size < visibleItems.length;
 
   const sameSection = React.useMemo(
-    () => isSameSection(items, selectedIds),
-    [items, selectedIds],
+    () => isSameSection(visibleItems, selectedIds),
+    [visibleItems, selectedIds],
   );
 
   const toggleSelect = React.useCallback(
@@ -222,12 +323,14 @@ export function ItemsTable({
       setSelectedIds((prev) => {
         const next = new Set(prev);
         if (shift && lastClickedId && lastClickedId !== itemId) {
-          const lastIdx = items.findIndex((it) => it.id === lastClickedId);
-          const curIdx = items.findIndex((it) => it.id === itemId);
+          const lastIdx = visibleItems.findIndex(
+            (it) => it.id === lastClickedId,
+          );
+          const curIdx = visibleItems.findIndex((it) => it.id === itemId);
           if (lastIdx !== -1 && curIdx !== -1) {
             const [from, to] =
               lastIdx < curIdx ? [lastIdx, curIdx] : [curIdx, lastIdx];
-            for (let i = from; i <= to; i++) next.add(items[i].id);
+            for (let i = from; i <= to; i++) next.add(visibleItems[i].id);
             return next;
           }
         }
@@ -237,16 +340,16 @@ export function ItemsTable({
       });
       setLastClickedId(itemId);
     },
-    [items, lastClickedId],
+    [visibleItems, lastClickedId],
   );
 
   const toggleSelectAll = React.useCallback(() => {
     setSelectedIds((prev) => {
       if (prev.size > 0) return new Set();
-      return new Set(items.map((it) => it.id));
+      return new Set(visibleItems.map((it) => it.id));
     });
     setLastClickedId(null);
-  }, [items]);
+  }, [visibleItems]);
 
   const clearSelection = React.useCallback(() => {
     setSelectedIds(new Set());
@@ -380,6 +483,16 @@ export function ItemsTable({
         cell: ({ row }) => (
           <EditableCell
             value={row.original.name}
+            display={
+              hasQuery
+                ? (v) =>
+                    v ? (
+                      highlightMatch(v, normalizedQuery)
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )
+                : undefined
+            }
             onCommit={(next) => commitField(row.original, "name", next)}
           />
         ),
@@ -397,6 +510,16 @@ export function ItemsTable({
           return (
             <EditableCell
               value={value}
+              display={
+                hasQuery
+                  ? (v) =>
+                      v ? (
+                        highlightMatch(v, normalizedQuery)
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )
+                  : undefined
+              }
               onCommit={(next) =>
                 commitTechSpec(row.original, "model_name", next)
               }
@@ -542,6 +665,16 @@ export function ItemsTable({
             >
               <EditableCell
                 value={value}
+                display={
+                  hasQuery
+                    ? (v) =>
+                        v ? (
+                          highlightMatch(v, normalizedQuery)
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )
+                    : undefined
+                }
                 onCommit={(next) =>
                   commitTechSpec(row.original, "comments", next)
                 }
@@ -582,28 +715,33 @@ export function ItemsTable({
       someSelected,
       toggleSelect,
       toggleSelectAll,
+      hasQuery,
+      normalizedQuery,
     ],
   );
 
   const table = useReactTable({
-    data: items,
+    data: visibleItems,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Totals считаем по видимой выборке: при активном поиске пользователь ждёт
+  // сумму именно по найденным позициям — иначе счётчики внизу расходятся с
+  // тем что он видит в таблице.
   const totals = React.useMemo(() => {
     let equipment = 0;
     let material = 0;
     let work = 0;
     let total = 0;
-    for (const it of items) {
+    for (const it of visibleItems) {
       equipment += Number.parseFloat(it.equipment_total) || 0;
       material += Number.parseFloat(it.material_total) || 0;
       work += Number.parseFloat(it.work_total) || 0;
       total += Number.parseFloat(it.total) || 0;
     }
     return { equipment, material, work, total };
-  }, [items]);
+  }, [visibleItems]);
 
   const sectionIdForNew = activeSectionId ?? fallbackSectionId;
   const canAdd = Boolean(sectionIdForNew);
@@ -669,6 +807,71 @@ export function ItemsTable({
           )}
         </div>
       )}
+      <div
+        className="flex flex-wrap items-center gap-3 border-b bg-background px-4 py-2 text-sm"
+        data-testid="items-search-toolbar"
+      >
+        <div className="relative flex min-w-[240px] flex-1 items-center">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-2 h-4 w-4 text-muted-foreground"
+          />
+          <input
+            ref={searchInputRef}
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Поиск по строкам сметы…"
+            aria-label="Поиск по строкам сметы"
+            data-testid="items-search-input"
+            className="h-8 w-full rounded-md border bg-background pl-7 pr-8 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
+          />
+          {searchQuery.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                searchInputRef.current?.focus();
+              }}
+              aria-label="Очистить поиск"
+              data-testid="items-search-clear"
+              className="absolute right-1 rounded p-1 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        {hasQuery && (
+          <span
+            className="shrink-0 tabular-nums text-muted-foreground"
+            data-testid="items-search-counter"
+          >
+            Найдено: {visibleItems.length} из {items.length}
+          </span>
+        )}
+        {hasQuery && otherSectionMatches > 0 && (
+          <button
+            type="button"
+            onClick={() => onClearSection?.()}
+            disabled={!onClearSection}
+            data-testid="items-search-other-sections"
+            className="shrink-0 rounded text-xs text-primary underline-offset-2 hover:underline disabled:cursor-default disabled:text-muted-foreground disabled:no-underline"
+            title={
+              onClearSection
+                ? "Переключиться на «Все разделы», чтобы увидеть эти совпадения"
+                : undefined
+            }
+          >
+            +{otherSectionMatches}{" "}
+            {otherSectionMatches === 1
+              ? "совпадение"
+              : otherSectionMatches < 5
+                ? "совпадения"
+                : "совпадений"}{" "}
+            в других разделах
+          </button>
+        )}
+      </div>
       <div className="flex-1 overflow-auto">
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-background">
@@ -699,9 +902,28 @@ export function ItemsTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-20 text-center text-sm text-muted-foreground"
+                  className="h-24 text-center text-sm text-muted-foreground"
                 >
-                  В этом разделе пока нет позиций
+                  {hasQuery ? (
+                    <div
+                      className="flex flex-col items-center justify-center gap-2"
+                      data-testid="items-search-empty"
+                    >
+                      <span>
+                        Ничего не найдено по запросу «{debouncedQuery.trim()}»
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSearchQuery("")}
+                        data-testid="items-search-empty-clear"
+                      >
+                        Очистить поиск
+                      </Button>
+                    </div>
+                  ) : (
+                    "В этом разделе пока нет позиций"
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
