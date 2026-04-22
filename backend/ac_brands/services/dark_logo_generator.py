@@ -47,7 +47,8 @@ def cleanup_white_opaque(
     fade = np.clip((255 - rgb_min) / denom, 0, 1)
     arr[..., 3] *= fade
     arr[..., 3] = np.clip(arr[..., 3], 0, 255)
-    return Image.fromarray(arr.astype(np.uint8), mode="RGBA")
+    # mode= arg deprecated in Pillow 11; PIL сам определит RGBA по shape[-1]==4.
+    return Image.fromarray(arr.astype(np.uint8))
 
 
 def is_monochromatic(
@@ -72,7 +73,8 @@ def set_rgb(img: Image.Image, r: int, g: int, b: int) -> Image.Image:
     arr[..., 0] = r
     arr[..., 1] = g
     arr[..., 2] = b
-    return Image.fromarray(arr, mode="RGBA")
+    # mode= arg deprecated в Pillow 11; shape[-1]==4 → PIL определяет RGBA сам.
+    return Image.fromarray(arr)
 
 
 def _load_image(src: Path | bytes) -> Image.Image:
