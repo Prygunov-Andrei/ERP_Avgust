@@ -96,6 +96,17 @@ export default function EstimateDetailPage({ params }: Props) {
     return allItems.filter((i) => !i.is_key_equipment);
   }, [allItems, track]);
 
+  // Items по всем секциям, но уже с применённым track-фильтром — нужно
+  // ItemsTable для hint «+N совпадений в других разделах». Должен
+  // подсвечивать только то, что user может реально увидеть на этом же
+  // треке оборудования.
+  const allItemsForSearch = React.useMemo(() => {
+    if (track === "all") return allEstimateItems;
+    if (track === "key")
+      return allEstimateItems.filter((i) => i.is_key_equipment);
+    return allEstimateItems.filter((i) => !i.is_key_equipment);
+  }, [allEstimateItems, track]);
+
   const selectFromValidate = React.useCallback(
     (itemId: UUID) => {
       // Сброс фильтра раздела — позиция может быть в другом разделе
@@ -175,6 +186,9 @@ export default function EstimateDetailPage({ params }: Props) {
             fallbackSectionId={firstSectionId}
             track={track}
             highlightItemId={highlightItemId}
+            sections={sections}
+            allItemsForSearch={allItemsForSearch}
+            onClearSection={() => setSectionId(null)}
           />
         </div>
         <ChatPanel
