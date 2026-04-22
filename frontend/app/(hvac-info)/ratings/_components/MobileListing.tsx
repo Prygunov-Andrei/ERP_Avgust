@@ -181,10 +181,8 @@ function MobileRows({
   const [openIdx, setOpenIdx] = useState<number | null>(0);
   const sorted = useMemo(() => {
     if (mode === 'silence') {
-      return models
-        .filter((m) => m.has_noise_measurement && m.noise_score != null)
-        .slice()
-        .sort((a, b) => (b.noise_score ?? 0) - (a.noise_score ?? 0));
+      // Все модели в рейтинг, без замера — в конце.
+      return models.slice().sort((a, b) => (b.noise_score ?? 0) - (a.noise_score ?? 0));
     }
     return models.slice().sort((a, b) => b.total_index - a.total_index);
   }, [models, mode]);

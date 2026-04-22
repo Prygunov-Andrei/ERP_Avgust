@@ -68,26 +68,11 @@ function RankedTable({
 }) {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const sorted = useMemo(() => sortModels(models, mode), [models, mode]);
-  const hiddenNoise =
-    mode === 'silence' ? models.filter((m) => !m.has_noise_measurement).length : 0;
   const rows = sorted.slice(0, visible);
   const remaining = sorted.length - visible;
 
   return (
     <div style={{ padding: '8px 40px 0' }}>
-      {mode === 'silence' && hiddenNoise > 0 && (
-        <div
-          style={{
-            padding: '10px 0 14px',
-            borderBottom: '1px solid hsl(var(--rt-border-subtle))',
-          }}
-        >
-          <T size={11} color="hsl(var(--rt-ink-60))">
-            Показаны {sorted.length} моделей с лабораторным замером шума. Ещё {hiddenNoise}{' '}
-            {pluralModels(hiddenNoise)} без замера — добавятся после Ф7.
-          </T>
-        </div>
-      )}
       {sorted.length === 0 && <EmptyState />}
       {rows.map((m, idx) => (
         <ModelRow key={m.id} model={m} position={idx + 1} mode={mode} />
@@ -237,8 +222,8 @@ function sortModels(
   mode: 'index' | 'silence'
 ): RatingModelListItem[] {
   if (mode === 'silence') {
+    // Все модели, без замера — в конце (noise_score == null treated as 0)
     return models
-      .filter((m) => m.has_noise_measurement && m.noise_score != null)
       .slice()
       .sort((a, b) => (b.noise_score ?? 0) - (a.noise_score ?? 0));
   }
