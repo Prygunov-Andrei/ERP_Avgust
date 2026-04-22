@@ -121,7 +121,12 @@ class TestInvoiceParserUnit:
         assert result.items  # page 1 items survived
 
     @pytest.mark.asyncio
-    async def test_deduplication(self):
+    async def test_items_preserved_across_pages(self):
+        """E16 it1: invoice = точная копия PDF. Одинаковые items с разных
+        страниц остаются отдельными позициями (дедупликация отключена,
+        симметрично SpecParser E15.03-hotfix). Это важно для pagination
+        артефактов — если поставщик разбил длинный список на страницы,
+        одинаковые артикулы с разных страниц это реально разные позиции."""
         items_resp = json.dumps(
             {
                 "items": [
@@ -141,9 +146,8 @@ class TestInvoiceParserUnit:
         result = await parser.parse(_make_real_pdf(3), "invoice.pdf")
 
         cables = [i for i in result.items if "Кабель" in i.name]
-        assert len(cables) == 1
-        assert cables[0].quantity == 300.0
-        assert cables[0].price_total == 9000.0
+        assert len(cables) == 3
+        assert [c.page_number for c in cables] == [1, 2, 3]
 
     @pytest.mark.asyncio
     async def test_build_partial_snapshot(self):
