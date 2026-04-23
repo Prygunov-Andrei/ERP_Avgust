@@ -97,6 +97,7 @@ function methodology(
     name: 'test',
     criteria,
     stats: { total_models: 10, active_criteria_count: criteria.length, median_total_index: 70 },
+    presets: [],
   };
 }
 
