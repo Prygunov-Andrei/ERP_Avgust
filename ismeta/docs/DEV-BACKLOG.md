@@ -374,6 +374,32 @@ Cold-start проблема решена.
 **Исполнитель:** Федя.
 **Приоритет:** 🟡 follow-up к E15-06 (после мержа).
 
+### 27. UI-11 — стриминг прогресса PDF-import (живой прогресс по страницам)
+
+**Запрос PO (QA-цикл заход 1/10, 2026-04-23):**
+> «Сейчас просто крутится по кругу одни и те же слова, прогресс-бар давно вышел и ничего не происходит. Может пусть отдаёт частями?»
+
+**Контекст:** после E15-06 it3 + semaphore 3 парсинг 19-страничного PDF занимает 60-90 с. Текущий UX (`pdf-import-dialog.tsx`):
+- progress-bar на `estimated_seconds` из probe — после истечения заливается 100% и стоит
+- hints (`HINTS_TEXT`) циклически меняются каждые 2.5 с, раздражают
+- нет индикации «обработано N из M страниц» или «найдено K позиций»
+
+**Решение:**
+
+1. **Backend streaming** — варианты:
+   - SSE (Server-Sent Events) endpoint `GET /api/v1/estimates/:id/import/pdf/stream`, принимающий PDF и эмитящий события `page_parsed {n, total, found_items}` / `retry_started {page}` / `done {total_items}`.
+   - polling endpoint `GET /api/v1/estimates/:id/import/pdf/status/:job_id` возвращающий `{stage, page_current, page_total, items_so_far}`.
+
+2. **Recognition** должен публиковать прогресс — например через Redis pub/sub (Redis уже есть в ismeta-compose) или через callback URL от backend.
+
+3. **Frontend (`pdf-import-dialog.tsx`)** — заменить цикл hints на реальный прогресс:
+   - «Страница 5 / 19 — найдено 42 позиции»
+   - индикатор retry если suspicious page
+   - estimated seconds пересчитывается по среднему per-page
+
+**Исполнитель:** Петя (backend + recognition stream) + Федя (frontend).
+**Приоритет:** 🟡 major UX — не блокер для функциональности, но раздражает на больших PDF. Сделать после закрытия QA-цикла 10-заходов.
+
 ### 23. CI валидация golden_llm через GitHub Actions secrets
 
 **Контекст:** `pytest -m golden_llm` пропускается без `OPENAI_API_KEY` в env (skipif). Значит в CI регрессии recall после mergе промпта/парсера не ловятся — видны только при локальном прогоне.

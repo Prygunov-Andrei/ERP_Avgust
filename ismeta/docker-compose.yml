@@ -123,6 +123,13 @@ services:
       LLM_EXTRACT_MODEL: ${LLM_EXTRACT_MODEL:-gpt-4o}
       LLM_MULTIMODAL_MODEL: ${LLM_MULTIMODAL_MODEL:-gpt-4o}
       LLM_CLASSIFY_MODEL: ${LLM_CLASSIFY_MODEL:-gpt-4o-mini}
+      # E15-06 it3 hotfix: OpenAI в hard throttle (retry_after=30s везде).
+      # Vision-counter + multimodal retry удваивают/утраивают count calls
+      # на PDF — убираем для снижения нагрузки. Safety-net теряем, но
+      # bbox-fix уже закрыл хвостовые потери на 9-стр PDF. Включим
+      # обратно когда OpenAI quota reset'нется.
+      LLM_VISION_COUNTER_ENABLED: ${LLM_VISION_COUNTER_ENABLED:-false}
+      LLM_MULTIMODAL_RETRY_ENABLED: ${LLM_MULTIMODAL_RETRY_ENABLED:-false}
     ports:
       - "${RECOGNITION_PORT:-8003}:8003"
     healthcheck:
