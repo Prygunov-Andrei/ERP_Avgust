@@ -23,6 +23,8 @@
 | Файл | Кому | Статус | Ветка |
 |---|---|---|---|
 | [UI-08-column-widths-resize-persist-fedya.md](./UI-08-column-widths-resize-persist-fedya.md) | Федя | 🟡 UX (finding #45 из 10-заходов) | `ismeta/ui-08-column-widths` |
+| [UI-09-sections-move-merge-fedya.md](./UI-09-sections-move-merge-fedya.md) | Федя | 🟡 **Queued** — после мержа UI-08 (findings #46-#49) | (pending) |
+| [TD-01-tech-debt-batch-petya.md](./TD-01-tech-debt-batch-petya.md) | Петя | 🟢 tech debt (DEV-BACKLOG #18-22 + mypy + plural) | `recognition/10-td-01-tech-debt-batch` |
 | [E17-quote-xlsx-parser-petya.md](./E17-quote-xlsx-parser-petya.md) | Петя | 🟡 **DRAFT** — не стартовать без явного go PO | (pending) |
 
 **Примечание:** E17 в draft — scope проектировался до обсуждения с PO. Workflow КП в ERP — отдельная продуктовая тема (см. `ismeta/docs/OPEN-QUESTIONS-procurement-ux.md`). Backend-расширение Recognition полезно само по себе, но запускаем только по явному согласию.
