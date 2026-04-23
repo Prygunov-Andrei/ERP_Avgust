@@ -221,13 +221,20 @@ class OpenAIVisionProvider(BaseLLMProvider):
 
     async def _post_with_retry(self, payload: dict) -> dict:
         """POST в OpenAI с retry на 429/5xx и сетевых ошибках (общий код
-        для vision_complete и text_complete)."""
+        для vision_complete и text_complete).
+
+        E15-06 it3 hotfix: retry-loop усилен для rate-limit scenarios на
+        больших PDF (19+ стр). Было 3 attempts × exp(2^n) = 1/2/4s, что
+        недостаточно для OpenAI minute-window 429. Теперь 6 attempts с
+        respect Retry-After header + exponential base 3s (3/9/27s max).
+        """
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
+        max_attempts = 6
         last_exc: Exception | None = None
-        for attempt in range(3):
+        for attempt in range(max_attempts):
             try:
                 resp = await self._client.post(OPENAI_URL, headers=headers, json=payload)
             except httpx.HTTPError as e:
@@ -235,23 +242,33 @@ class OpenAIVisionProvider(BaseLLMProvider):
                 logger.warning(
                     "openai request failed", extra={"attempt": attempt, "error": str(e)}
                 )
-                if attempt < 2:
-                    await asyncio.sleep(2 ** attempt)
+                if attempt < max_attempts - 1:
+                    await asyncio.sleep(min(30, 2 ** attempt))
                     continue
                 raise LLMUnavailableError(detail=f"network error: {e}") from e
 
             if resp.status_code == 429 or resp.status_code >= 500:
+                retry_after = _parse_retry_after(resp.headers.get("Retry-After"))
                 logger.warning(
                     "openai retryable status",
-                    extra={"attempt": attempt, "status_code": resp.status_code},
+                    extra={
+                        "attempt": attempt,
+                        "status_code": resp.status_code,
+                        "retry_after": retry_after,
+                    },
                 )
                 last_exc = httpx.HTTPStatusError(
                     f"status {resp.status_code}", request=resp.request, response=resp
                 )
-                if attempt < 2:
-                    await asyncio.sleep(2 ** attempt)
+                if attempt < max_attempts - 1:
+                    # Respect Retry-After hint от OpenAI если есть, иначе
+                    # exponential backoff (3s, 9s, 27s, capped at 45s).
+                    if retry_after and retry_after > 0:
+                        wait = min(45.0, float(retry_after))
+                    else:
+                        wait = min(45.0, 3 * (3 ** attempt))
+                    await asyncio.sleep(wait)
                     continue
-                retry_after = _parse_retry_after(resp.headers.get("Retry-After"))
                 raise LLMUnavailableError(
                     detail=f"upstream status {resp.status_code}",
                     retry_after_sec=retry_after,
