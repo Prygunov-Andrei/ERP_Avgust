@@ -600,25 +600,7 @@ function DesktopCustomTable({
   if (active.size === 0) return <EmptyCustom />;
 
   return (
-    <div style={{ padding: '0 40px 8px' }}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: TABLE_GRID,
-          padding: '12px 0 10px',
-          borderBottom: '1px solid hsl(var(--rt-ink-15))',
-          alignItems: 'center',
-        }}
-      >
-        <HeaderCell>#</HeaderCell>
-        <div />
-        <div />
-        <HeaderCell>Бренд</HeaderCell>
-        <HeaderCell>Модель</HeaderCell>
-        <HeaderCell right>«Август-климат»</HeaderCell>
-        <HeaderCell>Цена</HeaderCell>
-        <HeaderCell right>Ваш индекс</HeaderCell>
-      </div>
+    <div style={{ padding: '8px 40px 8px' }}>
       {shown.map((r, idx) => (
         <DesktopCustomRow
           key={r.model.id}
@@ -653,29 +635,6 @@ const loadMoreStyle: CSSProperties = {
   color: 'hsl(var(--rt-ink))',
   cursor: 'pointer',
 };
-
-function HeaderCell({
-  children,
-  right = false,
-}: {
-  children: ReactNode;
-  right?: boolean;
-}) {
-  return (
-    <span
-      style={{
-        fontFamily: 'var(--rt-font-mono)',
-        fontSize: 10,
-        color: 'hsl(var(--rt-ink-40))',
-        textTransform: 'uppercase',
-        letterSpacing: 1.2,
-        textAlign: right ? 'right' : 'left',
-      }}
-    >
-      {children}
-    </span>
-  );
-}
 
 function DesktopCustomRow({
   row,

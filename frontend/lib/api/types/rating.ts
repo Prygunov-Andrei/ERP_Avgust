@@ -47,8 +47,9 @@ export interface RatingRawValue {
 
 export interface RatingModelPhoto {
   id: number;
-  image: string;
+  image_url: string;
   alt: string;
+  order?: number;
 }
 
 export type RatingSupplierAvailability =

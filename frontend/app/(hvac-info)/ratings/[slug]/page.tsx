@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const descSource = (detail.editorial_lede || fallbackLede(detail)).trim();
   const description = descSource.slice(0, 160);
   const title = `${detail.brand.name} ${detail.inner_unit} — рейтинг и обзор`;
-  const firstPhoto = detail.photos?.[0]?.image;
+  const firstPhoto = detail.photos?.[0]?.image_url;
 
   return {
     title,

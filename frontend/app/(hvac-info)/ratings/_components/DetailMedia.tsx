@@ -94,7 +94,7 @@ function PhotoBlock({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={current.image}
+          src={current.image_url}
           alt={current.alt || modelName}
           style={{
             width: '100%',
@@ -175,7 +175,7 @@ function PhotoBlock({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={p.image}
+                  src={p.image_url}
                   alt={p.alt || `Фото ${i + 1}`}
                   style={{
                     width: '100%',
