@@ -45,8 +45,14 @@ class TestIsStamp:
         assert is_stamp_line("Лист")
         assert is_stamp_line("Подп.")
         assert is_stamp_line("ГИП")
-        assert is_stamp_line("+10%")
         assert is_stamp_line("2024г.")
+
+    def test_plus_percent_is_not_stamp(self):
+        # E15-06 (#54): «+10%» это валидное значение колонки «Примечание»
+        # (запас/резерв на монтаж), не элемент штампа. Должно долетать до
+        # cells.comments → items[].comments.
+        assert not is_stamp_line("+10%")
+        assert not is_stamp_line("+5%")
 
     def test_page_number(self):
         assert is_stamp_line("1")
@@ -451,10 +457,8 @@ class TestExtractStructuredRows:
             doc.close()
 
     def test_stamp_text_filtered(self):
-        # «+10%» / шифр документа фильтруются is_stamp_text. Используем
-        # ASCII-плэйсхолдеры там, где helv-шрифт не пишет кириллицу,
-        # но stamp-маркеры берём из реального _STAMP_EXACT — только латиница.
-        # «+10%» — типовой запас в Примечание-колонке.
+        # E15-06 (#54): шифр документа фильтруется is_stamp_text, а «+10%» —
+        # валидное значение колонки comments и должно сохраняться.
         doc, page = _build_synthetic_page(
             [
                 [(200.0, "Item A"), (665.0, "M-A"), (937.0, "sht"), (985.0, "2"),
@@ -464,9 +468,19 @@ class TestExtractStructuredRows:
         )
         try:
             rows = extract_structured_rows(page)
+            # row[1] полностью штамп → отброшен.
+            data_rows = [r for r in rows if not r.is_section_heading]
+            assert len(data_rows) == 1, (
+                f"ожидаем 1 item row + штамп отфильтрован, got {len(data_rows)}"
+            )
+            row = data_rows[0]
+            # «+10%» должен попасть в cells.comments (крайняя правая колонка).
+            assert row.cells.get("comments") == "+10%", (
+                f"«+10%» должно сохраниться в comments, got {row.cells}"
+            )
+            # Шифр документа — не в cells.
             for r in rows:
                 joined = " ".join(r.cells.values())
-                assert "+10%" not in joined
                 assert "470-05/2025" not in joined
         finally:
             doc.close()
@@ -507,7 +521,12 @@ class TestIsStampText:
         assert is_stamp_text("Изм.")
         assert is_stamp_text("Подп.")
         assert is_stamp_text("470-05/2025-ОВ2.СО")
-        assert is_stamp_text("+10%")
+
+    def test_plus_percent_is_not_stamp(self):
+        # E15-06 (#54): запасные проценты в колонке Примечание.
+        assert not is_stamp_text("+10%")
+        assert not is_stamp_text("+5%")
+        assert not is_stamp_text("+100%")
 
     def test_qty_not_stamp(self):
         # Регрессия: column-aware filter не должен резать числа.

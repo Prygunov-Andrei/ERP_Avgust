@@ -24,6 +24,7 @@
 |---|---|---|---|
 | [E15-06-spec-robustness-petya.md](./E15-06-spec-robustness-petya.md) | Петя | 🔴 **Active** — заход 1/10 (#51/#52/#53/#54/#55) | `recognition/11-e15-06-spec-robustness` |
 | [E17-quote-xlsx-parser-petya.md](./E17-quote-xlsx-parser-petya.md) | Петя | 🟡 **DRAFT** — не стартовать без явного go PO | (pending) |
+| UI-10 pages-summary warning | Федя | 🟢 **Follow-up после E15-06** — показать warning для pages с `pages_summary[].suspicious=true` в `pdf-import-dialog.tsx` | (pending) |
 
 **Примечание:** E17 в draft — scope проектировался до обсуждения с PO. Workflow КП в ERP — отдельная продуктовая тема (см. `ismeta/docs/OPEN-QUESTIONS-procurement-ux.md`). Backend-расширение Recognition полезно само по себе, но запускаем только по явному согласию.
 
