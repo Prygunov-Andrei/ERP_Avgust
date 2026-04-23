@@ -424,6 +424,21 @@ Cold-start проблема решена.
 **Исполнитель:** IS-Петя (backend exporter) или IS-Федя если там frontend-логика.
 **Приоритет:** 🟡 minor — не блокер, но раздражает при ручной правке сметы.
 
+### 29. Свободная заметка к смете (стикер)
+
+**Запрос PO (QA-цикл заход 1/10, 2026-04-23):**
+> «При смете нужны какие-то минимальные заметки, буквально одно текстовое поле, которое сохраняется и свободно редактируется — никакой истории — просто заметка (можно для красоты сделать жёлтым листочком, типа стикера).»
+
+**Scope:**
+
+- **Backend:** `Estimate.note: TextField(blank=True, default="")`. Миграция добавляет поле. PATCH `/api/v1/estimates/:id/` уже поддерживает partial — только whitelist serializer расширить на `note`.
+- **Frontend:** компонент `<EstimateNote>` — textarea с autosave-debounce (500ms) через `estimateApi.update({note})`. Стилизация как жёлтый стикер (background `bg-yellow-100`, лёгкая тень, font `sans` обычный). Разместить в `EstimateHeader` справа либо свёрнуто (иконка → expand).
+- **Никакой истории** — value перезаписывается, snapshot не делаем.
+- **Лимит:** 5000 символов (разумный cap, чтобы не злоупотребляли).
+
+**Исполнитель:** IS-Петя (backend + migration) + IS-Федя (frontend component + integration).
+**Приоритет:** 🟡 minor nice-to-have. Не срочно, после закрытия QA-цикла.
+
 ### 23. CI валидация golden_llm через GitHub Actions secrets
 
 **Контекст:** `pytest -m golden_llm` пропускается без `OPENAI_API_KEY` в env (skipif). Значит в CI регрессии recall после mergе промпта/парсера не ловятся — видны только при локальном прогоне.
