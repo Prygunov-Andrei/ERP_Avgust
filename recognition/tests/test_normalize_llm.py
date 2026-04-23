@@ -274,6 +274,44 @@ class TestPromptRulesE1505It2:
         assert "Вентиляция :" in NORMALIZE_PROMPT_TEMPLATE
 
 
+class TestPromptRulesE1506:
+    """E15-06: правила 12-16 для робастности парсинга Спецификаций."""
+
+    def test_rule_12_no_qty_continuation(self):
+        from app.services.spec_normalizer import NORMALIZE_PROMPT_TEMPLATE
+
+        assert "КРИТИЧЕСКОЕ ПРАВИЛО 12" in NORMALIZE_PROMPT_TEMPLATE
+        assert "продолжение имени" in NORMALIZE_PROMPT_TEMPLATE.lower()
+        # Ключевые предлоги из правила.
+        assert "«с», «со»" in NORMALIZE_PROMPT_TEMPLATE or "«с»," in NORMALIZE_PROMPT_TEMPLATE
+
+    def test_rule_13_subsection_without_qty(self):
+        from app.services.spec_normalizer import NORMALIZE_PROMPT_TEMPLATE
+
+        assert "КРИТИЧЕСКОЕ ПРАВИЛО 13" in NORMALIZE_PROMPT_TEMPLATE
+        assert "Фасонные изделия" in NORMALIZE_PROMPT_TEMPLATE
+
+    def test_rule_14_sticky_cap(self):
+        from app.services.spec_normalizer import NORMALIZE_PROMPT_TEMPLATE
+
+        assert "КРИТИЧЕСКОЕ ПРАВИЛО 14" in NORMALIZE_PROMPT_TEMPLATE
+        assert "variant-marker" in NORMALIZE_PROMPT_TEMPLATE
+        assert "Решётка" in NORMALIZE_PROMPT_TEMPLATE
+
+    def test_rule_15_comments_column(self):
+        from app.services.spec_normalizer import NORMALIZE_PROMPT_TEMPLATE
+
+        assert "КРИТИЧЕСКОЕ ПРАВИЛО 15" in NORMALIZE_PROMPT_TEMPLATE
+        assert "Примечание" in NORMALIZE_PROMPT_TEMPLATE
+        assert "+10%" in NORMALIZE_PROMPT_TEMPLATE
+
+    def test_rule_16_expected_count(self):
+        from app.services.spec_normalizer import NORMALIZE_PROMPT_TEMPLATE
+
+        assert "ПРАВИЛО 16" in NORMALIZE_PROMPT_TEMPLATE
+        assert "expected_count" in NORMALIZE_PROMPT_TEMPLATE
+
+
 @pytest.mark.asyncio
 async def test_manufacturer_field_maps_from_response():
     """R22: items[].manufacturer прокидывается из LLM-ответа в NormalizedItem."""
@@ -505,3 +543,84 @@ async def test_column_shift_does_not_happen_when_llm_obeys():
     assert "КОРФ" in it.brand
     # Главное — brand НЕ должен утечь в model_name.
     assert "КОРФ" not in it.model_name
+
+
+# ---------------------------------------------------------------------------
+# E15-06 — expected_count parsing (QA #52)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_expected_count_parsed_from_response():
+    resp = json.dumps(
+        {
+            "new_section": "",
+            "new_sticky": "",
+            "expected_count": 5,
+            "items": [
+                {"name": "Item A", "unit": "шт", "quantity": 1},
+                {"name": "Item B", "unit": "шт", "quantity": 2},
+            ],
+        }
+    )
+    provider = _StubProvider(resp)
+    rows = [_row(0, {"name": "Item A", "unit": "шт", "qty": "1"})]
+    page = await normalize_via_llm(provider, rows, page_number=1)
+    assert page.expected_count == 5
+    assert len(page.items) == 2
+
+
+@pytest.mark.asyncio
+async def test_expected_count_missing_falls_back_to_items_count():
+    resp = json.dumps(
+        {
+            "new_section": "",
+            "new_sticky": "",
+            "items": [
+                {"name": "Only item", "unit": "шт", "quantity": 1},
+            ],
+        }
+    )
+    provider = _StubProvider(resp)
+    rows = [_row(0, {"name": "Only item"})]
+    page = await normalize_via_llm(provider, rows, page_number=1)
+    # expected_count не задан → возвращаем len(items) как fallback.
+    assert page.expected_count == 1
+    assert page.warnings == []
+
+
+@pytest.mark.asyncio
+async def test_expected_count_malformed_fallbacks_with_warning():
+    resp = json.dumps(
+        {
+            "new_section": "",
+            "new_sticky": "",
+            "expected_count": "five",  # malformed — не число
+            "items": [
+                {"name": "Item", "unit": "шт", "quantity": 1},
+            ],
+        }
+    )
+    provider = _StubProvider(resp)
+    rows = [_row(0, {"name": "Item"})]
+    page = await normalize_via_llm(provider, rows, page_number=1)
+    assert page.expected_count == 1
+    assert any("expected_count" in w for w in page.warnings)
+
+
+@pytest.mark.asyncio
+async def test_expected_count_negative_falls_back():
+    resp = json.dumps(
+        {
+            "new_section": "",
+            "new_sticky": "",
+            "expected_count": -3,
+            "items": [
+                {"name": "Item", "unit": "шт", "quantity": 1},
+            ],
+        }
+    )
+    provider = _StubProvider(resp)
+    rows = [_row(0, {"name": "Item"})]
+    page = await normalize_via_llm(provider, rows, page_number=1)
+    assert page.expected_count == 1

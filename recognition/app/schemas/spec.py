@@ -28,8 +28,25 @@ class PagesStats(BaseModel):
     error: int = 0
 
 
+class PageSummary(BaseModel):
+    """E15-06 (#52): per-page self-check LLM vs parsed.
+
+    Заполняется SpecParser'ом после normalize: LLM возвращает `expected_count`,
+    мы сравниваем с количеством реально эмитнутых items. Если delta превышает
+    tolerance — retry через multimodal; если и после retry delta есть —
+    помечаем page как suspicious (показывается на фронте в будущей UI-10).
+    """
+
+    page: int
+    expected_count: int = 0
+    parsed_count: int = 0
+    retried: bool = False
+    suspicious: bool = False
+
+
 class SpecParseResponse(BaseModel):
     status: str = "done"  # done | partial | error
     items: list[SpecItem] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
     pages_stats: PagesStats = Field(default_factory=PagesStats)
+    pages_summary: list[PageSummary] = Field(default_factory=list)

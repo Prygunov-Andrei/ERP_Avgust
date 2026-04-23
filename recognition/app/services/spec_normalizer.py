@@ -59,6 +59,10 @@ class NormalizedPage:
     cached_tokens: int = 0  # TD-01: prompt caching hit
     raw_response: str = ""
     warnings: list[str] = field(default_factory=list)
+    # E15-06 (QA #52): LLM возвращает самооценку сколько позиций она видит на
+    # странице. Используется в SpecParser для cross-check: если expected >
+    # len(items) + tolerance → retry multimodal (bbox мог потерять хвост).
+    expected_count: int = 0
 
 
 NORMALIZE_PROMPT_TEMPLATE = """Ты обрабатываешь страницу проектной спецификации ОВиК/ЭОМ (форма 1а ГОСТ 21.110).
@@ -221,10 +225,78 @@ cells.unit → brand, cells.qty → unit) ЛОМАЕТ структуру сме
       → items[].name       = "Корпус металлический ... TITAN 5 ЩМП-40.30.20"
     Сохрани читаемую модель в name, а артикул в model_name.
 
+11. (intentionally reserved)
+
+КРИТИЧЕСКОЕ ПРАВИЛО 12 — продолжение имени по отсутствию qty (E15-06, #51/#53):
+
+У «реального» товара Спецификации ВСЕГДА есть количество (quantity > 0 или
+явное число в cells.qty). У «остатка» строки (continuation имени из переноса)
+количества НИКОГДА нет. Это основа диагностики.
+
+Если у row отсутствует количество (cells.qty пусто / 0) И отсутствует
+единица измерения (cells.unit пусто) И cells.name начинается со строчной
+буквы ИЛИ с союза/предлога («с», «со», «на», «в», «во», «под», «для»,
+«из», «над», «при», «через», «без», «ко») ИЛИ с прилагательного без
+артикула («круглый», «морозостойкий», «оцинкованный», «защитный»,
+«стальной», «гибкий», «прямоугольный», «квадратный») — это ПРОДОЛЖЕНИЕ
+name предыдущего item. Приклей cells.name этой row к name предыдущего
+item через пробел. НЕ создавай отдельный item. qty=0 без unit и без
+variant-marker — это маркер «это не товар».
+
+КРИТИЧЕСКОЕ ПРАВИЛО 13 — подраздел без qty (E15-06, #51):
+
+Если row выглядит как заголовок подраздела (cells.name заполнено, cells.qty
+пусто / 0, cells.unit пусто, cells.model пусто; часто центрирована или
+выделена; фразы типа «Фасонные изделия к X», «Комплектующие к Y», «Монтаж
+Z», «Материалы для W», «К вентиляторам …») — используй это как section_name
+(обновление текущей секции) для следующих позиций, НО НЕ создавай отдельный
+item с quantity=1. Реальная позиция ВСЕГДА имеет количество. Если у
+заголовка есть числовой префикс («1.», «3.2») — удали его как в правиле 1.
+
+КРИТИЧЕСКОЕ ПРАВИЛО 14 — sticky name только для явных серий (E15-06, #55):
+
+Sticky parent name (использование name предыдущей строки как name текущей
+при отсутствии cells.name в row) применяется ТОЛЬКО если row содержит
+variant-marker — паттерн из 1-4 заглавных букв + цифра, опциональные
+разделители ('-', ' ', '.'): ПН2, ПД1, В1-3, ПК 4,5, КВО-6, АПК-10.
+
+Если cells.name или cells.model текущей row ЯВНО отличается от sticky-
+series и не содержит variant-marker (например у sticky «Решётка», а
+текущая строка имеет cells.name="Воздуховод 250х100" или cells.model=
+"Воздуховод") — sticky НЕ применяется, это новая позиция, sticky
+сбрасывается. Название «Решётка» НЕ прилипает к «Воздуховод».
+
+Практически: не приставляй sticky к началу name у item'а, если остаток
+имени не является variant-code. Series с 2+ variant-marker подряд — sticky
+применяется свободно; единичное применение без последующей series —
+подозрительно и в спорном случае лучше НЕ применять.
+
+КРИТИЧЕСКОЕ ПРАВИЛО 15 — колонка «Примечание» (E15-06, #54):
+
+Крайний правый столбец Спецификации — «Примечание» (cells.comments). Его
+содержимое ВСЕГДА переноси в items[].comments 1:1. Распространённые
+значения: «+10%», «+5%», «резерв», «запас», «на монтаж», «уточнить у
+поставщика», «с запасом». Если в cells.comments стоит процент («+10%»),
+короткая пометка (≤40 символов) или одиночное слово — обязательно перенеси
+в comments. НЕ игнорируй эту колонку и НЕ склеивай её с name / tech_specs.
+
+ПРАВИЛО 16 — expected_count (E15-06, #52, cross-check):
+
+Помимо items, верни в корневом JSON поле `expected_count: int` — твоя
+оценка количества РЕАЛЬНЫХ позиций с quantity на этой странице (не
+считая section-heading row'ов, подразделов без qty, continuation row'ов
+и пустых / штамповых row'ов). Это внутренняя самопроверка: если ты
+склеила 3 continuation-row'а в 1 item, expected_count = число item'ов
+которые ты должна была эмитить (обычно = len(items)). Используется
+Python-layer для детекции пропущенных позиций на хвостах страниц.
+
+Если ты не уверена — поставь expected_count = len(items).
+
 ВЫХОДНОЙ JSON (строго один объект, ничего вокруг):
 - new_section: str — секция по окончании страницы (без числового префикса,
   без trailing `:`/`—`/`-`, см. правило 1d)
 - new_sticky: str — sticky parent name по окончании страницы
+- expected_count: int — сколько позиций ты видишь на странице (правило 16)
 - items: array of {name, model_name, brand, manufacturer, unit, quantity,
   comments, system_prefix, section_name}
 
@@ -402,6 +474,7 @@ async def normalize_via_llm(
         str(data.get("new_section") or current_section)
     )
     new_sticky = str(data.get("new_sticky") or sticky_parent_name)
+    expected_count = _parse_expected_count(data, items, warnings)
 
     if len(items) > len(rows) * 2:
         warnings.append(
@@ -418,7 +491,29 @@ async def normalize_via_llm(
         cached_tokens=completion.cached_tokens,
         raw_response=raw,
         warnings=warnings,
+        expected_count=expected_count,
     )
+
+
+def _parse_expected_count(
+    data: dict, items: list[NormalizedItem], warnings: list[str]
+) -> int:
+    """Распарсить поле `expected_count` из LLM-ответа.
+
+    Если поле отсутствует / некорректно — fallback на len(items). Используется
+    в SpecParser (Задача 3) для детекции потерь позиций на хвостах страниц.
+    """
+    raw = data.get("expected_count")
+    if raw is None:
+        return len(items)
+    try:
+        ec = int(raw)
+    except (TypeError, ValueError):
+        warnings.append(f"expected_count malformed: {raw!r}, fallback to len(items)")
+        return len(items)
+    if ec < 0:
+        return len(items)
+    return ec
 
 
 class LLMNormalizationError(Exception):
@@ -597,6 +692,7 @@ async def normalize_via_llm_multimodal(
         str(data.get("new_section") or current_section)
     )
     new_sticky = str(data.get("new_sticky") or sticky_parent_name)
+    expected_count = _parse_expected_count(data, items, warnings)
 
     return NormalizedPage(
         items=items,
@@ -607,4 +703,5 @@ async def normalize_via_llm_multimodal(
         cached_tokens=completion.cached_tokens,
         raw_response=raw,
         warnings=warnings,
+        expected_count=expected_count,
     )

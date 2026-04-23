@@ -18,7 +18,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from ..config import settings
 from ..providers.base import BaseLLMProvider
-from ..schemas.spec import PagesStats, SpecItem, SpecParseResponse
+from ..schemas.spec import PagesStats, PageSummary, SpecItem, SpecParseResponse
 from ._common import _strip_markdown_fence
 from .pdf_render import render_page_to_b64
 from .pdf_text import (
@@ -36,6 +36,7 @@ from .spec_normalizer import (
     normalize_via_llm,
     normalize_via_llm_multimodal,
 )
+from .spec_postprocess import apply_no_qty_merge, cap_sticky_name
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,8 @@ class _ParseState:
     multimodal_cached_tokens: int = 0  # TD-01
     # Per-page confidence — сохраняется для отчёта/логов.
     confidence_scores: list[tuple[int, float, bool]] = field(default_factory=list)
+    # E15-06 (#52): per-page LLM self-check (expected vs parsed).
+    pages_summary: list[PageSummary] = field(default_factory=list)
 
 
 class SpecParser:
@@ -228,16 +231,28 @@ class SpecParser:
                 f"page {page_num + 1}: {w}" for w in norm.warnings
             )
 
-        # R27 Phase 2 — параллельный multimodal retry для pages с confidence < threshold.
+        # R27 Phase 2 — параллельный multimodal retry. E15-06: два триггера,
+        #   (a) confidence < threshold (R27);
+        #   (b) expected_count - parsed_count ≥ tolerance (page-tail loss, #52).
         final_by_page: dict[int, NormalizedPage] = dict(phase1_by_page)
+        retry_reasons: dict[int, str] = {}
         if settings.llm_multimodal_retry_enabled:
             retry_jobs = []
             for page_num, norm in phase1_by_page.items():
                 rows = pages_rows[page_num]
                 conf = compute_confidence(norm, rows)
                 retried = False
+                reasons: list[str] = []
                 if conf < settings.llm_multimodal_retry_threshold and rows:
+                    reasons.append(f"confidence={conf:.2f}")
+                expected = norm.expected_count or 0
+                parsed = len(norm.items)
+                delta = expected - parsed
+                if delta >= settings.llm_expected_count_tolerance and rows:
+                    reasons.append(f"expected-parsed={delta}")
+                if reasons:
                     retried = True
+                    retry_reasons[page_num] = ", ".join(reasons)
                     retry_jobs.append(
                         self._run_multimodal_retry(
                             doc, page_num, rows, norm, stickies[page_num]
@@ -258,13 +273,20 @@ class SpecParser:
                     page_num, norm_p2 = outcome  # type: ignore[misc]
                     if norm_p2 is None:
                         continue
-                    # Broker-selection: принимаем P2 только если confidence
-                    # реально вырос vs P1 (иначе LLM мог выдать мусор на picture).
+                    # Broker-selection: принимаем P2 если confidence вырос ИЛИ
+                    # если P2 покрывает больше expected_count'а чем P1.
                     p1 = phase1_by_page[page_num]
                     rows = pages_rows[page_num]
                     conf_p1 = compute_confidence(p1, rows)
                     conf_p2 = compute_confidence(norm_p2, rows)
-                    if conf_p2 > conf_p1:
+                    expected = max(p1.expected_count, norm_p2.expected_count)
+                    p1_coverage = len(p1.items) / max(expected, 1)
+                    p2_coverage = len(norm_p2.items) / max(expected, 1)
+                    accept_p2 = (
+                        conf_p2 > conf_p1
+                        or (p2_coverage > p1_coverage and p2_coverage >= 0.8)
+                    )
+                    if accept_p2:
                         final_by_page[page_num] = norm_p2
                         # Обновляем метрики confidence для отчёта (заменяем tuple).
                         state.confidence_scores = [
@@ -281,9 +303,12 @@ class SpecParser:
                     )
 
         # Фаза 5 — применяем финальные результаты (после возможного retry) в
-        # порядке страниц + обновление sequential state.
+        # порядке страниц + обновление sequential state + PageSummary.
+        tolerance = settings.llm_expected_count_tolerance
         for page_num in sorted(final_by_page.keys()):
             norm = final_by_page[page_num]
+            initial_sticky = stickies[page_num][1] if page_num < len(stickies) else ""
+            self._apply_postprocess(norm, initial_sticky=initial_sticky)
             state.current_section = norm.new_section or state.current_section
             state.sticky_parent_name = norm.new_sticky or state.sticky_parent_name
             self._append_normalized_items(norm, page_num)
@@ -292,6 +317,20 @@ class SpecParser:
             else:
                 state.pages_skipped += 1
             self._processed_pages.add(page_num)
+
+            retried_flag = page_num in retry_reasons
+            expected = norm.expected_count or 0
+            parsed = len(norm.items)
+            suspicious = bool(expected and (expected - parsed) >= tolerance)
+            state.pages_summary.append(
+                PageSummary(
+                    page=page_num + 1,
+                    expected_count=expected,
+                    parsed_count=parsed,
+                    retried=retried_flag,
+                    suspicious=suspicious,
+                )
+            )
 
     async def _run_multimodal_retry(
         self,
@@ -467,6 +506,8 @@ class SpecParser:
             f"page {page_num + 1}: {w}" for w in normalized.warnings
         )
 
+        initial_sticky = state.sticky_parent_name
+        self._apply_postprocess(normalized, initial_sticky=initial_sticky)
         state.current_section = normalized.new_section or state.current_section
         state.sticky_parent_name = normalized.new_sticky or state.sticky_parent_name
 
@@ -475,7 +516,41 @@ class SpecParser:
             state.pages_processed += 1
         else:
             state.pages_skipped += 1
+
+        tolerance = settings.llm_expected_count_tolerance
+        expected = normalized.expected_count or 0
+        parsed = len(normalized.items)
+        state.pages_summary.append(
+            PageSummary(
+                page=page_num + 1,
+                expected_count=expected,
+                parsed_count=parsed,
+                retried=False,
+                suspicious=bool(expected and (expected - parsed) >= tolerance),
+            )
+        )
         return True
+
+    def _apply_postprocess(
+        self, norm: NormalizedPage, *, initial_sticky: str
+    ) -> None:
+        """E15-06: safety-net после LLM normalize.
+
+        1. apply_no_qty_merge — склеить continuation-орфаны (#51/#53).
+        2. cap_sticky_name — отрезать sticky у non-series items (#55).
+
+        initial_sticky — sticky_parent_name на входе страницы (с предыдущей
+        страницы или с входа всего документа). Нужен для cap_sticky_name,
+        чтобы корректно определить «ошибочно прилипший» родитель.
+        """
+        before = len(norm.items)
+        norm.items = apply_no_qty_merge(norm.items)
+        norm.items = cap_sticky_name(norm.items, initial_sticky=initial_sticky)
+        after = len(norm.items)
+        if before != after:
+            norm.warnings.append(
+                f"postprocess: merged {before - after} continuation row(s)"
+            )
 
     def _append_normalized_items(
         self, normalized: NormalizedPage, page_num: int
@@ -614,6 +689,7 @@ class SpecParser:
                 skipped=state.pages_skipped,
                 error=len(state.errors),
             ),
+            pages_summary=sorted(state.pages_summary, key=lambda p: p.page),
         )
 
 

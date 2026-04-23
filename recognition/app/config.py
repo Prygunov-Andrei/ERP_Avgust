@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # E15.05 it2 (R27) — conditional multimodal Vision retry.
     llm_multimodal_retry_enabled: bool = True
     llm_multimodal_retry_threshold: float = 0.7
+    # E15-06 (#52) — page-tail safety net. Если LLM сказала что видит N позиций,
+    # а мы распарсили меньше — retry через multimodal. Tolerance подбирает PO.
+    llm_expected_count_tolerance: int = 3
     dpi: int = 200
     max_page_retries: int = 2
     port: int = 8003
