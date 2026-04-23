@@ -22,7 +22,7 @@
 
 | Файл | Кому | Статус | Ветка |
 |---|---|---|---|
-| [E16-it1-invoice-hybrid-petya.md](./E16-it1-invoice-hybrid-petya.md) | Петя | 🔴 E16 итерация 1 — Invoice гибрид | `recognition/09-e16-it1-invoice-hybrid` |
+| [UI-08-column-widths-resize-persist-fedya.md](./UI-08-column-widths-resize-persist-fedya.md) | Федя | 🟡 UX (finding #45 из 10-заходов) | `ismeta/ui-08-column-widths` |
 | [E17-quote-xlsx-parser-petya.md](./E17-quote-xlsx-parser-petya.md) | Петя | 🟡 **DRAFT** — не стартовать без явного go PO | (pending) |
 
 **Примечание:** E17 в draft — scope проектировался до обсуждения с PO. Workflow КП в ERP — отдельная продуктовая тема (см. `ismeta/docs/OPEN-QUESTIONS-procurement-ux.md`). Backend-расширение Recognition полезно само по себе, но запускаем только по явному согласию.
@@ -43,6 +43,7 @@
 | UI-06-merge-rows-fedya.md | `ismeta/ui-06-merge-rows` | 2026-04-22 (main `39f4377`) |
 | UI-07-search-fedya.md | `ismeta/ui-07-items-search` | 2026-04-22 (main `539ea7b`) |
 | E15-05-it2-multiline-manufacturer-petya.md | `recognition/08-e15.05-it2-bbox-multimodal` | 2026-04-22 (main `dbb0a9b`) |
+| E16-it1-invoice-hybrid-petya.md | `recognition/09-e16-it1-invoice-hybrid` | 2026-04-22 (main `a5518d7`) |
 
 ## История
 
