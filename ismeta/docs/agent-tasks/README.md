@@ -22,7 +22,7 @@
 
 | Файл | Кому | Статус | Ветка |
 |---|---|---|---|
-| [E15-06-spec-robustness-petya.md](./E15-06-spec-robustness-petya.md) | Петя | 🔴 **Active** — заход 1/10 (#51/#52/#53/#54/#55) | `recognition/11-e15-06-spec-robustness` |
+| [E15-06-it2-vision-safety-net-petya.md](./E15-06-it2-vision-safety-net-petya.md) | Петя | 🔴 **Active** — заход 1/10 repeated (vision counter + bbox-row comparison + gpt-5.2 A/B) | `recognition/12-e15-06-it2-vision` |
 | [E17-quote-xlsx-parser-petya.md](./E17-quote-xlsx-parser-petya.md) | Петя | 🟡 **DRAFT** — не стартовать без явного go PO | (pending) |
 | UI-10 pages-summary warning | Федя | 🟢 **Follow-up после E15-06** — показать warning для pages с `pages_summary[].suspicious=true` в `pdf-import-dialog.tsx` | (pending) |
 
@@ -48,6 +48,7 @@
 | TD-01-tech-debt-batch-petya.md | `recognition/10-td-01-tech-debt-batch` | 2026-04-23 (main `4ce08ca`) |
 | UI-08-column-widths-resize-persist-fedya.md | `ismeta/ui-08-column-widths` | 2026-04-23 (main `f2b01cc`) |
 | UI-09-sections-move-merge-fedya.md | `ismeta/ui-09-sections-operations` | 2026-04-23 (main `aedf80b`) |
+| E15-06-spec-robustness-petya.md | `recognition/11-e15-06-spec-robustness` | 2026-04-23 (main `49ee1be`) |
 
 ## История
 
