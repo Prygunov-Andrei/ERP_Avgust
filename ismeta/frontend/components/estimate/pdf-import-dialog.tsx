@@ -102,6 +102,7 @@ export function PdfImportDialog({ estimateId, open, onOpenChange }: Props) {
       setResult(data);
       setStage("result");
       qc.invalidateQueries({ queryKey: ["estimate-items", estimateId] });
+      qc.invalidateQueries({ queryKey: ["estimate-sections", estimateId] });
       qc.invalidateQueries({ queryKey: ["estimate", estimateId] });
       toast.success(`Распознано: ${data.created} позиций`);
     },

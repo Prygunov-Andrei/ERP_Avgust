@@ -80,6 +80,7 @@ export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
       setResult(data);
       setStage("result");
       qc.invalidateQueries({ queryKey: ["estimate-items", estimateId] });
+      qc.invalidateQueries({ queryKey: ["estimate-sections", estimateId] });
       qc.invalidateQueries({ queryKey: ["estimate", estimateId] });
       const updated = data.updated ?? 0;
       if (data.created + updated > 0) {
