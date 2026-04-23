@@ -173,6 +173,60 @@ class TestItemCRUD:
         assert resp.data["name"] == "Вентилятор обновлённый"
         assert resp["ETag"] == str(item_a.version + 1)
 
+    def test_delete_section_with_items_returns_409(self, client, ws_a, section_a, item_a):
+        """UI-09 data-loss guard: DELETE section с живыми items → 409."""
+        resp = client.delete(
+            f"/api/v1/sections/{section_a.id}/",
+            HTTP_IF_MATCH=str(section_a.version),
+            **{WS_HEADER: str(ws_a.id)},
+        )
+        assert resp.status_code == 409
+        assert resp.data["items_count"] == 1
+        assert EstimateSection.objects.filter(id=section_a.id).count() == 1
+        assert EstimateItem.all_objects.filter(id=item_a.id).count() == 1
+
+    def test_delete_section_with_force_bypasses_guard(self, client, ws_a, section_a, item_a):
+        """?force=true — осознанное каскадное удаление с items."""
+        resp = client.delete(
+            f"/api/v1/sections/{section_a.id}/?force=true",
+            HTTP_IF_MATCH=str(section_a.version),
+            **{WS_HEADER: str(ws_a.id)},
+        )
+        assert resp.status_code == 204
+
+    def test_delete_empty_section_ok(self, client, ws_a, estimate_a):
+        """DELETE пустой секции — 204 без guard."""
+        empty = EstimateSection.objects.create(
+            estimate=estimate_a, workspace=ws_a, name="Пусто", sort_order=99
+        )
+        resp = client.delete(
+            f"/api/v1/sections/{empty.id}/",
+            HTTP_IF_MATCH=str(empty.version),
+            **{WS_HEADER: str(ws_a.id)},
+        )
+        assert resp.status_code == 204
+
+    def test_patch_item_section_moves_item(self, client, ws_a, estimate_a, section_a, item_a):
+        """UI-09 Move Items / Merge Sections: PATCH {section: id} должен
+        реально менять section_id в БД. Без fix — section_id игнорировался,
+        и последующий DELETE source section каскадно удалял items.
+        """
+        other_section = EstimateSection.objects.create(
+            estimate=estimate_a, workspace=ws_a, name="Электрика", sort_order=2
+        )
+        resp = client.patch(
+            f"/api/v1/items/{item_a.id}/",
+            {"section": str(other_section.id)},
+            format="json",
+            HTTP_IF_MATCH=str(item_a.version),
+            **{WS_HEADER: str(ws_a.id)},
+        )
+        assert resp.status_code == 200
+        item_a.refresh_from_db()
+        assert str(item_a.section_id) == str(other_section.id), (
+            "PATCH {section: X} должен менять section_id в БД"
+        )
+
     def test_soft_delete_item(self, client, ws_a, item_a):
         resp = client.delete(
             f"/api/v1/items/{item_a.id}/",

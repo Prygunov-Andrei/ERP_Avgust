@@ -91,12 +91,23 @@ class EstimateService:
         "equipment_total", "material_total", "work_total", "total",
         "match_source", "is_deleted", "is_key_equipment", "procurement_status", "man_hours",
         "tech_specs", "custom_data", "material_markup", "work_markup",
+        # UI-09: перенос item в другую секцию (Move Items + Merge Sections).
+        # Без этого PATCH {section: X} молчком игнорировался, и последующий
+        # DELETE source section каскадно удалял items (QA-CYCLE #58 data-loss).
+        "section_id",
     })
     JSONB_COLUMNS = frozenset({"tech_specs", "custom_data", "material_markup", "work_markup"})
 
     @staticmethod
     def update_item(item_id, workspace_id, version: int, data: dict) -> EstimateItem:
         """UPDATE с optimistic lock: WHERE id=%s AND workspace_id=%s AND version=%s."""
+        # DRF ModelSerializer шлёт ForeignKey как `section` (имя поля модели),
+        # а колонка БД — `section_id`. Нормализуем оба варианта → section_id,
+        # чтобы попасть в whitelist. UI-09 Move Items / Merge Sections.
+        if "section" in data and "section_id" not in data:
+            data = dict(data)
+            data["section_id"] = data.pop("section")
+
         set_clauses = []
         params = []
         _j = EstimateService._to_json_str

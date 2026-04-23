@@ -209,6 +209,35 @@ class EstimateSectionViewSet(viewsets.ModelViewSet):
         except OptimisticLockError as e:
             return _conflict_response(str(e))
 
+    def destroy(self, request, *args, **kwargs):
+        """Safety net: запретить DELETE секции с живыми items.
+
+        Без этого guard любой баг в перед-DELETE логике (например
+        забытый PATCH section_id на items) каскадно удалял items через
+        FK on_delete=CASCADE (QA-CYCLE заход 1/10, data-loss #58).
+
+        Для осознанного удаления с items — использовать ?force=true.
+        """
+        instance = self.get_object()
+        force = request.query_params.get("force", "").lower() in ("true", "1")
+        if not force:
+            items_count = EstimateItem.objects.filter(
+                section_id=instance.id, is_deleted=False
+            ).count()
+            if items_count > 0:
+                return Response(
+                    {
+                        "detail": (
+                            f"Раздел содержит {items_count} "
+                            "строк(и). Переместите их или подтвердите "
+                            "удаление через force=true."
+                        ),
+                        "items_count": items_count,
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+        return super().destroy(request, *args, **kwargs)
+
 
 # ---------------------------------------------------------------------------
 # ItemViewSet (nested under estimate + standalone for PATCH/DELETE)
