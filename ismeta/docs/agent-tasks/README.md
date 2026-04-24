@@ -25,8 +25,7 @@
 
 | Файл | Кому | Статус | Ветка |
 |---|---|---|---|
-| [TD-02-excel-note-suspicious-petya.md](./TD-02-excel-note-suspicious-petya.md) | Петя | 🟢 **Active** — Excel columns + Estimate.note + pages_summary | `ismeta/td-02-excel-note-suspicious` |
-| [UI-12-estimate-note-sticker-fedya.md](./UI-12-estimate-note-sticker-fedya.md) | Федя | 🟡 **Queued** — стикер-заметка, после мержа TD-02 | (pending) |
+| [UI-12-estimate-note-sticker-fedya.md](./UI-12-estimate-note-sticker-fedya.md) | Федя | 🟢 **Active** — стикер-заметка (TD-02 замержен, Estimate.note готов) | `ismeta/ui-12-estimate-note-sticker` |
 | [E17-quote-xlsx-parser-petya.md](./E17-quote-xlsx-parser-petya.md) | Петя | 🟡 **DRAFT** — не стартовать без явного go PO | (pending) |
 
 **Примечание:** E17 в draft — scope проектировался до обсуждения с PO. Workflow КП в ERP — отдельная продуктовая тема (см. `ismeta/docs/OPEN-QUESTIONS-procurement-ux.md`). Backend-расширение Recognition полезно само по себе, но запускаем только по явному согласию.
@@ -54,6 +53,7 @@
 | E15-06-spec-robustness-petya.md | `recognition/11-e15-06-spec-robustness` | 2026-04-23 (main `49ee1be`) |
 | E15-06-it2-vision-safety-net-petya.md | `recognition/12-e15-06-it2-vision` | 2026-04-23 (main `a88b3f4`) |
 | UI-10-suspicious-pages-warning-fedya.md | `ismeta/ui-10-suspicious-pages` | 2026-04-24 (main `b323bf7`) |
+| TD-02-excel-note-suspicious-petya.md | `ismeta/td-02-excel-note-suspicious` | 2026-04-24 (main `1c56835`) |
 
 ## История
 
