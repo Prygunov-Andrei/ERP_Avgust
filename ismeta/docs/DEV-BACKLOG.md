@@ -4,7 +4,7 @@
 
 ## Средний приоритет
 
-### 1. seed_dev_data: обогатить tech_specs
+### 1. ~~seed_dev_data: обогатить tech_specs~~ ✅ _(закрыто TD-04 a85e248 24.04)_
 - Сейчас `seed_dev_data` создаёт items с `tech_specs={}` у всех 5 позиций.
 - Из-за этого ручную проверку UI-02 (brand/model/подстроки) нельзя сделать сразу после `make ismeta-seed` — нужно вручную лезть в БД и UPDATE.
 - Что доделать: в команде `seed_dev_data` добавить для 3–5 items в тестовую смету разные комбинации:
@@ -282,7 +282,7 @@ UX (конфликт позиций) + section_name в ключе.
 
 ---
 
-### 20. LLM_MIN_ITEMS 135 → 142 после стабилизации промпта _(TD-01: оставлен 140 — see ниже)_
+### 20. ~~LLM_MIN_ITEMS 140→142~~ ✅ _(закрыто TD-04 a85e248 24.04: 3 прогона spec-ov2 = 153/153/153, поднят с запасом ~5%)_
 
 **Контекст:** `recognition/tests/golden/test_spec_ov2.py:LLM_MIN_ITEMS = 135` — слишком слабая защита (32 позиции запаса от фактических 147). Regression escape-зона: prompt может деградировать до 89% recall и golden_llm тест пропустит.
 
@@ -459,7 +459,7 @@ Importer делает merge с существующим `tech_specs` при upda
 - PATCH `/api/v1/estimates/:id/` теперь принимает `note` — partial update, overwrite без истории.
 - 6 новых тестов (default empty, persist, overwrite-no-history, clear to empty, cap 5000+1, boundary 5000 OK).
 
-### 23. CI валидация golden_llm через GitHub Actions secrets
+### 23. ~~CI валидация golden_llm через GitHub Actions~~ ⏳ _(draft замержен TD-04 a85e248: .github/workflows/recognition-golden-llm.yml с workflow_dispatch, schedule cron закомментирован. Активируется когда PO создаст `secrets.OPENAI_API_KEY_CI`)_
 
 **Контекст:** `pytest -m golden_llm` пропускается без `OPENAI_API_KEY` в env (skipif). Значит в CI регрессии recall после mergе промпта/парсера не ловятся — видны только при локальном прогоне.
 
