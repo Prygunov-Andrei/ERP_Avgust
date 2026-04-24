@@ -163,6 +163,27 @@ docker container prune -f >/dev/null 2>&1 || true
 docker image prune -af >/dev/null 2>&1 || true
 docker builder prune -af >/dev/null 2>&1 || true
 
+echo -e "${GREEN}[9.2/9] Revalidating frontend ISR-cache...${NC}"
+# Сбрасываем stale-empty cache если backend был недоступен во время
+# prerender'а главной. Берём секрет из .env или уже загруженного окружения.
+REVALIDATE_SECRET_VALUE="${REVALIDATE_SECRET:-}"
+if [ -z "$REVALIDATE_SECRET_VALUE" ] && [ -f ".env" ]; then
+    REVALIDATE_SECRET_VALUE=$(grep -E '^REVALIDATE_SECRET=' .env | tail -n1 | cut -d= -f2- | tr -d '"' | tr -d "'" || true)
+fi
+if [ -n "$REVALIDATE_SECRET_VALUE" ]; then
+    for path in "/" "/ratings/"; do
+        encoded_path=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$path")
+        if curl -fsS -X POST "http://127.0.0.1:3000/api/revalidate?path=${encoded_path}&secret=${REVALIDATE_SECRET_VALUE}" -o /dev/null 2>&1; then
+            echo -e "${GREEN}  revalidated: ${path}${NC}"
+        else
+            echo -e "${YELLOW}  revalidate failed: ${path} (non-fatal)${NC}"
+        fi
+    done
+else
+    echo -e "${YELLOW}  REVALIDATE_SECRET not set — skipping ISR revalidate${NC}"
+    echo -e "${YELLOW}  (добавь REVALIDATE_SECRET=<random> в /opt/finans_assistant/.env)${NC}"
+fi
+
 echo ""
 echo -e "${GREEN}Deployment completed!${NC}"
 echo ""

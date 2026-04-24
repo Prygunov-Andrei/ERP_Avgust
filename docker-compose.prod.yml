@@ -371,6 +371,7 @@ services:
     environment:
       - BACKEND_API_URL=http://backend:8000
       - NEXT_PUBLIC_APP_VERSION=${APP_VERSION:-dev}
+      - REVALIDATE_SECRET=${REVALIDATE_SECRET:-}
     depends_on:
       - backend
     restart: always
