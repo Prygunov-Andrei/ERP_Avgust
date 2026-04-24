@@ -1110,6 +1110,20 @@ def extract_structured_rows(page: object) -> list[TableRow]:
                 f"{word} {existing_name}".strip() if existing_name else word
             )
 
+        # Spec-3 Class D (заход 3/10 повтор): pos-фрагменты штампа (Инв. №)
+        # попадают в pos-column при широкой левой рамке. Чистим pos если он:
+        #  (a) содержит «инв» / «взам» / «подп» / «подл» — осколки штампа,
+        #  (b) ТОЛЬКО «№» или «N» — одинокий знак номера из штампа без кода.
+        # Легитимный pos всегда содержит цифру/букву после № (например «№5»,
+        # «ВД1», «3.1»). Изолированный «№» = штамп.
+        pos_val = (merged_cells.get("pos") or "").strip()
+        pos_lower = pos_val.lower()
+        if pos_val and (
+            any(frag in pos_lower for frag in ("инв", "взам", "подп", "подл"))
+            or pos_val in ("№", "N", "№.", "№ ")
+        ):
+            merged_cells.pop("pos", None)
+
         if not merged_cells and not raw_blocks:
             continue
         if not merged_cells:

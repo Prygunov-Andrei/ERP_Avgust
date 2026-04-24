@@ -73,13 +73,12 @@ def inherit_series_parent(items: list[NormalizedItem]) -> list[NormalizedItem]:
     """Class G/H: items с name-suffix («n=4сек.», «Ду15», «ф100») inheritуют
     полное name от ближайшего предыдущего items с ТОЧНО ТЕМ ЖЕ model_name.
 
-    Strict match — parent.model_name == item.model_name (обе непустые). Без
-    этого теряем точность: series items с другим model (например Ду15 vs
-    «Площадки СПК-1») захватывают wrong parent.
+    ДВУХПРОХОДНЫЙ алгоритм: первый pass snapshot'ит ОРИГИНАЛЬНЫЕ names и
+    suffix-флаги, второй pass применяет inheritance по snapshot'у — чтобы
+    items[i+1] НЕ получил уже-inheritанный name от items[i]. Иначе radiator
+    series 114+ аккумулировала «parent n=3 n=4 n=5 ...» (zacход 3/10 повтор).
 
-    Плюс: parent должен быть в пределах MAX_GAP=1 items назад — series
-    идут в плотных пачках (Радиатор с n=3,4,5,6...; Трубы с Ду15,20,25).
-    Если между ними других items больше — это не single series.
+    Strict match — parent.model_name == item.model_name (обе непустые).
 
     Safety на spec-ov2/АОВ:
     - spec-ov2 items series «ПН2-4,5 Решетка» уже полный name, не suffix-only
@@ -88,27 +87,33 @@ def inherit_series_parent(items: list[NormalizedItem]) -> list[NormalizedItem]:
     """
     if not items:
         return items
+    # Pass 1: snapshot original names + is_suffix flag.
+    snapshot: list[tuple[str, bool]] = [
+        (it.name, bool(_SERIES_SUFFIX_RE.match(it.name.strip())))
+        for it in items
+    ]
+    # Pass 2: apply inheritance только для suffix items, читая ORIGINAL names.
     for i, it in enumerate(items):
-        if not _SERIES_SUFFIX_RE.match(it.name.strip()):
+        _, is_suffix = snapshot[i]
+        if not is_suffix:
             continue
         if not it.model_name:
-            continue  # без model нельзя точно связать с parent
-        # Ищем назад до 5 items ближайший с тем же model_name AND полным name.
+            continue
+        # Ищем назад до 5 items ближайший с тем же model_name AND ОРИГИНАЛЬНЫМ
+        # полным name (не suffix-only). Используем snapshot, не изменённые items.
         for j in range(i - 1, max(-1, i - 6), -1):
+            prev_name_orig, prev_is_suffix = snapshot[j]
+            if prev_is_suffix:
+                continue  # сам suffix — ищем дальше назад
             prev = items[j]
             if prev.model_name != it.model_name:
                 continue
-            # Prev тоже series-suffix? Идём глубже — ищем «корень» серии.
-            if _SERIES_SUFFIX_RE.match(prev.name.strip()):
-                continue
-            # Prev имеет «тяжёлый» name ≥ 15 cyrillic/latin letters —
-            # только тогда считаем его parent'ом.
-            alpha_count = sum(1 for c in prev.name if c.isalpha())
+            alpha_count = sum(1 for c in prev_name_orig if c.isalpha())
             if alpha_count < 15:
                 continue
-            # Найден parent — inherit.
+            # Найден parent — inherit оригинальный parent + текущий suffix.
             suffix = it.name.strip()
-            it.name = f"{prev.name.rstrip()} {suffix}".strip()
+            it.name = f"{prev_name_orig.rstrip()} {suffix}".strip()
             break
     return items
 
