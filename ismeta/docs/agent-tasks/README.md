@@ -25,7 +25,6 @@
 
 | Файл | Кому | Статус | Ветка |
 |---|---|---|---|
-| [TD-03-recognition-backend-polish-petya.md](./TD-03-recognition-backend-polish-petya.md) | Петя | 🟢 **Active** — tech debt batch (#6/#13/#14/#15/#16/#20) | `recognition/13-td-03-polish` |
 | [UI-13-inline-edit-tech-specs-fedya.md](./UI-13-inline-edit-tech-specs-fedya.md) | Федя | 🟡 **Active** — inline-edit model/brand (DEV-BACKLOG #11) | `ismeta/ui-13-inline-edit-tech-specs` |
 | [E17-quote-xlsx-parser-petya.md](./E17-quote-xlsx-parser-petya.md) | Петя | 🟡 **DRAFT** — не стартовать без явного go PO | (pending) |
 
@@ -56,6 +55,7 @@
 | UI-10-suspicious-pages-warning-fedya.md | `ismeta/ui-10-suspicious-pages` | 2026-04-24 (main `b323bf7`) |
 | TD-02-excel-note-suspicious-petya.md | `ismeta/td-02-excel-note-suspicious` | 2026-04-24 (main `1c56835`) |
 | UI-12-estimate-note-sticker-fedya.md | `ismeta/ui-12-estimate-note-sticker` | 2026-04-24 (main `6b3fbf3`) |
+| TD-03-recognition-backend-polish-petya.md | `recognition/13-td-03-polish` | 2026-04-24 (main `9661475`) |
 
 ## История
 
