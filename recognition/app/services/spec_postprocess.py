@@ -59,6 +59,21 @@ def _unbreak_dash_word(text: str) -> str:
     return _WORD_BREAK_DASH_RE.sub(r"\1\2", text)
 
 
+# Spec-3 заход 3/10 повтор (#5): дублированный pos-prefix «А1-А1-Шкаф...».
+# Phase 2c pre-inject кладёт «pos-» в name, но LLM иногда ПРИ ВОЗВРАТЕ тоже
+# добавляет свой «pos-» — получается «А1-А1-name». Убираем дубль после LLM.
+_DUPLICATE_POS_PREFIX_RE = re.compile(
+    r"^([A-Za-zА-Яа-яЁё]{1,2}\d+(?:\.\d+)?)-\1-", re.IGNORECASE
+)
+
+
+def _strip_duplicate_pos_prefix(text: str) -> str:
+    """Убрать дублированный короткий alphanum-pos префикс «X1-X1-» → «X1-»."""
+    if not text:
+        return text
+    return _DUPLICATE_POS_PREFIX_RE.sub(r"\1-", text)
+
+
 # Spec-3 Class G/H: series-suffix items наследуют parent name.
 # Паттерны явно определяют «это лишь размер/вариант, а не самостоятельное имя»:
 # «n=3сек.» (секции радиатора), «Ду15» (диаметр трубы), «ф100/Ø100» (диаметр

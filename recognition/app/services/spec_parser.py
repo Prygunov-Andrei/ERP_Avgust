@@ -10,6 +10,7 @@ E15.04 — добавлен column-aware path:
 
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -39,6 +40,7 @@ from .spec_normalizer import (
 )
 from .spec_postprocess import (
     _looks_like_continuation,
+    _strip_duplicate_pos_prefix,
     _unbreak_dash_word,
     apply_no_qty_merge,
     backfill_source_row_index,
@@ -294,10 +296,33 @@ class SpecParser:
         # заполнить cells.name на стороне Python для «гол»-rows (только qty/
         # unit/model) до отправки в LLM. Тогда LLM получает явный name и не
         # путается с sticky от предыдущей серии.
+        # Фаза 2c (spec-3 заход 3/10 повтор, #5): pre-join КОРОТКИХ буквенных
+        # pos-кодов в начало cells.name. LLM иногда сдвигает одиночные pos
+        # (А1/Д1/У1 на листе 9 ТАБС) относительно next row's name — жёсткая
+        # склейка предотвращает confusion.
+        #
+        # STRICT regex: 1-2 буквы + цифры [+опциональная .N]. Матчит «А1»,
+        # «Д1», «У1», «K1.1», «ПН2», «N1.1». НЕ матчит составные/длинные
+        # pos типа «П1/В1», «П2.1/В2.1», «ВЕ1-ВЕ11.2» — они LLM'ом и так
+        # обрабатываются, а injection длинного префикса в name наоборот
+        # роняет recall (test: spec-3 p1 с «П1/В1-» injection упал с 18 на 14).
+        # Числовые («1», «2», «4.10») — НЕ матчат по определению.
+        _ALPHA_POS_RE = re.compile(r"^[A-Za-zА-Яа-яЁё]{1,2}\d+(?:\.\d+)?$")
         for page_num, rows in enumerate(pages_rows):
             local_sticky = stickies[page_num][1]
             for r in rows:
-                name = (r.cells.get("name") or "").strip()  # type: ignore[attr-defined]
+                cells_typed = r.cells  # type: ignore[attr-defined]
+                pos_raw = (cells_typed.get("pos") or "").strip()
+                name = (cells_typed.get("name") or "").strip()
+                # Phase 2c: pre-join буквенного pos в начало name.
+                if (
+                    pos_raw
+                    and name
+                    and _ALPHA_POS_RE.match(pos_raw)
+                    and not name.startswith(pos_raw)
+                ):
+                    cells_typed["name"] = f"{pos_raw}-{name}"
+                    name = cells_typed["name"]
                 if r.is_section_heading and name:  # type: ignore[attr-defined]
                     keyword_sticky = _sticky_from_section_heading(name)
                     if keyword_sticky:
@@ -307,7 +332,6 @@ class SpecParser:
                     local_sticky = name
                     continue
                 # Пустой name + есть qty/unit/model → inject sticky.
-                cells_typed = r.cells  # type: ignore[attr-defined]
                 has_content = bool(
                     (cells_typed.get("qty") or "").strip()
                     or (cells_typed.get("unit") or "").strip()
@@ -833,6 +857,7 @@ class SpecParser:
         # safety на spec-ov2/АОВ проверена (никаких ложных hits).
         for it in norm.items:
             it.name = _unbreak_dash_word(it.name)
+            it.name = _strip_duplicate_pos_prefix(it.name)
         # Spec-3 Class G/H: series suffix items («n=4сек.», «Ду15», «ф100»)
         # наследуют parent name от соседнего выше с тем же model_name.
         norm.items = inherit_series_parent(norm.items, rows)
