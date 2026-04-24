@@ -14,6 +14,7 @@ export default function NewsFeedHero({ items }: { items: NewsItem[] }) {
   const hero = items[0];
   const side = items.slice(1, 5);
   const heroImage = getNewsHeroImage(hero);
+  const hasImage = Boolean(heroImage);
 
   return (
     <section
@@ -45,32 +46,34 @@ export default function NewsFeedHero({ items }: { items: NewsItem[] }) {
       >
         <Link
           href={`/news/${hero.id}`}
+          data-no-image={hasImage ? undefined : 'true'}
+          className="rt-feed-hero-link"
           style={{
             display: 'block',
             textDecoration: 'none',
             color: 'inherit',
           }}
         >
-          <div
-            aria-hidden
-            className="rt-feed-hero-img"
-            style={{
-              width: '100%',
-              height: 240,
-              background: heroImage
-                ? `center / cover no-repeat url(${heroImage})`
-                : 'repeating-linear-gradient(135deg, hsl(var(--rt-ink-08)) 0 8px, hsl(var(--rt-ink-15)) 8px 16px)',
-              borderRadius: 4,
-              marginBottom: 14,
-            }}
-          />
+          {hasImage && (
+            <div
+              aria-hidden
+              className="rt-feed-hero-img"
+              style={{
+                width: '100%',
+                aspectRatio: '16 / 9',
+                background: `center / cover no-repeat url(${heroImage})`,
+                borderRadius: 4,
+                marginBottom: 14,
+              }}
+            />
+          )}
           <div style={{ marginBottom: 10 }}>
             <Pill style={{ background: 'hsl(var(--rt-accent-bg))', color: 'hsl(var(--rt-accent))', borderColor: 'hsl(var(--rt-accent))' }}>
               {getNewsCategoryLabel(hero)} · {formatNewsDateShort(hero.pub_date)}
             </Pill>
           </div>
           <H
-            size={26}
+            size={hasImage ? 26 : 34}
             serif
             style={{ letterSpacing: -0.4, textWrap: 'balance' } as React.CSSProperties}
             className="rt-feed-hero-h2"
@@ -80,13 +83,13 @@ export default function NewsFeedHero({ items }: { items: NewsItem[] }) {
           <p
             style={{
               margin: '10px 0 0',
-              fontSize: 14,
+              fontSize: hasImage ? 14 : 16,
               lineHeight: 1.55,
               color: 'hsl(var(--rt-ink-60))',
-              maxWidth: 520,
+              maxWidth: 580,
             }}
           >
-            {getNewsLede(hero, 220)}
+            {getNewsLede(hero, hasImage ? 220 : 320)}
           </p>
         </Link>
 
@@ -123,8 +126,8 @@ export default function NewsFeedHero({ items }: { items: NewsItem[] }) {
         @media (max-width: 1023px) {
           .rt-feed-hero { padding: 20px 16px 8px !important; }
           .rt-feed-hero-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
-          .rt-feed-hero-img { height: 200px !important; }
           .rt-feed-hero-h2 { font-size: 22px !important; }
+          .rt-feed-hero-link[data-no-image="true"] .rt-feed-hero-h2 { font-size: 24px !important; }
         }
       `}</style>
     </section>
