@@ -8,7 +8,7 @@ import type {
   EstimateItem,
   EstimateListItem,
   EstimateSection,
-  ImportResult,
+  ExcelImportResult,
   MaterialApplyResponse,
   MaterialMatchResult,
   MaterialMatchSession,
@@ -16,6 +16,7 @@ import type {
   MatchingResult,
   MatchingSession,
   PdfImportPreview,
+  PdfImportResult,
   PdfItem,
   PdfProbeResponse,
   ProblemDetails,
@@ -307,7 +308,7 @@ export const importApi = {
   uploadExcel: (estimateId: UUID, file: File, workspaceId: string) => {
     const form = new FormData();
     form.append("file", file);
-    return apiFetch<ImportResult>(
+    return apiFetch<ExcelImportResult>(
       `/estimates/${estimateId}/import/excel/`,
       {
         method: "POST",
@@ -320,7 +321,7 @@ export const importApi = {
   uploadPdf: (estimateId: UUID, file: File, workspaceId: string) => {
     const form = new FormData();
     form.append("file", file);
-    return apiFetch<ImportResult>(
+    return apiFetch<PdfImportResult>(
       `/estimates/${estimateId}/import/pdf/`,
       {
         method: "POST",

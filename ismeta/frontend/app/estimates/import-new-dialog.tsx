@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { ApiError, estimateApi, importApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
-import type { ImportResult } from "@/lib/api/types";
+import type { ExcelImportResult } from "@/lib/api/types";
 
 const ACCEPT =
   ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -73,10 +73,11 @@ export function ImportNewEstimateDialog() {
           typeof e.problem === "object" &&
           Array.isArray((e.problem as { errors?: unknown }).errors)
         ) {
-          const p = e.problem as unknown as ImportResult;
+          const p = e.problem as unknown as Partial<ExcelImportResult>;
+          const errorsCount = p.errors?.length ?? 0;
           // частичные ошибки — смета создана, показываем количество
           toast.info(
-            `Импортировано с ошибками: ${p.errors.length}. Откройте смету, чтобы исправить.`,
+            `Импортировано с ошибками: ${errorsCount}. Откройте смету, чтобы исправить.`,
           );
         } else {
           throw e;

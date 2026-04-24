@@ -261,20 +261,25 @@ export interface PageSummary {
   suspicious: boolean;
 }
 
-export interface ImportResult {
+// Excel-импорт (POST /import/excel/) — update-aware по row_id,
+// возвращает счётчики созданных/обновлённых строк.
+export interface ExcelImportResult {
   created: number;
-  // updated — только Excel-импорт возвращает это поле (update-aware по row_id).
-  // PDF-импорт через Recognition всегда создаёт новые позиции и updated не
-  // присылает. Читающий код должен использовать `updated ?? 0`.
-  updated?: number;
-  // sections / pages_* — только PDF-импорт (отчёт по страницам и секциям).
-  sections?: number;
+  updated: number;
   errors: string[];
-  pages_total?: number;
-  pages_processed?: number;
-  // pages_summary — PDF-импорт через Recognition (после TD-02): покадровый отчёт
-  // с флагом suspicious=true когда vision-counter видит позиций больше чем парсер.
-  // Optional: legacy backend без поля — поле просто отсутствует.
+}
+
+// PDF-импорт (POST /import/pdf/) через Recognition — всегда создаёт новые
+// позиции, дополнительно отдаёт отчёт по страницам и секциям.
+export interface PdfImportResult {
+  created: number;
+  sections: number;
+  errors: string[];
+  pages_total: number;
+  pages_processed: number;
+  pages_skipped?: number;
+  // pages_summary — покадровый отчёт с флагом suspicious=true когда vision-
+  // counter видит позиций больше чем парсер. Optional: legacy backend без поля.
   pages_summary?: PageSummary[];
 }
 

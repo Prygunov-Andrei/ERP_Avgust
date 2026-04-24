@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { ApiError, importApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
-import type { ImportResult, PdfProbeResponse, UUID } from "@/lib/api/types";
+import type { PdfImportResult, PdfProbeResponse, UUID } from "@/lib/api/types";
 
 interface Props {
   estimateId: UUID;
@@ -56,7 +56,7 @@ export function PdfImportDialog({ estimateId, open, onOpenChange }: Props) {
   const qc = useQueryClient();
   const [stage, setStage] = React.useState<Stage>("choose");
   const [, setFile] = React.useState<File | null>(null);
-  const [result, setResult] = React.useState<ImportResult | null>(null);
+  const [result, setResult] = React.useState<PdfImportResult | null>(null);
   const [elapsed, setElapsed] = React.useState(0);
   const [probe, setProbe] = React.useState<PdfProbeResponse | null>(null);
   const [hintIndex, setHintIndex] = React.useState(0);
@@ -284,12 +284,12 @@ export function PdfImportDialog({ estimateId, open, onOpenChange }: Props) {
                 </ul>
               </div>
             )}
-            {result.pages_total ? (
+            {result.pages_total > 0 ? (
               <div className="text-xs text-muted-foreground">
-                Обработано страниц: {result.pages_processed ?? 0} из {result.pages_total}
+                Обработано страниц: {result.pages_processed} из {result.pages_total}
               </div>
             ) : null}
-            {result.errors && result.errors.length > 0 && (
+            {result.errors.length > 0 && (
               <div className="space-y-1">
                 <div className="text-sm font-medium text-amber-600">Предупреждения:</div>
                 <ul className="text-xs text-muted-foreground space-y-0.5">
