@@ -5,13 +5,23 @@ from django.utils.html import format_html
 from django import forms
 from modeltranslation.admin import TranslationAdmin
 from .models import (
-    NewsPost, NewsMedia, NewsAuthor, Comment, NewsDiscoveryRun, NewsDiscoveryStatus,
+    NewsPost, NewsMedia, NewsAuthor, NewsCategory, Comment, NewsDiscoveryRun, NewsDiscoveryStatus,
     SearchConfiguration, DiscoveryAPICall
 )
 from .services import NewsImportService, publish_news_post, publish_multiple_news_posts
 
 class ImportNewsForm(forms.Form):
     zip_file = forms.FileField()
+
+@admin.register(NewsCategory)
+class NewsCategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "order", "is_active")
+    list_editable = ("order", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name", "slug")
+    prepopulated_fields = {"slug": ("name",)}
+    ordering = ("order", "name")
+
 
 @admin.register(NewsAuthor)
 class NewsAuthorAdmin(admin.ModelAdmin):
