@@ -8,6 +8,7 @@ import {
   formatNewsDateShort,
   getNewsCategoryLabel,
   getNewsHeroImage,
+  getNewsLede,
 } from './newsHelpers';
 
 interface Props {
@@ -25,6 +26,7 @@ export default function NewsFeedList({ items, hasMore, totalCount, skipFirst = 0
 
   const params = useSearchParams();
   const category = params?.get('category') || 'all';
+  const view: 'grid' | 'list' = params?.get('view') === 'list' ? 'list' : 'grid';
 
   const filtered = useMemo(() => {
     if (category === 'all') return all;
@@ -65,7 +67,7 @@ export default function NewsFeedList({ items, hasMore, totalCount, skipFirst = 0
         </div>
       )}
 
-      {visible.length > 0 && (
+      {visible.length > 0 && view === 'grid' && (
         <div
           style={{
             display: 'grid',
@@ -73,6 +75,7 @@ export default function NewsFeedList({ items, hasMore, totalCount, skipFirst = 0
             gap: 20,
           }}
           className="rt-feed-grid"
+          data-view="grid"
         >
           {visible.map((item) => {
             const img = getNewsHeroImage(item);
@@ -135,6 +138,98 @@ export default function NewsFeedList({ items, hasMore, totalCount, skipFirst = 0
         </div>
       )}
 
+      {visible.length > 0 && view === 'list' && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+          className="rt-feed-rows"
+          data-view="list"
+        >
+          {visible.map((item) => {
+            const img = getNewsHeroImage(item);
+            return (
+              <Link
+                key={item.id}
+                href={`/news/${item.id}`}
+                className="rt-feed-row"
+                style={{
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: 16,
+                  border: '1px solid hsl(var(--rt-border-subtle))',
+                  borderRadius: 4,
+                  padding: 12,
+                  background: 'hsl(var(--rt-paper))',
+                }}
+              >
+                <div
+                  aria-hidden
+                  className="rt-feed-row-img"
+                  style={{
+                    width: 200,
+                    height: 120,
+                    flexShrink: 0,
+                    borderRadius: 4,
+                    background: img
+                      ? `center / cover no-repeat url(${img})`
+                      : 'repeating-linear-gradient(135deg, hsl(var(--rt-ink-08)) 0 6px, hsl(var(--rt-ink-15)) 6px 12px)',
+                  }}
+                />
+                <div
+                  className="rt-feed-row-body"
+                  style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: 'hsl(var(--rt-ink-40))',
+                      fontFamily: 'var(--rt-font-mono)',
+                      textTransform: 'uppercase',
+                      letterSpacing: 1,
+                    }}
+                  >
+                    {formatNewsDateShort(item.pub_date)} · {getNewsCategoryLabel(item)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 16,
+                      fontFamily: 'var(--rt-font-serif)',
+                      fontWeight: 700,
+                      lineHeight: 1.25,
+                      color: 'hsl(var(--rt-ink))',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {item.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      lineHeight: 1.45,
+                      color: 'hsl(var(--rt-ink-60))',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {getNewsLede(item, 180)}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       {canLoadMore && category === 'all' && (
         <div style={{ marginTop: 26, display: 'flex', justifyContent: 'center' }}>
           <button
@@ -160,6 +255,10 @@ export default function NewsFeedList({ items, hasMore, totalCount, skipFirst = 0
       )}
 
       <style>{`
+        .rt-feed-card:hover,
+        .rt-feed-row:hover {
+          border-color: hsl(var(--rt-accent)) !important;
+        }
         @media (max-width: 1023px) {
           .rt-feed-list-wrap { padding: 18px 16px 32px !important; }
           .rt-feed-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
@@ -168,6 +267,17 @@ export default function NewsFeedList({ items, hasMore, totalCount, skipFirst = 0
         }
         @media (min-width: 1024px) and (max-width: 1279px) {
           .rt-feed-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        }
+        @media (max-width: 768px) {
+          .rt-feed-row {
+            flex-direction: column !important;
+            gap: 10px !important;
+            padding: 10px !important;
+          }
+          .rt-feed-row-img {
+            width: 100% !important;
+            height: 180px !important;
+          }
         }
       `}</style>
     </section>
