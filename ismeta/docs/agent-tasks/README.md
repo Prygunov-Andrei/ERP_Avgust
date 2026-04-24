@@ -26,7 +26,6 @@
 | Файл | Кому | Статус | Ветка |
 |---|---|---|---|
 | [TD-02-excel-note-suspicious-petya.md](./TD-02-excel-note-suspicious-petya.md) | Петя | 🟢 **Active** — Excel columns + Estimate.note + pages_summary | `ismeta/td-02-excel-note-suspicious` |
-| [UI-10-suspicious-pages-warning-fedya.md](./UI-10-suspicious-pages-warning-fedya.md) | Федя | 🟡 **Active** — warning в pdf-import-dialog (unit-тестами пока, визуально после TD-02) | `ismeta/ui-10-suspicious-pages` |
 | [UI-12-estimate-note-sticker-fedya.md](./UI-12-estimate-note-sticker-fedya.md) | Федя | 🟡 **Queued** — стикер-заметка, после мержа TD-02 | (pending) |
 | [E17-quote-xlsx-parser-petya.md](./E17-quote-xlsx-parser-petya.md) | Петя | 🟡 **DRAFT** — не стартовать без явного go PO | (pending) |
 
@@ -54,6 +53,7 @@
 | UI-09-sections-move-merge-fedya.md | `ismeta/ui-09-sections-operations` | 2026-04-23 (main `aedf80b`) |
 | E15-06-spec-robustness-petya.md | `recognition/11-e15-06-spec-robustness` | 2026-04-23 (main `49ee1be`) |
 | E15-06-it2-vision-safety-net-petya.md | `recognition/12-e15-06-it2-vision` | 2026-04-23 (main `a88b3f4`) |
+| UI-10-suspicious-pages-warning-fedya.md | `ismeta/ui-10-suspicious-pages` | 2026-04-24 (main `b323bf7`) |
 
 ## История
 
