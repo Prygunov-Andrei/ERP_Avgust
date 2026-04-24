@@ -49,6 +49,45 @@ class NewsAuthor(models.Model):
         return self.name
 
 
+class NewsCategory(models.Model):
+    """Раздел новостей для публичного HVAC-портала.
+
+    Аддитивно к hardcoded enum ``NewsPost.Category``: CharField ``category``
+    продолжает существовать параллельно, FK ``NewsPost.category_ref`` ссылается
+    на slug этой модели и синхронизируется с CharField в ``NewsPost.save()``.
+    CharField будет удалён отдельным эпиком после стабилизации.
+
+    Удаление — soft: ViewSet переводит ``is_active=False`` вместо ``DELETE``,
+    чтобы не осиротеть PROTECT FK на ``NewsPost``.
+    """
+
+    slug = models.SlugField(_("Slug"), max_length=50, unique=True)
+    name = models.CharField(_("Name"), max_length=100)
+    order = models.PositiveSmallIntegerField(
+        _("Order"),
+        default=0,
+        help_text=_("Порядок отображения в UI."),
+    )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_(
+            "Отключённые категории не показываются в picker, но FK на "
+            "существующих новостях сохраняется (soft-delete)."
+        ),
+    )
+    created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
+
+    class Meta:
+        ordering = ["order", "name"]
+        verbose_name = _("News Category")
+        verbose_name_plural = _("News Categories")
+
+    def __str__(self):
+        return self.name
+
+
 class NewsPost(models.Model):
     STATUS_CHOICES = [
         ('draft', _('Draft')),
@@ -112,6 +151,21 @@ class NewsPost(models.Model):
         choices=Category.choices,
         default=Category.OTHER,
         help_text=_("Категория новости. Показывается как eyebrow-label и chip-filter в ленте."),
+    )
+    category_ref = models.ForeignKey(
+        "NewsCategory",
+        to_field="slug",
+        db_column="category_ref_slug",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="posts",
+        verbose_name=_("Category (FK)"),
+        help_text=_(
+            "FK-вариант category для CRUD-управления разделами. "
+            "Синхронизируется с CharField 'category' в save(). "
+            "CharField будет удалён отдельным эпиком."
+        ),
     )
     lede = models.TextField(
         _("Lede"),
@@ -242,6 +296,32 @@ class NewsPost(models.Model):
         if self.body and self.reading_time_minutes is None:
             word_count = len(self.body.split())
             self.reading_time_minutes = max(1, round(word_count / 200))
+
+        # Sync CharField `category` ↔ FK `category_ref`.
+        # Приоритет — category_ref (если задан); иначе подтягиваем FK по slug.
+        # При save(update_fields=[...]) синхронизируем только если профильные поля
+        # действительно обновляются, чтобы не ломать узкие update_fields-вызовы
+        # (translation_status, star_rating и пр. — их save() не должен трогать category).
+        update_fields = kwargs.get("update_fields")
+        category_touched = (
+            update_fields is None
+            or "category" in update_fields
+            or "category_ref" in update_fields
+        )
+        if category_touched:
+            if self.category_ref_id and self.category != self.category_ref_id:
+                self.category = self.category_ref_id
+                if update_fields is not None and "category" not in update_fields:
+                    kwargs["update_fields"] = list(update_fields) + ["category"]
+            elif self.category and not self.category_ref_id:
+                try:
+                    self.category_ref = NewsCategory.objects.get(slug=self.category)
+                    if update_fields is not None and "category_ref" not in update_fields:
+                        kwargs["update_fields"] = list(update_fields) + ["category_ref"]
+                except NewsCategory.DoesNotExist:
+                    # До applied data-migration или при удалении категории — не падаем.
+                    pass
+
         super().save(*args, **kwargs)
 
     def is_published(self):
