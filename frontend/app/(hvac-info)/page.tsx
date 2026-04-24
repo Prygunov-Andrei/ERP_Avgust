@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { unstable_noStore as noStore } from 'next/cache';
 import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
 import { getNews } from '@/lib/hvac-api';
 import NewsFeedHero from './_components/NewsFeedHero';
@@ -6,22 +7,19 @@ import NewsCategoryFilter from './_components/NewsCategoryFilter';
 import NewsFeedList from './_components/NewsFeedList';
 import NewsViewSwitcher from './_components/NewsViewSwitcher';
 import SectionFooter from './_components/SectionFooter';
+import { loadFirstPage } from './loadFirstPage';
 
 export const revalidate = 300;
 
 export default async function NewsFeedPage() {
-  let firstPage: Awaited<ReturnType<typeof getNews>> = {
-    results: [],
-    count: 0,
-    next: null,
-    previous: null,
-  };
-  try {
-    firstPage = await getNews(1);
-  } catch (e) {
-    console.error('[news-feed] getNews failed, rendering empty:', e);
-  }
+  const { page: firstPage, empty } = await loadFirstPage(() => getNews(1));
   const items = firstPage.results ?? [];
+
+  // Критично: если после ретраев пусто — не даём Next.js писать пустой
+  // массив в fetch-cache (иначе stale empty переживёт deploy).
+  if (empty) {
+    noStore();
+  }
 
   return (
     <>
