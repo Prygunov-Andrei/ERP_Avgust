@@ -1,5 +1,11 @@
 """Post-process hooks для E15-06: safety-net поверх LLM нормализации.
 
+0. `backfill_source_row_index` (spec-2 заход 2/10) — fallback если LLM
+   (gpt-5.2) молча игнорирует правило 17 промпта и не заполняет
+   source_row_index. Без этого restore_from_bbox_rows и cover_bbox_rows
+   disabled — весь safety-net не работает. Fallback: sequential mapping
+   items[i] → i-я «head row» (row с непустым pos OR qty).
+
 1. `apply_no_qty_merge` (QA #51/#53) — склеить «продолжения» имени, которые
    LLM по какой-то причине выдал отдельными items. Эвристика: если у item
    quantity=0 И unit пуст И name начинается с lowercase / предлога /
@@ -53,6 +59,48 @@ _CONTINUATION_ADJECTIVES_RE = re.compile(
 )
 
 
+def backfill_source_row_index(
+    items: list[NormalizedItem],
+    rows: "list[TableRow] | None" = None,
+) -> list[NormalizedItem]:
+    """Sequential fallback для source_row_index если LLM не заполнила.
+
+    gpt-5.2 (E15-06 it2+) игнорирует правило 17 промпта и оставляет
+    все items.source_row_index=None. Без этого restore_from_bbox_rows
+    и cover_bbox_rows возвращают items без изменений — весь bbox
+    safety-net отключён.
+
+    Эвристика: items обычно выдаются в том же порядке что и bbox
+    «head rows» (row с непустым cells.pos ИЛИ непустым cells.qty).
+    Continuation rows (pos='' AND qty='') — LLM их должна была слить
+    в parent item. Мы назначаем items[i].source_row_index = i-я
+    head-row.
+
+    Не трогаем items которые LLM уже заполнила корректно (не-None).
+    Если rows меньше чем head-items — поздние items остаются None.
+    """
+    if not items or not rows:
+        return items
+    # Если хотя бы половина items уже имеют source_row_index — доверяем LLM.
+    with_idx = sum(1 for it in items if it.source_row_index is not None)
+    if with_idx >= len(items) // 2 and with_idx > 0:
+        return items
+    # Собираем head-row indices.
+    head_indices: list[int] = []
+    for r in rows:
+        pos = (r.cells.get("pos") or "").strip()
+        qty = (r.cells.get("qty") or "").strip()
+        if pos or qty:
+            head_indices.append(r.row_index)
+    # Назначаем по порядку.
+    for i, item in enumerate(items):
+        if item.source_row_index is not None:
+            continue
+        if i < len(head_indices):
+            item.source_row_index = head_indices[i]
+    return items
+
+
 def _looks_like_continuation(name: str) -> bool:
     """True если name выглядит как продолжение предыдущего item-а."""
     s = name.strip()
@@ -98,7 +146,7 @@ def apply_no_qty_merge(items: list[NormalizedItem]) -> list[NormalizedItem]:
         # (A) no-qty & no-unit continuation.
         if name_is_cont and qty == 0 and unit == "":
             prev = out[-1]
-            prev.name = f"{prev.name.rstrip()} {item.name.strip()}".strip()
+            _merge_continuation_into_prev(prev, item)
             continue
 
         # (B) LLM-copy-qty: qty/unit совпадают с предком, пустой model/brand.
@@ -113,11 +161,38 @@ def apply_no_qty_merge(items: list[NormalizedItem]) -> list[NormalizedItem]:
                 and abs(qty - prev_qty) < 1e-6
                 and unit == prev_unit
             ):
-                prev.name = f"{prev.name.rstrip()} {item.name.strip()}".strip()
+                _merge_continuation_into_prev(prev, item)
                 continue
 
         out.append(item)
     return out
+
+
+def _merge_continuation_into_prev(
+    prev: NormalizedItem, cont: NormalizedItem
+) -> None:
+    """Слить continuation-item в предыдущий. Name клеится всегда; model/brand/
+    manufacturer — только если у continuation они непустые И у prev — пустые
+    ИЛИ короткий (e.g. у prev model='КГППнг(A)-HF 3х1,5', у cont model='(N)-0,66'
+    → получаем 'КГППнг(A)-HF 3х1,5 (N)-0,66'). Без anti-duplicate — simple join.
+    """
+    prev.name = f"{prev.name.rstrip()} {cont.name.strip()}".strip()
+    if cont.model_name and cont.model_name not in prev.model_name:
+        prev.model_name = (
+            f"{prev.model_name.rstrip()} {cont.model_name.strip()}".strip()
+            if prev.model_name
+            else cont.model_name.strip()
+        )
+    if cont.brand and not prev.brand:
+        prev.brand = cont.brand
+    if cont.manufacturer and not prev.manufacturer:
+        prev.manufacturer = cont.manufacturer
+    if cont.comments and cont.comments not in prev.comments:
+        prev.comments = (
+            f"{prev.comments.rstrip()} {cont.comments.strip()}".strip()
+            if prev.comments
+            else cont.comments.strip()
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -368,16 +443,22 @@ def cover_bbox_rows(
             continue
         if row.is_section_heading:
             continue
-        # Это continuation (нет qty/unit/model/brand)?
+        # Это continuation (нет qty/unit/brand)?
         has_qty = bool((row.cells.get("qty") or "").strip())
         has_unit = bool((row.cells.get("unit") or "").strip())
         has_model = bool((row.cells.get("model") or "").strip())
         has_brand = bool((row.cells.get("brand") or "").strip())
-        is_continuation = not (has_qty or has_unit or has_model or has_brand)
-        if not is_continuation:
-            # Это полноценная потерянная позиция — склеивать в name
-            # соседнего item нельзя, это исказит данные. Оставляем для
-            # vision_counter / suspicious-flag.
+        is_name_only = not (has_qty or has_unit or has_model or has_brand)
+        # Spec-2 заход 2/10 Класс B: continuation row с собственным
+        # cells.model (fragment серии, например «(N)-0,66») — склеиваем
+        # model в parent item.model_name и name тоже (если name-continuation).
+        is_name_plus_model = (
+            not has_qty and not has_unit and not has_brand and has_model
+        )
+        if not (is_name_only or is_name_plus_model):
+            # Это полноценная потерянная позиция (с qty/unit/brand) —
+            # склеивать в name соседнего item нельзя, исказит данные.
+            # Оставляем для vision_counter / suspicious-flag.
             continue
         # Находим ближайший предыдущий item (по source_row_index < row.row_index).
         prev_item: NormalizedItem | None = None
@@ -400,9 +481,19 @@ def cover_bbox_rows(
         # детектятся через vision_counter / expected_count tolerance.
         if not _looks_like_continuation(cells_name):
             continue
-        prev_item.name = (
-            f"{prev_item.name.rstrip()} {cells_name.strip()}".strip()
-        )[:500]
+        # Склейка name — если ещё не содержится в prev (anti-duplicate).
+        if cells_name not in prev_item.name:
+            prev_item.name = (
+                f"{prev_item.name.rstrip()} {cells_name.strip()}".strip()
+            )[:500]
+        # Spec-2 Класс B: склейка model если у continuation row есть cells.model.
+        cells_model = (row.cells.get("model") or "").strip()
+        if cells_model and cells_model not in (prev_item.model_name or ""):
+            prev_item.model_name = (
+                f"{prev_item.model_name.rstrip()} {cells_model}".strip()
+                if prev_item.model_name
+                else cells_model
+            )[:500]
         covered.add(row.row_index)
 
     return items

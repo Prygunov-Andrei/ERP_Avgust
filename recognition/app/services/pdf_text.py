@@ -963,6 +963,12 @@ def _is_title_block_bucket(bucket: list[_Span], page_rect: object) -> bool:
 
 
 _QTY_LIKE_RE = re.compile(r"[~≈]?\s*[\d]+(?:[.,]\d+)?")
+# Pos-col accidentally захватил слово из name-col (pos-box широкий).
+# Пример «5.6 Шпилька» → pos='5.6', остаток 'Шпилька' в name.
+# Требует: числовой pos (X.Y или X), пробел, слово с заглавной ≥4 букв русских.
+_POS_WITH_WORD_RE = re.compile(
+    r"^(\d+(?:\.\d+)?)\s+([А-ЯЁ][А-Яа-яЁё]{3,}.*?)\s*$"
+)
 _MODEL_OR_SIZE_LIKE_RE = re.compile(
     r"[A-Za-zА-Яа-яЁё]*\d+(?:[-х×x/\\.A-Za-zА-Яа-яЁё\d]*)"
 )
@@ -1049,6 +1055,19 @@ def extract_structured_rows(page: object) -> list[TableRow]:
         merged_cells = {
             col: val for col, val in merged_cells.items() if not is_stamp_cell(val)
         }
+
+        # Spec-2 заход 2/10: split pos если словосочетание попало в pos-column.
+        # Пример: cells.pos='5.6 Шпилька' → pos='5.6', name='Шпилька ' + прежний.
+        # Safe на spec-ov2: pos там буквенный (ПН2-4,5, ВД1), не matches regex.
+        pos_raw = merged_cells.get("pos", "")
+        m = _POS_WITH_WORD_RE.match(pos_raw)
+        if m:
+            merged_cells["pos"] = m.group(1)
+            word = m.group(2).strip()
+            existing_name = merged_cells.get("name", "").strip()
+            merged_cells["name"] = (
+                f"{word} {existing_name}".strip() if existing_name else word
+            )
 
         if not merged_cells and not raw_blocks:
             continue

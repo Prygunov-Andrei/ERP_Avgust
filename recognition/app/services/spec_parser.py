@@ -38,6 +38,7 @@ from .spec_normalizer import (
 )
 from .spec_postprocess import (
     apply_no_qty_merge,
+    backfill_source_row_index,
     cap_sticky_name,
     cover_bbox_rows,
     restore_from_bbox_rows,
@@ -211,6 +212,47 @@ class SpecParser:
                 )
                 pages_rows.append([])
 
+        # Фаза 1b — cross-page continuation (spec-2 заход 2/10, Класс C).
+        # Rows в НАЧАЛЕ страницы N > 0 с пустыми pos+qty+model+unit+brand
+        # но непустым name — это «оторвавшийся» хвост multi-line name с
+        # предыдущей страницы. Изымаем их из pages_rows[N] (LLM не увидит,
+        # не спутает с item 1 страницы N) и складываем в буфер для
+        # приклейки к last item страницы N-1 после LLM-normalize.
+        cross_page_continuations: dict[int, list[str]] = {}
+        for pi in range(1, len(pages_rows)):
+            rows_pi = pages_rows[pi]
+            taken: list[TableRow] = []
+            while rows_pi:
+                r = rows_pi[0]
+                cells_typed = r.cells  # type: ignore[attr-defined]
+                pos = (cells_typed.get("pos") or "").strip()
+                qty = (cells_typed.get("qty") or "").strip()
+                unit = (cells_typed.get("unit") or "").strip()
+                model = (cells_typed.get("model") or "").strip()
+                brand = (cells_typed.get("brand") or "").strip()
+                name = (cells_typed.get("name") or "").strip()
+                is_sec = r.is_section_heading  # type: ignore[attr-defined]
+                if (
+                    not is_sec
+                    and name
+                    and not pos
+                    and not qty
+                    and not unit
+                    and not model
+                    and not brand
+                ):
+                    taken.append(rows_pi.pop(0))
+                    continue
+                break
+            if taken:
+                cross_page_continuations[pi - 1] = [
+                    (r.cells.get("name") or "").strip() for r in taken  # type: ignore[attr-defined]
+                ]
+                logger.info(
+                    "cross-page continuation: taken %d rows from page %d",
+                    len(taken), pi + 1,
+                )
+
         # Фаза 2 — best-effort sticky/section перед каждой страницей.
         # E15-06 it3 (QA заход 1/10 hardcore): section-heading обновляет sticky
         # по ключевому слову — «Воздуховоды приточной ...» → sticky «Воздуховод».
@@ -230,6 +272,9 @@ class SpecParser:
                         cur_sticky = keyword_sticky
                 elif name:
                     cur_sticky = name
+
+        # Сохраняем cross-page buffer в state для Фазы 5.
+        self._cross_page_continuations = cross_page_continuations
 
         # Фаза 2b — pre-inject sticky в rows с пустым cells.name (E15-06 it3).
         # LLM не умеет стабильно переключать sticky между страницами по
@@ -475,6 +520,20 @@ class SpecParser:
             initial_sticky = stickies[page_num][1] if page_num < len(stickies) else ""
             rows = pages_rows[page_num] if page_num < len(pages_rows) else []
             self._apply_postprocess(norm, rows=rows, initial_sticky=initial_sticky)
+
+            # Cross-page continuation (Класс C spec-2): rows изъятые с
+            # начала следующей страницы склеиваем в name last item ЭТОЙ.
+            cp_tails = getattr(self, "_cross_page_continuations", {}).get(page_num)
+            if cp_tails and norm.items:
+                last = norm.items[-1]
+                for tail in cp_tails:
+                    if tail and tail not in last.name:
+                        last.name = f"{last.name.rstrip()} {tail.strip()}".strip()
+                logger.info(
+                    "cross-page continuation applied: page %d last item += %d tails",
+                    page_num + 1, len(cp_tails),
+                )
+
             state.current_section = norm.new_section or state.current_section
             state.sticky_parent_name = norm.new_sticky or state.sticky_parent_name
             self._append_normalized_items(norm, page_num)
@@ -733,6 +792,9 @@ class SpecParser:
         чтобы корректно определить «ошибочно прилипший» родитель.
         """
         before = len(norm.items)
+        if rows:
+            # Fallback mapping если LLM (gpt-5.2) не заполнила source_row_index.
+            norm.items = backfill_source_row_index(norm.items, rows)
         norm.items = apply_no_qty_merge(norm.items)
         norm.items = cap_sticky_name(norm.items, initial_sticky=initial_sticky)
         if rows:
