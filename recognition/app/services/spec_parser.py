@@ -39,10 +39,12 @@ from .spec_normalizer import (
 )
 from .spec_postprocess import (
     _looks_like_continuation,
+    _unbreak_dash_word,
     apply_no_qty_merge,
     backfill_source_row_index,
     cap_sticky_name,
     cover_bbox_rows,
+    inherit_series_parent,
     restore_from_bbox_rows,
 )
 from .vision_counter import count_items_on_page
@@ -826,6 +828,14 @@ class SpecParser:
         if rows:
             norm.items = restore_from_bbox_rows(norm.items, rows)
             norm.items = cover_bbox_rows(norm.items, rows)
+        # Spec-3 Class B: fix word-break «по- крытием» → «покрытием» в
+        # финальных item.name (после всех merge). Regex cyrillic-only,
+        # safety на spec-ov2/АОВ проверена (никаких ложных hits).
+        for it in norm.items:
+            it.name = _unbreak_dash_word(it.name)
+        # Spec-3 Class G/H: series suffix items («n=4сек.», «Ду15», «ф100»)
+        # наследуют parent name от соседнего выше с тем же model_name.
+        norm.items = inherit_series_parent(norm.items)
         after = len(norm.items)
         if before != after:
             norm.warnings.append(

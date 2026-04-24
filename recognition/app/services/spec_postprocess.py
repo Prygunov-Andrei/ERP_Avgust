@@ -43,6 +43,75 @@ _CONTINUATION_PREFIXES = (
     "со ", "во ", "ко ", "без ",
 )
 
+# Spec-3 Class B: word-break с дефисом + пробел в name (LLM-уровень).
+# Pattern: прежняя буква кириллицы + «-» + whitespace + cyrillic lowercase →
+# склейка без tire и space. «по- крытием» → «покрытием», «ком- плектом» →
+# «комплектом». Latin не трогаем (могут быть код-маркеры типа «TI-HF»).
+# После uppercase — тоже не трогаем (могут быть list items «1 - Заголовок»).
+_WORD_BREAK_DASH_RE = re.compile(r"([а-яёА-ЯЁ])-\s+([а-яё])")
+
+
+def _unbreak_dash_word(text: str) -> str:
+    """Починить word-break с дефисом+пробелом в name-строке."""
+    if not text or "-" not in text:
+        return text
+    return _WORD_BREAK_DASH_RE.sub(r"\1\2", text)
+
+
+# Spec-3 Class G/H: series-suffix items наследуют parent name.
+# Паттерны явно определяют «это лишь размер/вариант, а не самостоятельное имя»:
+# «n=3сек.» (секции радиатора), «Ду15» (диаметр трубы), «ф100/Ø100» (диаметр
+# воздуховода). Такие items с тем же model_name как у соседнего выше —
+# продолжение series, name должен inheritовать parent.
+_SERIES_SUFFIX_RE = re.compile(
+    r"^(?:n=\d+\s*[cс]ек\.?|Ду\d+|[фØø∅]\s*\d+(?:[x×х]\d+)?)\s*$",
+    re.IGNORECASE,
+)
+
+
+def inherit_series_parent(items: list[NormalizedItem]) -> list[NormalizedItem]:
+    """Class G/H: items с name-suffix («n=4сек.», «Ду15», «ф100») inheritуют
+    полное name от ближайшего предыдущего items с ТОЧНО ТЕМ ЖЕ model_name.
+
+    Strict match — parent.model_name == item.model_name (обе непустые). Без
+    этого теряем точность: series items с другим model (например Ду15 vs
+    «Площадки СПК-1») захватывают wrong parent.
+
+    Плюс: parent должен быть в пределах MAX_GAP=1 items назад — series
+    идут в плотных пачках (Радиатор с n=3,4,5,6...; Трубы с Ду15,20,25).
+    Если между ними других items больше — это не single series.
+
+    Safety на spec-ov2/АОВ:
+    - spec-ov2 items series «ПН2-4,5 Решетка» уже полный name, не suffix-only
+      pattern → не matches.
+    - spec-АОВ кабели имеют полное name → не matches.
+    """
+    if not items:
+        return items
+    for i, it in enumerate(items):
+        if not _SERIES_SUFFIX_RE.match(it.name.strip()):
+            continue
+        if not it.model_name:
+            continue  # без model нельзя точно связать с parent
+        # Ищем назад до 5 items ближайший с тем же model_name AND полным name.
+        for j in range(i - 1, max(-1, i - 6), -1):
+            prev = items[j]
+            if prev.model_name != it.model_name:
+                continue
+            # Prev тоже series-suffix? Идём глубже — ищем «корень» серии.
+            if _SERIES_SUFFIX_RE.match(prev.name.strip()):
+                continue
+            # Prev имеет «тяжёлый» name ≥ 15 cyrillic/latin letters —
+            # только тогда считаем его parent'ом.
+            alpha_count = sum(1 for c in prev.name if c.isalpha())
+            if alpha_count < 15:
+                continue
+            # Найден parent — inherit.
+            suffix = it.name.strip()
+            it.name = f"{prev.name.rstrip()} {suffix}".strip()
+            break
+    return items
+
 # Прилагательные в начале continuation-фрагментов (нижний регистр
 # гарантирован is-lowercase проверкой выше, но регистронезависимо
 # нужен на случай когда LLM сохраняет заглавную).
@@ -175,8 +244,17 @@ def _merge_continuation_into_prev(
     manufacturer — только если у continuation они непустые И у prev — пустые
     ИЛИ короткий (e.g. у prev model='КГППнг(A)-HF 3х1,5', у cont model='(N)-0,66'
     → получаем 'КГППнг(A)-HF 3х1,5 (N)-0,66'). Без anti-duplicate — simple join.
+
+    Spec-3 заход 3/10 Class B: dash-rule word-break. Если prev.name
+    заканчивается на '-' AND cont.name начинается с lowercase —
+    склейка БЕЗ space, tire убираем («...по-» + «крытием» → «...покрытием»).
     """
-    prev.name = f"{prev.name.rstrip()} {cont.name.strip()}".strip()
+    prev_name = prev.name.rstrip()
+    cont_name = cont.name.strip()
+    if prev_name.endswith("-") and cont_name and cont_name[0].islower():
+        prev.name = prev_name[:-1] + cont_name
+    else:
+        prev.name = f"{prev_name} {cont_name}".strip()
     if cont.model_name and cont.model_name not in prev.model_name:
         prev.model_name = (
             f"{prev.model_name.rstrip()} {cont.model_name.strip()}".strip()
@@ -483,9 +561,14 @@ def cover_bbox_rows(
             continue
         # Склейка name — если ещё не содержится в prev (anti-duplicate).
         if cells_name not in prev_item.name:
-            prev_item.name = (
-                f"{prev_item.name.rstrip()} {cells_name.strip()}".strip()
-            )[:500]
+            prev_name = prev_item.name.rstrip()
+            cname = cells_name.strip()
+            # Spec-3 Class B: dash-rule word-break для cover_bbox_rows тоже.
+            if prev_name.endswith("-") and cname and cname[0].islower():
+                merged = (prev_name[:-1] + cname)[:500]
+            else:
+                merged = f"{prev_name} {cname}".strip()[:500]
+            prev_item.name = merged
         # Spec-2 Класс B: склейка model если у continuation row есть cells.model.
         cells_model = (row.cells.get("model") or "").strip()
         if cells_model and cells_model not in (prev_item.model_name or ""):

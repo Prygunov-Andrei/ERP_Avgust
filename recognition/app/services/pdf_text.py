@@ -93,6 +93,12 @@ _STAMP_EXACT: set[str] = {
     "Подп. и дата",
     "Инв. № подл.",
     "Инв.№ подл.",
+    # Spec-3 Class D: «№ инв» фрагмент штампа «Инв. №» попадал в pos-column
+    # и при column detection прилеплялся к name item 17 как «№ инв-Дроссель...».
+    "№ инв",
+    "№ инв.",
+    "N инв",
+    "N инв.",
     "Согласовано :",
     "Согласовано:",
     "Поз.",
@@ -1134,7 +1140,60 @@ def extract_structured_rows(page: object) -> list[TableRow]:
         )
         row_idx += 1
 
-    return _merge_multiline_section_headings(rows)
+    rows = _merge_multiline_section_headings(rows)
+    rows = _merge_continuation_rows(rows)
+    return rows
+
+
+def _merge_continuation_rows(rows: list[TableRow]) -> list[TableRow]:
+    """Spec-3 заход 3/10 Класс E: склеить rows с ТОЛЬКО заполненной
+    pos-cell (и НИЧЕМ другим) в предыдущий row с полными данными.
+
+    Случай: «ВЕ1-» + «ВЕ11.2», «К2, К2.1,» + «К3, К3.1» — вертикальный
+    перенос pos-cell в ЕСКД таблице. Отдельный row со ТОЛЬКО pos (no
+    name/qty/unit/model/brand/manufacturer/comments) должен приклеиться
+    к предыдущей полной позиции.
+
+    НЕ трогаем rows с только name (Class B — word-break в name) —
+    тест test_multiline_name_splits_into_two_rows фиксирует контракт
+    «multi-line name остаётся split, LLM+post-process склеивает».
+    Class B (dash-rule для name) решается в spec_postprocess через
+    dash-aware apply_no_qty_merge.
+
+    Регрессия safety:
+    - spec-ov2: pos-only rows отсутствуют (pos там в той же row что и
+      остальные data).
+    - spec-АОВ: row 18 Кабель имеет name + model → не pos-only.
+    """
+    _OTHER_KEYS = (
+        "name", "qty", "unit", "model", "brand", "manufacturer", "comments",
+    )
+    out: list[TableRow] = []
+    for row in rows:
+        cells = row.cells
+        if row.is_section_heading:
+            out.append(row)
+            continue
+        has_other = any((cells.get(k) or "").strip() for k in _OTHER_KEYS)
+        has_pos = bool((cells.get("pos") or "").strip())
+        # Pos-only lonely row → merge в prev.
+        if has_pos and not has_other and out and not out[-1].is_section_heading:
+            prev = out[-1]
+            prev_pos = (prev.cells.get("pos") or "").strip()
+            cur_pos = (cells.get("pos") or "").strip()
+            if prev_pos:
+                # Для pos dash-rule SIMPLE: если prev ends '-' — убираем
+                # tire + concat БЕЗ space, независимо от регистра cur (pos
+                # это code типа «ВЕ1-ВЕ11.2» где обе части начинаются с
+                # заглавных). Для name dash-rule остаётся строгой (lowercase)
+                # чтобы не поломать «П1 - Приточная».
+                if prev_pos.endswith("-"):
+                    prev.cells["pos"] = prev_pos[:-1] + cur_pos
+                else:
+                    prev.cells["pos"] = f"{prev_pos} {cur_pos}"
+                continue  # не добавляем row в out
+        out.append(row)
+    return out
 
 
 def _merge_multiline_section_headings(rows: list[TableRow]) -> list[TableRow]:
@@ -1212,6 +1271,40 @@ def _join_column_spans_with_gap(spans: list[_Span], baseline_size: float) -> str
     if not spans:
         return ""
     spans_sorted = sorted(spans, key=lambda s: s.disp_x)
+
+    # Spec-3 заход 3/10 Класс I: superscript digit "0" (size < 70%
+    # baseline + приподнятый) между числом и буквой/° — это знак градуса.
+    # Примеры: «Т 120» + [small]«0» + «C» → «Т 120°C».
+    # Safe: на spec-ov2 (ОВиК без температур) и spec-АОВ (кабели) таких
+    # сценариев нет, regression = 0.
+    normalized: list[_Span] = []
+    for i, sp in enumerate(spans_sorted):
+        if (
+            sp.text == "0"
+            and sp.size > 0
+            and baseline_size > 0
+            and sp.size < baseline_size * 0.75
+            and 0 < i < len(spans_sorted) - 1
+        ):
+            prev_text = spans_sorted[i - 1].text.rstrip()
+            next_text = spans_sorted[i + 1].text.lstrip()
+            if prev_text and prev_text[-1].isdigit() and next_text:
+                if next_text[0] in ("C", "С", "F", "К", "c", "с"):
+                    normalized.append(
+                        _Span(
+                            text="°",
+                            disp_x=sp.disp_x,
+                            disp_y=sp.disp_y,
+                            width=sp.width,
+                            size=sp.size,
+                            flags=sp.flags,
+                            is_bold=sp.is_bold,
+                        )
+                    )
+                    continue
+        normalized.append(sp)
+    spans_sorted = normalized
+
     parts: list[str] = [spans_sorted[0].text]
     for i in range(1, len(spans_sorted)):
         prev = spans_sorted[i - 1]
@@ -1220,7 +1313,21 @@ def _join_column_spans_with_gap(spans: list[_Span], baseline_size: float) -> str
         font_size = max(cur.size, prev.size, baseline_size)
         threshold = font_size * 0.3
         if gap < threshold:
-            parts.append(cur.text)
+            # Spec-3 заход 3/10 Класс F: space-spans фильтруются
+            # _collect_spans через .strip() → в tight-kerning PDF gap между
+            # «Площадки» и «под» = 2.74pt < 3.0 threshold → склейка без
+            # пробела «Площадкипод». Но digit+digit legitimate склеивается
+            # (kerning в «Pc=300»). Правило: если prev заканчивается
+            # русской/латинской буквой И cur начинается буквой — между
+            # словами ДОЛЖЕН быть пробел, иначе получаем слипшую кашу.
+            # Для digit+digit / digit+letter / letter+digit — старое
+            # поведение (склеиваем без пробела).
+            prev_last = prev.text[-1:] if prev.text else ""
+            cur_first = cur.text[:1] if cur.text else ""
+            if gap > 0 and prev_last.isalpha() and cur_first.isalpha():
+                parts.append(" " + cur.text)
+            else:
+                parts.append(cur.text)
         else:
             parts.append(" " + cur.text)
     return "".join(parts)
