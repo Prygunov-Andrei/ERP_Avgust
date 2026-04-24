@@ -27,7 +27,7 @@ import { ApiError, importApi } from "@/lib/api/client";
 import { getWorkspaceId } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
 import { parseXlsxPreview, type PreviewResult } from "@/lib/excel/preview";
-import type { ImportResult, UUID } from "@/lib/api/types";
+import type { ExcelImportResult, UUID } from "@/lib/api/types";
 
 interface Props {
   estimateId: UUID;
@@ -55,7 +55,7 @@ export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
   const [stage, setStage] = React.useState<Stage>("choose");
   const [preview, setPreview] = React.useState<PreviewResult | null>(null);
   const [parseError, setParseError] = React.useState<string | null>(null);
-  const [result, setResult] = React.useState<ImportResult | null>(null);
+  const [result, setResult] = React.useState<ExcelImportResult | null>(null);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   const parseMut = useMutation({
@@ -82,10 +82,9 @@ export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
       qc.invalidateQueries({ queryKey: ["estimate-items", estimateId] });
       qc.invalidateQueries({ queryKey: ["estimate-sections", estimateId] });
       qc.invalidateQueries({ queryKey: ["estimate", estimateId] });
-      const updated = data.updated ?? 0;
-      if (data.created + updated > 0) {
+      if (data.created + data.updated > 0) {
         toast.success(
-          `Импорт: +${data.created} новых, ~${updated} обновлено`,
+          `Импорт: +${data.created} новых, ~${data.updated} обновлено`,
         );
       }
     },
@@ -96,11 +95,11 @@ export function ImportDialog({ estimateId, open, onOpenChange }: Props) {
         typeof e.problem === "object" &&
         Array.isArray((e.problem as { errors?: unknown }).errors)
       ) {
-        const p = e.problem as unknown as ImportResult;
+        const p = e.problem as unknown as Partial<ExcelImportResult>;
         setResult({
           created: p.created ?? 0,
           updated: p.updated ?? 0,
-          errors: p.errors,
+          errors: p.errors ?? [],
         });
         setStage("result");
         return;
@@ -380,9 +379,8 @@ function FormatHint() {
   );
 }
 
-function ResultView({ result }: { result: ImportResult }) {
-  const updated = result.updated ?? 0;
-  const hasChanges = result.created + updated > 0;
+function ResultView({ result }: { result: ExcelImportResult }) {
+  const hasChanges = result.created + result.updated > 0;
   return (
     <div className="flex flex-col gap-3 text-sm">
       <div className="flex items-center gap-2" data-testid="result-created">
@@ -393,7 +391,7 @@ function ResultView({ result }: { result: ImportResult }) {
       <div className="flex items-center gap-2" data-testid="result-updated">
         <RefreshCw className="h-4 w-4 text-sky-600" aria-hidden />
         <span>Обновлено:</span>
-        <span className="font-medium tabular-nums">{updated}</span>
+        <span className="font-medium tabular-nums">{result.updated}</span>
       </div>
       {result.errors.length > 0 ? (
         <div className="flex flex-col gap-2" data-testid="result-errors">
