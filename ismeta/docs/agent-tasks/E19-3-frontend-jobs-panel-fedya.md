@@ -172,10 +172,19 @@ export const useRecognitionJobs = () => {
 ```tsx
 function showToastForCompletion(job: RecognitionJob) {
   if (job.status === "done") {
+    const modelName = job.profile_name ?? job.llm_costs?.extract?.model ?? "—";
+    const costStr = job.llm_costs ? `$${job.llm_costs.total_usd.toFixed(2)}` : "—";
     toast({
       duration: 10000,
       title: `✓ ${job.estimate_name}`,
-      description: `${job.items_count} позиций распознано${job.llm_costs ? ` ($${job.llm_costs.total_usd.toFixed(2)})` : ""}`,
+      description: (
+        <div>
+          <div>{job.items_count} позиций распознано</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {modelName} · {costStr}
+          </div>
+        </div>
+      ),
       action: (
         <ToastAction altText="Открыть смету" onClick={() => router.push(`/estimates/${job.estimate}`)}>
           Открыть смету
@@ -198,6 +207,8 @@ function showToastForCompletion(job: RecognitionJob) {
   }
 }
 ```
+
+**Правило:** «модель + цена» всегда мелким серым шрифтом (`text-xs text-muted-foreground`), не должны притягивать взгляд — это справочная мета.
 
 ### 6. Звуковой сигнал (опционально, выключен по умолчанию)
 
@@ -247,9 +258,23 @@ const activeJob = jobs?.[0];
 )}
 ```
 
-После `done` — баннер «✓ Распознано N позиций за X мин ($Y.YY)», dismissable.
+После `done` — баннер «✓ Распознано N позиций за X мин ($Y.YY)», dismissable. Под основным текстом — мелким серым: «DeepSeek v4-pro · 18,234 input + 4,103 output tokens». PO попросил эту мета-информацию везде, не выделяться.
 
 После `failed` — банер с retry-кнопкой.
+
+### 8.1 Мета-блок самой сметы (PO 2026-04-25)
+
+В `app/estimates/[id]/page.tsx` под заголовком сметы (или в footer estimate-note компонента UI-12) — постоянная **мелкая серая строка** с last успешного `ImportLog`:
+
+```tsx
+{lastImport && (
+  <div className="text-xs text-muted-foreground">
+    Распознано: {lastImport.profile?.name ?? "—"} · ${lastImport.cost_usd?.toFixed(2) ?? "—"} · {format(lastImport.created_at, "d MMM")}
+  </div>
+)}
+```
+
+Источник: `GET /api/v1/import-logs/?estimate_id=X&status=done&limit=1`.
 
 ### 9. Тесты
 

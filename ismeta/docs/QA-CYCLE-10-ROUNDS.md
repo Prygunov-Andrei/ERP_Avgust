@@ -481,4 +481,47 @@ LLM_CLASSIFY_MODEL: gpt-5.4
 - **Заход 4/10** с новым PDF от PO
 - Invoice UI / UI-11 stream / E17 — по-прежнему не запускать без go PO
 
+---
+
+## Заход 3/10 — re-validation на DeepSeek V4-Pro (2026-04-25)
+
+PO: «нам нужна самая мощная модель, всё должно работать прекрасно!». Решили попробовать DeepSeek V4-Pro thinking high. Тщательно прошли по документации `api-docs.deepseek.com`:
+
+**Ключевые находки:**
+- `thinking: {type: "enabled"|"disabled"}` — toggle reasoning
+- `reasoning_effort: "high"|"max"` — TOP-LEVEL поле, не внутри `thinking`. low/medium маппятся на high (ниже не поставить), xhigh → max
+- Default thinking enabled high → reasoning_content идёт ДО content. На больших промптах съедает max_tokens, content остаётся пустым (известная проблема, JSON mode тоже)
+- v4-pro со скидкой 75% до 5 мая 2026: input cache miss $0.435/M, cache hit $0.03625/M, output $0.87/M
+- httpx timeout 120s в provider — мало (thinking high может занять >60сек/запрос)
+- backend recognition_client.py hardcoded `DEFAULT_TIMEOUT_SECONDS = 310.0` — упирался первым (502 на UI)
+
+**Внесённые правки (commit `f8af6fe` + `606d25e`):**
+- `recognition/app/config.py` — добавлены `openai_api_base`, `llm_thinking_mode`, `llm_thinking_effort`
+- `recognition/app/providers/openai_vision.py` — `_apply_thinking_mode()` пробрасывает thinking + reasoning_effort на top-level (как требует docs); httpx timeout 120 → 600
+- `ismeta/backend/apps/integration/recognition_client.py` — `DEFAULT_TIMEOUT_SECONDS` 310 → 1800
+- `ismeta/.env` (gitignored) — DeepSeek profile: `deepseek-v4-pro` + thinking enabled high + max_tokens=32000 + concurrency=3 + parse_timeout=1500
+
+**Результаты на live (PO визуальная сверка через UI):**
+
+| PDF | items | страницы (DeepSeek V4-Pro vs PO) | время | стоимость |
+|---|---|---|---|---|
+| spec-ov2 | 153 | 153 ✅ | ~10 мин | ~$0.076 |
+| spec-АОВ | 29 | [15, 14] = 29 ✅ | ~4 мин | ~$0.017 |
+| spec-3 ТАБС | **199/199** ✅ | каждая страница 1-к-1 как у PO | ~14 мин | ~$0.118 |
+
+PO: **«все три Спецификации на отлично! Только проблема долго - но мы это решим!»**
+
+### Решение PO 2026-04-25 (production model)
+
+**Default LLM модель: DeepSeek V4-Pro thinking high.** Платим временем (4-15 мин на PDF), получаем 100% точность. Скорость лечится через E19 background jobs (загрузил → закрыл диалог → работаешь дальше).
+
+PO попросил во всех UI-touchpoint распознавания показывать **«какая модель + сколько стоило»** ненавязчиво (мелким серым). Зафиксировано в master spec E18 (раздел «Модель + цена — обязательная сквозная мета-информация») и E19-3 ТЗ.
+
+### Параллельные планы (на go PO)
+
+- **E18** LLM-профили + cost — спека `specs/16-llm-profiles.md` + 3 task'а готовы (commit `f8af6fe`)
+- **E19** Background jobs — спека `specs/17-background-recognition-jobs.md` + 3 task'а готовы (commit `606d25e`)
+
+**Заход 3/10 ОКОНЧАТЕЛЬНО ЗАКРЫТ.**
+
 
