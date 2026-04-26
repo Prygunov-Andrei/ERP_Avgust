@@ -9,7 +9,11 @@ import type {
   ACModelListItem,
   ACModelPhoto,
   ACModelWritable,
+  ACPreset,
+  ACPresetWritable,
+  ACReview,
   BrandsListParams,
+  BulkUpdateReviewsResponse,
   CriteriaListParams,
   EquipmentType,
   GenerateDarkLogosResponse,
@@ -17,9 +21,12 @@ import type {
   ModelsListParams,
   NormalizeLogosResponse,
   PaginatedResponse,
+  PresetsListParams,
   RecalculateResponse,
   RegionChoice,
   ReorderPhotosResponse,
+  ReviewStatus,
+  ReviewsListParams,
 } from './acRatingTypes';
 
 // Бэкенд возвращает либо DRF-paginated, либо plain list — нормализуем.
@@ -57,6 +64,29 @@ function buildCriteriaParams(params?: CriteriaListParams): URLSearchParams {
   if (params.is_active) sp.set('is_active', params.is_active);
   if (params.is_key_measurement)
     sp.set('is_key_measurement', params.is_key_measurement);
+  if (params.search) sp.set('search', params.search);
+  if (params.ordering) sp.set('ordering', params.ordering);
+  if (params.page) sp.set('page', String(params.page));
+  return sp;
+}
+
+function buildPresetsParams(params?: PresetsListParams): URLSearchParams {
+  const sp = new URLSearchParams();
+  if (!params) return sp;
+  if (params.is_active) sp.set('is_active', params.is_active);
+  if (params.is_all_selected) sp.set('is_all_selected', params.is_all_selected);
+  if (params.search) sp.set('search', params.search);
+  if (params.ordering) sp.set('ordering', params.ordering);
+  if (params.page) sp.set('page', String(params.page));
+  return sp;
+}
+
+function buildReviewsParams(params?: ReviewsListParams): URLSearchParams {
+  const sp = new URLSearchParams();
+  if (!params) return sp;
+  if (params.status) sp.set('status', params.status);
+  if (params.model !== undefined) sp.set('model', String(params.model));
+  if (params.rating !== undefined) sp.set('rating', String(params.rating));
   if (params.search) sp.set('search', params.search);
   if (params.ordering) sp.set('ordering', params.ordering);
   if (params.page) sp.set('page', String(params.page));
@@ -347,6 +377,113 @@ const acRatingService = {
   ): Promise<GenerateProsConsResponse> {
     const response = await acRatingApiClient.post<GenerateProsConsResponse>(
       `/models/${modelId}/generate-pros-cons/`
+    );
+    return response.data;
+  },
+
+  // ── Presets (Ф8B-2) ───────────────────────────────────────────────
+  async getPresets(
+    params?: PresetsListParams
+  ): Promise<{
+    items: ACPreset[];
+    next: string | null;
+    count: number | null;
+  }> {
+    const sp = buildPresetsParams(params);
+    const response = await acRatingApiClient.get<unknown>('/presets/', {
+      params: sp,
+    });
+    const data = response.data;
+    if (Array.isArray(data)) {
+      return { items: data as ACPreset[], next: null, count: data.length };
+    }
+    const paginated = data as PaginatedResponse<ACPreset>;
+    return {
+      items: paginated.results || [],
+      next: paginated.next ?? null,
+      count: paginated.count ?? null,
+    };
+  },
+
+  async getPreset(id: number): Promise<ACPreset> {
+    const response = await acRatingApiClient.get<ACPreset>(`/presets/${id}/`);
+    return response.data;
+  },
+
+  async createPreset(payload: ACPresetWritable): Promise<ACPreset> {
+    const response = await acRatingApiClient.post<ACPreset>(
+      '/presets/',
+      payload
+    );
+    return response.data;
+  },
+
+  async updatePreset(
+    id: number,
+    payload: ACPresetWritable
+  ): Promise<ACPreset> {
+    const response = await acRatingApiClient.patch<ACPreset>(
+      `/presets/${id}/`,
+      payload
+    );
+    return response.data;
+  },
+
+  async deletePreset(id: number): Promise<void> {
+    await acRatingApiClient.delete(`/presets/${id}/`);
+  },
+
+  // ── Reviews (Ф8B-2) ───────────────────────────────────────────────
+  async getReviews(
+    params?: ReviewsListParams
+  ): Promise<{
+    items: ACReview[];
+    next: string | null;
+    count: number | null;
+  }> {
+    const sp = buildReviewsParams(params);
+    const response = await acRatingApiClient.get<unknown>('/reviews/', {
+      params: sp,
+    });
+    const data = response.data;
+    if (Array.isArray(data)) {
+      return { items: data as ACReview[], next: null, count: data.length };
+    }
+    const paginated = data as PaginatedResponse<ACReview>;
+    return {
+      items: paginated.results || [],
+      next: paginated.next ?? null,
+      count: paginated.count ?? null,
+    };
+  },
+
+  async getReview(id: number): Promise<ACReview> {
+    const response = await acRatingApiClient.get<ACReview>(`/reviews/${id}/`);
+    return response.data;
+  },
+
+  async updateReviewStatus(
+    id: number,
+    status: ReviewStatus
+  ): Promise<ACReview> {
+    const response = await acRatingApiClient.patch<ACReview>(
+      `/reviews/${id}/`,
+      { status }
+    );
+    return response.data;
+  },
+
+  async deleteReview(id: number): Promise<void> {
+    await acRatingApiClient.delete(`/reviews/${id}/`);
+  },
+
+  async bulkUpdateReviews(
+    review_ids: number[],
+    status: ReviewStatus
+  ): Promise<BulkUpdateReviewsResponse> {
+    const response = await acRatingApiClient.post<BulkUpdateReviewsResponse>(
+      '/reviews/bulk-update/',
+      { review_ids, status }
     );
     return response.data;
   },
