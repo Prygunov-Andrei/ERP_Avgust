@@ -95,6 +95,10 @@ class FeaturedNewsView(APIView):
                 pub_date__lte=timezone.now(),
                 is_no_news_found=False,
                 is_deleted=False,
+                # 5★ фильтр — синхронно с публичным NewsPostViewSet (views.py:154-155).
+                # Без него featured-news может вернуть id, который detail-endpoint
+                # /news/<id>/ отбросит → 404 на клике из hero (баг 2026-04-26).
+                star_rating=5,
             )
         )
         if featured.category_id is not None:
