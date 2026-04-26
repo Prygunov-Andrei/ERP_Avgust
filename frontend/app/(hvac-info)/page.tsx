@@ -1,18 +1,26 @@
 import { Suspense } from 'react';
 import { unstable_noStore as noStore } from 'next/cache';
 import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
-import { getNews } from '@/lib/hvac-api';
+import { getFeaturedNews, getNews, type FeaturedNewsResponse } from '@/lib/hvac-api';
 import NewsFeedHero from './_components/NewsFeedHero';
 import NewsCategoryFilter from './_components/NewsCategoryFilter';
 import NewsFeedList from './_components/NewsFeedList';
 import NewsViewSwitcher from './_components/NewsViewSwitcher';
 import SectionFooter from './_components/SectionFooter';
 import { loadFirstPage } from './loadFirstPage';
+import { buildFeaturedFeed } from './buildFeaturedFeed';
 
 export const revalidate = 300;
 
 export default async function NewsFeedPage() {
-  const { page: firstPage, empty } = await loadFirstPage(() => getNews(1));
+  const [{ page: firstPage, empty }, featured] = await Promise.all([
+    loadFirstPage(() => getNews(1)),
+    getFeaturedNews().catch((e): FeaturedNewsResponse => {
+      console.error('[featured-news] fetch failed', e);
+      return { post: null, category: null };
+    }),
+  ]);
+
   const items = firstPage.results ?? [];
 
   // Критично: если после ретраев пусто — не даём Next.js писать пустой
@@ -21,11 +29,13 @@ export default async function NewsFeedPage() {
     noStore();
   }
 
+  const { hero, feed } = buildFeaturedFeed(items, featured.post);
+
   return (
     <>
       <HvacInfoHeader />
       <main className="hvac-content">
-        <NewsFeedHero items={items} />
+        <NewsFeedHero items={hero} />
         <div className="rt-feed-controls-row">
           <Suspense fallback={null}>
             <NewsCategoryFilter items={items} />
@@ -59,9 +69,9 @@ export default async function NewsFeedPage() {
         </div>
         <Suspense fallback={null}>
           <NewsFeedList
-            items={items}
+            items={feed}
             hasMore={!!firstPage.next}
-            totalCount={firstPage.count ?? items.length}
+            totalCount={firstPage.count ?? feed.length}
             skipFirst={5}
           />
         </Suspense>
