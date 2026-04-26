@@ -38,28 +38,41 @@ Backend готов:
 ```typescript
 export type RecognitionJobStatus = "queued" | "running" | "done" | "failed" | "cancelled";
 
+// Точный contract от E19-2 backend (RecognitionJobSerializer):
+// apps/recognition_jobs/serializers.py — read_only_fields = fields, всегда GET-only.
 export interface RecognitionJob {
-  id: string;
-  estimate: number;
+  id: string;  // UUID
+  estimate_id: string;  // UUID
   estimate_name: string;
   file_name: string;
   file_type: "pdf" | "excel" | "spec" | "invoice";
-  // E18 not yet implemented — profile_id всегда null на MVP, profile_name отсутствует
+  // E18 not yet — profile_id всегда null на MVP. После E18-2 будет int.
   profile_id: number | null;
   status: RecognitionJobStatus;
   pages_total: number | null;
   pages_done: number;
   items_count: number;
-  llm_costs: LLMCosts | null;  // E19-1 шлёт {} placeholder; E18-1 заполнит реальные значения
+  // pages_summary — массив объектов { page, expected_count, parsed_count, suspicious, ... }
+  // от recognition. Для banner/popover можно показать aggregate "N suspicious страниц".
+  pages_summary: Array<{ page: number; parsed_count: number; expected_count?: number; suspicious?: boolean }>;
+  // E19-1 шлёт {} placeholder; E18-1 заполнит реальную структуру с extract/multimodal/total_usd.
+  llm_costs: { extract?: { model: string; total_tokens?: number }; total_usd?: number } | Record<string, never>;
   error_message: string;
+  // apply_result — { items_created, sections_created, ... } от apply_parsed_items.
+  // Для UI можно показать "199 позиций добавлено в смету".
+  apply_result: { items_created?: number; sections_created?: number } | Record<string, never>;
+  is_active: boolean;
+  duration_seconds: number | null;
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
-  duration_seconds: number | null;
 }
 ```
 
-> Точное поле `profile_name` появится после E18-3 — не закладывайся.
+> **Backend contract:**
+> - `items` (тяжёлый, тысячи позиций) **НЕ возвращается** API намеренно — applies в смету через callback handler. Frontend читает items уже из `EstimateItem` после `done`.
+> - Все поля `read_only` — POST/PATCH через ViewSet нет. Создание job — через `POST /api/v1/estimates/{id}/import/pdf/?async=true` (см. п.7 PdfImportDialog rework).
+> - `cancel` action возвращает `{"id": "...", "status": "cancelled"}` (или 409 если уже terminal).
 
 ### 2. API client
 
@@ -238,13 +251,21 @@ function showToastForCompletion(job: RecognitionJob) {
 
 После submit:
 ```typescript
-const result = await api.post(`/estimates/${estimateId}/import/pdf/?async=true`, formData);
-toast({ description: `Распознавание "${file.name}" запущено. Можете продолжать работу.`, duration: 5000 });
-qc.invalidateQueries(["recognition-jobs"]);
-onClose(); // моментально закрыть диалог
+// E19-2 hotfix: backend default sync. Async — только при явном ?async=true.
+// Backend возвращает 202 + RecognitionJob JSON (status="queued").
+const job = await api.post<RecognitionJob>(
+  `/estimates/${estimateId}/import/pdf/?async=true`,
+  formData
+);
+toast({
+  description: `Распознавание "${file.name}" запущено. Можете продолжать работу.`,
+  duration: 5000,
+});
+qc.invalidateQueries({ queryKey: ["recognition-jobs"] });
+onClose();  // моментально закрыть диалог
 ```
 
-Старый sync flow можно оставить через `?async=false` (для admin / debug-кнопки).
+Backend дефолт без флага — sync flow (старый PdfImportResult). Если PO специально хочет sync (admin/debug) — `?async=false`.
 
 ### 8. Estimate page banner
 
