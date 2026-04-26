@@ -76,8 +76,8 @@ export default function HeroBlock({ stats }: { stats: RatingMethodologyStats }) 
       <div className="rt-hero-grid">
         <div>
           <H size={34} serif as="h1" style={{ letterSpacing: -0.5, lineHeight: 1.2 }}>
-            Интегральный индекс «Август-климат» качества бытовых кондиционеров до 4,0 кВт на
-            основе наших измерений и анализа параметров.
+            Интегральный индекс «Август-климат» качества бытовых кондиционеров до 4,5 кВт на
+            основе наших измерений и анализа параметров
           </H>
           <div
             style={{
