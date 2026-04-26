@@ -111,6 +111,7 @@ export function DetailHeroCollapsed({ detail, stats }: { detail: RatingModelDeta
           srcDark={detail.brand.logo_dark}
           name={detail.brand.name}
           size={28}
+          tooltip={detail.brand.name}
         />
         <span
           style={{
@@ -234,7 +235,8 @@ function HeroLeft({
           src={detail.brand.logo}
           srcDark={detail.brand.logo_dark}
           name={detail.brand.name}
-          size={32}
+          size={64}
+          tooltip={detail.brand.name}
         />
         {seriesLabel && (
           <>
@@ -453,7 +455,8 @@ function HeroMobile({
           src={detail.brand.logo}
           srcDark={detail.brand.logo_dark}
           name={detail.brand.name}
-          size={32}
+          size={44}
+          tooltip={detail.brand.name}
         />
         <div
           style={{
