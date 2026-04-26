@@ -68,10 +68,12 @@ def estimate(ws, user):
 
 @pytest.mark.django_db
 class TestImportPdfAsync:
-    def test_async_default_creates_job_and_returns_202(self, client, ws, estimate):
+    def test_async_explicit_creates_job_and_returns_202(self, client, ws, estimate):
+        # E19 hotfix 2026-04-26: default — sync (frontend ещё не знает async).
+        # async требует явного ?async=true, переключим default после E19-3.
         pdf = SimpleUploadedFile("spec.pdf", b"%PDF-1.4 fake", content_type="application/pdf")
         resp = client.post(
-            f"/api/v1/estimates/{estimate.id}/import/pdf/",
+            f"/api/v1/estimates/{estimate.id}/import/pdf/?async=true",
             data={"file": pdf},
             format="multipart",
             **{WS_HEADER: str(ws.id)},

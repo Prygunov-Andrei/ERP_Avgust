@@ -39,11 +39,15 @@ def _get_workspace_id(request):
 
 
 def _is_async_requested(request) -> bool:
-    """`?async=true` (default) — async через RecognitionJob.
-    `?async=false` — старый sync flow.
+    """`?async=true` — async через RecognitionJob (E19-2).
+    Default — sync (старый backward-compat flow).
+
+    E19 hotfix 2026-04-26: переключение на async **default** опасно — frontend
+    ожидает sync PdfImportResult, на 202 + RecognitionJob ломается. Default
+    остаётся sync, frontend начнёт передавать `?async=true` после E19-3.
     """
-    raw = request.query_params.get("async", "true").strip().lower()
-    return raw not in ("false", "0", "no", "off")
+    raw = request.query_params.get("async", "false").strip().lower()
+    return raw in ("true", "1", "yes", "on")
 
 
 @api_view(["POST"])
