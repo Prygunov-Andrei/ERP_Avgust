@@ -352,3 +352,74 @@ export interface GenerateProsConsResponse {
   generated: { pros: string[]; cons: string[] };
   provider: string;
 }
+
+// ── Presets (Ф8B-2) ───────────────────────────────────────────────────
+// AdminRatingPresetSerializer.
+
+export interface ACPreset {
+  id: number;
+  slug: string;
+  label: string;
+  order: number;
+  is_active: boolean;
+  description: string;
+  is_all_selected: boolean;
+  criteria_ids: number[];
+  criteria_count: number; // -1 = «ВСЕ» (если is_all_selected)
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ACPresetWritable {
+  slug?: string;
+  label?: string;
+  order?: number;
+  is_active?: boolean;
+  description?: string;
+  is_all_selected?: boolean;
+  criteria_ids?: number[];
+}
+
+export interface PresetsListParams {
+  is_active?: 'true' | 'false';
+  is_all_selected?: 'true' | 'false';
+  search?: string;
+  ordering?: string;
+  page?: number;
+}
+
+// ── Reviews (Ф8B-2) ───────────────────────────────────────────────────
+// AdminReviewSerializer.
+
+export type ReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export interface ACReview {
+  id: number;
+  model: number;
+  model_brand: string;
+  model_inner_unit: string;
+  model_slug: string;
+  author_name: string;
+  rating: number;
+  pros: string;
+  cons: string;
+  comment: string;
+  status: ReviewStatus;
+  ip_address: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewsListParams {
+  status?: ReviewStatus;
+  model?: number;
+  rating?: number;
+  search?: string;
+  ordering?: string;
+  page?: number;
+}
+
+export interface BulkUpdateReviewsResponse {
+  updated: number;
+  errors: Array<{ id?: number; error: string }>;
+}
