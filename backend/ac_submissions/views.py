@@ -11,8 +11,8 @@ from ac_brands.models import Brand
 from .models import ACSubmission, SubmissionPhoto
 from .serializers import ACSubmissionCreateSerializer, BrandListSerializer
 
-MAX_PHOTOS = 20
-MAX_PHOTO_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_PHOTOS = 10
+MAX_PHOTO_SIZE = 5 * 1024 * 1024  # 5 MB
 
 
 def _client_ip(request) -> str | None:
@@ -53,7 +53,7 @@ class ACSubmissionCreateView(generics.CreateAPIView):
         for f in photos:
             if f.size > MAX_PHOTO_SIZE:
                 return Response(
-                    {"photos": [f"Файл «{f.name}» превышает 10 МБ."]},
+                    {"photos": [f"Файл «{f.name}» превышает 5 МБ."]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         return super().create(request, *args, **kwargs)

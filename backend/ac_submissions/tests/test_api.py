@@ -110,28 +110,47 @@ def test_create_submission_no_photos_returns_400(client):
 def test_create_submission_too_many_photos_returns_400(client):
     brand = BrandFactory()
     data = _payload(brand)
-    photos = [_photo(f"p{i}.png") for i in range(21)]
+    photos = [_photo(f"p{i}.png") for i in range(11)]
     resp = client.post(
         "/api/public/v1/rating/submissions/",
         {**data, "photos": photos},
         format="multipart",
     )
     assert resp.status_code == 400
-    assert "Максимум 20 фото" in resp.json()["photos"][0]
+    assert "Максимум 10 фото" in resp.json()["photos"][0]
 
 
 @pytest.mark.django_db
 def test_create_submission_oversize_photo_returns_400(client):
     brand = BrandFactory()
     data = _payload(brand)
-    big = _photo("big.png", size_bytes=11 * 1024 * 1024)  # 11MB > 10MB limit
+    big = _photo("big.png", size_bytes=6 * 1024 * 1024)  # 6MB > 5MB limit
     resp = client.post(
         "/api/public/v1/rating/submissions/",
         {**data, "photos": [big]},
         format="multipart",
     )
     assert resp.status_code == 400
-    assert "10 МБ" in resp.json()["photos"][0]
+    assert "5 МБ" in resp.json()["photos"][0]
+
+
+@pytest.mark.django_db
+def test_create_submission_boundary_10_photos_5mb_accepted(client):
+    """Граница: ровно 10 фото по 5 МБ должны приниматься."""
+    brand = BrandFactory()
+    data = _payload(brand)
+    photos = [
+        _photo(f"p{i}.png", size_bytes=5 * 1024 * 1024) for i in range(10)
+    ]
+    resp = client.post(
+        "/api/public/v1/rating/submissions/",
+        {**data, "photos": photos},
+        format="multipart",
+        REMOTE_ADDR="10.0.0.99",
+    )
+    assert resp.status_code == 201
+    sub = ACSubmission.objects.latest("created_at")
+    assert SubmissionPhoto.objects.filter(submission=sub).count() == 10
 
 
 @pytest.mark.django_db
