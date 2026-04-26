@@ -1,5 +1,82 @@
 # TASK — Ф8A backend — admin API для каталога моделей и брендов
 
+> ## ⚠️ Корректировки 2026-04-26 (приоритет над основным текстом ниже)
+>
+> Спасибо AC-Пете за ревью моделей перед стартом — мой исходный TASK.md был
+> написан по памяти, не сверяясь с фактической схемой. Корректную картину
+> читай в этом блоке. Ниже по тексту — старый драфт; местами расходится с
+> реальностью, при конфликте всегда побеждает этот блок.
+>
+> ### Решения по вопросам Пети
+>
+> 1. **Подтверждаю «реализуем под текущую схему».** Никаких миграций моделей
+>    в Ф8A. Если в Ф8B/C появится потребность в slug/multilang/`is_primary`
+>    — заведём отдельный мини-эпик с миграцией под review.
+> 2. **`generate-dark-logos` переноси отдельным endpoint.** Логика админки не
+>    должна теряться при переносе. Итого два action-endpoint:
+>    - `POST /api/hvac/rating/brands/normalize-logos/`
+>    - `POST /api/hvac/rating/brands/generate-dark-logos/`
+> 3. **`recalculate` — переиспользуй существующий `ac_scoring`-механизм** (тот
+>    же что вызывает Django-admin action и signal). Если функция называется
+>    иначе — используй её, главное чтобы расчёт был один-в-один.
+>
+> ### Реальные модели — пиши API под них
+>
+> **`Brand` (`backend/ac_brands/models.py`):**
+> - Поля: `name` (unique), `logo`, `logo_dark`, `is_active`, `origin_class` (FK
+>   на `BrandOriginClass`), `sales_start_year_ru`.
+> - `slug`, `name_en/de/pt`, `founding_year`, `sort_order` — **НЕТ**, не пиши.
+> - В list-сериализаторе верни `models_count` (через `obj.models.count()`),
+>   `logo_url`, `logo_dark_url` (полные URL).
+>
+> **`ACModelPhoto` (`backend/ac_catalog/models.py:260`):**
+> - Поля: `image`, `alt`, `order`. **Нет** `caption`, `sort_order`, `is_primary`.
+> - Reorder bulk-action работает по `order` (`POST .../photos/reorder/` с
+>   `{ids: [3,1,2]}` — выставляет `order` = индекс в массиве).
+> - `is_primary` логику пропускаем — на фронте «primary» = первая по `order`.
+> - **`MAX_PHOTOS = 6`** заведи константой в `backend/ac_catalog/admin_views.py`
+>   (не делай отдельный сервис). Проверка в `ACModelPhotoListCreateView.post`:
+>   при попытке загрузить 7-ю → 400 с понятным сообщением.
+>
+> **`ACModelSupplier`:**
+> - Поля: `name`, `url`, `order`, `price`, `city`, `rating`, `availability`
+>   (choices: `in_stock`, `low_stock`, `out_of_stock`, `unknown`), `note` —
+>   все 8 пиши writable.
+> - **Нет** `supplier_name`, `region`, `sort_order`.
+>
+> **Регионы:**
+> - Отдельной таблицы `Region` **нет**. `ModelRegion` хранит `region_code` как
+>   `TextChoices` (`ru`, `eu`).
+> - В сериализаторе писать через список `region_codes: ["ru", "eu"]` (write_only,
+>   sync через `ModelRegion`).
+> - Endpoint `GET /api/hvac/rating/regions/` отдаёт
+>   `[{"code": "ru", "label": "Россия"}, {"code": "eu", "label": "Европа"}]`
+>   из `ModelRegion.RegionCode.choices`. Без CRUD.
+>
+> **`EquipmentType`:** существует как обычная модель. `GET /equipment-types/`
+> — read-only `ListAPIView`.
+>
+> **`ModelRawValue`:**
+> - Поля для writable: `criterion_code` (string), `raw_value`, `numeric_value`.
+> - `criterion` (FK) проставляется в `save()` автоматически из `criterion_code`,
+>   тебе самому не надо его сетить.
+> - Constraint: `(model, criterion)` уникален когда criterion FK есть; иначе
+>   `(model, criterion_code)`. Sync-стратегия: при PATCH модели с
+>   `raw_values: [...]` обновляй по `criterion_code`, удаляй отсутствующие.
+>
+> ### Что **не** меняем по сравнению со старым драфтом
+>
+> - URL-структура (`/api/hvac/rating/models/`, `/brands/`, `/equipment-types/`,
+>   `/regions/`).
+> - Permission `IsHvacAdminProxyAllowed` на всех ViewSet'ах.
+> - DRF `DefaultRouter` для основных ресурсов; APIView для photo/action
+>   endpoint'ов.
+> - Тестовая стратегия (permission tests + CRUD happy + filter tests).
+> - Файловая структура (`admin_views.py`, `admin_serializers.py`,
+>   `admin_urls.py` в `ac_catalog`/`ac_brands`).
+>
+> ---
+
 ## Цель
 
 Создать DRF endpoints под `/api/hvac/rating/` для CRUD операций с моделями кондиционеров (`ACModel`) и брендами (`Brand`). Это первая половина Ф8A — после неё Федя пишет UI на готовый API.
