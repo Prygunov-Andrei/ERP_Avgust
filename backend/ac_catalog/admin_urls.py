@@ -2,7 +2,8 @@
 
 Ф8A: CRUD моделей и брендов для ERP-операторов.
 Ф8B-1: добавлены критерии (CRUD) + методика (read+activate) + AI-генератор pros/cons.
-Ф8B-2/C: добавятся пресеты, отзывы, заявки.
+Ф8B-2: добавлены пресеты «Свой рейтинг» + модерация отзывов.
+Ф8C: добавлена модерация заявок submissions + конверсия в ACModel.
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ from rest_framework.routers import DefaultRouter
 from ac_brands import admin_views as brand_admin_views
 from ac_methodology import admin_views as methodology_admin_views
 from ac_reviews import admin_views as review_admin_views
+from ac_submissions import admin_views as submission_admin_views
 
 from . import admin_views
 
@@ -51,6 +53,11 @@ router.register(
     r"reviews",
     review_admin_views.ReviewAdminViewSet,
     basename="review-admin",
+)
+router.register(
+    r"submissions",
+    submission_admin_views.SubmissionAdminViewSet,
+    basename="submission-admin",
 )
 
 urlpatterns = [
@@ -97,6 +104,17 @@ urlpatterns = [
         "reviews/bulk-update/",
         review_admin_views.ReviewBulkUpdateView.as_view(),
         name="review-bulk-update",
+    ),
+    # Submissions: action endpoint'ы тоже ДО include(router.urls).
+    path(
+        "submissions/bulk-update/",
+        submission_admin_views.SubmissionBulkUpdateView.as_view(),
+        name="submission-bulk-update",
+    ),
+    path(
+        "submissions/<int:pk>/convert-to-acmodel/",
+        submission_admin_views.SubmissionConvertView.as_view(),
+        name="submission-convert",
     ),
     path("", include(router.urls)),
 ]
