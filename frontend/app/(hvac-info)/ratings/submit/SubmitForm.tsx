@@ -29,10 +29,11 @@ const RUSSIAN_REMOTE_CHOICES = ['Нет', 'Только пульт', 'Экран
 const UV_LAMP_CHOICES = ['Нет', 'Есть'];
 const DRAIN_HEATER_CHOICES = ['Нет', 'Есть'];
 
-const MAX_PHOTOS = 20;
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
-// Cloudflare free tier режет загрузку >100 МБ раньше Django, поэтому оставляем
-// запас и блокируем submit на клиенте при превышении 80 МБ суммарно.
+// Лимиты синхронизированы с backend/ac_submissions/views.py (MAX_PHOTOS, MAX_PHOTO_SIZE).
+// Cloudflare free tier режет >100 МБ раньше Django, поэтому суммарный лимит — 80 МБ
+// с запасом (10 фото × 5 МБ = 50 МБ комфортно проходит).
+const MAX_PHOTOS = 10;
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 80 * 1024 * 1024;
 
 type FormState = {
@@ -904,7 +905,7 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
                       color: 'hsl(var(--rt-ink-60))',
                     }}
                   >
-                    JPG, PNG до 10 МБ каждый · максимум {MAX_PHOTOS} файлов · суммарно до 80 МБ
+                    JPG, PNG до 5 МБ каждый · максимум {MAX_PHOTOS} файлов · суммарно до 80 МБ
                   </div>
                 </div>
               </label>

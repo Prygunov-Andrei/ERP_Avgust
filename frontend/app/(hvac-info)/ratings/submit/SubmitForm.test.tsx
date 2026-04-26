@@ -477,21 +477,11 @@ describe('SubmitForm — индикатор размера', () => {
     expect(indicator.textContent).not.toMatch(/превышен лимит/);
   });
 
-  it('при суммарном размере > 80 МБ индикатор красный и предупреждает', async () => {
-    const { container } = render(<SubmitForm brands={BRANDS} />);
-    const photoInput = container.querySelector(
-      '[data-testid="submit-photos"]',
-    ) as HTMLInputElement;
-    // 10 файлов по 9 МБ = 90 МБ — каждый ≤ 10 МБ, чтобы пройти validatePhotos
-    const files = Array.from({ length: 10 }, (_, i) =>
-      mkFile(`p${i}.jpg`, 9 * 1024 * 1024),
-    );
-    await act(async () => {
-      fireEvent.change(photoInput, { target: { files } });
-    });
-    const indicator = screen.getByTestId('submit-photos-size');
-    expect(indicator.textContent).toMatch(/превышен лимит/);
-  });
+  // Тест на 80 МБ-блокировку через индикатор удалён: текущие лимиты
+  // (MAX_PHOTOS=10 × MAX_PHOTO_BYTES=5 МБ = 50 МБ max) делают превышение
+  // 80 МБ недостижимым на уровне ввода — per-file валидация рубит файлы
+  // > 5 МБ раньше total-size-индикатора. MAX_TOTAL_BYTES=80 МБ остаётся
+  // как safety net на случай повышения лимитов в будущем.
 });
 
 describe('SubmitForm — submit ветки 413/5xx/totalSize', () => {
@@ -502,24 +492,11 @@ describe('SubmitForm — submit ветки 413/5xx/totalSize', () => {
     vi.restoreAllMocks();
   });
 
-  it('суммарный размер > 80 МБ → submit показывает clientError, fetch не вызывается', async () => {
-    const mockFetch = global.fetch as unknown as ReturnType<typeof vi.fn>;
-    const { container } = render(<SubmitForm brands={BRANDS} />);
-    // 10 файлов по 9 МБ = 90 МБ
-    const files = Array.from({ length: 10 }, (_, i) =>
-      mkFile(`p${i}.jpg`, 9 * 1024 * 1024),
-    );
-    await fillFormCompletely(container, files);
-
-    const form = container.querySelector('form') as HTMLFormElement;
-    await act(async () => {
-      fireEvent.submit(form);
-    });
-    expect(mockFetch).not.toHaveBeenCalled();
-    expect(screen.getByTestId('submit-error').textContent).toMatch(
-      /превышает 80 МБ/,
-    );
-  });
+  // Аналогично — submit-блокировка по 80 МБ через UI недостижима
+  // при текущих per-file лимитах. validateTotalSize() покрыта unit-тестом
+  // выше (см. блок «SubmitForm — validateTotalSize»). Эта safety net
+  // сработает только если кто-то поднимет MAX_PHOTOS/MAX_PHOTO_BYTES
+  // в коде и забудет про 80 МБ-порог.
 
   it('413 → «Файлы слишком большие»', async () => {
     const mockFetch = global.fetch as unknown as ReturnType<typeof vi.fn>;
