@@ -29,7 +29,16 @@ export default async function NewsFeedPage() {
     noStore();
   }
 
-  const { hero, feed } = buildFeaturedFeed(items, featured.post);
+  // Safety: featured-news endpoint не фильтрует по star_rating, тогда как
+  // публичный list/detail для не-админов отдают только 5★. Если featured.post
+  // не виден в публичном списке — значит и /news/<id>/ ответит 404 (битая
+  // ссылка в hero). В этом случае фолбэчимся на null.
+  const featuredVisible =
+    featured.post && items.some((n) => n.id === featured.post!.id)
+      ? featured.post
+      : null;
+
+  const { hero, feed } = buildFeaturedFeed(items, featuredVisible);
 
   return (
     <>
