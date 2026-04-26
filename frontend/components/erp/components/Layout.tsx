@@ -8,7 +8,7 @@ import {
   Truck, CalendarClock, TrendingUp, BarChart3, ShoppingCart, Link2,
   ExternalLink, HardHat, Search, BookOpen, HelpCircle,
   Calendar, PieChart, Wallet, Scale, Megaphone, Calculator, Globe, Phone, MessageSquareText,
-  Info, Sliders, Layers, MessageSquare
+  Info, Sliders, Layers, MessageSquare, Inbox
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -254,6 +254,7 @@ const menuItems: MenuItem[] = [
       { id: 'hvac-rating-methodology', label: 'Методика', icon: <Scale className="w-4 h-4" />, path: '/hvac-rating/methodology', section: 'dashboard' },
       { id: 'hvac-rating-presets', label: 'Пресеты «Свой рейтинг»', icon: <Layers className="w-4 h-4" />, path: '/hvac-rating/presets', section: 'dashboard' },
       { id: 'hvac-rating-reviews', label: 'Отзывы (модерация)', icon: <MessageSquare className="w-4 h-4" />, path: '/hvac-rating/reviews', section: 'dashboard' },
+      { id: 'hvac-rating-submissions', label: 'Заявки', icon: <Inbox className="w-4 h-4" />, path: '/hvac-rating/submissions', section: 'dashboard' },
     ],
   },
 
@@ -377,6 +378,7 @@ const pageTitles: Record<string, string> = {
   'hvac-rating/presets': 'Пресеты «Свой рейтинг»',
   'hvac-rating/presets/create': 'Новый пресет',
   'hvac-rating/reviews': 'Отзывы (модерация)',
+  'hvac-rating/submissions': 'Заявки (модерация)',
   // 11. Справочники и Настройки
   'references/work-conditions': 'Фронт работ и монтажные условия',
   personnel: 'Персонал',
@@ -456,6 +458,7 @@ pathToParent['hvac-rating/presets'] = { label: 'HVAC-Рейтинг', path: '/hv
 pathToParent['hvac-rating/presets/create'] = { label: 'Пресеты', path: '/hvac-rating/presets' };
 pathToParent['hvac-rating/presets/edit'] = { label: 'Пресеты', path: '/hvac-rating/presets' };
 pathToParent['hvac-rating/reviews'] = { label: 'HVAC-Рейтинг', path: '/hvac-rating/reviews' };
+pathToParent['hvac-rating/submissions'] = { label: 'HVAC-Рейтинг', path: '/hvac-rating/submissions' };
 
 export function Layout({ children, onLogout, user }: LayoutProps) {
   const { hasAccess } = usePermissions();
