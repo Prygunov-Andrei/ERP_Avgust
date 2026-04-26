@@ -123,6 +123,20 @@ class FeaturedNewsSettings(models.Model):
     def save(self, *args, **kwargs):
         # Singleton: всегда pk=1.
         self.pk = 1
+        # objects.create() и подобные передают force_insert=True — для singleton'а
+        # это означало бы INSERT поверх существующей строки и UniqueViolation;
+        # снимаем флаг, чтобы Django пошёл по UPDATE-ветке если pk=1 уже занят.
+        kwargs.pop("force_insert", None)
+        # Если конструируется новый instance (через FeaturedNewsSettings(...))
+        # и в БД уже есть строка pk=1, Django сделает UPDATE — но auto_now_add
+        # не сработает повторно, и self.created_at останется None, что нарушит
+        # NOT NULL. Подтянем существующее значение, чтобы UPDATE не затирал его.
+        if self.created_at is None:
+            existing = type(self).objects.filter(pk=1).values_list(
+                "created_at", flat=True
+            ).first()
+            if existing is not None:
+                self.created_at = existing
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
