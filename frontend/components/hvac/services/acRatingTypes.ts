@@ -423,3 +423,114 @@ export interface BulkUpdateReviewsResponse {
   updated: number;
   errors: Array<{ id?: number; error: string }>;
 }
+
+// ── Submissions (Ф8C) ─────────────────────────────────────────────────
+// AdminSubmissionListSerializer / AdminSubmissionDetailSerializer
+// (backend/ac_submissions/admin_serializers.py).
+
+export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
+
+// AdminSubmissionListSerializer
+export interface ACSubmissionListItem {
+  id: number;
+  status: SubmissionStatus;
+  brand_name: string; // FK→name или custom_brand_name или «—»
+  series: string;
+  inner_unit: string;
+  outer_unit: string;
+  nominal_capacity_watt: number;
+  price: string | null;
+  submitter_email: string;
+  photos_count: number;
+  primary_photo_url: string;
+  converted_model_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ACSubmissionPhoto {
+  id: number;
+  image_url: string;
+  order: number;
+}
+
+// AdminSubmissionDetailSerializer
+export interface ACSubmissionDetail {
+  id: number;
+  status: SubmissionStatus;
+  admin_notes: string;
+  brand: number | null;
+  brand_name: string;
+
+  custom_brand_name: string;
+  series: string;
+  inner_unit: string;
+  outer_unit: string;
+  compressor_model: string;
+  nominal_capacity_watt: number;
+  price: string | null;
+
+  drain_pan_heater: string;
+  erv: boolean;
+  fan_speed_outdoor: boolean;
+  remote_backlight: boolean;
+  fan_speeds_indoor: number;
+  fine_filters: number;
+  ionizer_type: string;
+  russian_remote: string;
+  uv_lamp: string;
+
+  inner_he_length_mm: number;
+  inner_he_tube_count: number;
+  inner_he_tube_diameter_mm: number;
+  inner_he_surface_area: number;
+  outer_he_length_mm: number;
+  outer_he_tube_count: number;
+  outer_he_tube_diameter_mm: number;
+  outer_he_thickness_mm: number;
+  outer_he_surface_area: number;
+
+  video_url: string;
+  buy_url: string;
+  supplier_url: string;
+
+  submitter_email: string;
+  consent: boolean;
+  ip_address: string | null;
+
+  converted_model: number | null;
+  converted_model_id: number | null;
+
+  photos: ACSubmissionPhoto[];
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubmissionsListParams {
+  status?: SubmissionStatus;
+  brand?: number;
+  has_brand?: 'true' | 'false';
+  search?: string;
+  ordering?: string;
+  page?: number;
+}
+
+export interface SubmissionPatchPayload {
+  status?: SubmissionStatus;
+  admin_notes?: string;
+  brand?: number | null;
+}
+
+export interface BulkUpdateSubmissionsResponse {
+  updated: number;
+  errors: Array<{ id?: number; error: string }>;
+}
+
+export interface ConvertSubmissionResponse {
+  submission_id: number;
+  created_model_id: number;
+  created_model_slug: string;
+  created_brand: boolean;
+  redirect_to: string;
+}
