@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
+  <!-- Фавикон light — только круглая эмблема без текста -->
+  <circle cx="50" cy="50" r="46" fill="#0e8385"/>
+  <circle cx="50" cy="50" r="10" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <line x1="50" y1="22" x2="50" y2="78" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="26" y1="36" x2="74" y2="64" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="26" y1="64" x2="74" y2="36" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="50" cy="22" r="4" fill="#3fc7c9"/>
+  <circle cx="50" cy="78" r="4" fill="#3fc7c9"/>
+  <circle cx="26" cy="36" r="4" fill="#3fc7c9"/>
+  <circle cx="74" cy="64" r="4" fill="#3fc7c9"/>
+  <circle cx="26" cy="64" r="4" fill="#3fc7c9"/>
+  <circle cx="74" cy="36" r="4" fill="#3fc7c9"/>
+</svg>

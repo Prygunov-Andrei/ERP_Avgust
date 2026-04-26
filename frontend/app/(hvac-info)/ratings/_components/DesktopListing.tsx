@@ -170,7 +170,7 @@ function ModelRow({
       </div>
       <div />
       <T size={13} weight={600} style={{ letterSpacing: -0.1 }}>
-        {model.brand}
+        {model.series || '—'}
       </T>
       <InnerUnit>{model.inner_unit || model.series}</InnerUnit>
       <T size={13} weight={500}>

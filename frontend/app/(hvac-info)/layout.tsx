@@ -30,6 +30,21 @@ export const metadata: Metadata = {
   },
   description:
     'Рейтинг кондиционеров, новости HVAC-индустрии, методика, франшиза Август-Климат.',
+  icons: {
+    icon: [
+      {
+        url: '/favicon-light.svg',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: light)',
+      },
+      {
+        url: '/favicon-dark.svg',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: dark)',
+      },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+  },
 };
 
 export default function HvacInfoLayout({

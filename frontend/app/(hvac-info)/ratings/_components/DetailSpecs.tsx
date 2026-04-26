@@ -130,17 +130,6 @@ export default function DetailSpecs({ detail, methodology }: Props) {
         ))}
       </div>
 
-      <T
-        size={11}
-        color="hsl(var(--rt-ink-40))"
-        style={{ marginTop: 18, fontStyle: 'italic', lineHeight: 1.5, display: 'block' }}
-      >
-        <span style={{ color: '#1f8f4c' }}>▲</span> — параметр лучше эталона класса,{' '}
-        <span style={{ color: '#b24a3b' }}>▼</span> — хуже. Эталон рассчитан по медиане{' '}
-        {methodology?.stats.total_models ?? '—'} моделей рейтинга{' '}
-        {detail.methodology_version || '—'}.
-      </T>
-
       <style>{`
         @media (max-width: 899px) {
           .rt-detail-specs { padding: 28px 18px !important; }

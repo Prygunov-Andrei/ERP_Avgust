@@ -694,11 +694,12 @@ function DesktopCustomRow({
           srcDark={model.brand_logo_dark}
           name={model.brand}
           size={28}
+          tooltip={model.brand}
         />
       </span>
       <span />
       <T size={13} weight={600} style={{ letterSpacing: -0.1 }}>
-        {model.brand}
+        {model.series || '—'}
       </T>
       <span
         style={{
