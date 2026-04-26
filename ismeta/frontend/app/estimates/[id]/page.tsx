@@ -12,6 +12,8 @@ import { MaterialsMatchingDialog } from "@/components/estimate/materials-matchin
 import { PdfImportDialog } from "@/components/estimate/pdf-import-dialog";
 import { ItemsTable } from "@/components/estimate/items-table";
 import { ProcurementSummary } from "@/components/estimate/procurement-summary";
+import { RecognitionJobBanner } from "@/components/estimate/recognition-job-banner";
+import { RecognitionMetaLine } from "@/components/estimate/recognition-meta-line";
 import { SectionsPanel } from "@/components/estimate/sections-panel";
 import { TrackTabs, type EquipmentTrack } from "@/components/estimate/track-tabs";
 import { ValidationReportDialog } from "@/components/estimate/validation-report-dialog";
@@ -167,6 +169,10 @@ export default function EstimateDetailPage({ params }: Props) {
         onOpenPdfImport={() => setPdfImportOpen(true)}
         onOpenMaterialsMatch={() => setMaterialsMatchOpen(true)}
       />
+      <div className="px-6 pb-2">
+        <RecognitionMetaLine estimateId={id} />
+      </div>
+      <RecognitionJobBanner estimateId={id} />
       <div className="flex flex-1 overflow-hidden">
         <SectionsPanel
           estimateId={id}

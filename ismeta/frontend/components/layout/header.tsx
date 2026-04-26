@@ -1,3 +1,5 @@
+import { RecognitionJobsIndicator } from "./recognition-jobs-indicator";
+import { SoundToggle } from "./sound-toggle";
 import { ThemeToggle } from "./theme-toggle";
 
 export function Header({ workspaceName = "Август Климат" }: { workspaceName?: string }) {
@@ -8,6 +10,8 @@ export function Header({ workspaceName = "Август Климат" }: { worksp
         <span className="text-sm font-medium">{workspaceName}</span>
       </div>
       <div className="flex items-center gap-2">
+        <RecognitionJobsIndicator />
+        <SoundToggle />
         <ThemeToggle />
         <div
           className="h-8 w-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-medium"

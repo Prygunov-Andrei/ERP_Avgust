@@ -397,3 +397,69 @@ export const MATCH_SOURCE_LABELS: Record<MatchSource, string> = {
   supplier: "Поставщик",
   unmatched: "Не подобрано",
 };
+
+// =============================================================================
+// E19: Background recognition jobs
+// =============================================================================
+
+export type RecognitionJobStatus =
+  | "queued"
+  | "running"
+  | "done"
+  | "failed"
+  | "cancelled";
+
+export type RecognitionJobFileType = "pdf" | "excel" | "spec" | "invoice";
+
+export interface RecognitionJobPageSummary {
+  page: number;
+  parsed_count: number;
+  expected_count?: number;
+  expected_count_vision?: number;
+  retried?: boolean;
+  suspicious?: boolean;
+}
+
+export interface RecognitionJobLlmCosts {
+  extract?: { model?: string; total_tokens?: number };
+  total_usd?: number;
+}
+
+export interface RecognitionJobApplyResult {
+  items_created?: number;
+  sections_created?: number;
+}
+
+// Точный contract от E19-2 backend (RecognitionJobSerializer).
+// items не возвращается (тяжёлый, тысячи позиций) — apply через callback.
+export interface RecognitionJob {
+  id: UUID;
+  estimate_id: UUID;
+  estimate_name: string;
+  file_name: string;
+  file_type: RecognitionJobFileType;
+  // E18 not yet — profile_id всегда null до E18-2.
+  profile_id: number | null;
+  status: RecognitionJobStatus;
+  pages_total: number | null;
+  pages_done: number;
+  items_count: number;
+  pages_summary: RecognitionJobPageSummary[];
+  // E19-1 шлёт {} placeholder; E18-1 заполнит реальную структуру.
+  llm_costs: RecognitionJobLlmCosts | Record<string, never>;
+  error_message: string;
+  apply_result: RecognitionJobApplyResult | Record<string, never>;
+  is_active: boolean;
+  duration_seconds: number | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export const RECOGNITION_JOB_STATUS_LABELS: Record<RecognitionJobStatus, string> = {
+  queued: "В очереди",
+  running: "В работе",
+  done: "Готово",
+  failed: "Ошибка",
+  cancelled: "Отменено",
+};
