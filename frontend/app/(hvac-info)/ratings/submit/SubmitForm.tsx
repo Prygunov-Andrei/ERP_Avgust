@@ -214,6 +214,13 @@ export function validatePhotos(files: File[]): string | null {
       return `Файл «${f.name}» превышает 10 МБ.`;
     }
   }
+  return null;
+}
+
+// Отдельно от validatePhotos: проверка суммы делается на submit, чтобы
+// пользователь мог добавить фото и увидеть красный индикатор размера —
+// это понятнее, чем «файл не добавился непонятно почему».
+export function validateTotalSize(files: File[]): string | null {
   const total = files.reduce((s, f) => s + f.size, 0);
   if (total > MAX_TOTAL_BYTES) {
     return `Суммарный размер фото ${(total / 1024 / 1024).toFixed(0)} МБ превышает 80 МБ. Уберите часть фото или сожмите изображения.`;
@@ -326,6 +333,11 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
       const photoErr = validatePhotos(photos);
       if (photoErr) {
         setClientError(photoErr);
+        return;
+      }
+      const sizeErr = validateTotalSize(photos);
+      if (sizeErr) {
+        setClientError(sizeErr);
         return;
       }
       if (!isFormReady(state, photos)) {
