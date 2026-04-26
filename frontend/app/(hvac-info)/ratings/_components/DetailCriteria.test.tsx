@@ -274,8 +274,8 @@ describe('DetailCriteria', () => {
     expect(screen.getByText(/вердикт редакции/i)).toBeTruthy();
     expect(screen.getByText(/Плюсы · 2/)).toBeTruthy();
     expect(screen.getByText(/Минусы · 1/)).toBeTruthy();
-    // Хардкод авторов:
-    expect(screen.getByText(/Савинов Максим/)).toBeTruthy();
-    expect(screen.getByText(/Прыгунов Андрей/)).toBeTruthy();
+    // Хардкод авторов в формате «И. Фамилия»:
+    expect(screen.getByText(/М\. Савинов/)).toBeTruthy();
+    expect(screen.getByText(/А\. Прыгунов/)).toBeTruthy();
   });
 });

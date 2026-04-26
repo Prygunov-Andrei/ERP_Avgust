@@ -7,8 +7,8 @@ type Props = {
 };
 
 const EDITORS: Array<{ name: string; avatar: string }> = [
-  { name: 'Савинов Максим', avatar: '/rating-authors/savinov.jpg' },
-  { name: 'Прыгунов Андрей', avatar: '/rating-authors/prygunov.jpg' },
+  { name: 'М. Савинов', avatar: '/rating-authors/savinov.jpg' },
+  { name: 'А. Прыгунов', avatar: '/rating-authors/prygunov.jpg' },
 ];
 
 const DATE_LABEL = 'редакция · апрель 2026';
