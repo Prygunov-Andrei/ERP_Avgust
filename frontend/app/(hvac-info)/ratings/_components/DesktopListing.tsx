@@ -165,6 +165,7 @@ function ModelRow({
           srcDark={model.brand_logo_dark}
           name={model.brand}
           size={28}
+          tooltip={model.brand}
         />
       </div>
       <div />
@@ -178,6 +179,11 @@ function ModelRow({
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <Meter value={clamp01(displayValue, model.index_max)} />
         <span
+          title={
+            mode === 'silence'
+              ? 'Уровень шума, дБ(А)'
+              : 'Значение индекса «Август-климат»'
+          }
           style={{
             fontSize: 15,
             fontWeight: 600,

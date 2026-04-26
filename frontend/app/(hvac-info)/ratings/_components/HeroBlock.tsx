@@ -10,12 +10,12 @@ const ABOUT_LINKS: Array<{ label: string; href: string; primary?: boolean }> = [
 
 const AUTHORS: Array<{ name: string; role: string; photo: string }> = [
   {
-    name: 'Савинов Максим',
+    name: 'М. Савинов',
     role: 'главный редактор, автор методики',
     photo: '/rating-authors/savinov.jpg',
   },
   {
-    name: 'Прыгунов Андрей',
+    name: 'А. Прыгунов',
     role: 'редактор',
     photo: '/rating-authors/prygunov.jpg',
   },
@@ -76,8 +76,8 @@ export default function HeroBlock({ stats }: { stats: RatingMethodologyStats }) 
       <div className="rt-hero-grid">
         <div>
           <H size={34} serif as="h1" style={{ letterSpacing: -0.5, lineHeight: 1.2 }}>
-            Интегральный индекс «Август-климат» качества бытовых кондиционеров до 4,0 кВт на
-            основе наших измерений и анализа параметров.
+            Интегральный индекс «Август-климат» качества бытовых кондиционеров до 4,5 кВт на
+            основе наших измерений и анализа параметров
           </H>
           <div
             style={{
@@ -210,7 +210,9 @@ export function HeroBlockCollapsed({ stats }: { stats: RatingMethodologyStats })
           overflow: 'hidden',
         }}
       >
-        <Eyebrow style={{ flexShrink: 0 }}>Рейтинг · 04.2026</Eyebrow>
+        <Eyebrow style={{ flexShrink: 0 }}>
+          Рейтинг кондиционеров «Август-климат» · 04.2026
+        </Eyebrow>
         <div
           style={{
             display: 'flex',

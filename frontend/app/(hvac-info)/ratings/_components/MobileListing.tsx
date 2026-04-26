@@ -259,6 +259,7 @@ function MobileRows({
                       srcDark={m.brand_logo_dark}
                       name={m.brand}
                       size={28}
+                      tooltip={m.brand}
                     />
                   </span>
                   <span
@@ -277,6 +278,11 @@ function MobileRows({
                 </span>
                 <span style={{ textAlign: 'right' }}>
                   <span
+                    title={
+                      mode === 'silence'
+                        ? 'Уровень шума, дБ(А)'
+                        : 'Значение индекса «Август-климат»'
+                    }
                     style={{
                       fontFamily: 'var(--rt-font-serif)',
                       fontSize: 16,
