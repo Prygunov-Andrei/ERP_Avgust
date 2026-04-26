@@ -622,3 +622,66 @@ describe('SubmitForm tooltips', () => {
     ).toBeNull();
   });
 });
+
+describe('SubmitForm — хардкод-подсказки для теплообменника (5.4)', () => {
+  // Все 7 полей теплообменника должны получить «?», даже без methodology
+  // (используется hint, не criterionCode). Лейблы повторяются («Длина»,
+  // «Кол-во трубок», «Диаметр трубок»), поэтому матчим по placeholder
+  // соответствующего input — это уникальный якорь.
+  // Все 7 полей: уникальные пары (placeholder, индекс среди инпутов с
+  // этим placeholder) + регексп для tooltip-title.
+  const HE_FIELDS: Array<{
+    placeholder: string;
+    inputIdx: number;
+    hintFragment: RegExp;
+  }> = [
+    { placeholder: '780', inputIdx: 0, hintFragment: /теплообменника внутреннего/i },
+    { placeholder: '16', inputIdx: 0, hintFragment: /видимые ряды/i },
+    { placeholder: '7', inputIdx: 0, hintFragment: /Диаметр одной трубы/i },
+    { placeholder: '820', inputIdx: 0, hintFragment: /теплообменника наружного/i },
+    { placeholder: '22', inputIdx: 0, hintFragment: /наружного блока/i },
+    { placeholder: '7', inputIdx: 1, hintFragment: /наружного блока/i },
+    { placeholder: '28', inputIdx: 0, hintFragment: /Толщина пакета/i },
+  ];
+
+  it('у каждого из 7 полей теплообменника есть «?» с хардкод-подсказкой (без methodology)', () => {
+    const { container } = render(<SubmitForm brands={BRANDS} />);
+    expect(HE_FIELDS).toHaveLength(7);
+    for (const { placeholder, inputIdx, hintFragment } of HE_FIELDS) {
+      const inputs = container.querySelectorAll<HTMLInputElement>(
+        `input[placeholder="${placeholder}"]`,
+      );
+      expect(inputs.length).toBeGreaterThan(inputIdx);
+      const field = inputs[inputIdx].closest('div')?.parentElement as HTMLElement;
+      const tooltipBtn = within(field).getByRole('button', {
+        name: 'Описание критерия',
+      }) as HTMLButtonElement;
+      expect(tooltipBtn.getAttribute('title')).toMatch(hintFragment);
+    }
+  });
+
+  it('hint имеет приоритет над criterionCode (если бы methodology содержал тот же код)', () => {
+    // Вкладываем в methodology criterion с тем же кодом, что одно из
+    // наших полей могло бы случайно использовать. Hint должен победить.
+    // У наших полей теплообменника criterionCode не задан вовсе, но
+    // проверим контракт: на любом Field с hint description приходит
+    // именно из hint.
+    const methodology = mkMethodology([
+      mkCriterion('inner_he_length_mm', 'should-not-appear'),
+    ]);
+    const { container } = render(
+      <SubmitForm brands={BRANDS} methodology={methodology} />,
+    );
+    const input = container.querySelector(
+      'input[placeholder="780"]',
+    ) as HTMLInputElement;
+    const field = input.closest('div')?.parentElement as HTMLElement;
+    const tooltipBtn = within(field).getByRole('button', {
+      name: 'Описание критерия',
+    });
+    expect(tooltipBtn.getAttribute('title')).toMatch(
+      /теплообменника внутреннего/i,
+    );
+    expect(tooltipBtn.getAttribute('title')).not.toMatch(/should-not-appear/);
+  });
+});

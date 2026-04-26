@@ -29,6 +29,28 @@ const RUSSIAN_REMOTE_CHOICES = ['Нет', 'Только пульт', 'Экран
 const UV_LAMP_CHOICES = ['Нет', 'Есть'];
 const DRAIN_HEATER_CHOICES = ['Нет', 'Есть'];
 
+// Подсказки для полей теплообменника. В methodology.criteria этих
+// criterion-кодов нет (там агрегаты heat_exchanger_inner / outer для
+// «Площади»), а пользователю нужно объяснение каждого из 7 численных
+// замеров. Тексты — разумные дефолты; Tooltip-text TBD по уточнению с
+// Максимом, отправил агент 2026-04-26.
+const INPUT_HINTS: Record<string, string> = {
+  inner_he_length_mm:
+    'Длина теплообменника внутреннего блока в мм. Замерить штангенциркулем по самой длинной грани.',
+  inner_he_tube_count:
+    'Количество труб (рядов) теплообменника. Считать видимые ряды на торце.',
+  inner_he_tube_diameter_mm:
+    'Диаметр одной трубы теплообменника, в мм. Штангенциркулем по внешней стенке.',
+  outer_he_length_mm:
+    'Длина теплообменника наружного блока в мм. Замерить штангенциркулем по самой длинной грани.',
+  outer_he_tube_count:
+    'Количество труб (рядов) теплообменника наружного блока. Считать видимые ряды на торце.',
+  outer_he_tube_diameter_mm:
+    'Диаметр одной трубы теплообменника наружного блока, в мм. Штангенциркулем по внешней стенке.',
+  outer_he_thickness_mm:
+    'Толщина пакета труб наружного теплообменника, в мм.',
+};
+
 // Лимиты синхронизированы с backend/ac_submissions/views.py (MAX_PHOTOS, MAX_PHOTO_SIZE).
 // Cloudflare free tier режет >100 МБ раньше Django, поэтому суммарный лимит — 80 МБ
 // с запасом (10 фото × 5 МБ = 50 МБ комфортно проходит).
@@ -753,6 +775,7 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
             <Field
               label="Длина"
               required
+              hint={INPUT_HINTS.inner_he_length_mm}
               error={errors.inner_he_length_mm?.[0]}
             >
               <TextInput
@@ -767,6 +790,7 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
             <Field
               label="Кол-во трубок"
               required
+              hint={INPUT_HINTS.inner_he_tube_count}
               error={errors.inner_he_tube_count?.[0]}
             >
               <TextInput
@@ -781,6 +805,7 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
             <Field
               label="Диаметр трубок"
               required
+              hint={INPUT_HINTS.inner_he_tube_diameter_mm}
               error={errors.inner_he_tube_diameter_mm?.[0]}
             >
               <TextInput
@@ -800,6 +825,7 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
             <Field
               label="Длина"
               required
+              hint={INPUT_HINTS.outer_he_length_mm}
               error={errors.outer_he_length_mm?.[0]}
             >
               <TextInput
@@ -814,6 +840,7 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
             <Field
               label="Кол-во трубок"
               required
+              hint={INPUT_HINTS.outer_he_tube_count}
               error={errors.outer_he_tube_count?.[0]}
             >
               <TextInput
@@ -830,6 +857,7 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
             <Field
               label="Диаметр трубок"
               required
+              hint={INPUT_HINTS.outer_he_tube_diameter_mm}
               error={errors.outer_he_tube_diameter_mm?.[0]}
             >
               <TextInput
@@ -844,6 +872,7 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
             <Field
               label="Толщина"
               required
+              hint={INPUT_HINTS.outer_he_thickness_mm}
               error={errors.outer_he_thickness_mm?.[0]}
             >
               <TextInput
@@ -1274,6 +1303,7 @@ function Field({
   required,
   error,
   criterionCode,
+  hint,
   children,
 }: {
   label: string;
@@ -1283,17 +1313,30 @@ function Field({
    *  description_ru, справа от label появляется «?» с tooltip-подсказкой.
    *  Если методология не загружена или описание пустое — «?» не рендерится. */
   criterionCode?: string;
+  /** Жёстко заданная подсказка — рендерит «?» в обход methodology lookup.
+   *  Имеет приоритет над criterionCode. Используется для полей, у которых
+   *  нет соответствующего критерия в методологии (теплообменник). */
+  hint?: string;
   children: ReactNode;
 }) {
   const description = useCriterionDescription(criterionCode);
+  const tooltipText = hint ?? description;
   return (
     <div>
       <div
+        // display: flex (block-level) + width: fit-content — чтобы строка
+        // label↔«?» не попадала на одну линию с radio-кнопкой/инпутом
+        // справа. inline-flex вёл себя как inline-block: при длинном
+        // label «Регулировка оборотов вент. наруж. блока *» (фидбек 5.5)
+        // обёртка занимала меньше width родителя, и radio-группа
+        // (width: fit-content) прижималась справа от «?».
         style={{
-          display: 'inline-flex',
+          display: 'flex',
           alignItems: 'center',
           gap: 10,
           marginBottom: 6,
+          width: 'fit-content',
+          maxWidth: '100%',
         }}
       >
         <span
@@ -1312,7 +1355,7 @@ function Field({
             </span>
           ) : null}
         </span>
-        {description ? <CriterionTooltip description={description} /> : null}
+        {tooltipText ? <CriterionTooltip description={tooltipText} /> : null}
       </div>
       {children}
       {error ? (
