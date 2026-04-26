@@ -121,6 +121,10 @@ services:
     volumes:
       - ./backend:/app
     command: ["python", "manage.py", "recognition_worker"]
+    # E19-2: воркер не запускает HTTP-сервер, только poll loop. Healthcheck
+    # из Dockerfile (curl :8000) фейлится → status=unhealthy. Отключаем.
+    healthcheck:
+      disable: true
 
   ismeta-frontend:
     build:
