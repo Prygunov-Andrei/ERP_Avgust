@@ -1324,11 +1324,19 @@ function Field({
   return (
     <div>
       <div
+        // display: flex (block-level) + width: fit-content — чтобы строка
+        // label↔«?» не попадала на одну линию с radio-кнопкой/инпутом
+        // справа. inline-flex вёл себя как inline-block: при длинном
+        // label «Регулировка оборотов вент. наруж. блока *» (фидбек 5.5)
+        // обёртка занимала меньше width родителя, и radio-группа
+        // (width: fit-content) прижималась справа от «?».
         style={{
-          display: 'inline-flex',
+          display: 'flex',
           alignItems: 'center',
           gap: 10,
           marginBottom: 6,
+          width: 'fit-content',
+          maxWidth: '100%',
         }}
       >
         <span
