@@ -2,9 +2,18 @@
 
 **Команда:** IS-Федя.
 **Ветка:** `ismeta/e19-3-jobs-panel`.
-**Worktree:** `ERP_Avgust_is_fedya_e19_3`.
+**Worktree:** `ERP_Avgust_is_fedya_e19_3` (создаст PO от `origin/main` после merge E19-2).
 **Приоритет:** 🟢 feature E19. Зависимость: **E19-1 + E19-2 в main**.
 **Срок:** ~1.5-2 дня.
+
+> **ВАЖНО — независимость от E18 (LLM-профили).** E18 ещё не сделан, поэтому:
+> - **Dropdown «Модель распознавания»** в `PdfImportDialog` (в master spec E18-3) — **НЕ ДЕЛАЕМ** в этом ТЗ. PO выбирает модель пока через `.env` recognition (DeepSeek V4-Pro thinking high). Когда E18-3 появится — Федя добавит dropdown отдельным task'ом.
+> - **`profile_name`** в `RecognitionJob` API будет null (бэкенд возвращает только `profile_id` IntegerField). В UI показываем модель из `llm_costs.extract.model` если есть, иначе `—`.
+> - **`llm_costs`** от recognition пока приходит `{}` placeholder (заполнится в E18-1). В UI: «Стоимость: —» с tooltip «не доступно (не настроена pricing-таблица)». Не падать на null.
+> - **Settings page «Модели LLM»** (CRUD профилей) — **не делаем** — это E18-3.
+> - **`generate_pros_cons`** Anthropic action из admin — нет (это AC Rating, не наша зона).
+>
+> **Что остаётся в этом ТЗ E19-3:** глобальный jobs panel + nav-bar badge + toast on finish + estimate banner + settings toggle звука + PdfImportDialog rework (без profile dropdown). Это полноценный E19 UX без E18 интеграции.
 
 ---
 
@@ -35,13 +44,13 @@ export interface RecognitionJob {
   estimate_name: string;
   file_name: string;
   file_type: "pdf" | "excel" | "spec" | "invoice";
-  profile: number | null;
-  profile_name: string | null;
+  // E18 not yet implemented — profile_id всегда null на MVP, profile_name отсутствует
+  profile_id: number | null;
   status: RecognitionJobStatus;
   pages_total: number | null;
   pages_done: number;
   items_count: number;
-  llm_costs: LLMCosts | null;
+  llm_costs: LLMCosts | null;  // E19-1 шлёт {} placeholder; E18-1 заполнит реальные значения
   error_message: string;
   created_at: string;
   started_at: string | null;
@@ -49,6 +58,8 @@ export interface RecognitionJob {
   duration_seconds: number | null;
 }
 ```
+
+> Точное поле `profile_name` появится после E18-3 — не закладывайся.
 
 ### 2. API client
 
@@ -172,8 +183,11 @@ export const useRecognitionJobs = () => {
 ```tsx
 function showToastForCompletion(job: RecognitionJob) {
   if (job.status === "done") {
-    const modelName = job.profile_name ?? job.llm_costs?.extract?.model ?? "—";
-    const costStr = job.llm_costs ? `$${job.llm_costs.total_usd.toFixed(2)}` : "—";
+    // E18 не сделан — profile_name отсутствует. Берём model из llm_costs если
+    // есть, иначе "—". llm_costs.total_usd может быть 0 (placeholder E19-1).
+    const modelName = job.llm_costs?.extract?.model ?? "—";
+    const cost = job.llm_costs?.total_usd ?? 0;
+    const costStr = cost > 0 ? `$${cost.toFixed(2)}` : "—";
     toast({
       duration: 10000,
       title: `✓ ${job.estimate_name}`,
@@ -258,23 +272,33 @@ const activeJob = jobs?.[0];
 )}
 ```
 
-После `done` — баннер «✓ Распознано N позиций за X мин ($Y.YY)», dismissable. Под основным текстом — мелким серым: «DeepSeek v4-pro · 18,234 input + 4,103 output tokens». PO попросил эту мета-информацию везде, не выделяться.
+После `done` — баннер «✓ Распознано N позиций за X мин», dismissable. Под основным текстом — мелким серым: модель + tokens **если** `llm_costs` есть от backend. На MVP `llm_costs` может быть пустой ({} placeholder из E19-1) — тогда строки нет, без «—». PO попросил эту мета-информацию везде где она есть, но не показывать заглушки.
 
 После `failed` — банер с retry-кнопкой.
 
 ### 8.1 Мета-блок самой сметы (PO 2026-04-25)
 
-В `app/estimates/[id]/page.tsx` под заголовком сметы (или в footer estimate-note компонента UI-12) — постоянная **мелкая серая строка** с last успешного `ImportLog`:
+В `app/estimates/[id]/page.tsx` под заголовком сметы (или в footer estimate-note компонента UI-12) — постоянная **мелкая серая строка** с last успешного RecognitionJob (`status=done` для этой сметы):
 
 ```tsx
-{lastImport && (
+const { data: lastJob } = useQuery({
+  queryKey: ["recognition-jobs", "last-done", estimateId],
+  queryFn: () => recognitionJobsApi.list({ status: "done", estimate_id: estimateId }),
+  select: (jobs) => jobs[0],  // последний done
+});
+
+{lastJob && (
   <div className="text-xs text-muted-foreground">
-    Распознано: {lastImport.profile?.name ?? "—"} · ${lastImport.cost_usd?.toFixed(2) ?? "—"} · {format(lastImport.created_at, "d MMM")}
+    Распознано: {lastJob.llm_costs?.extract?.model ?? "—"} ·{" "}
+    {lastJob.llm_costs?.total_usd ? `$${lastJob.llm_costs.total_usd.toFixed(2)}` : "—"} ·{" "}
+    {format(lastJob.completed_at, "d MMM")}
   </div>
 )}
 ```
 
-Источник: `GET /api/v1/import-logs/?estimate_id=X&status=done&limit=1`.
+Если `llm_costs` пустой/null (placeholder E19-1 без E18) — все три поля «—». На E18-1 заполнятся реально.
+
+Источник: `GET /api/v1/recognition-jobs/?estimate_id=X&status=done` (sorted DESC by created_at — последний первый). **НЕ** делать отдельный `import-logs/` endpoint — RecognitionJob уже хранит всё.
 
 ### 9. Тесты
 
@@ -344,14 +368,27 @@ Worktree: /Users/andrei_prygunov/obsidian/avgust/ERP_Avgust_is_fedya_e19_3
 При завершении — большой toast «199 позиций распознано». Звук — опц.
 Cancel — confirm + один клик.
 
-Backend ready: E19-1 (recognition async) + E19-2 (Django RecognitionJob
-+ worker + endpoints) уже замержены. Твоя часть — global context +
-nav-bar indicator + toast + estimate banner + settings toggle звука +
-PdfImportDialog rework.
+Backend ready: E19-1 (recognition async + callbacks) и E19-2 (Django
+RecognitionJob + worker + endpoints) — оба замержены в main. Твоя
+часть — global context + nav-bar indicator + toast + estimate banner
++ settings toggle звука + PdfImportDialog rework.
 
-ВАЖНО: для frontend-worktree сделай symlink node_modules
-(ln -s ../ERP_Avgust/frontend/node_modules). См. memory
-feedback_worktree_node_modules.
+ВАЖНО: E18 (LLM-профили) ещё НЕ сделан — в начале ТЗ есть отдельный
+блок «ВАЖНО — независимость от E18» с актуализированным списком ЧТО
+делать и ЧТО НЕ делать. Главное:
+- НЕ делать dropdown «Модель распознавания» в PdfImportDialog (нет профилей)
+- НЕ делать Settings page «Модели LLM» (это E18-3)
+- llm_costs может приходить пустой/null — не падать, показывать «—»
+
+Параллельно работает другая команда AC Rating (3 worktree ac-rating/*) —
+НЕ заходи в backend/ac_*, frontend/app/ratings/, ac-rating/. Если
+планируешь править shared файлы (frontend/app/globals.css, layout.tsx
+корневой) — пинг Андрею ДО коммита.
+
+ВАЖНО (worktree): для frontend-worktree сделай symlink node_modules:
+ln -s /Users/andrei_prygunov/obsidian/avgust/ERP_Avgust/frontend/node_modules \
+      /Users/andrei_prygunov/obsidian/avgust/ERP_Avgust_is_fedya_e19_3/frontend/node_modules
+См. memory/feedback_worktree_node_modules.
 
 Работай строго по ТЗ. Push в свою ветку, отчёт по формату.
 ```
