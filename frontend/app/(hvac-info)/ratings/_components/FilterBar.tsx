@@ -435,6 +435,7 @@ function PriceInput({
         style={{
           fontSize: 10,
           fontFamily: 'var(--rt-font-mono)',
+          fontWeight: 600,
           color: 'hsl(var(--rt-ink-40))',
           textTransform: 'uppercase',
           letterSpacing: 1,
@@ -464,7 +465,7 @@ function PriceInput({
           background: 'transparent',
           fontFamily: 'var(--rt-font-mono)',
           fontSize: 12,
-          fontWeight: 600,
+          fontWeight: 400,
           color: 'hsl(var(--rt-ink))',
           outline: 'none',
           padding: 0,
