@@ -20,6 +20,8 @@ import type {
   PdfItem,
   PdfProbeResponse,
   ProblemDetails,
+  RecognitionJob,
+  RecognitionJobStatus,
   UUID,
   ValidationReport,
 } from "./types";
@@ -331,6 +333,21 @@ export const importApi = {
     );
   },
 
+  // E19: запускает background-распознавание. Возвращает 202 + RecognitionJob
+  // в статусе "queued" сразу. Прогресс — через recognitionJobsApi.list polling.
+  uploadPdfAsync: (estimateId: UUID, file: File, workspaceId: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<RecognitionJob>(
+      `/estimates/${estimateId}/import/pdf/?async=true`,
+      {
+        method: "POST",
+        body: form,
+        workspaceId,
+      },
+    );
+  },
+
   probePdf: (estimateId: UUID, file: File, workspaceId: string) => {
     const form = new FormData();
     form.append("file", file);
@@ -372,5 +389,39 @@ export const materialApi = {
     apiFetch<MaterialApplyResponse>(
       `/estimates/${estimateId}/match-materials/apply/`,
       { method: "POST", body: { matches }, workspaceId },
+    ),
+};
+
+// =============================================================================
+// E19: recognition jobs API
+// =============================================================================
+
+export interface RecognitionJobsListFilters {
+  // CSV статусов: "queued,running" | "done,failed,cancelled" | etc.
+  status?: string;
+  estimate_id?: UUID;
+}
+
+export const recognitionJobsApi = {
+  list: async (
+    workspaceId: string,
+    filters: RecognitionJobsListFilters = {},
+  ): Promise<RecognitionJob[]> => {
+    const resp = await apiFetch<
+      { results: RecognitionJob[] } | RecognitionJob[]
+    >(
+      `/recognition-jobs/${q(filters as Record<string, string | undefined>)}`,
+      { workspaceId },
+    );
+    return Array.isArray(resp) ? resp : resp.results;
+  },
+
+  retrieve: (id: UUID, workspaceId: string) =>
+    apiFetch<RecognitionJob>(`/recognition-jobs/${id}/`, { workspaceId }),
+
+  cancel: (id: UUID, workspaceId: string) =>
+    apiFetch<{ id: UUID; status: RecognitionJobStatus }>(
+      `/recognition-jobs/${id}/cancel/`,
+      { method: "POST", workspaceId },
     ),
 };
