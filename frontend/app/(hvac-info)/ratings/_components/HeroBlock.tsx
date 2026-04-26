@@ -10,12 +10,12 @@ const ABOUT_LINKS: Array<{ label: string; href: string; primary?: boolean }> = [
 
 const AUTHORS: Array<{ name: string; role: string; photo: string }> = [
   {
-    name: 'Савинов Максим',
+    name: 'М. Савинов',
     role: 'главный редактор, автор методики',
     photo: '/rating-authors/savinov.jpg',
   },
   {
-    name: 'Прыгунов Андрей',
+    name: 'А. Прыгунов',
     role: 'редактор',
     photo: '/rating-authors/prygunov.jpg',
   },
