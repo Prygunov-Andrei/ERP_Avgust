@@ -386,6 +386,10 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
           if (typeof window !== 'undefined') {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }
+        } else if (res.status === 413) {
+          setClientError(
+            'Файлы слишком большие — попробуйте уменьшить количество или сжать изображения. Максимум — 80 МБ суммарно.',
+          );
         } else if (res.status === 429) {
           setClientError(
             'Слишком много заявок с этого IP. Попробуйте через час.',
@@ -411,6 +415,8 @@ export default function SubmitForm({ brands, methodology = null }: Props) {
           } else {
             setClientError('Проверьте форму.');
           }
+        } else if (res.status >= 500) {
+          setClientError('Сервер временно недоступен. Попробуйте через минуту.');
         } else {
           setClientError('Что-то пошло не так. Попробуйте позже.');
         }
