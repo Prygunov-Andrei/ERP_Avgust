@@ -210,7 +210,9 @@ export function HeroBlockCollapsed({ stats }: { stats: RatingMethodologyStats })
           overflow: 'hidden',
         }}
       >
-        <Eyebrow style={{ flexShrink: 0 }}>Рейтинг · 04.2026</Eyebrow>
+        <Eyebrow style={{ flexShrink: 0 }}>
+          Рейтинг кондиционеров «Август-климат» · 04.2026
+        </Eyebrow>
         <div
           style={{
             display: 'flex',
