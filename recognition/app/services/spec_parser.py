@@ -166,6 +166,10 @@ class SpecParser:
         self.provider = provider
         self.state = _ParseState()
         self._on_page_done: PageDoneCallback | None = None
+        # E19 hotfix: страницы уже прошедшие post-process+fire_page_done в
+        # run_one (Phase 3 inline). Phase 5 пропустит их дублирование, но
+        # выполнит cross-page merge как обычно.
+        self._inline_processed_pages: set[int] = set()
 
     async def parse(
         self,
@@ -382,7 +386,6 @@ class SpecParser:
                         sticky_parent_name=sticky,
                         max_tokens=settings.llm_normalize_max_tokens,
                     )
-                    return page_num, norm
                 except NotImplementedError:
                     return page_num, "no_text_complete"
                 except LLMNormalizationError as e:
@@ -391,6 +394,20 @@ class SpecParser:
                         extra={"page": page_num + 1, "error": str(e)},
                     )
                     return page_num, None
+            # E19 hotfix: inline post-process + fire_page_done СРАЗУ после LLM
+            # ответа, до возврата из run_one. Раньше post-process делался в
+            # Phase 5 после gather всех страниц — на 87-страничном PDF это
+            # значит page_done callbacks стреляли волной через 5 часов вместо
+            # инкрементального прогресса. Теперь fire стреляет per-page как
+            # только LLM ответил для этой страницы.
+            #
+            # Если страница попадёт под Phase 4 multimodal retry, retry
+            # запишет новый norm в final_by_page — Phase 5 переобрабатывает
+            # его (set _inline_processed_pages не содержит этот page).
+            self._apply_postprocess(norm, rows=rows, initial_sticky=sticky)
+            await self._fire_page_done(page_num + 1, norm.items)
+            self._inline_processed_pages.add(page_num)
+            return page_num, norm
 
         async def run_vision_counter_gated(page_num: int) -> int:
             async with llm_sema:
@@ -554,6 +571,10 @@ class SpecParser:
                     if accept_p2:
                         norm_p2.expected_count_vision = v_count
                         final_by_page[page_num] = norm_p2
+                        # E19 hotfix: страница попала в multimodal retry — это
+                        # новый norm без inline post-process. Снимаем флаг
+                        # чтобы Phase 5 переобработал.
+                        self._inline_processed_pages.discard(page_num)
                         # Обновляем метрики confidence для отчёта (заменяем tuple).
                         state.confidence_scores = [
                             (pn, conf_p2 if pn == page_num + 1 else c, r)
@@ -576,12 +597,13 @@ class SpecParser:
             norm = final_by_page[page_num]
             initial_sticky = stickies[page_num][1] if page_num < len(stickies) else ""
             rows = pages_rows[page_num] if page_num < len(pages_rows) else []
-            self._apply_postprocess(norm, rows=rows, initial_sticky=initial_sticky)
-
-            # E19-1: per-page progress callback ПОСЛЕ post-process, но ДО
-            # cross-page merge. Cross-page может потом удлинить last.name —
-            # финальная форма доедет до клиента через `finished` event.
-            await self._fire_page_done(page_num + 1, norm.items)
+            # E19 hotfix: post-process+fire_page_done теперь делается inline в
+            # run_one (Phase 3), чтобы page_done callbacks стреляли инкрементально.
+            # Phase 5 повторяет ТОЛЬКО для страниц, которые прошли через Phase 4
+            # multimodal retry — там новый norm не прошёл inline post-process.
+            if page_num not in self._inline_processed_pages:
+                self._apply_postprocess(norm, rows=rows, initial_sticky=initial_sticky)
+                await self._fire_page_done(page_num + 1, norm.items)
 
             # Cross-page continuation (Класс C spec-2): rows изъятые с
             # начала следующей страницы склеиваем в name last item ЭТОЙ.
