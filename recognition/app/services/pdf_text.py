@@ -1160,6 +1160,7 @@ def extract_structured_rows(page: object) -> list[TableRow]:
     rows = _merge_multiline_model_codes(rows)
     rows = _merge_klop_two_row_pattern(rows)
     rows = _drop_obm_vent_preface_phantoms(rows)
+    rows = _drop_doc_code_footer_rows(rows)
     return rows
 
 
@@ -1211,6 +1212,49 @@ def _is_obm_vent_preface_phantom(row: TableRow) -> bool:
 
 def _drop_obm_vent_preface_phantoms(rows: list[TableRow]) -> list[TableRow]:
     return [r for r in rows if not _is_obm_vent_preface_phantom(r)]
+
+
+# E20-2 Task 3 retrofit (Class P) — фильтр footer-row штампа ЕСКД
+# «СК-269/7/22-ОВ2.СО лист N». На всех 87 стр Spec-4 footer-row имеет
+# структуру cells = {unit: 'СК', qty: '-269/7/22-', mass: 'ОВ2.СО',
+# comments: 'N'}, name пуст. Эта row не отфильтрована stamp-filter'ом
+# (значения формируются column-mapping'ом из spans «СК», «-269/7/22-»,
+# «ОВ2.СО», «N» внутри title-block-zone, но `_is_title_block_bucket`
+# по координатам не всегда срабатывает).
+#
+# LLM спорадически эмитит phantom item с qty=1, unit='СК' и sticky-name
+# предыдущего реального item-а (Class P, проявление на Spec-4 pp 2/24).
+#
+# Фильтр: drop row если ≥2 из cells (qty/unit/mass) матчат doc-code-patterns
+# И name пуст. Защищает от ложного срабатывания на реальных item-ах
+# (у настоящего item name всегда заполнен после cluster-merge).
+_DOC_CODE_QTY_RE = re.compile(r"^-?\d+(?:[/-]\d+)+-?$")  # -269/7/22-, 469-05/2025
+_DOC_CODE_MASS_RE = re.compile(r"^[А-ЯЁ]{1,3}\d*\.[А-ЯЁ]{1,3}\d*$")  # ОВ2.СО, СС.КЖ
+_DOC_CODE_UNIT_TOKENS = {"СК", "ОВ2.СО", "ОВ", "СО", "ОВ1.СО", "ОВ3.СО"}
+
+
+def _is_doc_code_footer_row(row: TableRow) -> bool:
+    if row.is_section_heading:
+        return False
+    cells = row.cells
+    name = (cells.get("name") or "").strip()
+    if name:
+        return False
+    qty = (cells.get("qty") or "").strip()
+    unit = (cells.get("unit") or "").strip()
+    mass = (cells.get("mass") or "").strip()
+    matches = 0
+    if qty and _DOC_CODE_QTY_RE.match(qty):
+        matches += 1
+    if unit and (unit in _DOC_CODE_UNIT_TOKENS or _DOC_CODE_MASS_RE.match(unit)):
+        matches += 1
+    if mass and _DOC_CODE_MASS_RE.match(mass):
+        matches += 1
+    return matches >= 2
+
+
+def _drop_doc_code_footer_rows(rows: list[TableRow]) -> list[TableRow]:
+    return [r for r in rows if not _is_doc_code_footer_row(r)]
 
 
 def _merge_continuation_rows(rows: list[TableRow]) -> list[TableRow]:

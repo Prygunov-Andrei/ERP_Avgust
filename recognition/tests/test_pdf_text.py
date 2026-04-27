@@ -1019,6 +1019,66 @@ class TestE201Fixes:
         out = _drop_obm_vent_preface_phantoms([r1, r3, r2, r4, r5])
         assert out == [r3, r4, r5], f"оставлены лишние/удалены нужные: {out}"
 
+    def test_doc_code_footer_row_dropped(self):
+        """E20-2 Task 3 retrofit (Class P): footer-row штампа ЕСКД
+        «СК-269/7/22-ОВ2.СО лист N» — column-mapping раскладывает spans
+        в cells = {unit: 'СК', qty: '-269/7/22-', mass: 'ОВ2.СО',
+        comments: 'N'}, name пуст. Если ≥2 значащих cells матчат doc-code
+        patterns И name пуст — drop. Иначе LLM эмитит phantom item с
+        qty=1 unit='СК' и sticky-name предыдущего реального item-а."""
+        from app.services.pdf_text import (
+            TableRow, _is_doc_code_footer_row, _drop_doc_code_footer_rows,
+        )
+        # 1) Spec-4 footer-row на всех 87 страницах.
+        r_footer = TableRow(
+            page_number=1, y_mid=799.9, row_index=0,
+            cells={"unit": "СК", "qty": "-269/7/22-", "mass": "ОВ2.СО", "comments": "17"},
+        )
+        assert _is_doc_code_footer_row(r_footer)
+        # 2) Реальный item с qty/unit — НЕ drop.
+        r_real = TableRow(
+            page_number=1, y_mid=200.0, row_index=1,
+            cells={"name": "Воздуховод", "qty": "10", "unit": "п.м.",
+                   "model": "ГОСТ 14918-80"},
+        )
+        assert not _is_doc_code_footer_row(r_real)
+        # 3) Реальный item с unit='шт' (короткое — не doc-code) — НЕ drop.
+        r_short = TableRow(
+            page_number=1, y_mid=300.0, row_index=2,
+            cells={"name": "Решетка", "qty": "5", "unit": "шт"},
+        )
+        assert not _is_doc_code_footer_row(r_short)
+        # 4) Только 1 doc-code matcher (unit='СК' но qty='1') — НЕ drop
+        #    (это может быть real item с unit СК).
+        r_one_marker = TableRow(
+            page_number=1, y_mid=400.0, row_index=3,
+            cells={"unit": "СК", "qty": "1"},  # qty не doc-code, mass пуст
+        )
+        assert not _is_doc_code_footer_row(r_one_marker)
+        # 5) qty без unit — НЕ drop (нужно ≥2 markers).
+        r_qty_only = TableRow(
+            page_number=1, y_mid=500.0, row_index=4,
+            cells={"qty": "-269/7/22-"},
+        )
+        assert not _is_doc_code_footer_row(r_qty_only)
+        # 6) section_heading — НЕ trogаем.
+        r_sec = TableRow(
+            page_number=1, y_mid=600.0, row_index=5,
+            cells={"unit": "СК", "qty": "-269/7/22-", "mass": "ОВ2.СО"},
+            is_section_heading=True,
+        )
+        assert not _is_doc_code_footer_row(r_sec)
+        # 7) name заполнен (не sticky-leak phantom, реальный item) — НЕ drop.
+        r_named = TableRow(
+            page_number=1, y_mid=700.0, row_index=6,
+            cells={"name": "Что-то полезное", "unit": "СК", "qty": "-269/7/22-",
+                   "mass": "ОВ2.СО"},
+        )
+        assert not _is_doc_code_footer_row(r_named)
+        # 8) batch filter.
+        out = _drop_doc_code_footer_rows([r_footer, r_real, r_short, r_sec])
+        assert out == [r_real, r_short, r_sec], f"unexpected: {out}"
+
 
 class TestIsHeaderRow:
     def test_header_row_detected(self):
