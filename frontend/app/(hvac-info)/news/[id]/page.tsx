@@ -11,6 +11,7 @@ import NewsMentionedModelCard from './_components/NewsMentionedModelCard';
 import NewsPrevNextNav from './_components/NewsPrevNextNav';
 import SectionFooter from '../../_components/SectionFooter';
 import {
+  getNewsBodyWithoutHero,
   getNewsCategoryLabel,
   getNewsLede,
   prevNextFromIndex,
@@ -115,7 +116,7 @@ export default async function NewsDetailPage({ params }: Props) {
       >
         <NewsBreadcrumb category={getNewsCategoryLabel(news)} />
         <NewsArticleHero news={news} />
-        <NewsArticleBody body={news.body || ''} />
+        <NewsArticleBody body={getNewsBodyWithoutHero(news)} />
 
         {news.mentioned_ac_models && news.mentioned_ac_models.length > 0 && (
           <NewsMentionedModelCard models={news.mentioned_ac_models} />

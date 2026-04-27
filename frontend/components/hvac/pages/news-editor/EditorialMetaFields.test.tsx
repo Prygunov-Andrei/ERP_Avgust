@@ -1,8 +1,18 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import EditorialMetaFields, { LEDE_SOFT_MAX } from './EditorialMetaFields';
-import { NEWS_CATEGORIES } from '@/constants';
-import type { HvacNewsCategory } from '@/lib/api/types/hvac';
+import type { HvacNewsCategory, HvacNewsCategoryItem } from '@/lib/api/types/hvac';
+
+// Wave 9: список категорий грузится из API (newsCategoriesService).
+// Мокаем модуль, чтобы тест был оффлайн и предсказуем.
+const mockGetCategories: ReturnType<
+  typeof vi.fn<(...args: unknown[]) => Promise<HvacNewsCategoryItem[]>>
+> = vi.fn();
+vi.mock('../../services/newsCategoriesService', () => ({
+  default: {
+    getNewsCategories: () => mockGetCategories(),
+  },
+}));
 
 // Radix Select использует pointer-events capturing + ResizeObserver;
 // подставляем минимальные моки.
@@ -13,6 +23,18 @@ class NoopResizeObserver {
 }
 
 beforeEach(() => {
+  mockGetCategories.mockReset();
+  // По умолчанию возвращаем 8 legacy-категорий (имитируем NewsCategory из БД).
+  mockGetCategories.mockResolvedValue([
+    { slug: 'business', name: 'Деловые', order: 1, is_active: true },
+    { slug: 'industry', name: 'Индустрия', order: 2, is_active: true },
+    { slug: 'market', name: 'Рынок', order: 3, is_active: true },
+    { slug: 'regulation', name: 'Регулирование', order: 4, is_active: true },
+    { slug: 'review', name: 'Обзор', order: 5, is_active: true },
+    { slug: 'guide', name: 'Гайд', order: 6, is_active: true },
+    { slug: 'brands', name: 'Бренды', order: 7, is_active: true },
+    { slug: 'other', name: 'Прочее', order: 8, is_active: true },
+  ]);
   (globalThis as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver =
     NoopResizeObserver as unknown as typeof ResizeObserver;
   // Radix проверяет matchMedia/hasPointerCapture
@@ -54,23 +76,23 @@ function renderFields(
 }
 
 describe('EditorialMetaFields', () => {
-  it('рендерит trigger с выбранной категорией (8 вариантов в enum)', () => {
+  it('рендерит trigger с выбранной категорией (динамический список из API)', async () => {
     renderFields({ category: 'business' });
-    // Убеждаемся что label категории отображается в триггере
-    expect(screen.getByText('Деловые')).toBeInTheDocument();
-    // И что в константе ровно 8 значений
-    expect(NEWS_CATEGORIES).toHaveLength(8);
-    // И что значения совпадают с backend (синхронизация enum)
-    expect(NEWS_CATEGORIES.map((c) => c.value)).toEqual([
-      'business',
-      'industry',
-      'market',
-      'regulation',
-      'review',
-      'guide',
-      'brands',
-      'other',
-    ]);
+    // После загрузки из API в триггере должно быть имя выбранной категории.
+    await waitFor(() => {
+      expect(screen.getByText('Деловые')).toBeInTheDocument();
+    });
+    expect(mockGetCategories).toHaveBeenCalled();
+  });
+
+  it('grace fallback: при пустом ответе API в Select остаётся "Прочее"', async () => {
+    mockGetCategories.mockResolvedValueOnce([]);
+    renderFields({ category: 'other' });
+    await waitFor(() => {
+      expect(mockGetCategories).toHaveBeenCalled();
+    });
+    // Триггер показывает "Прочее" (single fallback SelectItem).
+    expect(screen.getByText('Прочее')).toBeInTheDocument();
   });
 
   it('lede textarea: ввод вызывает onLedeChange', () => {

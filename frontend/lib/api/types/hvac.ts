@@ -3,16 +3,18 @@ import type { PaginatedResponse } from './common';
 export type HvacNewsStatus = 'draft' | 'scheduled' | 'published';
 export type HvacSourceLanguage = 'ru' | 'en' | 'de' | 'pt';
 export type HvacTranslationStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
-/** Категории новостей (M5) — синхронизировано с backend/news/models.py NewsPost.Category. */
-export type HvacNewsCategory =
-  | 'business'
-  | 'industry'
-  | 'market'
-  | 'regulation'
-  | 'review'
-  | 'guide'
-  | 'brands'
-  | 'other';
+/**
+ * Slug категории новости — свободная строка из NewsCategory (динамика).
+ * Раньше было hardcoded enum (8 значений), снято в Wave 9 backend (миграция
+ * news/0031_alter_newspost_category.py — choices убраны).
+ *
+ * Старые 8 slug'ов остаются: business, industry, market, regulation, review,
+ * guide, brands, other — они в БД через NewsCategory с теми же slug'ами.
+ *
+ * Для отображения категории — используй `news.category_object?.name` через FK,
+ * не `category_display` (старый сериализатор для legacy enum).
+ */
+export type HvacNewsCategory = string;
 
 /**
  * Раздел новостей как редактируемая сущность (NewsCategory).

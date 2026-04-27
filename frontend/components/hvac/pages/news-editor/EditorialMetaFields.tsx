@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -9,8 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { NEWS_CATEGORIES } from '@/constants';
-import type { HvacNewsCategory } from '@/lib/api/types/hvac';
+import newsCategoriesService from '../../services/newsCategoriesService';
+import type { HvacNewsCategory, HvacNewsCategoryItem } from '@/lib/api/types/hvac';
 
 /**
  * Soft-cap длины lede. Интерфейсное предупреждение при превышении,
@@ -40,25 +41,47 @@ export default function EditorialMetaFields({
   const ledeLen = lede.length;
   const ledeOverSoftCap = ledeLen > LEDE_SOFT_MAX;
 
+  // Wave 9: список категорий грузится из API (NewsCategory editable).
+  // На fail — пустой список + fallback "Прочее" в SelectContent.
+  const [categories, setCategories] = useState<HvacNewsCategoryItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    newsCategoriesService
+      .getNewsCategories()
+      .then((items) => {
+        if (!cancelled) setCategories(items);
+      })
+      .catch(() => {
+        if (!cancelled) setCategories([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const activeCategories = categories.filter((c) => c.is_active);
+
   return (
     <div className="space-y-4">
       <div>
         <Label htmlFor="news-category">Категория</Label>
         <Select
           value={category}
-          onValueChange={(value: string) =>
-            onCategoryChange(value as HvacNewsCategory)
-          }
+          onValueChange={(value: string) => onCategoryChange(value)}
         >
           <SelectTrigger id="news-category" className="mt-1">
-            <SelectValue />
+            <SelectValue placeholder="— Выберите категорию —" />
           </SelectTrigger>
           <SelectContent>
-            {NEWS_CATEGORIES.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.label}
+            {activeCategories.map((c) => (
+              <SelectItem key={c.slug} value={c.slug}>
+                {c.name}
               </SelectItem>
             ))}
+            {activeCategories.length === 0 && (
+              <SelectItem value="other">Прочее</SelectItem>
+            )}
           </SelectContent>
         </Select>
         <p className="text-sm text-muted-foreground mt-1">

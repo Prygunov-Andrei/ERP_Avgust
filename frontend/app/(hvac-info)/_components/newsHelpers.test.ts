@@ -3,6 +3,7 @@ import type { HvacNews } from '@/lib/api/types/hvac';
 import {
   formatNewsDate,
   formatNewsDateShort,
+  getNewsBodyWithoutHero,
   getNewsCategoryLabel,
   getNewsHeroImage,
   getNewsLede,
@@ -124,6 +125,48 @@ describe('getNewsHeroImage', () => {
       body_ru: '<img src="/m/ru.jpg">',
     });
     expect(getNewsHeroImage(n)).toBe('/m/ru.jpg');
+  });
+});
+
+describe('getNewsBodyWithoutHero', () => {
+  it('отрезает первое <img> если hero взят из body', () => {
+    const news = mk({
+      media: [],
+      lede: 'Текст лида',
+      body: '<img src="/x.jpg"><p>Текст статьи</p>',
+    });
+    expect(getNewsBodyWithoutHero(news)).toBe('<p>Текст статьи</p>');
+  });
+
+  it('сохраняет <img> если hero взят из media', () => {
+    const news = mk({
+      media: [{ id: 1, file: '/hero.jpg', media_type: 'image' }],
+      lede: 'Текст лида',
+      body: '<img src="/x.jpg"><p>Текст статьи</p>',
+    });
+    expect(getNewsBodyWithoutHero(news)).toContain('<img');
+  });
+
+  it('отрезает первый <p> если lede пустое', () => {
+    const news = mk({
+      media: [],
+      lede: '',
+      body: '<img src="/x.jpg"><p></p><p>Первый абзац (lede).</p><p>Второй абзац.</p>',
+    });
+    const result = getNewsBodyWithoutHero(news);
+    expect(result).not.toContain('Первый абзац');
+    expect(result).toContain('Второй абзац');
+  });
+
+  it('не трогает body если lede заполнен и hero из media', () => {
+    const news = mk({
+      media: [{ id: 1, file: '/hero.jpg', media_type: 'image' }],
+      lede: 'Свой осмысленный лид',
+      body: '<p>Первый абзац.</p><p>Второй.</p>',
+    });
+    const result = getNewsBodyWithoutHero(news);
+    expect(result).toContain('Первый абзац');
+    expect(result).toContain('Второй');
   });
 });
 
