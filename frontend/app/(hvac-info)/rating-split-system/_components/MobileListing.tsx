@@ -314,34 +314,40 @@ function MobileRows({
                   </span>
                 </span>
                 <span style={{ textAlign: 'right' }}>
-                  <span
-                    title={
-                      mode === 'silence'
-                        ? 'Уровень шума, дБ(А)'
-                        : 'Значение индекса «Август-климат»'
-                    }
-                    style={{
-                      fontFamily: 'var(--rt-font-serif)',
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: 'hsl(var(--rt-accent))',
-                      letterSpacing: -0.2,
-                      lineHeight: 1,
-                      display: 'block',
-                    }}
-                  >
-                    {value.toFixed(1)}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: 'hsl(var(--rt-ink-60))',
-                      display: 'block',
-                      marginTop: 4,
-                    }}
-                  >
-                    {formatPrice(m.price)}
-                  </span>
+                  {isAd ? (
+                    <AdBadge />
+                  ) : (
+                    <>
+                      <span
+                        title={
+                          mode === 'silence'
+                            ? 'Уровень шума, дБ(А)'
+                            : 'Значение индекса «Август-климат»'
+                        }
+                        style={{
+                          fontFamily: 'var(--rt-font-serif)',
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: 'hsl(var(--rt-accent))',
+                          letterSpacing: -0.2,
+                          lineHeight: 1,
+                          display: 'block',
+                        }}
+                      >
+                        {value.toFixed(1)}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: 'hsl(var(--rt-ink-60))',
+                          display: 'block',
+                          marginTop: 4,
+                        }}
+                      >
+                        {formatPrice(m.price)}
+                      </span>
+                    </>
+                  )}
                 </span>
               </button>
               {open && (
