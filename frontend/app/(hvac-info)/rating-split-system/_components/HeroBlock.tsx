@@ -169,99 +169,34 @@ export default function HeroBlock({
 }
 
 function HeroIllustration() {
-  // Временный placeholder — Андрей пришлёт финальную картинку.
   return (
     <div
       className="rt-hero-illustration"
       role="img"
-      aria-label="Иллюстрация скоро"
+      aria-label="Иллюстрация наружного блока сплит-системы"
     >
-      <svg
-        viewBox="0 0 220 165"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        style={{ width: '100%', height: 'auto', display: 'block' }}
-      >
-        <rect
-          x="22"
-          y="28"
-          width="120"
-          height="44"
-          rx="6"
-          fill="hsl(var(--rt-paper))"
-          stroke="hsl(var(--rt-border))"
-          strokeWidth="1.2"
-        />
-        <line x1="34" y1="42" x2="130" y2="42" stroke="hsl(var(--rt-ink-20))" strokeWidth="0.8" />
-        <line x1="34" y1="50" x2="130" y2="50" stroke="hsl(var(--rt-ink-20))" strokeWidth="0.8" />
-        <line x1="34" y1="58" x2="130" y2="58" stroke="hsl(var(--rt-ink-20))" strokeWidth="0.8" />
-        <path
-          d="M82 72 L82 105 L150 110"
-          stroke="hsl(var(--rt-ink-40))"
-          strokeWidth="1"
-          strokeDasharray="3 3"
-          fill="none"
-        />
-        <rect
-          x="138"
-          y="98"
-          width="60"
-          height="46"
-          rx="4"
-          fill="hsl(var(--rt-alt))"
-          stroke="hsl(var(--rt-border))"
-          strokeWidth="1.2"
-        />
-        <circle
-          cx="168"
-          cy="121"
-          r="14"
-          fill="hsl(var(--rt-paper))"
-          stroke="hsl(var(--rt-ink-40))"
-          strokeWidth="1"
-        />
-        <path
-          d="M168 110 Q174 116 168 121 Q162 116 168 110 Z"
-          fill="hsl(var(--rt-ink-20))"
-        />
-        <path
-          d="M179 121 Q173 127 168 121 Q173 115 179 121 Z"
-          fill="hsl(var(--rt-ink-20))"
-        />
-        <path
-          d="M168 132 Q162 126 168 121 Q174 126 168 132 Z"
-          fill="hsl(var(--rt-ink-20))"
-        />
-        <path
-          d="M157 121 Q163 115 168 121 Q163 127 157 121 Z"
-          fill="hsl(var(--rt-ink-20))"
-        />
-        <circle cx="168" cy="121" r="2" fill="hsl(var(--rt-ink-60))" />
-      </svg>
-      <span className="rt-hero-illustration-label">иллюстрация скоро</span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/rating-hero/ac-unit-illustration.webp"
+        alt=""
+        style={{
+          width: '100%',
+          height: 'auto',
+          display: 'block',
+          objectFit: 'contain',
+        }}
+      />
       <style>{`
         .rt-hero-illustration {
-          flex-direction: column;
           justify-content: center;
           align-items: center;
-          gap: 12px;
-          padding: 18px;
           aspect-ratio: 4 / 3;
-          background: linear-gradient(
-            135deg,
-            hsl(var(--rt-alt)) 0%,
-            hsl(var(--rt-ink-08)) 100%
-          );
-          border: 1px dashed hsl(var(--rt-border));
-          border-radius: 10px;
+          padding: 8px;
         }
-        .rt-hero-illustration-label {
-          font-family: var(--rt-font-mono);
-          font-size: 10px;
-          letter-spacing: 0.6px;
-          text-transform: uppercase;
-          color: hsl(var(--rt-ink-40));
+        @media (prefers-color-scheme: dark) {
+          .rt-hero-illustration img { filter: invert(1) hue-rotate(180deg); }
         }
+        .dark .rt-hero-illustration img { filter: invert(1) hue-rotate(180deg); }
       `}</style>
     </div>
   );
