@@ -32,7 +32,7 @@ export default function NewsFeedHero({ items }: { items: NewsItem[] }) {
           as="h1"
           style={{ marginTop: 4, letterSpacing: -0.5 }}
         >
-          Сегодня, {formatNewsDate(hero.pub_date)}
+          Сегодня, {formatNewsDate(new Date().toISOString())}
         </H>
       </div>
 
