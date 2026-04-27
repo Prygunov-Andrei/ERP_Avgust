@@ -963,6 +963,62 @@ class TestE201Fixes:
             f"phantom defended row не absorb-нулась: {defended_phantom}"
         )
 
+    def test_obm_vent_preface_phantoms_dropped(self):
+        """E20-2 Task 3 (Class M): section-preface rows ОВиК ОБМ-Вент
+        («Комплексное огнезащитное покрытие воздуховодов ОБМ-» / «Вент EI30
+        в составе:») без значащих cells (qty/unit/model/mfr) должны быть
+        отфильтрованы. На pp 44/49/74 LLM эмитит их как phantom items с
+        qty=1 шт (галлюцинация) или склеивает с соседней «Фасонные изделия»
+        в name. Filter дропает их до LLM."""
+        from app.services.pdf_text import (
+            TableRow, _is_obm_vent_preface_phantom, _drop_obm_vent_preface_phantoms,
+        )
+        # 1) preface trailing с дефисом — drop.
+        r1 = TableRow(
+            page_number=1, y_mid=727.0, row_index=0,
+            cells={"name": "Комплексное огнезащитное покрытие воздуховодов ОБМ-",
+                   "comments": "или аналог.Уточ-"},
+        )
+        assert _is_obm_vent_preface_phantom(r1)
+        # 2) preface «Вент EI30 в составе:» без qty/unit — drop.
+        r2 = TableRow(
+            page_number=1, y_mid=741.0, row_index=1,
+            cells={"name": "Вент EI30 в составе:", "comments": "нить на монтаже"},
+        )
+        assert _is_obm_vent_preface_phantom(r2)
+        r2b = TableRow(
+            page_number=1, y_mid=741.0, row_index=1,
+            cells={"name": "Вент EI60 в составе:"},
+        )
+        assert _is_obm_vent_preface_phantom(r2b)
+        # 3) реальный item ОБМ-5Ф с qty/unit — НЕ drop.
+        r3 = TableRow(
+            page_number=1, y_mid=637.5, row_index=2,
+            cells={"name": "ОБМ-5Ф прошивной базальтовый материал из базальтового",
+                   "qty": "36", "unit": "м2"},
+        )
+        assert not _is_obm_vent_preface_phantom(r3)
+        # 4) реальный item «Огнезащ Expert Standart ... воздуховодов ОБМ-Вент (...)»
+        #    name CONTAINS «воздуховодов ОБМ-» НО не trailing (за ним «Вент»).
+        #    qty/unit заполнены — НЕ drop.
+        r4 = TableRow(
+            page_number=1, y_mid=706.1, row_index=3,
+            cells={"name": "Огнезащитное покрытие Expert Standart в качестве связующего "
+                           "компонента в системах комплексной огнезащиты воздуховодов ОБМ-Вент",
+                   "qty": "22", "unit": "кг"},
+        )
+        assert not _is_obm_vent_preface_phantom(r4)
+        # 5) section_heading row — НЕ drop (отдельный flow).
+        r5 = TableRow(
+            page_number=1, y_mid=727.0, row_index=4,
+            cells={"name": "Вент EI30 в составе:"},
+            is_section_heading=True,
+        )
+        assert not _is_obm_vent_preface_phantom(r5)
+        # 6) batch filter сохраняет реальные item'ы и дропает phantoms.
+        out = _drop_obm_vent_preface_phantoms([r1, r3, r2, r4, r5])
+        assert out == [r3, r4, r5], f"оставлены лишние/удалены нужные: {out}"
+
 
 class TestIsHeaderRow:
     def test_header_row_detected(self):

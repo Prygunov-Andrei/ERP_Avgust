@@ -1159,7 +1159,58 @@ def extract_structured_rows(page: object) -> list[TableRow]:
     rows = _merge_series_parent_into_children(rows)
     rows = _merge_multiline_model_codes(rows)
     rows = _merge_klop_two_row_pattern(rows)
+    rows = _drop_obm_vent_preface_phantoms(rows)
     return rows
+
+
+# E20-2 Task 3 — фильтр section-preface phantom rows ОВиК ОБМ-Вент.
+#
+# На pp 44/49/74 (и потенциально других ОВиК-альбомах) section preface
+# «Комплексное огнезащитное покрытие воздуховодов ОБМ-Вент EI*X в составе:»
+# разносится bbox extractor'ом на 2-3 row'а:
+#   row A: «Комплексное огнезащитное покрытие воздуховодов ОБМ-» (trailing -)
+#   row B: «Вент EI30 в составе:» (или «Вент EI60 в составе:»)
+# Эти rows — preface header секции, не самостоятельные item'ы. Содержат
+# только name + comments из штамп-зоны («или аналог.Уточ-», «нить на
+# монтаже»), без qty/unit/model/manufacturer. На pg 2 LLM их корректно
+# отбрасывает; на pp 44/49/74 — эмитит phantom item'ы с qty=1 шт (галлюцинация)
+# или приклеивает к соседней «Фасонные изделия» через имя
+# («Фасонные изделия (20%) Комплексное огнезащитное покрытие воздуховодов ОБМ-»).
+#
+# Решение: дропать preface phantoms на pdf_text-уровне, до LLM. Section-context
+# в spec_parser строится через is_section_heading + sticky pipeline отдельно,
+# preface-rows для этого не нужны (sticky берётся из реальных item'ов).
+_OBM_VENT_PREFACE_NAME_RES = (
+    re.compile(r"^\s*Вент\s+EI\d+\b", re.IGNORECASE),
+    re.compile(r"воздуховодов\s+ОБМ\s*-\s*$", re.IGNORECASE),
+    re.compile(
+        r"^\s*Комплексное\s+огнезащитное\s+покрытие\s+воздуховодов\s+ОБМ\s*-?\s*$",
+        re.IGNORECASE,
+    ),
+)
+
+
+def _is_obm_vent_preface_phantom(row: TableRow) -> bool:
+    if row.is_section_heading:
+        return False
+    cells = row.cells
+    name = (cells.get("name") or "").strip()
+    if not name:
+        return False
+    if not any(p.search(name) for p in _OBM_VENT_PREFACE_NAME_RES):
+        return False
+    # Если есть значащие данные (qty/unit/model/mfr/brand не placeholder) —
+    # это уже не preface, а реальный item с тем же name в начале (например
+    # реальная позиция «Вент EI30...» в спецификации, если такая бывает).
+    for k in ("qty", "unit", "model", "manufacturer", "brand", "mass"):
+        v = (cells.get(k) or "").strip()
+        if v and v not in _PLACEHOLDER_VALUES:
+            return False
+    return True
+
+
+def _drop_obm_vent_preface_phantoms(rows: list[TableRow]) -> list[TableRow]:
+    return [r for r in rows if not _is_obm_vent_preface_phantom(r)]
 
 
 def _merge_continuation_rows(rows: list[TableRow]) -> list[TableRow]:
