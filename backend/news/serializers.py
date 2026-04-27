@@ -222,16 +222,42 @@ class NewsPostWriteSerializer(serializers.ModelSerializer):
         """Проверяем логику статуса и даты публикации"""
         status = attrs.get('status', self.instance.status if self.instance else 'draft')
         pub_date = attrs.get('pub_date', self.instance.pub_date if self.instance else None)
-        
+
         # Если статус 'published', но дата в будущем, меняем на 'scheduled'
         if status == 'published' and pub_date and pub_date > timezone.now():
             attrs['status'] = 'scheduled'
-        
+
         # Если статус 'scheduled', но дата в прошлом, меняем на 'published'
         if status == 'scheduled' and pub_date and pub_date <= timezone.now():
             attrs['status'] = 'published'
-        
+
         return attrs
+
+    def _sync_category_ref(self, validated_data):
+        """Синхронизация FK ``category_ref`` с CharField ``category``.
+
+        Без этого NewsPost.save() при изменении category может откатить значение
+        обратно (приоритет category_ref в save-логике ломает PATCH category=…).
+        Серилазиатор знает только legacy ``category`` slug — резолвим в FK.
+        """
+        if 'category' not in validated_data:
+            return
+        cat_slug = validated_data['category']
+        try:
+            validated_data['category_ref'] = NewsCategory.objects.get(
+                slug=cat_slug, is_active=True,
+            )
+        except NewsCategory.DoesNotExist:
+            # Legacy 'other' и категории без записи в NewsCategory — FK = NULL.
+            validated_data['category_ref'] = None
+
+    def create(self, validated_data):
+        self._sync_category_ref(validated_data)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        self._sync_category_ref(validated_data)
+        return super().update(instance, validated_data)
 
 
 class CommentSerializer(serializers.ModelSerializer):
