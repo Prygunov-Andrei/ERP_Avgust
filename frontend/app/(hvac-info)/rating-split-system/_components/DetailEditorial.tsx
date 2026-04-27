@@ -79,6 +79,22 @@ export default function DetailEditorial({ detail }: Props) {
         @media (max-width: 1023px) {
           .rt-detail-editorial { position: static !important; top: auto !important; }
         }
+        /* Dark mode: pale green/red bg + light текст не читается. Затемняем текст
+           до тёмно-зелёного / тёмно-красного оттенка, оставляя бледный фон. */
+        .dark .rt-proscons-card[data-pros="true"] {
+          background: hsl(140 30% 88%) !important;
+        }
+        .dark .rt-proscons-card[data-cons="true"] {
+          background: hsl(8 35% 88%) !important;
+        }
+        .dark .rt-proscons-card[data-pros="true"] .rt-proscons-text,
+        .dark .rt-proscons-card[data-pros="true"] .rt-proscons-text * {
+          color: hsl(140 60% 18%) !important;
+        }
+        .dark .rt-proscons-card[data-cons="true"] .rt-proscons-text,
+        .dark .rt-proscons-card[data-cons="true"] .rt-proscons-text * {
+          color: hsl(8 60% 22%) !important;
+        }
       `}</style>
     </div>
   );
@@ -157,6 +173,7 @@ function PointsCard({
       data-testid={isPros ? 'pros-card' : 'cons-card'}
       data-pros={isPros ? 'true' : undefined}
       data-cons={!isPros ? 'true' : undefined}
+      className="rt-proscons-card"
       style={{
         background: softBg,
         borderLeft: `4px solid ${accent}`,
@@ -200,7 +217,7 @@ function PointsCard({
             <span style={{ marginTop: 2, flexShrink: 0 }}>
               <PointGlyph kind={kind} accent={accent} small />
             </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="rt-proscons-text" style={{ flex: 1, minWidth: 0 }}>
               <T size={12} weight={600} style={{ lineHeight: 1.35 }}>
                 {p.title}
               </T>
