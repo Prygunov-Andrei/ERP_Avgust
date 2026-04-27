@@ -97,12 +97,16 @@ export function getNewsBodyWithoutHero(news: NewsItem): string {
     body = body.replace(/^\s*<img[^>]*>\s*/i, '');
   }
 
-  // Если lede пустое (значит helper подставил начало body) — отрезать первый <p>.
+  // Если lede пустое — режем первый <p> ТОЛЬКО если в body есть второй,
+  // иначе короткие новости (1 img + 1 параграф) полностью исчезнут.
   if (!news.lede || !news.lede.trim()) {
     // Убираем пустые <p></p> в начале (от парсинга tinymce/tiptap).
     body = body.replace(/^\s*(<p>\s*<\/p>\s*)+/gi, '');
-    // Убираем первый абзац с текстом.
-    body = body.replace(/^\s*<p>[\s\S]*?<\/p>\s*/i, '');
+    // Считаем содержательные <p>; режем только если ≥ 2.
+    const pCount = (body.match(/<p[\s>]/gi) || []).length;
+    if (pCount >= 2) {
+      body = body.replace(/^\s*<p>[\s\S]*?<\/p>\s*/i, '');
+    }
   }
 
   return body.trim();

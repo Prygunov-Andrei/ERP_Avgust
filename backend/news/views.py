@@ -572,9 +572,19 @@ class NewsCategoryViewSet(viewsets.ModelViewSet):
 
     queryset = NewsCategory.objects.all()
     serializer_class = NewsCategorySerializer
-    permission_classes = [permissions.IsAdminUser]
+    # Wave 9 hotfix: GET читать может любой (даже без auth) — категории не
+    # sensitive (8-20 enum-style записей). POST/PATCH/DELETE остаются admin-only
+    # через get_permissions(). Раньше IsAdminUser давал 401 на NewsEditor когда
+    # apiClient interceptor видел 401 и редиректил на /login (regression Wave 9).
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     lookup_field = "slug"
     pagination_class = None
+
+    def get_permissions(self):
+        # POST/PATCH/DELETE — только staff. GET — публично.
+        if self.request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
 
     def get_queryset(self):
         qs = NewsCategory.objects.all()
