@@ -79,6 +79,36 @@ export function getNewsCategoryLabel(news: NewsItem): string {
 }
 
 /**
+ * Возвращает body новости с отрезанной первой картинкой и/или первым параграфом —
+ * если они уже использованы в hero (как hero image или lede).
+ *
+ * Используется в NewsArticleBody, чтобы избежать дублирования с NewsArticleHero
+ * (getNewsHeroImage берёт первое <img> из body, getNewsLede — первые символы).
+ */
+export function getNewsBodyWithoutHero(news: NewsItem): string {
+  let body = news.body || '';
+  if (!body) return '';
+
+  // Если hero image взят из body (а не из news.media) — отрезать первое <img>.
+  const heroFromMedia = news.media?.find(
+    (m) => (m.media_type ?? 'image') === 'image',
+  )?.file;
+  if (!heroFromMedia) {
+    body = body.replace(/^\s*<img[^>]*>\s*/i, '');
+  }
+
+  // Если lede пустое (значит helper подставил начало body) — отрезать первый <p>.
+  if (!news.lede || !news.lede.trim()) {
+    // Убираем пустые <p></p> в начале (от парсинга tinymce/tiptap).
+    body = body.replace(/^\s*(<p>\s*<\/p>\s*)+/gi, '');
+    // Убираем первый абзац с текстом.
+    body = body.replace(/^\s*<p>[\s\S]*?<\/p>\s*/i, '');
+  }
+
+  return body.trim();
+}
+
+/**
  * Вычисляет соседей в ленте для страницы деталей.
  */
 export function prevNextFromIndex<T extends { id: number }>(

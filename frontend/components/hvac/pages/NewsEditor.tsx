@@ -89,8 +89,8 @@ export default function NewsEditor() {
       setPubDate(date.toISOString().slice(0, 16));
       setSourceUrl(news.source_url);
 
-      // M5 — editorial-поля
-      setCategory((news.category as HvacNewsCategory) || 'other');
+      // M5 — editorial-поля. Wave 9: category — свободный slug из NewsCategory.
+      setCategory(news.category || 'other');
       setLede(news.lede || '');
       setReadingTimeMinutes(news.reading_time_minutes ?? null);
       setEditorialAuthorId(news.editorial_author?.id ?? null);

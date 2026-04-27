@@ -62,7 +62,7 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[400px] p-4',
+        class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[400px] p-4',
       },
     },
   });
