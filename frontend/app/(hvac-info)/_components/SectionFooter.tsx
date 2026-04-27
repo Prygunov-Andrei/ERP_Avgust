@@ -11,6 +11,16 @@ const RATING_LINKS: Array<[string, string]> = [
 const NEWS_STUBS = ['Прислать новость'];
 const MISC_STUBS = ['Контакты', 'Нашли ошибку?'];
 
+/** Ссылки для поисковиков и AI-агентов. Все 4 файла лежат на проде в корне
+ *  домена (200 OK по прямым URL) — здесь делаем их видимыми в подвале, чтобы
+ *  крауллеры могли подняться от страницы к этим файлам без угадывания путей. */
+const SEO_AGENT_LINKS: Array<[string, string]> = [
+  ['robots.txt', '/robots.txt'],
+  ['sitemap.xml', '/sitemap.xml'],
+  ['llms.txt', '/llms.txt'],
+  ['llms-full.txt', '/llms-full.txt'],
+];
+
 const linkStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
@@ -118,6 +128,18 @@ export default function SectionFooter() {
         </div>
 
         <div className="rt-section-footer-login-row">
+          <ul
+            className="rt-section-footer-seo-links"
+            aria-label="Файлы для поисковых и AI-агентов"
+          >
+            {SEO_AGENT_LINKS.map(([label, href]) => (
+              <li key={href}>
+                <a href={href} className="rt-section-footer-seo-link">
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
           <Link
             href="/login/"
             className="rt-section-footer-login"
@@ -160,8 +182,30 @@ export default function SectionFooter() {
         }
         .rt-section-footer-login-row {
           display: flex;
-          justify-content: flex-end;
+          justify-content: space-between;
+          align-items: center;
+          gap: 16px;
           margin-top: 24px;
+          flex-wrap: wrap;
+        }
+        .rt-section-footer-seo-links {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 14px;
+        }
+        .rt-section-footer-seo-link {
+          font-size: 11px;
+          font-family: var(--rt-font-mono);
+          color: hsl(var(--rt-ink-60));
+          text-decoration: none;
+          letter-spacing: 0.2px;
+        }
+        .rt-section-footer-seo-link:hover {
+          color: hsl(var(--rt-ink));
+          text-decoration: underline;
         }
         @media (max-width: 767px) {
           .rt-section-footer-inner { padding: 24px 18px 28px !important; }
@@ -175,6 +219,13 @@ export default function SectionFooter() {
           }
           .rt-section-footer-login-row {
             justify-content: stretch;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 18px;
+          }
+          .rt-section-footer-seo-links {
+            justify-content: center;
+            gap: 12px 18px;
           }
           .rt-section-footer-login {
             align-self: stretch;

@@ -348,18 +348,44 @@ export default function MethodologyTable({ criteria }: Props) {
                       gap: 32,
                     }}
                   >
-                    <p
+                    <div
                       style={{
-                        fontFamily: 'var(--rt-font-serif)',
-                        fontSize: 13,
-                        lineHeight: 1.65,
-                        color: 'hsl(var(--rt-ink-80))',
-                        margin: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 14,
                         maxWidth: 560,
                       }}
                     >
-                      {c.description_ru || '—'}
-                    </p>
+                      <p
+                        style={{
+                          fontFamily: 'var(--rt-font-serif)',
+                          fontSize: 13,
+                          lineHeight: 1.65,
+                          color: 'hsl(var(--rt-ink-80))',
+                          margin: 0,
+                        }}
+                      >
+                        {c.description_ru || '—'}
+                      </p>
+                      {c.photo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={c.photo_url}
+                          alt={c.name_ru}
+                          loading="lazy"
+                          data-testid={`methodology-photo-${c.code}`}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            maxWidth: 360,
+                            height: 'auto',
+                            borderRadius: 6,
+                            border: '1px solid hsl(var(--rt-border-subtle))',
+                            background: 'hsl(var(--rt-alt))',
+                          }}
+                        />
+                      ) : null}
+                    </div>
                     <div
                       style={{
                         background: 'hsl(var(--rt-alt))',

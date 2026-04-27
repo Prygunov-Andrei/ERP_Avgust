@@ -200,24 +200,37 @@ function ModelRow({
       <T size={13} weight={500}>
         {formatPrice(model.price)}
       </T>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Meter value={clamp01(displayValue, model.index_max)} />
-        <span
-          title={
-            mode === 'silence'
-              ? 'Уровень шума, дБ(А)'
-              : 'Значение индекса «Август-климат»'
-          }
-          style={{
-            fontSize: 15,
-            fontWeight: 600,
-            color: 'hsl(var(--rt-accent))',
-            fontFamily: 'var(--rt-font-serif)',
-            letterSpacing: -0.2,
-          }}
-        >
-          {displayValue.toFixed(1)}
-        </span>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          justifyContent: isAd ? 'flex-end' : 'flex-start',
+        }}
+      >
+        {isAd ? (
+          <AdBadge />
+        ) : (
+          <>
+            <Meter value={clamp01(displayValue, model.index_max)} />
+            <span
+              title={
+                mode === 'silence'
+                  ? 'Уровень шума, дБ(А)'
+                  : 'Значение индекса «Август-климат»'
+              }
+              style={{
+                fontSize: 15,
+                fontWeight: 600,
+                color: 'hsl(var(--rt-accent))',
+                fontFamily: 'var(--rt-font-serif)',
+                letterSpacing: -0.2,
+              }}
+            >
+              {displayValue.toFixed(1)}
+            </span>
+          </>
+        )}
       </div>
     </Link>
   );

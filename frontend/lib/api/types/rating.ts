@@ -179,6 +179,10 @@ export interface RatingMethodologyCriterion {
    *  в полиш-4 (миграция 0006_criterion_is_key_measurement). До мержа backend
    *  поле может отсутствовать — фронт устойчив (treats as false). */
   is_key_measurement?: boolean;
+  /** Wave 8: backend отдаёт URL загруженного фото-иллюстрации параметра
+   *  (например «внутренний теплообменник»). Поле опциональное, может быть
+   *  null/отсутствовать. Используется на странице методики в раскрытой панели. */
+  photo_url?: string | null;
 }
 
 export interface RatingMethodologyStats {

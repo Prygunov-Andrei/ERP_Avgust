@@ -52,6 +52,14 @@ export default function DetailMedia({ detail }: Props) {
         @media (max-width: 899px) {
           .rt-detail-media { padding: 20px 18px 24px !important; }
         }
+        .rt-photo-navbtn {
+          background: rgba(255,255,255,0.92);
+          color: hsl(var(--rt-ink));
+        }
+        .dark .rt-photo-navbtn {
+          background: rgba(0,0,0,0.7);
+          color: #fff;
+        }
       `}</style>
     </section>
   );
@@ -94,25 +102,6 @@ function PhotoBlock({
           // key — чтобы при переключении фото state hover/modal сбрасывался
           key={current.id}
         />
-        <span
-          style={{
-            position: 'absolute',
-            left: 14,
-            top: 14,
-            padding: '5px 12px',
-            background: 'rgba(255,255,255,0.92)',
-            color: 'hsl(var(--rt-ink))',
-            borderRadius: 3,
-            fontFamily: 'var(--rt-font-mono)',
-            fontSize: 10,
-            letterSpacing: 1,
-            textTransform: 'uppercase',
-            pointerEvents: 'none',
-            zIndex: 3,
-          }}
-        >
-          Фото · галерея
-        </span>
         <span
           style={{
             position: 'absolute',
@@ -368,6 +357,7 @@ function NavButton({
         e.stopPropagation();
         onClick();
       }}
+      className="rt-photo-navbtn"
       style={{
         position: 'absolute',
         [position === 'left' ? 'left' : 'right']: 10,
@@ -376,13 +366,11 @@ function NavButton({
         width: 36,
         height: 36,
         borderRadius: '50%',
-        background: 'rgba(255,255,255,0.92)',
         border: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        color: 'hsl(var(--rt-ink))',
         zIndex: 3,
       }}
     >
