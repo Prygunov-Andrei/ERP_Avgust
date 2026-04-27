@@ -26,9 +26,9 @@ import type { HvacNewsCategory } from '@/lib/api/types/hvac';
 export default function NewsEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { t } = useTranslation();
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
@@ -48,13 +48,15 @@ export default function NewsEditor() {
   const [editorialAuthorId, setEditorialAuthorId] = useState<number | null>(null);
   const [mentionedAcModelIds, setMentionedAcModelIds] = useState<number[]>([]);
 
-  // Проверка прав администратора
+  // Проверка прав администратора (race-fix: ждём пока useHvacAuth подтянет
+  // /me/, иначе на свежем mount user=null → ложный редирект на login).
   useEffect(() => {
+    if (authLoading) return;
     if (!user?.is_staff) {
       toast.error('У вас нет прав для доступа к этой странице');
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   // Загрузка существующей новости для редактирования
   useEffect(() => {

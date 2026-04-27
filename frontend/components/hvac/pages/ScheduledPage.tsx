@@ -15,22 +15,23 @@ import { stripHtml, extractFirstImageFromHtml } from '../utils/htmlHelpers';
 
 export default function ScheduledPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { t } = useTranslation();
-  
+
   const [scheduled, setScheduled] = useState<News[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [publishingId, setPublishingId] = useState<number | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user?.is_staff) {
       toast.error('У вас нет прав для доступа к этой странице');
       navigate('/');
       return;
     }
     loadScheduled();
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const loadScheduled = async () => {
     setIsLoading(true);
