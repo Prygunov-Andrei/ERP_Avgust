@@ -194,9 +194,9 @@ function HeroIllustration() {
           padding: 8px;
         }
         @media (prefers-color-scheme: dark) {
-          .rt-hero-illustration img { filter: invert(1) hue-rotate(180deg); }
+          .rt-hero-illustration img { filter: invert(1) hue-rotate(180deg) brightness(1.25); }
         }
-        .dark .rt-hero-illustration img { filter: invert(1) hue-rotate(180deg); }
+        .dark .rt-hero-illustration img { filter: invert(1) hue-rotate(180deg) brightness(1.25); }
       `}</style>
     </div>
   );
