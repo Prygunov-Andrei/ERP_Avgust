@@ -57,19 +57,33 @@ def _build_model_context(ac_model: ACModel) -> dict[str, Any]:
 
 def max_possible_total_index(methodology: MethodologyVersion | None) -> float:
     """
-    Верхняя граница итогового индекса: сумма весов активных критериев,
-    по которым есть скорер (при normalized_score = 100 для каждого).
+    Верхняя граница нормированного итогового индекса (0-100).
+
+    total_index ренормируется по сумме весов non-key-критериев:
+        total_index = weighted_sum_non_key * 100 / sum(weight of non-key active)
+
+    Соответственно max = (sum(weight of scorable non-key) / sum(weight of non-key active)) * 100.
+    is_key_measurement-критерии исключаются и из числителя, и из знаменателя.
     """
     if methodology is None:
         return 100.0
     mc_qs = MethodologyCriterion.objects.filter(
         methodology=methodology, is_active=True,
     ).select_related("criterion").order_by("display_order", "criterion__code")
-    total = 0.0
+
+    non_key_weight = 0.0
+    scorable_non_key_weight = 0.0
     for mc in mc_qs:
+        if mc.criterion.is_key_measurement:
+            continue
+        w = float(mc.weight)
+        non_key_weight += w
         if _get_scorer(mc):
-            total += float(mc.weight)
-    return round(total, 2)
+            scorable_non_key_weight += w
+
+    if non_key_weight <= 0:
+        return 0.0
+    return round(scorable_non_key_weight * 100.0 / non_key_weight, 2)
 
 
 def compute_scores_for_model(
@@ -93,10 +107,16 @@ def compute_scores_for_model(
 
     model_ctx = _build_model_context(ac_model)
 
-    total_index = 0.0
+    weighted_sum = 0.0
+    non_key_weight = 0.0
     rows: list[dict[str, Any]] = []
 
     for mc in mc_qs:
+        is_key = bool(mc.criterion.is_key_measurement)
+
+        if not is_key:
+            non_key_weight += float(mc.weight)
+
         rv = raw_values.get(mc.criterion_id)
         raw = rv.raw_value if rv else ""
 
@@ -110,16 +130,22 @@ def compute_scores_for_model(
 
         result: ScoreResult = scorer.calculate(mc, raw, **context)
 
-        weighted = round(mc.weight * result.normalized_score / 100, 4)
-        total_index += weighted
+        weighted = round(float(mc.weight) * result.normalized_score / 100, 4)
+        if not is_key:
+            weighted_sum += weighted
 
         rows.append({
             "criterion": mc,
             "raw_value": str(raw),
             "compressor_model": rv.compressor_model if rv else "",
             "normalized_score": round(result.normalized_score, 2),
-            "weighted_score": round(weighted, 4),
+            "weighted_score": 0.0 if is_key else round(weighted, 4),
             "above_reference": result.above_reference,
         })
+
+    if non_key_weight <= 0:
+        total_index = 0.0
+    else:
+        total_index = weighted_sum * 100.0 / non_key_weight
 
     return round(total_index, 2), rows

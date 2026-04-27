@@ -224,6 +224,141 @@ def test_update_model_total_index_without_calculation_run(methodology, ac_model)
 
 
 @pytest.mark.django_db
+class TestKeyMeasurementExcluded:
+    """is_key_measurement=true критерии не участвуют в расчёте total_index.
+
+    На проде активная методика имеет noise (key) weight=10 + другие weight=100,
+    сумма весов 110%. После фикса total_index ренормируется по non-key весам (100),
+    noise отображается в CalculationResult с weighted_score=0.
+    """
+
+    def test_key_criterion_excluded_from_total_index(self, methodology, ac_model):
+        # Сценарий из ТЗ: key weight=20, обычный weight=80. Total = 100.
+        # Расчёт total_index должен использовать только weight=80,
+        # ренормировать к 100 (множитель 100/80=1.25).
+        key = _make_mc(
+            methodology, "noise_key", "Шум (ключевой)", "binary",
+            scoring_type="binary", weight=20, display_order=1,
+        )
+        key.criterion.is_key_measurement = True
+        key.criterion.save(update_fields=["is_key_measurement"])
+
+        regular = _make_mc(
+            methodology, "erv", "ЭРВ", "binary",
+            scoring_type="binary", weight=80, display_order=2,
+        )
+
+        # Обычный критерий: score 100, ключевой: score 100.
+        ModelRawValue.objects.create(
+            model=ac_model, criterion=key.criterion, raw_value="да",
+        )
+        ModelRawValue.objects.create(
+            model=ac_model, criterion=regular.criterion, raw_value="да",
+        )
+
+        run = recalculate_all()
+        ac_model.refresh_from_db()
+
+        # weighted_sum (без key) = 80 * 100 / 100 = 80
+        # total_index = 80 * 100 / 80 = 100
+        assert ac_model.total_index == pytest.approx(100.0, abs=0.01)
+
+        key_result = CalculationResult.objects.get(run=run, criterion=key.criterion)
+        # Раcчёт сохраняет normalized_score, но weighted_score = 0 (key исключён).
+        assert key_result.normalized_score == 100.0
+        assert key_result.weighted_score == pytest.approx(0.0, abs=0.001)
+
+        regular_result = CalculationResult.objects.get(
+            run=run, criterion=regular.criterion,
+        )
+        assert regular_result.weighted_score == pytest.approx(80.0, abs=0.01)
+
+    def test_all_key_criteria_total_index_zero(self, methodology, ac_model):
+        key = _make_mc(
+            methodology, "key_only", "Только ключевой", "binary",
+            scoring_type="binary", weight=100, display_order=1,
+        )
+        key.criterion.is_key_measurement = True
+        key.criterion.save(update_fields=["is_key_measurement"])
+
+        ModelRawValue.objects.create(
+            model=ac_model, criterion=key.criterion, raw_value="да",
+        )
+
+        recalculate_all()
+        ac_model.refresh_from_db()
+        assert ac_model.total_index == pytest.approx(0.0, abs=0.001)
+
+    def test_prod_scenario_weights_sum_110(self, methodology, ac_model):
+        # Реалистичный кейс: noise (key) weight=10, regular weight=100.
+        # Сумма весов методики = 110.
+        # После фикса учтённый non-key вес = 100,
+        # total_index ренормируется по 100, не по 110.
+        key = _make_mc(
+            methodology, "noise", "Шум", "binary",
+            scoring_type="binary", weight=10, display_order=1,
+        )
+        key.criterion.is_key_measurement = True
+        key.criterion.save(update_fields=["is_key_measurement"])
+
+        regular = _make_mc(
+            methodology, "regular_full", "Обычный 100%", "binary",
+            scoring_type="binary", weight=100, display_order=2,
+        )
+
+        ModelRawValue.objects.create(
+            model=ac_model, criterion=key.criterion, raw_value="да",
+        )
+        ModelRawValue.objects.create(
+            model=ac_model, criterion=regular.criterion, raw_value="да",
+        )
+
+        recalculate_all()
+        ac_model.refresh_from_db()
+
+        # weighted_sum (без key) = 100 * 100/100 = 100
+        # non_key_weight = 100
+        # total_index = 100 * 100 / 100 = 100 (а НЕ 110, как было до фикса)
+        assert ac_model.total_index == pytest.approx(100.0, abs=0.01)
+
+    def test_no_key_criteria_no_regression(self, methodology, ac_model):
+        # Регрессия: без is_key_measurement критериев total_index считается как раньше.
+        mc1 = _make_mc(
+            methodology, "noise_reg", "Шум", "numeric",
+            scoring_type="min_median_max", weight=50,
+            min_value=20, median_value=30, max_value=40, display_order=1,
+        )
+        mc2 = _make_mc(
+            methodology, "erv_reg", "ЭРВ", "binary",
+            scoring_type="binary", weight=50, display_order=2,
+        )
+        ModelRawValue.objects.create(
+            model=ac_model, criterion=mc1.criterion, raw_value="30",
+        )
+        ModelRawValue.objects.create(
+            model=ac_model, criterion=mc2.criterion, raw_value="да",
+        )
+
+        recalculate_all()
+        ac_model.refresh_from_db()
+        assert ac_model.total_index == pytest.approx(75.0, abs=0.02)
+
+    def test_max_possible_excludes_key(self, methodology):
+        key = _make_mc(
+            methodology, "key_max", "Key", "binary",
+            scoring_type="binary", weight=20, display_order=1,
+        )
+        key.criterion.is_key_measurement = True
+        key.criterion.save(update_fields=["is_key_measurement"])
+        _make_mc(
+            methodology, "reg_max", "Reg", "binary",
+            scoring_type="binary", weight=80, display_order=2,
+        )
+        # max = scorable_non_key (80) * 100 / non_key (80) = 100
+        assert max_possible_total_index(methodology) == pytest.approx(100.0)
+
+
+@pytest.mark.django_db
 def test_refresh_all_ac_model_total_indices(methodology, ac_model):
     mc = _make_mc(methodology, "x", "X", "binary",
                    scoring_type="binary", weight=100, display_order=1)
