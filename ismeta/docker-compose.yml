@@ -162,6 +162,10 @@ services:
     environment:
       RECOGNITION_API_KEY: ${RECOGNITION_API_KEY:-dev-recognition-key}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # TD-04: LLM_API_KEY — основной env var (OpenAI/DeepSeek/Claude
+      # OpenAI-compatible). OPENAI_API_KEY оставлен как deprecated alias
+      # для backward compat (см. recognition/app/config.py::_resolve_api_key).
+      LLM_API_KEY: ${LLM_API_KEY:-${OPENAI_API_KEY:-}}
       # LLM модели и base_url берутся из .env (env_file). Default = gpt-5.4
       # для OpenAI; для DeepSeek/других OpenAI-совместимых endpoint'ов
       # установить в .env: OPENAI_API_BASE=https://api.deepseek.com,

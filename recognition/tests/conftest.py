@@ -6,6 +6,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 os.environ.setdefault("RECOGNITION_API_KEY", "test-key")
+# TD-04: LLM_API_KEY — основной env var. OPENAI_API_KEY оставлен как
+# deprecated alias (settings._resolve_api_key подхватит).
+os.environ.setdefault("LLM_API_KEY", "sk-test")
 os.environ.setdefault("OPENAI_API_KEY", "sk-test")
 
 from app.api.parse import get_provider  # noqa: E402

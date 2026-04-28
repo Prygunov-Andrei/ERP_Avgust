@@ -1,10 +1,18 @@
 """Configuration via pydantic-settings."""
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     recognition_api_key: str = "dev-recognition-key-change-me"
+    # TD-04: основной env var для LLM API key. Унаследованное имя
+    # OPENAI_API_KEY confused агентов и PO («какого OpenAI? мы же на
+    # DeepSeek!»). LLM_API_KEY — нейтральное имя, работает с
+    # OpenAI/DeepSeek/Claude OpenAI-compatible API.
+    llm_api_key: str = ""
+    # DEPRECATED: alias для backward compat, удалится в N+2 (E22+).
+    # Если LLM_API_KEY пуст — используется OPENAI_API_KEY (см. _resolve_api_key).
     openai_api_key: str = ""
     # OpenAI-compatible API base URL. Default = OpenAI; override на DeepSeek
     # («https://api.deepseek.com») или другой OpenAI-совместимый endpoint.
@@ -74,6 +82,18 @@ class Settings(BaseSettings):
     port: int = 8003
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @model_validator(mode="after")
+    def _resolve_api_key(self) -> "Settings":
+        """TD-04: backward-compat alias OPENAI_API_KEY → LLM_API_KEY.
+
+        Если LLM_API_KEY не задан, но OPENAI_API_KEY есть — используем
+        старое значение. Так старые .env работают без изменений во время
+        deprecation window.
+        """
+        if not self.llm_api_key and self.openai_api_key:
+            self.llm_api_key = self.openai_api_key
+        return self
 
 
 settings = Settings()

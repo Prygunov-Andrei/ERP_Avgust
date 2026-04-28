@@ -25,12 +25,12 @@ FIXTURE_PDF = (
     / "invoice-02.pdf"
 )
 
-_LLM_SKIP_REASON = "OPENAI_API_KEY не задан — skip golden_llm"
+_LLM_SKIP_REASON = "LLM_API_KEY/OPENAI_API_KEY не задан — skip golden_llm"
 
 
 @pytest.mark.golden_llm
 @pytest.mark.asyncio
-@pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason=_LLM_SKIP_REASON)
+@pytest.mark.skipif(not (os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY")), reason=_LLM_SKIP_REASON)
 async def test_invoice_02_hybrid_pipeline():
     """E16 it1: 15 items + «27 шт.» split + lead_time_days + supply_type."""
     from app.providers.openai_vision import OpenAIVisionProvider
@@ -92,7 +92,7 @@ async def test_invoice_02_hybrid_pipeline():
 
 @pytest.mark.golden_llm
 @pytest.mark.asyncio
-@pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason=_LLM_SKIP_REASON)
+@pytest.mark.skipif(not (os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY")), reason=_LLM_SKIP_REASON)
 async def test_invoice_02_time_budget():
     """Нефункциональный: 2-стр invoice-02 (15 items) ≤ 60s."""
     import time

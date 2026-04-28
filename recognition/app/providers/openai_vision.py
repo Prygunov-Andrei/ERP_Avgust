@@ -1,4 +1,10 @@
-"""OpenAI Vision provider (async, with retry on 429/5xx).
+"""OpenAI-compatible LLM provider (async, with retry on 429/5xx).
+
+Несмотря на историческое имя «OpenAIVisionProvider», провайдер работает
+со ВСЕМИ OpenAI-compatible API (OpenAI, DeepSeek, Anthropic-compatible,
+локальные vLLM/llama-server). Управляется парой `OPENAI_API_BASE` (URL) +
+`LLM_API_KEY` (TD-04 — переименовано из `OPENAI_API_KEY`, который остался
+как deprecated alias).
 
 E15.04 — расширен `text_complete` для column-aware LLM-нормализации:
 text-in → JSON-out.
@@ -92,7 +98,7 @@ def _apply_thinking_mode(payload: dict) -> None:
 
 class OpenAIVisionProvider(BaseLLMProvider):
     def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
-        self.api_key = api_key if api_key is not None else settings.openai_api_key
+        self.api_key = api_key if api_key is not None else settings.llm_api_key
         # `model` kwarg оставлен для backward-compat (старые тесты); в runtime
         # text_complete/vision/multimodal читают settings.llm_*_model напрямую.
         self.model = model or settings.llm_model

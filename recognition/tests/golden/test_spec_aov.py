@@ -33,12 +33,12 @@ AOV_MIN_ITEMS = 29
 AOV_MIN_SECTIONS = 4
 
 
-_LLM_SKIP_REASON = "OPENAI_API_KEY не задан — skip golden_llm"
+_LLM_SKIP_REASON = "LLM_API_KEY/OPENAI_API_KEY не задан — skip golden_llm"
 
 
 @pytest.mark.golden_llm
 @pytest.mark.asyncio
-@pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason=_LLM_SKIP_REASON)
+@pytest.mark.skipif(not (os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY")), reason=_LLM_SKIP_REASON)
 async def test_aov_spec_llm_normalize():
     from app.providers.openai_vision import OpenAIVisionProvider
     from app.services.spec_parser import SpecParser
