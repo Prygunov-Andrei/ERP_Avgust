@@ -1159,7 +1159,102 @@ def extract_structured_rows(page: object) -> list[TableRow]:
     rows = _merge_series_parent_into_children(rows)
     rows = _merge_multiline_model_codes(rows)
     rows = _merge_klop_two_row_pattern(rows)
+    rows = _drop_obm_vent_preface_phantoms(rows)
+    rows = _drop_doc_code_footer_rows(rows)
     return rows
+
+
+# E20-2 Task 3 — фильтр section-preface phantom rows ОВиК ОБМ-Вент.
+#
+# На pp 44/49/74 (и потенциально других ОВиК-альбомах) section preface
+# «Комплексное огнезащитное покрытие воздуховодов ОБМ-Вент EI*X в составе:»
+# разносится bbox extractor'ом на 2-3 row'а:
+#   row A: «Комплексное огнезащитное покрытие воздуховодов ОБМ-» (trailing -)
+#   row B: «Вент EI30 в составе:» (или «Вент EI60 в составе:»)
+# Эти rows — preface header секции, не самостоятельные item'ы. Содержат
+# только name + comments из штамп-зоны («или аналог.Уточ-», «нить на
+# монтаже»), без qty/unit/model/manufacturer. На pg 2 LLM их корректно
+# отбрасывает; на pp 44/49/74 — эмитит phantom item'ы с qty=1 шт (галлюцинация)
+# или приклеивает к соседней «Фасонные изделия» через имя
+# («Фасонные изделия (20%) Комплексное огнезащитное покрытие воздуховодов ОБМ-»).
+#
+# Решение: дропать preface phantoms на pdf_text-уровне, до LLM. Section-context
+# в spec_parser строится через is_section_heading + sticky pipeline отдельно,
+# preface-rows для этого не нужны (sticky берётся из реальных item'ов).
+_OBM_VENT_PREFACE_NAME_RES = (
+    re.compile(r"^\s*Вент\s+EI\d+\b", re.IGNORECASE),
+    re.compile(r"воздуховодов\s+ОБМ\s*-\s*$", re.IGNORECASE),
+    re.compile(
+        r"^\s*Комплексное\s+огнезащитное\s+покрытие\s+воздуховодов\s+ОБМ\s*-?\s*$",
+        re.IGNORECASE,
+    ),
+)
+
+
+def _is_obm_vent_preface_phantom(row: TableRow) -> bool:
+    if row.is_section_heading:
+        return False
+    cells = row.cells
+    name = (cells.get("name") or "").strip()
+    if not name:
+        return False
+    if not any(p.search(name) for p in _OBM_VENT_PREFACE_NAME_RES):
+        return False
+    # Если есть значащие данные (qty/unit/model/mfr/brand не placeholder) —
+    # это уже не preface, а реальный item с тем же name в начале (например
+    # реальная позиция «Вент EI30...» в спецификации, если такая бывает).
+    for k in ("qty", "unit", "model", "manufacturer", "brand", "mass"):
+        v = (cells.get(k) or "").strip()
+        if v and v not in _PLACEHOLDER_VALUES:
+            return False
+    return True
+
+
+def _drop_obm_vent_preface_phantoms(rows: list[TableRow]) -> list[TableRow]:
+    return [r for r in rows if not _is_obm_vent_preface_phantom(r)]
+
+
+# E20-2 Task 3 retrofit (Class P) — фильтр footer-row штампа ЕСКД
+# «СК-269/7/22-ОВ2.СО лист N». На всех 87 стр Spec-4 footer-row имеет
+# структуру cells = {unit: 'СК', qty: '-269/7/22-', mass: 'ОВ2.СО',
+# comments: 'N'}, name пуст. Эта row не отфильтрована stamp-filter'ом
+# (значения формируются column-mapping'ом из spans «СК», «-269/7/22-»,
+# «ОВ2.СО», «N» внутри title-block-zone, но `_is_title_block_bucket`
+# по координатам не всегда срабатывает).
+#
+# LLM спорадически эмитит phantom item с qty=1, unit='СК' и sticky-name
+# предыдущего реального item-а (Class P, проявление на Spec-4 pp 2/24).
+#
+# Фильтр: drop row если ≥2 из cells (qty/unit/mass) матчат doc-code-patterns
+# И name пуст. Защищает от ложного срабатывания на реальных item-ах
+# (у настоящего item name всегда заполнен после cluster-merge).
+_DOC_CODE_QTY_RE = re.compile(r"^-?\d+(?:[/-]\d+)+-?$")  # -269/7/22-, 469-05/2025
+_DOC_CODE_MASS_RE = re.compile(r"^[А-ЯЁ]{1,3}\d*\.[А-ЯЁ]{1,3}\d*$")  # ОВ2.СО, СС.КЖ
+_DOC_CODE_UNIT_TOKENS = {"СК", "ОВ2.СО", "ОВ", "СО", "ОВ1.СО", "ОВ3.СО"}
+
+
+def _is_doc_code_footer_row(row: TableRow) -> bool:
+    if row.is_section_heading:
+        return False
+    cells = row.cells
+    name = (cells.get("name") or "").strip()
+    if name:
+        return False
+    qty = (cells.get("qty") or "").strip()
+    unit = (cells.get("unit") or "").strip()
+    mass = (cells.get("mass") or "").strip()
+    matches = 0
+    if qty and _DOC_CODE_QTY_RE.match(qty):
+        matches += 1
+    if unit and (unit in _DOC_CODE_UNIT_TOKENS or _DOC_CODE_MASS_RE.match(unit)):
+        matches += 1
+    if mass and _DOC_CODE_MASS_RE.match(mass):
+        matches += 1
+    return matches >= 2
+
+
+def _drop_doc_code_footer_rows(rows: list[TableRow]) -> list[TableRow]:
+    return [r for r in rows if not _is_doc_code_footer_row(r)]
 
 
 def _merge_continuation_rows(rows: list[TableRow]) -> list[TableRow]:
@@ -1680,6 +1775,18 @@ def _merge_cluster_into_main(
     """
     main = rows[main_idx]
     main_cells = main.cells
+    # E20-2: proxy-main detection. Если main.name сам — continuation-фрагмент
+    # (lowercase Cyrillic / blacklist-маркер «ванный», «щего», «супертонкого»
+    # и т.д.), это row-«карман» с qty/unit, попавший в середину multi-line
+    # name. Above-main absorb-кандидаты — peer-rows того же item, а не шлейф
+    # предыдущего → защиты (a)/(b) не применяем (иначе теряем середину name
+    # и UPPERCASE-голова item-а склеивается напрямую с main: «...базальтового
+    # ванный обкладочным...»). См. ОВиК Spec-4 стр 2/8/19/26/50/65/77 — было
+    # 23 broken ОБМ-Вент item'ов в baseline-job.
+    main_name_initial = (main_cells.get("name") or "").strip()
+    main_is_proxy_continuation = bool(main_name_initial) and _is_continuation_of_neighbour(
+        main_name_initial
+    )
     # Собираем absorbed indices в y-order. Cluster sorted by index = sorted by y.
     absorb_idx_in_order: list[int] = []
     for j in cluster:
@@ -1693,8 +1800,8 @@ def _merge_cluster_into_main(
         # continuation текущего main (если бы соседнее main row было ниже,
         # cluster содержал бы 2 main и cluster-merge не сработал бы).
         other_name = (other.cells.get("name") or "").strip()
-        if other_name and j < main_idx:
-            initial_main_name = (main_cells.get("name") or "").strip()
+        if other_name and j < main_idx and not main_is_proxy_continuation:
+            initial_main_name = main_name_initial
             current_main_name = _build_running_name(rows, main_idx, absorb_idx_in_order)
             looks_like_continuation = _is_continuation_of_neighbour(other_name)
             # (a) main изначально имел name И orphan = continuation
