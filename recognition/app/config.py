@@ -1,10 +1,18 @@
 """Configuration via pydantic-settings."""
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     recognition_api_key: str = "dev-recognition-key-change-me"
+    # TD-04: основной env var для LLM API key. Унаследованное имя
+    # OPENAI_API_KEY confused агентов и PO («какого OpenAI? мы же на
+    # DeepSeek!»). LLM_API_KEY — нейтральное имя, работает с
+    # OpenAI/DeepSeek/Claude OpenAI-compatible API.
+    llm_api_key: str = ""
+    # DEPRECATED: alias для backward compat, удалится в N+2 (E22+).
+    # Если LLM_API_KEY пуст — используется OPENAI_API_KEY (см. _resolve_api_key).
     openai_api_key: str = ""
     # OpenAI-compatible API base URL. Default = OpenAI; override на DeepSeek
     # («https://api.deepseek.com») или другой OpenAI-совместимый endpoint.
@@ -34,6 +42,15 @@ class Settings(BaseSettings):
     # начинающимся с "deepseek-v4-".
     llm_thinking_mode: str = ""
     llm_thinking_effort: str = ""  # "" / "high" / "max"
+    # TD-04: детерминизм run-to-run. temperature=0 уже стоит на всех endpoints,
+    # но без seed и top_p OpenAI/DeepSeek всё равно сэмплируют из top tokens →
+    # разные runs дают ±1 phantom item (Spec-4 стр 10/87 split «Дроссель клапан
+    # 400х300» на 2 row'а). seed=42 — фиксированный default; top_p=0.0 локает
+    # выбор лучшего token (greedy) поверх temperature=0. Известное ограничение:
+    # DeepSeek thinking_mode=enabled может игнорировать seed (CoT-stochasticity);
+    # см. docs/recognition/known-issues.md.
+    llm_seed: int = 42
+    llm_top_p: float = 0.0
     # E15.05 it2 (R27) — conditional multimodal Vision retry.
     llm_multimodal_retry_enabled: bool = True
     llm_multimodal_retry_threshold: float = 0.7
@@ -65,6 +82,18 @@ class Settings(BaseSettings):
     port: int = 8003
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @model_validator(mode="after")
+    def _resolve_api_key(self) -> "Settings":
+        """TD-04: backward-compat alias OPENAI_API_KEY → LLM_API_KEY.
+
+        Если LLM_API_KEY не задан, но OPENAI_API_KEY есть — используем
+        старое значение. Так старые .env работают без изменений во время
+        deprecation window.
+        """
+        if not self.llm_api_key and self.openai_api_key:
+            self.llm_api_key = self.openai_api_key
+        return self
 
 
 settings = Settings()

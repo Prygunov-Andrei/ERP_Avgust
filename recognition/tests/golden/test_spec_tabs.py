@@ -37,12 +37,12 @@ TABS_MIN_ITEMS = 120       # 80% от ожидаемых ~150
 TABS_MIN_SECTIONS = 4      # из 5: Вентиляция/Кондиционирование/Отопление/БТП/Шкаф
 TABS_MIN_MODEL_RATIO = 0.8  # ≥80% items с непустым model_name
 
-_LLM_SKIP_REASON = "OPENAI_API_KEY не задан — skip golden_llm"
+_LLM_SKIP_REASON = "LLM_API_KEY/OPENAI_API_KEY не задан — skip golden_llm"
 
 
 @pytest.mark.golden_llm
 @pytest.mark.asyncio
-@pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason=_LLM_SKIP_REASON)
+@pytest.mark.skipif(not (os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY")), reason=_LLM_SKIP_REASON)
 async def test_tabs_spec_hybrid_recall():
     """E15.05 it2 gate test: hybrid bbox+multimodal должен собрать ≥120 items."""
     from app.providers.openai_vision import OpenAIVisionProvider
@@ -109,7 +109,7 @@ async def test_tabs_spec_hybrid_recall():
 
 @pytest.mark.golden_llm
 @pytest.mark.asyncio
-@pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason=_LLM_SKIP_REASON)
+@pytest.mark.skipif(not (os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY")), reason=_LLM_SKIP_REASON)
 async def test_tabs_spec_multiline_installation_stays_one_item():
     """R18-strict: «Приточно-вытяжная установка… комплектно со см. узлом…
     комплектом автоматики» должна быть ОДНИМ item, а не тремя.

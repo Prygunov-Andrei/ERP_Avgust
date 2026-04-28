@@ -114,12 +114,12 @@ async def test_ov2_spec_sections_include_known_keywords():
 # ---------------------------------------------------------------------------
 
 
-_LLM_SKIP_REASON = "OPENAI_API_KEY не задан — skip golden_llm"
+_LLM_SKIP_REASON = "LLM_API_KEY/OPENAI_API_KEY не задан — skip golden_llm"
 
 
 @pytest.mark.golden_llm
 @pytest.mark.asyncio
-@pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason=_LLM_SKIP_REASON)
+@pytest.mark.skipif(not (os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY")), reason=_LLM_SKIP_REASON)
 async def test_ov2_spec_llm_normalize_recall():
     """E15.04: column-aware + gpt-5.2 → recall ≥142 / 152.
 
@@ -166,7 +166,7 @@ async def test_ov2_spec_llm_normalize_recall():
 
 @pytest.mark.golden_llm
 @pytest.mark.asyncio
-@pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason=_LLM_SKIP_REASON)
+@pytest.mark.skipif(not (os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY")), reason=_LLM_SKIP_REASON)
 async def test_ov2_spec_llm_time_budget():
     """E15.04 нефункциональный: ≤30s на 9-стр PDF через параллельный batch."""
     import time

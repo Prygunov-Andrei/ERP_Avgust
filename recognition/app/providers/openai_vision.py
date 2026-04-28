@@ -1,4 +1,10 @@
-"""OpenAI Vision provider (async, with retry on 429/5xx).
+"""OpenAI-compatible LLM provider (async, with retry on 429/5xx).
+
+Несмотря на историческое имя «OpenAIVisionProvider», провайдер работает
+со ВСЕМИ OpenAI-compatible API (OpenAI, DeepSeek, Anthropic-compatible,
+локальные vLLM/llama-server). Управляется парой `OPENAI_API_BASE` (URL) +
+`LLM_API_KEY` (TD-04 — переименовано из `OPENAI_API_KEY`, который остался
+как deprecated alias).
 
 E15.04 — расширен `text_complete` для column-aware LLM-нормализации:
 text-in → JSON-out.
@@ -48,6 +54,22 @@ def _apply_max_tokens(payload: dict, max_tokens: int) -> None:
         payload["max_tokens"] = max_tokens
 
 
+def _apply_determinism_params(payload: dict) -> None:
+    """TD-04: добавить seed + top_p в payload для run-to-run детерминизма.
+
+    OpenAI/DeepSeek поддерживают `seed: int` (deterministic completions при
+    одинаковых params) и `top_p: float` (nucleus sampling). С temperature=0 +
+    top_p=0 модель выбирает greedy лучший token; seed закрепляет tie-breaking
+    в случае равных logprobs.
+
+    DeepSeek thinking_mode=enabled может игнорировать seed (CoT-стохастика
+    внутри reasoning_content). Это known limitation — см.
+    docs/recognition/known-issues.md.
+    """
+    payload["seed"] = int(settings.llm_seed)
+    payload["top_p"] = float(settings.llm_top_p)
+
+
 def _apply_thinking_mode(payload: dict) -> None:
     """DeepSeek V4 thinking control (https://api-docs.deepseek.com/guides/thinking_mode).
 
@@ -76,7 +98,7 @@ def _apply_thinking_mode(payload: dict) -> None:
 
 class OpenAIVisionProvider(BaseLLMProvider):
     def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
-        self.api_key = api_key if api_key is not None else settings.openai_api_key
+        self.api_key = api_key if api_key is not None else settings.llm_api_key
         # `model` kwarg оставлен для backward-compat (старые тесты); в runtime
         # text_complete/vision/multimodal читают settings.llm_*_model напрямую.
         self.model = model or settings.llm_model
@@ -156,6 +178,7 @@ class OpenAIVisionProvider(BaseLLMProvider):
         }
         _apply_max_tokens(payload, max_tokens or settings.llm_max_tokens)
         _apply_thinking_mode(payload)
+        _apply_determinism_params(payload)
         data = await self._post_with_retry(payload)
         usage = data.get("usage") or {}
         cached = (usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0
@@ -195,6 +218,7 @@ class OpenAIVisionProvider(BaseLLMProvider):
         }
         _apply_max_tokens(payload, settings.llm_max_tokens)
         _apply_thinking_mode(payload)
+        _apply_determinism_params(payload)
         data = await self._post_with_retry(payload)
         return str(data["choices"][0]["message"]["content"])
 
@@ -247,6 +271,7 @@ class OpenAIVisionProvider(BaseLLMProvider):
             payload, max_tokens or settings.llm_normalize_max_tokens
         )
         _apply_thinking_mode(payload)
+        _apply_determinism_params(payload)
         data = await self._post_with_retry(payload)
         usage = data.get("usage") or {}
         cached = (usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0
