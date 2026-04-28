@@ -148,11 +148,24 @@ class RecognitionJobViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({"ok": True, "ignored": "already_terminal"})
 
         if event == "started":
+            update_fields: list[str] = []
             if job.status != RecognitionJob.STATUS_RUNNING:
                 job.status = RecognitionJob.STATUS_RUNNING
+                update_fields.append("status")
                 if not job.started_at:
                     job.started_at = timezone.now()
-                job.save(update_fields=["status", "started_at"])
+                    update_fields.append("started_at")
+            # TD-07: recognition теперь шлёт pages_total в started callback,
+            # чтобы фронт-баннер сразу показал «0 из N» вместо «0 из ?».
+            pages_total_payload = request.data.get("pages_total")
+            if pages_total_payload and not job.pages_total:
+                try:
+                    job.pages_total = int(pages_total_payload)
+                    update_fields.append("pages_total")
+                except (TypeError, ValueError):
+                    pass
+            if update_fields:
+                job.save(update_fields=update_fields)
         elif event == "page_done":
             page_items = request.data.get("items") or []
             existing = job.items or []

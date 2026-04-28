@@ -7,5 +7,8 @@
   "deepseek-chat": {"input": 0.14, "output": 0.28, "cached": 0.0},
   "deepseek-v4-flash": {"input": 0.27, "output": 1.10, "cached": 0.027},
   "deepseek-v4-pro": {"input": 0.55, "output": 2.20, "cached": 0.055},
-  "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cached": 0.30}
+  "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cached": 0.30},
+  "gemini-3.1-pro-preview": {"input": 2.0, "output": 12.0, "cached": 0.20},
+  "gemini-3-pro-preview": {"input": 2.0, "output": 12.0, "cached": 0.20},
+  "gemini-2.5-pro": {"input": 1.25, "output": 10.0, "cached": 0.125}
 }

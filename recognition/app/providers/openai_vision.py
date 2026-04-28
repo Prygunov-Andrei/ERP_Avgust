@@ -43,19 +43,29 @@ def _apply_max_tokens(payload: dict, max_tokens: int) -> None:
         payload["max_tokens"] = max_tokens
 
 
-def _apply_determinism_params(payload: dict) -> None:
+def _apply_determinism_params(payload: dict, *, supports_seed: bool = True) -> None:
     """TD-04: добавить seed + top_p в payload для run-to-run детерминизма.
 
     OpenAI/DeepSeek поддерживают `seed: int` (deterministic completions при
-    одинаковых params) и `top_p: float` (nucleus sampling). С temperature=0 +
-    top_p=0 модель выбирает greedy лучший token; seed закрепляет tie-breaking
-    в случае равных logprobs.
+    одинаковых params). С temperature=0 модель уже выбирает greedy лучший
+    token; seed закрепляет tie-breaking в случае равных logprobs.
+
+    top_p=1.0 = «не фильтруем токены». DeepSeek валидирует top_p в диапазоне
+    (0, 1.0] (открытый слева) → top_p=0 даёт 400 «Invalid top_p value».
+    OpenAI принимает 0.0, но 1.0 семантически корректнее (при temperature=0
+    значение top_p не влияет — выбор всё равно greedy). См. TD-06 hot fix.
+
+    TD-08: Gemini OpenAI-compat (`generativelanguage.googleapis.com/v1beta/openai`)
+    НЕ поддерживает `seed` — возвращает 400 «Unknown name "seed": Cannot find
+    field». Provider определяет support по api_base в __init__ и передаёт
+    флаг сюда. Top_p Gemini принимает.
 
     DeepSeek thinking_mode=enabled может игнорировать seed (CoT-стохастика
     внутри reasoning_content). Это known limitation — см.
     docs/recognition/known-issues.md.
     """
-    payload["seed"] = int(settings.llm_seed)
+    if supports_seed:
+        payload["seed"] = int(settings.llm_seed)
     payload["top_p"] = float(settings.llm_top_p)
 
 
@@ -119,6 +129,10 @@ class OpenAIVisionProvider(BaseLLMProvider):
         # `model` kwarg оставлен для backward-compat (старые тесты); в runtime
         # text_complete/vision/multimodal читают self.*_model.
         self.model = model or settings.llm_model
+        # TD-08: Gemini OpenAI-compat endpoint не поддерживает `seed`. Detect
+        # по host в api_base и передаём флаг в _apply_determinism_params,
+        # чтобы Gemini не получал 400 на нашу detrminism-обвязку.
+        self._supports_seed = "googleapis.com" not in self.api_base.lower()
         # TD-01: HTTP/2 + persistent connections. Ключевой вин — один TCP +
         # TLS handshake на все 9+ LLM-calls одного документа (вместо 9
         # независимых холодных соединений). `keepalive_expiry=300` держит
@@ -204,7 +218,7 @@ class OpenAIVisionProvider(BaseLLMProvider):
         }
         _apply_max_tokens(payload, max_tokens or settings.llm_max_tokens)
         _apply_thinking_mode(payload)
-        _apply_determinism_params(payload)
+        _apply_determinism_params(payload, supports_seed=self._supports_seed)
         data = await self._post_with_retry(payload)
         usage = data.get("usage") or {}
         cached = (usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0
@@ -251,7 +265,7 @@ class OpenAIVisionProvider(BaseLLMProvider):
         }
         _apply_max_tokens(payload, settings.llm_max_tokens)
         _apply_thinking_mode(payload)
-        _apply_determinism_params(payload)
+        _apply_determinism_params(payload, supports_seed=self._supports_seed)
         data = await self._post_with_retry(payload)
         usage = data.get("usage") or {}
         cached = (usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0
@@ -313,7 +327,7 @@ class OpenAIVisionProvider(BaseLLMProvider):
             payload, max_tokens or settings.llm_normalize_max_tokens
         )
         _apply_thinking_mode(payload)
-        _apply_determinism_params(payload)
+        _apply_determinism_params(payload, supports_seed=self._supports_seed)
         data = await self._post_with_retry(payload)
         usage = data.get("usage") or {}
         cached = (usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0

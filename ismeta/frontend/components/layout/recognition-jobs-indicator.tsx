@@ -282,7 +282,7 @@ function RecentJobRow({
           </div>
           {meta && (
             <div className="mt-0.5 text-[11px] text-muted-foreground/80">
-              {meta.model} · {meta.cost}
+              {meta.model} · {meta.cost} · {meta.duration}
             </div>
           )}
         </div>

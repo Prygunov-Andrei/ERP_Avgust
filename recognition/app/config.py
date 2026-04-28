@@ -43,14 +43,16 @@ class Settings(BaseSettings):
     llm_thinking_mode: str = ""
     llm_thinking_effort: str = ""  # "" / "high" / "max"
     # TD-04: детерминизм run-to-run. temperature=0 уже стоит на всех endpoints,
-    # но без seed и top_p OpenAI/DeepSeek всё равно сэмплируют из top tokens →
-    # разные runs дают ±1 phantom item (Spec-4 стр 10/87 split «Дроссель клапан
-    # 400х300» на 2 row'а). seed=42 — фиксированный default; top_p=0.0 локает
-    # выбор лучшего token (greedy) поверх temperature=0. Известное ограничение:
-    # DeepSeek thinking_mode=enabled может игнорировать seed (CoT-stochasticity);
-    # см. docs/recognition/known-issues.md.
+    # но без seed OpenAI/DeepSeek всё равно сэмплируют из top tokens → разные
+    # runs дают ±1 phantom item (Spec-4 стр 10/87 split «Дроссель клапан
+    # 400х300» на 2 row'а). seed=42 — фиксированный default. top_p=1.0 = «не
+    # фильтруем токены» (при temperature=0 итак greedy, top_p не влияет).
+    # ВАЖНО: top_p=0.0 НЕ работает на DeepSeek — API валидирует диапазон
+    # (0, 1.0] и возвращает 400 «Invalid top_p value» (TD-06 hot fix).
+    # Известное ограничение: DeepSeek thinking_mode=enabled может игнорировать
+    # seed (CoT-stochasticity); см. docs/recognition/known-issues.md.
     llm_seed: int = 42
-    llm_top_p: float = 0.0
+    llm_top_p: float = 1.0
     # E15.05 it2 (R27) — conditional multimodal Vision retry.
     llm_multimodal_retry_enabled: bool = True
     llm_multimodal_retry_threshold: float = 0.7

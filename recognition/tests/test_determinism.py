@@ -3,7 +3,10 @@
 Полный repeatability test (job × 2 = identical items) требует live LLM —
 здесь мы проверяем только что provider пробрасывает determinism-params в
 payload. На уровне модели гарантия даётся OpenAI/DeepSeek API контрактом
-(seed=int + top_p=0 + temperature=0 → deterministic).
+(seed=int + temperature=0 → deterministic; top_p при temperature=0 не влияет).
+
+TD-06: top_p=1.0 (а не 0.0) — DeepSeek валидирует диапазон (0, 1.0] и
+возвращает 400 на top_p=0.
 
 Известное ограничение DeepSeek thinking_mode — описано в
 ismeta/docs/recognition/known-issues.md.
@@ -102,6 +105,10 @@ async def test_multimodal_complete_payload_has_seed_and_top_p(
 
 
 def test_settings_have_determinism_defaults() -> None:
-    """seed default = 42, top_p default = 0.0 (greedy)."""
+    """seed default = 42, top_p default = 1.0.
+
+    TD-06 hot fix: top_p=0.0 ломает DeepSeek API (валидация (0, 1.0]).
+    При temperature=0 значение top_p не влияет — оба варианта greedy.
+    """
     assert settings.llm_seed == 42
-    assert settings.llm_top_p == 0.0
+    assert settings.llm_top_p == 1.0

@@ -22,9 +22,37 @@ interface Props {
 
 const POLL_ACTIVE_MS = 5_000;
 
+const dismissedStorageKey = (estimateId: UUID) =>
+  `ismeta:recognition-banner-dismissed:${estimateId}`;
+
+function loadDismissed(estimateId: UUID): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(dismissedStorageKey(estimateId));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? new Set(parsed.filter((x) => typeof x === "string")) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissed(estimateId: UUID, ids: Set<string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      dismissedStorageKey(estimateId),
+      JSON.stringify([...ids]),
+    );
+  } catch {
+    // localStorage может быть отключён — не валим UI.
+  }
+}
+
 // Жёлто-зелёно-красный alert над таблицей items: показывает прогресс активного
-// recognition job либо последний завершённый успех/провал. Зеленый/красный —
-// dismissable per-session, чтобы баннер не мозолил после прочтения.
+// recognition job либо последний завершённый успех/провал. Зелёный/красный —
+// dismissable. Dismiss persistится в localStorage per-estimate, чтобы hard
+// reload (Cmd+Shift+R) не возвращал уже скрытые failed-баннеры.
 export function RecognitionJobBanner({ estimateId }: Props) {
   const workspaceId = getWorkspaceId();
   const qc = useQueryClient();
@@ -71,8 +99,8 @@ export function RecognitionJobBanner({ estimateId }: Props) {
 
   const recent = recentQ.data?.[0] ?? null;
 
-  const [dismissed, setDismissed] = React.useState<Set<string>>(
-    () => new Set(),
+  const [dismissed, setDismissed] = React.useState<Set<string>>(() =>
+    loadDismissed(estimateId),
   );
 
   const cancelMutation = useMutation({
@@ -106,6 +134,7 @@ export function RecognitionJobBanner({ estimateId }: Props) {
           setDismissed((prev) => {
             const next = new Set(prev);
             next.add(recent.id);
+            saveDismissed(estimateId, next);
             return next;
           })
         }
@@ -198,7 +227,7 @@ function RecentBanner({
         {meta && (
           <AlertDescription>
             <div className="text-xs text-muted-foreground">
-              {meta.model} · {meta.cost}
+              {meta.model} · {meta.cost} · {meta.duration}
             </div>
           </AlertDescription>
         )}

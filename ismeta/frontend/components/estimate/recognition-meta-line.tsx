@@ -36,7 +36,7 @@ export function RecognitionMetaLine({ estimateId }: Props) {
   if (!meta && !dateLabel) return null;
 
   const parts: string[] = [];
-  if (meta) parts.push(meta.model, meta.cost);
+  if (meta) parts.push(meta.model, meta.cost, meta.duration);
   if (dateLabel) parts.push(dateLabel);
 
   return (

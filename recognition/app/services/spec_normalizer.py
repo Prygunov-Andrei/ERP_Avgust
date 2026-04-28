@@ -454,6 +454,37 @@ def _row_to_dict(row: TableRow) -> dict:
     }
 
 
+def _is_column_numbers_row(row: TableRow) -> bool:
+    """TD-09 (Spec-5 Class Q): True если row — sub-header «1|2|3|4|5|6|7|8|9»
+    с номерами колонок ЕСКД-таблицы.
+
+    ЕСКД-шапка двухстрочная: top — «Поз / Наименование / Тип / Код / Завод-
+    изготовитель / Ед. / Кол-во / Масса / Прим.», bottom — «1 / 2 / 3 / 4 / 5
+    / 6 / 7 / 8 / 9» (sub-row с номерами колонок). Top отбрасывается через
+    `_match_header_column` в pdf_text.py, bottom попадает в data rows и
+    LLM иногда трактует его как реальный item (Class Q phantom на Spec-5
+    pages 11/16).
+
+    Эвристика: все non-empty cells состоят только из single-digit токенов
+    (допускаем split «4 5» если manufacturer-cell захватил два цифровых
+    span'а). Минимум 5 заполненных cells, иначе шанс ложного срабатывания.
+    """
+    cells = row.cells or {}
+    if len(cells) < 5:
+        return False
+    non_empty = 0
+    for v in cells.values():
+        v = (v or "").strip()
+        if not v:
+            continue
+        non_empty += 1
+        # каждый токен должен быть однозначным цифровым.
+        for token in v.split():
+            if not (token.isdigit() and len(token) == 1):
+                return False
+    return non_empty >= 5
+
+
 async def normalize_via_llm(
     provider: BaseLLMProvider,
     rows: list[TableRow],
@@ -474,7 +505,10 @@ async def normalize_via_llm(
             items=[], new_section=current_section, new_sticky=sticky_parent_name
         )
 
-    rows_json = json.dumps([_row_to_dict(r) for r in rows], ensure_ascii=False)
+    # TD-09 (Class Q): убираем sub-row column numbers «1|2|3|...|9» до LLM,
+    # чтобы он не трактовал её как item (повторилось на Spec-5 pages 11/16).
+    filtered_rows = [r for r in rows if not _is_column_numbers_row(r)]
+    rows_json = json.dumps([_row_to_dict(r) for r in filtered_rows], ensure_ascii=False)
     user_input = _build_user_input(current_section, sticky_parent_name, rows_json)
 
     # TD-01: INSTRUCTIONS_BLOCK → system (кэшируется), per-call ВХОД → user.
@@ -700,7 +734,9 @@ async def normalize_via_llm_multimodal(
             items=[], new_section=current_section, new_sticky=sticky_parent_name
         )
 
-    rows_json = json.dumps([_row_to_dict(r) for r in rows], ensure_ascii=False)
+    # TD-09 (Class Q): symmetry с text-path — убираем sub-row column numbers.
+    filtered_rows = [r for r in rows if not _is_column_numbers_row(r)]
+    rows_json = json.dumps([_row_to_dict(r) for r in filtered_rows], ensure_ascii=False)
     user_input = MULTIMODAL_PROMPT_PREFIX + _build_user_input(
         current_section, sticky_parent_name, rows_json
     )

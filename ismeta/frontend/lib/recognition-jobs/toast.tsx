@@ -19,7 +19,7 @@ function MetaLine({ job }: { job: RecognitionJob }) {
   if (!meta) return null;
   return (
     <div className="mt-1 text-xs text-muted-foreground">
-      {meta.model} · {meta.cost}
+      {meta.model} · {meta.cost} · {meta.duration}
     </div>
   );
 }

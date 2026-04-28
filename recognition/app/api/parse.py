@@ -403,7 +403,23 @@ async def _run_async_spec_job(
         )
 
     try:
-        await send_callback("started", {"filename": filename})
+        # TD-07: посчитать pages_total ДО парсинга и передать в started callback.
+        # Без этого фронт-баннер показывает «0 из ?» весь парсинг (backend пишет
+        # pages_total только финальным finished callback). fitz.open(stream=) на
+        # bytes — быстрая операция (~10ms даже на 100 стр PDF).
+        pages_total = 0
+        try:
+            with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
+                pages_total = len(doc)
+        except Exception:
+            # PDF битый — parser.parse() сам поднимет вменяемую ошибку, а здесь
+            # просто отправим started без total (фолбэк на «?»).
+            pages_total = 0
+
+        await send_callback(
+            "started",
+            {"filename": filename, "pages_total": pages_total},
+        )
         result = await parser.parse(
             pdf_bytes,
             filename=filename,
