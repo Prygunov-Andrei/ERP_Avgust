@@ -71,16 +71,28 @@ export async function getNewsById(id: number): Promise<NewsItem> {
 }
 
 export async function getAllNews(): Promise<NewsItem[]> {
-  // Для sitemap/RSS — получаем все новости
+  // Для sitemap/RSS — получаем все новости.
+  // Wave 10.1 hotfix: публичный endpoint вернул shape `NewsItem[]` вместо
+  // `PaginatedResponse` (видимо после изменений HVAC-команды) — обрабатываем оба
+  // варианта, иначе sitemap.ts падал на `.results is not iterable` и в
+  // sitemap.xml не попадало ни одной новости (107 на проде).
   const items: NewsItem[] = [];
   let page = 1;
   let hasNext = true;
 
   while (hasNext) {
-    const data = await fetchApi<PaginatedResponse<NewsItem>>(`/news/?page=${page}&page_size=100`, { revalidate: 3600 });
-    items.push(...data.results);
-    hasNext = !!data.next;
-    page++;
+    const data = await fetchApi<PaginatedResponse<NewsItem> | NewsItem[]>(
+      `/news/?page=${page}&page_size=100`,
+      { revalidate: 3600 },
+    );
+    if (Array.isArray(data)) {
+      items.push(...data);
+      hasNext = false;
+    } else {
+      items.push(...data.results);
+      hasNext = !!data.next;
+      page++;
+    }
   }
 
   return items;
