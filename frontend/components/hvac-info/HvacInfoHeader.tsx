@@ -133,6 +133,7 @@ export default function HvacInfoHeader() {
               <Link
                 key={item.label}
                 href={item.href}
+                prefetch={false}
                 aria-current={isActive ? 'page' : undefined}
                 style={{
                   position: 'relative',
@@ -333,6 +334,7 @@ function MobileMenu({
               <li key={item.label}>
                 <Link
                   href={item.href}
+                  prefetch={false}
                   aria-current={isActive ? 'page' : undefined}
                   onClick={onClose}
                   style={{
