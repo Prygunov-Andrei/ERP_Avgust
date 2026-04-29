@@ -7,6 +7,9 @@ x-backend-env: &backend-env
   TOCHKA_PASSWORD: ${TOCHKA_PASSWORD:-}
   TOCHKA_JWT_TOKEN: ${TOCHKA_JWT_TOKEN:-}
   PRODUCTION_DOMAIN: ${PRODUCTION_DOMAIN:-}
+  # Wave 10.3 (AC Rating): absolute URL для image:loc в sitemap.xml + og:image.
+  # На проде в .env прописано https://hvac-info.com; локально пусто → relative URL.
+  PUBLIC_MEDIA_HOST: ${PUBLIC_MEDIA_HOST:-}
   DB_HOST: postgres
   DB_PORT: "5432"
   DB_NAME: ${DB_NAME}
