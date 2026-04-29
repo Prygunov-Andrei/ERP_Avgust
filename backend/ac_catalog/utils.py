@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import re
 
+from django.utils.text import slugify
+
 _TRANSLIT_MAP = {
     "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo",
     "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
@@ -45,3 +47,24 @@ def generate_acmodel_slug(brand_name: str, series: str, inner_unit: str, outer_u
         parts.append(slugify_part(outer_unit))
     parts = [p for p in parts if p]
     return "-".join(parts)
+
+
+def generate_lowercase_slug(
+    brand_name: str, series: str, inner_unit: str, outer_unit: str = "",
+) -> str:
+    """Wave 12: SEO-friendly lowercase slug формата 'brand-series-inner-outer'.
+
+    Пример: ('MDV', 'NOVA 3-in-1', 'MDSAH-09HRFN8', 'MDOAH-09HFN8')
+            → 'mdv-nova-3-in-1-mdsah-09hrfn8-mdoah-09hfn8'
+
+    Кириллица предварительно транслитерируется (slugify(allow_unicode=False)
+    иначе вырезает её до пустоты). Django slugify оставляет '_', поэтому
+    дополнительно меняем '_' → '-' и схлопываем дубликаты дефиса.
+    """
+    parts = [p for p in (brand_name, series, inner_unit, outer_unit) if p]
+    raw = "-".join(parts)
+    raw = transliterate(raw)
+    s = slugify(raw, allow_unicode=False)
+    s = s.replace("_", "-")
+    s = re.sub(r"-+", "-", s).strip("-")
+    return s

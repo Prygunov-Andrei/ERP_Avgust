@@ -42,7 +42,8 @@ def test_acmodel_save_normalizes_units_to_upper():
 def test_acmodel_save_generates_slug_when_empty():
     brand = BrandFactory(name="Daikin")
     m = ACModelFactory(brand=brand, series="Comfort", inner_unit="ftxb25c", outer_unit="rxb25c")
-    assert m.slug == "Daikin-Comfort-FTXB25C-RXB25C"
+    # Wave 12: slug lowercase.
+    assert m.slug == "daikin-comfort-ftxb25c-rxb25c"
 
 
 @pytest.mark.django_db
@@ -55,7 +56,8 @@ def test_acmodel_save_keeps_explicit_slug():
 def test_acmodel_save_omits_empty_outer_unit_in_slug():
     brand = BrandFactory(name="Brand")
     m = ACModelFactory(brand=brand, series="Eco", inner_unit="x1", outer_unit="")
-    assert m.slug == "Brand-Eco-X1"
+    # Wave 12: slug lowercase.
+    assert m.slug == "brand-eco-x1"
 
 
 def test_transliterate_basic():
