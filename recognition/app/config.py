@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     # быстрого rollback в случае проблем).
     llm_normalize_enabled: bool = True
     llm_normalize_max_tokens: int = 6000  # достаточно для ~30 items/стр в JSON
+    # TD-17: IBM Docling extract path (97.9% cell accuracy, Apache 2.0).
+    # При flag=true PDF идёт через DocumentConverter, table cells → TableRow
+    # via adapter. При pdf_docling_bypass_llm=true normalize_via_llm
+    # пропускается полностью (pure path, без LLM costs/noise).
+    pdf_extract_via_docling: bool = False
+    pdf_docling_bypass_llm: bool = False
     # DeepSeek V4 thinking mode: "" (не передавать, использовать дефолт модели),
     # "disabled" (быстрый non-thinking, экономит max_tokens для content),
     # "enabled" (reasoning_content генерится перед content — нужно поднять
