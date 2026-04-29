@@ -32,8 +32,8 @@ URL_PREFIXES = ("/media/", "/hvac-media/")
 # Ловим обе формы — relative (/media/...) и absolute (https://hvac-info.com/media/...).
 # Расширения ограничиваем чтобы не зацепить случайно non-image.
 _URL_BODY = (
-    r'(?:https?://[^"\'\\)\\s]*?)?'                                 # optional https://hvac-info.com
-    r'/(?:media|hvac-media)/[^"\'\\)\\s]+\.(?:png|jpg|jpeg|webp|gif|svg)'  # path + extension
+    r'(?:https?://[^"\'() ]*?)?'                                # optional https://hvac-info.com
+    r'/(?:media|hvac-media)/[^"\'() ]+\.(?:png|jpg|jpeg|webp|gif|svg)'  # path + extension
 )
 
 # <img src="..."> и <a href="..."> для inline картинок в HTML.
