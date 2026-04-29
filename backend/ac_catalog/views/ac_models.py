@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from django.db.models import Q
+from django.http import Http404
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 
@@ -122,7 +124,24 @@ class ACModelDetailView(LangMixin, generics.RetrieveAPIView):
 
 
 class ACModelDetailBySlugView(ACModelDetailView):
-    lookup_field = "slug"
+    """Wave 12: lookup по slug ИЛИ legacy_slug.
+
+    Если запрос пришёл по legacy_slug, на объекте ставится метка
+    `_matched_via_legacy=True`; serializer отдаёт `is_legacy_match=true`,
+    и фронт делает один 301-редирект на канонический URL.
+    """
+
+    def get_object(self):
+        slug = self.kwargs[self.lookup_url_kwarg or "slug"]
+        obj = (
+            self.get_queryset()
+            .filter(Q(slug=slug) | Q(legacy_slug=slug))
+            .first()
+        )
+        if obj is None:
+            raise Http404
+        obj._matched_via_legacy = obj.slug != slug
+        return obj
 
 
 class ACModelArchiveListView(ACModelListView):

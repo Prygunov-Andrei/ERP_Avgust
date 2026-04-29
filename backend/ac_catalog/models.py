@@ -62,6 +62,18 @@ class ACModel(TimestampedModel):
         help_text="Генерируется автоматически из бренда, серии и блоков",
         allow_unicode=True,
     )
+    legacy_slug = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name="Legacy slug",
+        help_text=(
+            "Старый slug (Wave 11 формат: UPPERCASE+underscore). Сохраняется "
+            "при переходе на lowercase в Wave 12 для 301-редиректа на новый "
+            "канонический URL. Используется в by-slug view как fallback."
+        ),
+    )
     pros_text = models.TextField(blank=True, default="", verbose_name="Плюсы (AI)")
     cons_text = models.TextField(blank=True, default="", verbose_name="Минусы (AI)")
 
@@ -126,16 +138,32 @@ class ACModel(TimestampedModel):
         self.outer_unit = (self.outer_unit or "").strip().upper()
 
     def _generate_slug(self) -> None:
-        from .utils import generate_acmodel_slug
+        from .utils import generate_lowercase_slug
 
         if not self.slug:
-            self.slug = generate_acmodel_slug(
+            self.slug = generate_lowercase_slug(
                 self.brand.name, self.series, self.inner_unit, self.outer_unit,
             )
+
+    def _capture_legacy_slug(self) -> None:
+        """Wave 12: при ручном изменении slug сохраняем старый в legacy_slug.
+
+        Защита от потери редиректа, если редактор поменяет slug в админке.
+        Не перезаписывает уже заполненный legacy_slug (data migration или
+        предыдущий ренейм)."""
+        if not self.pk:
+            return
+        try:
+            old = type(self).objects.only("slug", "legacy_slug").get(pk=self.pk)
+        except type(self).DoesNotExist:
+            return
+        if old.slug and old.slug != self.slug and not self.legacy_slug:
+            self.legacy_slug = old.slug
 
     def save(self, *args, **kwargs):
         self._normalize_unit_names()
         self._generate_slug()
+        self._capture_legacy_slug()
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:

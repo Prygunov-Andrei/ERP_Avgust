@@ -279,6 +279,7 @@ class ACModelDetailSerializer(serializers.ModelSerializer):
     rank = serializers.SerializerMethodField()
     median_total_index = serializers.SerializerMethodField()
     news_mentions = serializers.SerializerMethodField()
+    is_legacy_match = serializers.SerializerMethodField()
 
     class Meta:
         model = ACModel
@@ -300,8 +301,13 @@ class ACModelDetailSerializer(serializers.ModelSerializer):
             "outer_unit_dimensions", "outer_unit_weight_kg",
             # M5.6 — секция «Упоминания в прессе» (Ф7A HVAC news):
             "news_mentions",
+            # Wave 12: true, если запрос пришёл по legacy_slug — фронт делает 301.
+            "is_legacy_match",
         ]
         read_only_fields = fields
+
+    def get_is_legacy_match(self, obj: ACModel) -> bool:
+        return bool(getattr(obj, "_matched_via_legacy", False))
 
     def get_news_mentions(self, obj: ACModel) -> list[dict]:
         """Reverse-relation NewsPost.mentioned_ac_models (related_name='news_mentions').
