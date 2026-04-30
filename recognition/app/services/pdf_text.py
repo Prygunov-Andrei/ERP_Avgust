@@ -1272,14 +1272,14 @@ def extract_via_docling(pdf_bytes: bytes) -> dict[int, list[TableRow]]:
             if len(col_to_cell) >= 3:
                 prev_col_to_cell = dict(col_to_cell)
                 prev_col_count = td.num_cols
-                # TD-17 Spec-9: сохраняем column x-ranges из cells для
-                # hybrid fallback на skipped pages.
+                # TD-17 Spec-9: column x-ranges. Try cell bbox; fallback
+                # to TableData.table_cells (alternative API), and last —
+                # equal-width split of table.bbox.
                 col_ranges_per_key: dict[str, list[tuple[float, float]]] = {}
                 try:
+                    # Pass 1: iterate ALL data rows (not first 5).
                     for ci, cell_key in col_to_cell.items():
-                        # Берём bbox из первой data row (ri=1 если header
-                        # был, иначе ri=0).
-                        for ri in range(min(td.num_rows, 5)):
+                        for ri in range(td.num_rows):
                             try:
                                 cell = td.grid[ri][ci]
                             except (IndexError, AttributeError):
@@ -1296,20 +1296,38 @@ def extract_via_docling(pdf_bytes: bytes) -> dict[int, list[TableRow]]:
                             col_ranges_per_key.setdefault(cell_key, []).append(
                                 (float(l), float(r))
                             )
-                            break
                 except Exception:
                     pass
+
                 # Aggregate to single (x_min, x_max) per cell_key.
-                if col_ranges_per_key:
-                    new_ranges: dict[str, tuple[float, float]] = {}
-                    for cell_key, lst in col_ranges_per_key.items():
-                        if not lst:
-                            continue
-                        xs_min = min(p[0] for p in lst)
-                        xs_max = max(p[1] for p in lst)
-                        new_ranges[cell_key] = (xs_min, xs_max)
-                    if len(new_ranges) >= 3:
-                        _LAST_DOCLING_COLUMN_RANGES = new_ranges
+                new_ranges: dict[str, tuple[float, float]] = {}
+                for cell_key, lst in col_ranges_per_key.items():
+                    if not lst:
+                        continue
+                    xs_min = min(p[0] for p in lst)
+                    xs_max = max(p[1] for p in lst)
+                    new_ranges[cell_key] = (xs_min, xs_max)
+
+                # Fallback: equal-width split of table.bbox if not all
+                # mapped columns got bboxes.
+                if len(new_ranges) < len(col_to_cell):
+                    try:
+                        tbbox = table.bbox
+                        if tbbox and td.num_cols > 0:
+                            t_l = float(tbbox[0])
+                            t_r = float(tbbox[2])
+                            col_w = (t_r - t_l) / td.num_cols
+                            for ci, cell_key in col_to_cell.items():
+                                if cell_key in new_ranges:
+                                    continue
+                                lo = t_l + ci * col_w
+                                hi = t_l + (ci + 1) * col_w
+                                new_ranges[cell_key] = (lo, hi)
+                    except Exception:
+                        pass
+
+                if len(new_ranges) >= 3:
+                    _LAST_DOCLING_COLUMN_RANGES = new_ranges
 
             rows_for_page = out.setdefault(page_no, [])
             # На multi-page tables (когда наследовали header) row[0] —

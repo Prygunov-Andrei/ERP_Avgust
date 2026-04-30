@@ -230,10 +230,14 @@ class SpecParser:
                 )
                 docling_col_ranges = get_last_docling_column_ranges()
                 for page_num in range(state.pages_total):
-                    # Trigger hybrid fallback также если Docling вернул
-                    # empty rows для этой страницы (multi-page без header).
-                    existing = docling_rows_by_page.get(page_num + 1)
-                    if existing:  # non-empty
+                    # Trigger hybrid fallback если:
+                    # - Docling вернул empty rows для этой страницы;
+                    # - rows есть но НИ В ОДНОЙ нет qty (mapping broken).
+                    existing = docling_rows_by_page.get(page_num + 1) or []
+                    has_qty = any(
+                        (r.cells.get("qty") or "").strip() for r in existing
+                    )
+                    if has_qty:
                         continue
                     try:
                         page = doc[page_num]
@@ -260,7 +264,11 @@ class SpecParser:
                             rows = await run_in_threadpool(
                                 extract_structured_rows, page
                             )
-                        if rows:
+                        # Use new rows ONLY if it has qty (better than existing).
+                        rows_has_qty = any(
+                            (r.cells.get("qty") or "").strip() for r in rows
+                        )
+                        if rows and rows_has_qty:
                             docling_rows_by_page[page_num + 1] = rows
                             missing_pages.append(page_num + 1)
                     except Exception as e:
