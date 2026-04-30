@@ -882,6 +882,29 @@ class SpecParser:
                 manuf_val = (cells.get("manufacturer") or "").strip()
                 comments_val = (cells.get("comments") or "").strip()
 
+                # TD-17a v7: skip GOST col-numbers row («1, 2, ..., 9»).
+                # Native col-numbers row на странице (или injected) может
+                # быть прочитана Docling как data row, qty приклеивается
+                # из соседних cells. Detection: text cells (name/model/
+                # brand/manufacturer/unit/comments) — все single digits
+                # 1-9, qty игнорируется. Реальный data row никогда не
+                # имеет name=«2», model=«3» etc.
+                # ВАЖНО: используем raw cells.get(), не fallback'нутые
+                # значения (unit_val подменяется на «шт» если пусто).
+                _raw_vals = [
+                    (cells.get(k) or "").strip()
+                    for k in (
+                        "name", "model", "brand",
+                        "manufacturer", "unit", "comments",
+                    )
+                ]
+                _digit_vals = [v for v in _raw_vals if v]
+                if (
+                    len(_digit_vals) >= 2
+                    and all(v in "123456789" for v in _digit_vals)
+                ):
+                    continue
+
                 # Section heading: only `name`, no pos/qty/unit/model/brand.
                 if row.is_section_heading and name_val:
                     state.current_section = name_val
