@@ -1231,6 +1231,177 @@ def _inject_header_overlay(
         return pdf_bytes
 
 
+def extract_via_camelot_page(
+    pdf_bytes: bytes, page_no: int
+) -> list[TableRow]:
+    """TD-17e: Camelot extract для одной страницы (1-based page_no).
+
+    Используется как fallback в hybrid pipeline когда Docling вернул
+    empty qty rows для этой page (multi-page без header — Spec-9).
+    Прямой вызов Camelot per-page минимизирует overhead.
+    """
+    try:
+        full = extract_via_camelot_subset(pdf_bytes, str(page_no))
+    except Exception:
+        return []
+    return full.get(page_no, [])
+
+
+def extract_via_camelot_subset(
+    pdf_bytes: bytes, pages: str
+) -> dict[int, list[TableRow]]:
+    """Camelot extract для подмножества страниц. pages — Camelot syntax
+    («1», «2», «1,3,5», «2-7»).
+    """
+    try:
+        import camelot
+        import logging as _logging
+        import tempfile
+        import os
+        _log = _logging.getLogger(__name__)
+    except ImportError:
+        return {}
+
+    tmp_path: str = ""
+    try:
+        with tempfile.NamedTemporaryFile(
+            suffix=".pdf", delete=False
+        ) as tmp:
+            tmp.write(pdf_bytes)
+            tmp_path = tmp.name
+        tables = camelot.read_pdf(
+            tmp_path, pages=pages, flavor="lattice"
+        )
+    except Exception as e:
+        _log.warning(f"TD-17e camelot subset failed: {e}")
+        return {}
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
+
+    return _camelot_tables_to_rows(tables)
+
+
+def _camelot_tables_to_rows(tables) -> dict[int, list[TableRow]]:
+    """Конверсия Camelot tables → dict[page_no, list[TableRow]]."""
+    col_to_key = {
+        0: "pos", 1: "name", 2: "model", 3: "brand",
+        4: "manufacturer", 5: "unit", 6: "qty",
+        7: "mass", 8: "comments",
+    }
+    HEADER_KEYWORDS = (
+        "Поз", "Наимен", "Кол", "Обозн", "Изготов",
+        "Прим", "Масс", "Ед.",
+    )
+    out: dict[int, list[TableRow]] = {}
+    for tbl in tables:
+        try:
+            page_no = int(tbl.page)
+        except Exception:
+            page_no = 1
+        df = tbl.df
+        rows_for_page = out.setdefault(page_no, [])
+        n_rows, n_cols = df.shape
+        for ri in range(n_rows):
+            cells: dict[str, str] = {}
+            row_text_concat = ""
+            for ci in range(min(n_cols, 9)):
+                val = str(df.iloc[ri, ci]).strip()
+                if val:
+                    key = col_to_key.get(ci)
+                    if key:
+                        cells[key] = val
+                    row_text_concat += val + " "
+            kw_count = sum(
+                1 for kw in HEADER_KEYWORDS if kw in row_text_concat
+            )
+            if kw_count >= 2:
+                continue
+            text_vals = [
+                cells.get(k, "")
+                for k in (
+                    "name", "model", "brand",
+                    "manufacturer", "unit", "comments",
+                )
+                if cells.get(k)
+            ]
+            if (
+                len(text_vals) >= 2
+                and all(v in "123456789" for v in text_vals)
+            ):
+                continue
+            if not cells:
+                continue
+            is_section = bool(
+                cells.get("name")
+                and not any(
+                    cells.get(k)
+                    for k in ("pos", "qty", "unit", "model", "brand")
+                )
+            )
+            rows_for_page.append(TableRow(
+                page_number=page_no,
+                y_mid=float(ri),
+                row_index=len(rows_for_page),
+                cells=cells,
+                raw_blocks=[],
+                is_header=False,
+                is_section_heading=is_section,
+            ))
+    return out
+
+
+def extract_via_camelot(pdf_bytes: bytes) -> dict[int, list[TableRow]]:
+    """TD-17e: extract таблиц через Camelot lattice flavor.
+
+    Camelot designed для multi-page bordered tables. Lattice flavor
+    использует grid-line detection (PDF cv2) вместо ML — для ОВиК ЕСКД
+    с рамками на continuation pages работает там, где Docling
+    page-by-page split падает (Spec-9 multi-page без header).
+
+    Возвращает dict[page_no, list[TableRow]] — same structure как
+    extract_via_docling для compat с _build_items_from_docling_rows.
+
+    GOST 21.110 col layout (9 cols по позиции):
+    0=Поз, 1=Наименование, 2=Тип/Марка, 3=Поставщик, 4=Изготовитель,
+    5=Ед.изм, 6=Кол-во, 7=Масса, 8=Примечание.
+    """
+    try:
+        import camelot
+        import logging as _logging
+        import tempfile
+        import os
+        _log = _logging.getLogger(__name__)
+    except ImportError:
+        return {}
+
+    # Camelot требует path; пишем в temp.
+    tmp_path: str = ""
+    try:
+        with tempfile.NamedTemporaryFile(
+            suffix=".pdf", delete=False
+        ) as tmp:
+            tmp.write(pdf_bytes)
+            tmp_path = tmp.name
+        tables = camelot.read_pdf(
+            tmp_path, pages="all", flavor="lattice"
+        )
+    except Exception as e:
+        _log.warning(f"TD-17e camelot read_pdf failed: {e}")
+        return {}
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
+
+    return _camelot_tables_to_rows(tables)
+
+
 def extract_via_docling(pdf_bytes: bytes) -> dict[int, list[TableRow]]:
     """TD-17: extract таблиц через IBM Docling (97.9% cell accuracy, AAAI 2025).
 

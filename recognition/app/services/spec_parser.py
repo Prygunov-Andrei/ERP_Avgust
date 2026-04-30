@@ -205,9 +205,72 @@ class SpecParser:
                     extract_via_docling,
                     has_usable_text_layer,
                 )
+                # TD-17e: hybrid Docling + Camelot. Docling primary
+                # (точнее на single-page tables — Spec-1, 2, 3, 6, 7, 8, 11),
+                # Camelot per-page fallback (Spec-9 multi-page без header
+                # → Camelot lattice работает на 100%).
                 docling_rows_by_page = await run_in_threadpool(
                     extract_via_docling, pdf_bytes
                 )
+
+                # TD-17e routing: если >50% pages без parseable qty в
+                # Docling rows — это multi-page без header (Spec-9 style).
+                # Используем Camelot полностью — inject+Docling combo даёт
+                # phantom (col-numbers row leak в data row binding).
+                from .pdf_text import (
+                    extract_via_camelot,
+                    parse_quantity as _parse_qty_route,
+                )
+                _no_qty_pages = 0
+                for _pn in range(state.pages_total):
+                    _rows = docling_rows_by_page.get(_pn + 1) or []
+                    _has = any(
+                        (r.cells.get("qty") or "").strip()
+                        and _parse_qty_route(
+                            (r.cells.get("qty") or "").strip()
+                        ) is not None
+                        for r in _rows
+                    )
+                    if not _has:
+                        _no_qty_pages += 1
+                _no_qty_ratio = (
+                    _no_qty_pages / state.pages_total
+                    if state.pages_total else 0.0
+                )
+                if (
+                    _no_qty_ratio >= 0.5
+                    and getattr(settings, "pdf_extract_via_camelot", False)
+                ):
+                    logger.info(
+                        "TD-17e routing: pure Camelot (multi-page без header)",
+                        extra={
+                            "no_qty_pages": _no_qty_pages,
+                            "total_pages": state.pages_total,
+                            "ratio": _no_qty_ratio,
+                        },
+                    )
+                    camelot_full = await run_in_threadpool(
+                        extract_via_camelot, pdf_bytes
+                    )
+                    # Validate Camelot extracted ≥ what Docling did.
+                    _docling_total_qty = sum(
+                        1 for _rs in docling_rows_by_page.values()
+                        for r in _rs
+                        if (r.cells.get("qty") or "").strip()
+                        and _parse_qty_route(
+                            (r.cells.get("qty") or "").strip()
+                        ) is not None
+                    )
+                    _camelot_total_qty = sum(
+                        1 for _rs in camelot_full.values()
+                        for r in _rs
+                        if (r.cells.get("qty") or "").strip()
+                        and _parse_qty_route(
+                            (r.cells.get("qty") or "").strip()
+                        ) is not None
+                    )
+                    if _camelot_total_qty >= _docling_total_qty:
+                        docling_rows_by_page = camelot_full
                 # TD-17 hybrid: для страниц без Docling tables — legacy
                 # span-based extract. Многостраничные таблицы Docling
                 # видит только page 1 (с header); страницы 2-N без header
@@ -229,15 +292,52 @@ class SpecParser:
                     get_last_docling_column_ranges,
                 )
                 docling_col_ranges = get_last_docling_column_ranges()
+                # TD-17e: collect pages where Docling returned no parseable
+                # qty. Validate via parse_quantity — garbage in qty cell
+                # (col-numbers row, mismapping) does NOT count as qty.
+                from .pdf_text import parse_quantity as _parse_qty
+                pages_without_qty: list[int] = []
+
+                def _has_real_qty(rows):
+                    for r in rows:
+                        q = (r.cells.get("qty") or "").strip()
+                        if q and _parse_qty(q) is not None:
+                            return True
+                    return False
+
+                for pn in range(state.pages_total):
+                    existing = docling_rows_by_page.get(pn + 1) or []
+                    if not _has_real_qty(existing):
+                        pages_without_qty.append(pn + 1)
+
+                camelot_rows: dict[int, list] = {}
+                if (
+                    pages_without_qty
+                    and getattr(settings, "pdf_extract_via_camelot", False)
+                ):
+                    from .pdf_text import extract_via_camelot_subset
+                    pages_str = ",".join(str(p) for p in pages_without_qty)
+                    camelot_rows = await run_in_threadpool(
+                        extract_via_camelot_subset, pdf_bytes, pages_str
+                    )
+                    logger.info(
+                        "TD-17e camelot subset",
+                        extra={
+                            "requested_pages": pages_without_qty,
+                            "got_pages": sorted(camelot_rows.keys()),
+                            "rows_per_page": {
+                                p: len(rs) for p, rs in camelot_rows.items()
+                            },
+                        },
+                    )
+
                 for page_num in range(state.pages_total):
                     # Trigger hybrid fallback если:
                     # - Docling вернул empty rows для этой страницы;
-                    # - rows есть но НИ В ОДНОЙ нет qty (mapping broken).
+                    # - rows есть но НИ В ОДНОЙ нет parseable qty
+                    #   (mapping broken, garbage в qty cell).
                     existing = docling_rows_by_page.get(page_num + 1) or []
-                    has_qty = any(
-                        (r.cells.get("qty") or "").strip() for r in existing
-                    )
-                    if has_qty:
+                    if _has_real_qty(existing):
                         continue
                     try:
                         page = doc[page_num]
@@ -246,8 +346,18 @@ class SpecParser:
                         ):
                             continue
                         rows = []
+                        # Step 0 (TD-17e): Camelot lattice — для multi-page
+                        # без header (Spec-9). Lattice использует grid-lines.
+                        camelot_page_rows = camelot_rows.get(page_num + 1) or []
+                        if camelot_page_rows:
+                            camelot_has_qty = any(
+                                (r.cells.get("qty") or "").strip()
+                                for r in camelot_page_rows
+                            )
+                            if camelot_has_qty:
+                                rows = camelot_page_rows
                         # Step 1: explicit columns from Docling page 1.
-                        if docling_col_ranges:
+                        if not rows and docling_col_ranges:
                             rows = await run_in_threadpool(
                                 extract_with_explicit_columns,
                                 page,

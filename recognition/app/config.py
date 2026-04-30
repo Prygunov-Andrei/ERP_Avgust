@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     # → корректно мапит qty column для multi-page без header (Spec-9).
     pdf_docling_inject_header: bool = False
     pdf_docling_header_height_pt: float = 110.0
+    # TD-17e: Camelot lattice flavor — альтернативный extractor для PDF
+    # с border-line tables (ОВиК ЕСКД). Lattice использует grid-lines для
+    # column boundaries → работает на continuation pages БЕЗ header
+    # (Spec-9). При flag=true путь Docling обходится полностью.
+    pdf_extract_via_camelot: bool = False
     # DeepSeek V4 thinking mode: "" (не передавать, использовать дефолт модели),
     # "disabled" (быстрый non-thinking, экономит max_tokens для content),
     # "enabled" (reasoning_content генерится перед content — нужно поднять
