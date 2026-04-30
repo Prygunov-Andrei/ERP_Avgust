@@ -1077,6 +1077,160 @@ def get_last_docling_column_ranges() -> dict[str, tuple[float, float]]:
     return dict(_LAST_DOCLING_COLUMN_RANGES)
 
 
+# TD-17a: keywords ОВиК-таблицы header. Используется для conditional
+# injection — если top портion continuation page УЖЕ содержит хотя бы
+# 2 из этих keywords, страница не требует injection (Docling её видит).
+_HEADER_DETECT_KEYWORDS = (
+    "Поз",
+    "Наимен",
+    "Кол",
+    "Обозн",
+    "Изготов",
+    "Прим",
+    "Масс",
+    "Ед.",
+)
+
+
+def _page_has_header_keywords(
+    src_doc, page_idx: int, min_matches: int = 2
+) -> bool:
+    """Возвращает True, если page содержит >=min_matches header keywords.
+
+    Используется для conditional injection: если page уже имеет «Поз»,
+    «Наименование», «Кол-во» и т.д. — она self-contained, injection
+    создаст dual-header и сломает Docling. Если keywords нет — это
+    continuation page без header (Spec-9), injection нужен.
+
+    Используем full-page text (page.get_text("text")) вместо clip rect,
+    т.к. clip rect требует rotation-aware coordinates (Spec-1 rotation=90).
+    Continuation pages multi-page tables не содержат keywords нигде —
+    fullpage check достаточен.
+    """
+    try:
+        page = src_doc[page_idx]
+        text = page.get_text("text") or ""
+        matches = sum(1 for kw in _HEADER_DETECT_KEYWORDS if kw in text)
+        return matches >= min_matches
+    except Exception:
+        return False
+
+
+def _inject_header_overlay(
+    pdf_bytes: bytes, header_height_pt: float = 110.0
+) -> bytes:
+    """TD-17a: copy header (top header_height_pt of page 0) ТОЛЬКО на continuation pages БЕЗ собственного header.
+
+    Multi-page ОВиК-таблицы (Spec-9) имеют header только на page 1 — Docling
+    page-by-page split на pages 2+ видит continuation rows без header,
+    cells остаются на col 0 (garbage), qty column не мапится.
+
+    Conditional injection (v2): для каждой page > 0 проверяем top
+    портион (header_height_pt + 30 pt) на наличие header keywords
+    («Поз», «Наимен», «Кол», ...). Если найдено хотя бы 2 — страница
+    уже имеет собственный header (как Spec-1, Spec-3) → копируется
+    без изменений. Иначе расширяем page на header_height_pt и инжектируем
+    header page 0 в верх (Spec-9 multi-page без header).
+
+    Page 0 не модифицируется. Возвращает новый PDF bytes;
+    при ошибке возвращает оригинальные bytes.
+    """
+    try:
+        import pymupdf as fitz
+        import logging as _logging
+        _log = _logging.getLogger(__name__)
+        src = fitz.open(stream=pdf_bytes, filetype="pdf")
+        if len(src) < 2:
+            src.close()
+            return pdf_bytes
+
+        # TD-17a v3: skip injection on scanned PDFs (Spec-7).
+        # Text layer пуст → detector ВСЕГДА говорит «no header» → injекcим
+        # изображение header через show_pdf_page, но Docling использует OCR
+        # на каждой continuation page → injected image создаёт визуальный
+        # шум в OCR layer и отсутствие текстового header не помогает.
+        # Pre-scan avg chars per page; если scanned — skip injection.
+        try:
+            total_chars = sum(len(p.get_text("text")) for p in src)
+            avg_chars = total_chars / max(len(src), 1)
+            if avg_chars < 200:
+                src.close()
+                _log.info(
+                    f"TD-17a v3: skip injection — scanned PDF "
+                    f"(avg_chars={avg_chars:.1f})"
+                )
+                return pdf_bytes
+        except Exception:
+            pass
+
+        out_doc = fitz.open()
+        # Page 0 — копируем без изменений.
+        out_doc.insert_pdf(src, from_page=0, to_page=0)
+
+        # Используем .rect — он учитывает rotation, нам нужен display-size.
+        p0_rect = src[0].rect
+        src_width = p0_rect.width
+        src_clip_header = fitz.Rect(0, 0, src_width, header_height_pt)
+
+        injected_count = 0
+        skipped_count = 0
+        for pi in range(1, len(src)):
+            # Conditional skip: если на странице уже есть header keywords.
+            if _page_has_header_keywords(src, pi):
+                # Page уже самодостаточна — копируем без изменений.
+                out_doc.insert_pdf(src, from_page=pi, to_page=pi)
+                skipped_count += 1
+                continue
+
+            page_rect = src[pi].rect
+            page_w = page_rect.width
+            page_h = page_rect.height
+            new_h = page_h + header_height_pt
+            new_page = out_doc.new_page(width=page_w, height=new_h)
+            # Top: header from page 0 (clip top header_height_pt of page 0).
+            header_target = fitz.Rect(0, 0, page_w, header_height_pt)
+            try:
+                new_page.show_pdf_page(
+                    header_target, src, 0, clip=src_clip_header
+                )
+            except Exception as e:
+                _log.warning(
+                    f"TD-17a header inject failed for page {pi+1}: {e}"
+                )
+            # Bottom: original page content shifted down by header_height_pt.
+            content_target = fitz.Rect(0, header_height_pt, page_w, new_h)
+            full_clip = fitz.Rect(0, 0, page_w, page_h)
+            try:
+                new_page.show_pdf_page(
+                    content_target, src, pi, clip=full_clip
+                )
+            except Exception as e:
+                _log.warning(
+                    f"TD-17a content paste failed for page {pi+1}: {e}"
+                )
+            injected_count += 1
+
+        buf = BytesIO()
+        out_doc.save(buf)
+        out_doc.close()
+        src.close()
+        _log.info(
+            f"TD-17a v2: injected={injected_count}, "
+            f"skipped(already-has-header)={skipped_count}, "
+            f"height={header_height_pt}pt"
+        )
+        return buf.getvalue()
+    except Exception as e:
+        try:
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                f"TD-17a inject_header_overlay failed: {e}"
+            )
+        except Exception:
+            pass
+        return pdf_bytes
+
+
 def extract_via_docling(pdf_bytes: bytes) -> dict[int, list[TableRow]]:
     """TD-17: extract таблиц через IBM Docling (97.9% cell accuracy, AAAI 2025).
 
@@ -1126,6 +1280,20 @@ def extract_via_docling(pdf_bytes: bytes) -> dict[int, list[TableRow]]:
         _doc.close()
     except Exception:
         pass
+
+    # TD-17a: synthetic header injection (multi-page tables без header).
+    # ENV PDF_DOCLING_INJECT_HEADER=true → копируем header page 0 на верх
+    # каждой continuation page. Размер header задаётся
+    # PDF_DOCLING_HEADER_HEIGHT_PT (default 110.0).
+    try:
+        from ..config import settings as _settings
+        if getattr(_settings, "pdf_docling_inject_header", False):
+            header_h = float(
+                getattr(_settings, "pdf_docling_header_height_pt", 110.0)
+            )
+            pdf_bytes = _inject_header_overlay(pdf_bytes, header_h)
+    except Exception as _e:
+        _log.warning(f"TD-17a inject_header wrapper failed: {_e}")
 
     # TD-17: TableFormerMode.ACCURATE даёт более точный structure recovery
     # (медленнее но качественнее). Для ЕСКД-таблиц с многоуровневой нумерацией

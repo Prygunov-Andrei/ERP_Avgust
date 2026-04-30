@@ -41,6 +41,13 @@ class Settings(BaseSettings):
     # пропускается полностью (pure path, без LLM costs/noise).
     pdf_extract_via_docling: bool = False
     pdf_docling_bypass_llm: bool = False
+    # TD-17a: Synthetic header injection. Перед page-by-page split копируем
+    # верхнюю часть page 0 (header_height_pt в pt) поверх каждой continuation
+    # page. Каждая страница расширяется на header_height_pt и оригинальный
+    # контент сдвигается вниз. Docling видит каждую страницу с phantom-header
+    # → корректно мапит qty column для multi-page без header (Spec-9).
+    pdf_docling_inject_header: bool = False
+    pdf_docling_header_height_pt: float = 110.0
     # DeepSeek V4 thinking mode: "" (не передавать, использовать дефолт модели),
     # "disabled" (быстрый non-thinking, экономит max_tokens для content),
     # "enabled" (reasoning_content генерится перед content — нужно поднять
