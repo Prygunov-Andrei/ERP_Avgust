@@ -3,7 +3,10 @@
 # Локальная разработка: полный запуск одной командой
 # SSH-туннель → venv → Docker инфраструктура → миграции → приложения
 #
-# Запуск: ./dev-local.sh
+# Запуск:
+#   ./dev-local.sh         # дефолт: прод-БД через SSH-туннель + dev infra
+#   ./dev-local.sh --f8    # F8: локальный postgres-erp + ismeta + redis,
+#                          # БЕЗ SSH-туннеля. См. docker-compose.local.yml.
 # Остановка: Ctrl+C (или ./dev-stop.sh из другого терминала)
 #
 # БД: продакшен через SSH-туннель (localhost:15432 → prod:5432)
@@ -18,6 +21,18 @@ PIDFILE="$ROOT_DIR/.dev-pids"
 VENV_DIR="$ROOT_DIR/backend/.venv"
 PYTHON="$VENV_DIR/bin/python"
 CELERY="$VENV_DIR/bin/celery"
+
+# --- Флаги -------------------------------------------------------------------
+F8_MODE=false
+for arg in "$@"; do
+    case "$arg" in
+        --f8) F8_MODE=true ;;
+        -h|--help)
+            sed -n '2,11p' "$0" | sed 's/^# *//'
+            exit 0
+            ;;
+    esac
+done
 
 # Цвета
 GREEN='\033[0;32m'
@@ -42,10 +57,14 @@ cleanup() {
     sleep 1
 
     echo -e "${YELLOW}Останавливаю Docker инфраструктуру...${NC}"
-    docker compose -f "$ROOT_DIR/docker-compose.dev.yml" down
-
-    # SSH-туннель НЕ убиваем — он переживает перезапуски
-    echo -e "${GREEN}Всё остановлено. SSH-туннель оставлен активным.${NC}"
+    if [ "$F8_MODE" = true ]; then
+        docker compose --env-file "$ROOT_DIR/.env.local" -f "$ROOT_DIR/docker-compose.local.yml" down
+        echo -e "${GREEN}Всё остановлено.${NC}"
+    else
+        docker compose -f "$ROOT_DIR/docker-compose.dev.yml" down
+        # SSH-туннель НЕ убиваем — он переживает перезапуски
+        echo -e "${GREEN}Всё остановлено. SSH-туннель оставлен активным.${NC}"
+    fi
     exit 0
 }
 
@@ -91,19 +110,35 @@ echo "  OK"
 # =========================================================================
 # 0. Загрузить переменные окружения
 # =========================================================================
-if [ -f "$ROOT_DIR/backend/.env" ]; then
+if [ "$F8_MODE" = true ]; then
+    if [ ! -f "$ROOT_DIR/.env.local" ]; then
+        echo -e "${RED}.env.local не найден!${NC}"
+        echo "Скопируйте .env.local.example → .env.local и заполните"
+        echo "(см. docs/epics/F8-public-ismeta/local-dev.md)"
+        exit 1
+    fi
     set -a
-    source "$ROOT_DIR/backend/.env"
+    source "$ROOT_DIR/.env.local"
     set +a
+    echo -e "${CYAN}F8 режим: локальный стенд (postgres-erp + ismeta + redis)${NC}"
 else
-    echo -e "${RED}backend/.env не найден!${NC}"
-    echo "Скопируйте .env.example → .env и заполните значениями"
-    exit 1
+    if [ -f "$ROOT_DIR/backend/.env" ]; then
+        set -a
+        source "$ROOT_DIR/backend/.env"
+        set +a
+    else
+        echo -e "${RED}backend/.env не найден!${NC}"
+        echo "Скопируйте .env.example → .env и заполните значениями"
+        exit 1
+    fi
 fi
 
 # =========================================================================
-# 1. SSH-туннель к прод-БД
+# 1. SSH-туннель к прод-БД (только в дефолтном режиме)
 # =========================================================================
+if [ "$F8_MODE" = true ]; then
+    echo -e "${GREEN}[1/6] SSH-туннель пропущен (--f8 использует локальный postgres)${NC}"
+else
 TUNNEL_PORT="${DB_PORT:-15432}"
 echo -e "${GREEN}[1/6] SSH-туннель к прод-БД (порт $TUNNEL_PORT)...${NC}"
 
@@ -163,6 +198,7 @@ else
     echo -e "${RED}БД не отвечает на порту $TUNNEL_PORT. Туннель есть, но БД недоступна.${NC}"
     exit 1
 fi
+fi  # /F8_MODE != true (SSH-туннель блок)
 
 # =========================================================================
 # 2. Python venv
@@ -190,29 +226,48 @@ else
 fi
 
 # =========================================================================
-# 3. Docker инфраструктура (Redis + MinIO)
+# 3. Docker инфраструктура
+#    --f8: postgres-erp + postgres-ismeta + redis + recognition-public
+#    default: Redis + MinIO
 # =========================================================================
-echo -e "${GREEN}[3/6] Docker инфраструктура (Redis, MinIO)...${NC}"
-docker compose -f "$ROOT_DIR/docker-compose.dev.yml" up -d
+if [ "$F8_MODE" = true ]; then
+    echo -e "${GREEN}[3/6] Docker инфраструктура (postgres-erp/ismeta, redis, recognition-public)...${NC}"
+    docker compose --env-file "$ROOT_DIR/.env.local" -f "$ROOT_DIR/docker-compose.local.yml" up -d
+else
+    echo -e "${GREEN}[3/6] Docker инфраструктура (Redis, MinIO)...${NC}"
+    docker compose -f "$ROOT_DIR/docker-compose.dev.yml" up -d
+fi
 
 # =========================================================================
 # 4. Ждём готовности сервисов
 # =========================================================================
 echo -e "${GREEN}[4/6] Жду готовности сервисов...${NC}"
 
-echo -n "  Redis..."
-until docker compose -f "$ROOT_DIR/docker-compose.dev.yml" exec -T redis redis-cli ping > /dev/null 2>&1; do
-    echo -n "."
-    sleep 1
-done
-echo " OK"
+if [ "$F8_MODE" = true ]; then
+    for service in postgres-erp-local postgres-ismeta-local redis-local; do
+        echo -n "  $service..."
+        for _ in $(seq 1 60); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' "$service" 2>/dev/null || echo "starting")
+            if [ "$status" = "healthy" ]; then echo " OK"; break; fi
+            echo -n "."
+            sleep 1
+        done
+    done
+else
+    echo -n "  Redis..."
+    until docker compose -f "$ROOT_DIR/docker-compose.dev.yml" exec -T redis redis-cli ping > /dev/null 2>&1; do
+        echo -n "."
+        sleep 1
+    done
+    echo " OK"
 
-echo -n "  MinIO..."
-until curl -sf http://localhost:9000/minio/health/live > /dev/null 2>&1; do
-    echo -n "."
-    sleep 1
-done
-echo " OK"
+    echo -n "  MinIO..."
+    until curl -sf http://localhost:9000/minio/health/live > /dev/null 2>&1; do
+        echo -n "."
+        sleep 1
+    done
+    echo " OK"
+fi
 
 # =========================================================================
 # 5. Миграции
@@ -271,10 +326,18 @@ echo ""
 echo -e "  ${CYAN}Frontend:${NC}    http://localhost:3000"
 echo -e "  ${CYAN}ERP API:${NC}     http://localhost:8000/api/v1/"
 echo -e "  ${CYAN}Kanban API:${NC}  http://localhost:8000/kanban-api/v1/"
-echo -e "  ${CYAN}MinIO:${NC}       http://localhost:9001"
-echo -e "  ${CYAN}Прод-БД:${NC}     localhost:$TUNNEL_PORT → $PROD_SSH_HOST"
-echo ""
-echo -e "${YELLOW}Ctrl+C для остановки (SSH-туннель останется активным)${NC}"
+if [ "$F8_MODE" = true ]; then
+    echo -e "  ${CYAN}postgres-erp:${NC}    localhost:${F8_ERP_DB_PORT:-5432}"
+    echo -e "  ${CYAN}postgres-ismeta:${NC} localhost:${F8_ISMETA_DB_PORT:-5433}"
+    echo -e "  ${CYAN}recognition:${NC}     http://localhost:${F8_RECOGNITION_PORT:-8004}/v1/healthz"
+    echo ""
+    echo -e "${YELLOW}Ctrl+C для остановки. F8 БД сохранится в docker volumes.${NC}"
+else
+    echo -e "  ${CYAN}MinIO:${NC}       http://localhost:9001"
+    echo -e "  ${CYAN}Прод-БД:${NC}     localhost:$TUNNEL_PORT → $PROD_SSH_HOST"
+    echo ""
+    echo -e "${YELLOW}Ctrl+C для остановки (SSH-туннель останется активным)${NC}"
+fi
 echo ""
 
 # Ждём завершения (Ctrl+C вызовет cleanup через trap)

@@ -1,0 +1,132 @@
+# =============================================================================
+# F8 Local stand — изолированная локальная среда для разработки F8 Public ISMeta.
+# F8-00 (IS-Петя). Документация: docs/epics/F8-public-ismeta/local-dev.md.
+#
+# Поднимает локально:
+#   - postgres-erp-local:5432    — ERP БД (без прод-данных)
+#   - postgres-ismeta-local:5433 — ismeta БД (LLMProfile + ismeta jobs)
+#   - redis-local:6379           — Redis (rate limit, Celery)
+#   - recognition-public:8004    — Recognition (TD-17g pipeline после F8-01,
+#                                  fallback на текущий ./recognition Dockerfile)
+#
+# ERP backend, frontend и Celery-worker запускаются нативно через
+# `./dev-local.sh --f8` (см. dev-local.sh, шаг F8). Это позволяет hot-reload
+# без билда контейнера.
+#
+# Важно: НЕ пересекается с прод-стеком. Прод docker-compose.yml использует
+# именованные сервисы (postgres, redis, recognition) — здесь имена другие
+# (postgres-erp-local, postgres-ismeta-local, redis-local, recognition-public)
+# чтобы можно было держать прод docker-compose.yml в покое и не получить
+# конфликт по volumes/контейнерам.
+#
+# Запуск:
+#   docker compose -f docker-compose.local.yml up -d
+# Bootstrap (миграции, seed):
+#   ./scripts/bootstrap_local_f8.sh
+# =============================================================================
+
+name: erp-f8-local
+
+services:
+
+  postgres-erp-local:
+    image: postgres:14-alpine
+    container_name: postgres-erp-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${F8_ERP_DB_NAME:-finans_assistant}
+      POSTGRES_USER: ${F8_ERP_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${F8_ERP_DB_PASSWORD:-postgres}
+    ports:
+      - "${F8_ERP_DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata-erp-local:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${F8_ERP_DB_USER:-postgres} -d ${F8_ERP_DB_NAME:-finans_assistant}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres-ismeta-local:
+    image: postgres:14-alpine
+    container_name: postgres-ismeta-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${F8_ISMETA_DB_NAME:-ismeta}
+      POSTGRES_USER: ${F8_ISMETA_DB_USER:-ismeta}
+      POSTGRES_PASSWORD: ${F8_ISMETA_DB_PASSWORD:-ismeta}
+    ports:
+      - "${F8_ISMETA_DB_PORT:-5433}:5432"
+    volumes:
+      - pgdata-ismeta-local:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${F8_ISMETA_DB_USER:-ismeta} -d ${F8_ISMETA_DB_NAME:-ismeta}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-local:
+    image: redis:7-alpine
+    container_name: redis-local
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${F8_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-local-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # recognition-public — public ISMeta pipeline (TD-17g).
+  #
+  # F8-01 (другой Петя) делает production image с docling+camelot+vision deps.
+  # До его коммита локальный стенд использует текущий ./recognition Dockerfile —
+  # этого достаточно для F8-02/F8-04 smoke-тестов (они не дёргают TD-17g
+  # тяжёлые pipelines). Когда F8-01 коммитит docker-compose.public.yml —
+  # локально можно перейти на extends:
+  #   extends:
+  #     file: docker-compose.public.yml
+  #     service: recognition-public
+  # с переопределением portов/ENV в override.
+  # ---------------------------------------------------------------------------
+  recognition-public:
+    build:
+      context: ./recognition
+      dockerfile: Dockerfile
+    image: recognition-public:local
+    container_name: recognition-public-local
+    restart: unless-stopped
+    ports:
+      - "${F8_RECOGNITION_PORT:-8004}:8003"
+    environment:
+      RECOGNITION_API_KEY: ${RECOGNITION_API_KEY:-dev-recognition-key-change-me}
+      OPENAI_API_KEY: ${LLM_API_KEY_OPENAI:-${OPENAI_API_KEY:-}}
+      LOG_LEVEL: ${RECOGNITION_LOG_LEVEL:-INFO}
+      MAX_FILE_SIZE_MB: ${RECOGNITION_MAX_FILE_SIZE_MB:-50}
+      PARSE_TIMEOUT_SECONDS: ${RECOGNITION_PARSE_TIMEOUT_SECONDS:-300}
+      LLM_MODEL: ${RECOGNITION_LLM_MODEL:-gpt-4o-mini}
+      LLM_EXTRACT_MODEL: ${RECOGNITION_LLM_EXTRACT_MODEL:-gpt-4o}
+      LLM_CLASSIFY_MODEL: ${RECOGNITION_LLM_CLASSIFY_MODEL:-gpt-4o-mini}
+      LLM_MULTIMODAL_MODEL: ${RECOGNITION_LLM_MULTIMODAL_MODEL:-gpt-4o}
+      LLM_MULTIMODAL_RETRY_ENABLED: ${RECOGNITION_LLM_MULTIMODAL_RETRY_ENABLED:-true}
+      LLM_MULTIMODAL_RETRY_THRESHOLD: ${RECOGNITION_LLM_MULTIMODAL_RETRY_THRESHOLD:-0.7}
+      # F8-01 добавит PDF storage volume + флаги Docling/Camelot/Vision pipeline.
+      PDF_STORAGE_PATH: /uploads
+    volumes:
+      # F8-01 ожидает копирование PDF в этот путь (см. 01-pipeline-production.md).
+      - ./storage/ismeta-uploads:/uploads:rw
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8003/v1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  pgdata-erp-local:
+  pgdata-ismeta-local:
+  redis-local-data:
