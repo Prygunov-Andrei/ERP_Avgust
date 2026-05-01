@@ -149,6 +149,7 @@ urlpatterns = [
     path('api/v1/hvac/', include('hvac_bridge.urls')),
     path('api/v1/hvac/ismeta/', include('hvac_ismeta.urls')),
     path('api/hvac/', include('hvac_bridge.public_urls')),
+    path('api/hvac/ismeta/', include('hvac_ismeta.public_urls')),
     # Kanban (объединён с основным бэкендом)
     path('api/v1/', include('kanban_files.urls')),
     path('api/v1/', include('kanban_core.urls')),
