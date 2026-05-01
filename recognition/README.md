@@ -2,9 +2,16 @@
 
 Standalone FastAPI микросервис распознавания PDF-документов. Stateless, один запрос = upload → parse → result. Клиенты: Айсмета (спецификации, КП), ERP payments (счета).
 
+- **📖 Архитектура (TD-17g, актуальная):** [docs/recognition/](../docs/recognition/) — pipeline, regression results, evolution log
 - ADR: [ADR-0023](../ismeta/docs/adr/0023-recognition-as-standalone-service.md)
 - API контракт: [ismeta/specs/15-recognition-api.md](../ismeta/specs/15-recognition-api.md)
 - Порт: **8003**
+
+## Текущий best (2026-05-01)
+
+`recognition/td-17g-llm-targeted @ d8bce21` — Docling+Camelot+Vision LLM hybrid.
+**TOTAL 99.7% (3434/3444), 5/10 на 100%** на regression suite из 10 ОВиК спец.
+См. [REGRESSION-RESULTS.md](../docs/recognition/REGRESSION-RESULTS.md).
 
 ## Структура
 
