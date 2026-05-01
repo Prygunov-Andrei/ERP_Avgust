@@ -24,26 +24,33 @@ CI run для воспроизведения: `25216412325`
 
 ## Категории
 
-### 1. `connection already closed` (~25 тестов) — possibly xdist regression
+### 1. `connection already closed` (~25 тестов с xdist, сотни без xdist) — pre-existing
 
 **Локация:** `contracts/test_phase4_purchase_links.py`,
-`contracts/test_phase5_accumulative.py`.
+`contracts/test_phase5_accumulative.py`, `ac_submissions/tests/test_admin_views.py`,
+много других.
 
 **Симптом:**
 ```
 django.db.utils.InterfaceError: connection already closed
+psycopg2.InterfaceError: connection already closed
 ```
 
-**Гипотеза:** race condition между pytest-xdist workers и кастомным
-`db` setup в этих файлах. **Сначала проверить:** воспроизводится ли
-без `-n auto` (диагностический run в `infra/fix-main-ci`).
+**Подтверждено pre-existing** диагностическим run'ом `25216793376`
+(без `-n auto`): 533 failed + 409 errors. С xdist картина мягче
+(~80 fails видимых) — изолированные workers не дают broken state
+накапливаться, но проблема всё равно проявляется в `contracts/test_phase4_*`
+и `test_phase5_*`.
 
-**Если xdist:** пометить тесты `@pytest.mark.serial` и исключать из
-xdist run, либо использовать `pytest-xdist --dist loadfile` чтобы
-тесты одного файла шли в одном worker'е.
+**Гипотеза:** где-то вызывается `connection.close()` в fixture teardown
+или middleware, ломая connection для следующего теста. Возможные места:
+- кастомные `db` fixture в conftest
+- middleware, закрывающее connection в request lifecycle
+- factory-boy post_generation hooks
 
-**Если pre-existing:** искать где явно вызывается `connection.close()`
-или fixture teardown ломает соединение.
+**Фикс:** искать `connection.close()` в кодовой базе, особенно в
+`*/conftest.py`, `core/middleware.py`, `*/services/*.py`. После фикса
+проверить с `-n auto` и без — должны давать одинаковый pass rate.
 
 ---
 
