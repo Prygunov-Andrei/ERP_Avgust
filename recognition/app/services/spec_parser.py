@@ -221,6 +221,15 @@ class SpecParser:
                     extract_via_camelot,
                     parse_quantity as _parse_qty_route,
                 )
+
+                def _real_qty_count(rows):
+                    n = 0
+                    for r in rows:
+                        q = (r.cells.get("qty") or "").strip()
+                        if q and _parse_qty_route(q) is not None:
+                            n += 1
+                    return n
+
                 _no_qty_pages = 0
                 for _pn in range(state.pages_total):
                     _rows = docling_rows_by_page.get(_pn + 1) or []
@@ -396,6 +405,19 @@ class SpecParser:
                         "TD-17 hybrid: legacy fallback for pages without docling tables",
                         extra={"pages": missing_pages, "count": len(missing_pages)},
                     )
+
+                # TD-17g: targeted LLM Vision intervention поверх
+                # Docling+Camelot. Universal triggers (НЕ spec-id):
+                # - scanned PDF (avg_chars < threshold) + page без parsed
+                #   rows → Vision extract
+                # - encoding broken (low cyrillic ratio / cid: markers)
+                #   на page → Vision extract
+                # - Vision Counter mismatch на page → Vision retry
+                if getattr(settings, "pdf_llm_vision_fallback", False):
+                    docling_rows_by_page = await self._td17g_vision_intervene(
+                        doc, docling_rows_by_page, _real_qty_count
+                    )
+
                 self._build_items_from_docling_rows(docling_rows_by_page)
                 return self._finalize()
 
@@ -1376,6 +1398,189 @@ class SpecParser:
                     sort_order=state.sort_order,
                 )
             )
+
+    async def _td17g_vision_intervene(
+        self,
+        doc: "fitz.Document",
+        docling_rows_by_page: dict[int, list[TableRow]],
+        real_qty_count_fn,
+    ) -> dict[int, list[TableRow]]:
+        """TD-17g: targeted Vision LLM intervention.
+
+        Universal triggers (page-level, не spec-id):
+        - scanned page: text layer < scanned_threshold chars/page
+        - broken encoding: cyrillic ratio < threshold или есть «(cid:N)»
+        - Vision Counter mismatch: parsed_count < vision_count - tolerance
+
+        Если any trigger fires — Vision extract на эту page заменяет
+        existing Docling/Camelot rows.
+
+        Provider: self.provider (из spec_parser).
+        """
+        from .pdf_text import parse_quantity as _parse_qty
+        scanned_threshold = float(
+            getattr(settings, "pdf_llm_scanned_threshold", 200)
+        )
+        cyrillic_ratio_threshold = float(
+            getattr(settings, "pdf_llm_cyrillic_ratio_threshold", 0.3)
+        )
+        count_tolerance = int(
+            getattr(settings, "pdf_llm_vision_count_tolerance", 2)
+        )
+
+        def _is_cyrillic(ch: str) -> bool:
+            cp = ord(ch)
+            return 0x0400 <= cp <= 0x04FF
+
+        # PDF-level scanned detection: avg chars/page across ВСЕХ
+        # страниц. Если pdf scanned — все pages в Vision (даже если
+        # одна имеет footer text > threshold).
+        pdf_total_chars = 0
+        for _pn in range(self.state.pages_total):
+            try:
+                pdf_total_chars += len(doc[_pn].get_text("text") or "")
+            except Exception:
+                pass
+        pdf_avg_chars = (
+            pdf_total_chars / self.state.pages_total
+            if self.state.pages_total else 0
+        )
+        pdf_is_scanned = pdf_avg_chars < scanned_threshold
+
+        intervened_pages: list[dict] = []
+        for page_num in range(self.state.pages_total):
+            try:
+                page = doc[page_num]
+            except Exception:
+                continue
+            page_text = page.get_text("text") or ""
+
+            # Trigger A: scanned PDF (PDF-level avg < threshold).
+            is_scanned = pdf_is_scanned
+
+            # Trigger B: broken encoding (low cyrillic ratio).
+            cyr_count = sum(1 for ch in page_text if _is_cyrillic(ch))
+            alpha_count = sum(1 for ch in page_text if ch.isalpha())
+            cyr_ratio = (
+                cyr_count / alpha_count if alpha_count > 0 else 1.0
+            )
+            has_cid_marker = "(cid:" in page_text
+            broken_encoding = (
+                alpha_count > 50
+                and (cyr_ratio < cyrillic_ratio_threshold or has_cid_marker)
+            )
+
+            existing = docling_rows_by_page.get(page_num + 1) or []
+            parsed_count = real_qty_count_fn(existing)
+
+            # Trigger C: Vision Counter mismatch (cheap call).
+            need_count_check = (
+                not is_scanned
+                and not broken_encoding
+                and parsed_count > 0
+            )
+            vision_count = 0
+            count_mismatch = False
+            if need_count_check:
+                try:
+                    vision_count = await self._run_vision_counter(
+                        doc, page_num
+                    )
+                    if (
+                        vision_count > 0
+                        and parsed_count < vision_count - count_tolerance
+                    ):
+                        count_mismatch = True
+                except Exception as e:
+                    logger.warning(
+                        "TD-17g vision_counter failed",
+                        extra={"page": page_num + 1, "error": str(e)},
+                    )
+
+            should_vision = (
+                is_scanned
+                or broken_encoding
+                or count_mismatch
+                or (parsed_count == 0 and len(page_text) > 100)
+            )
+
+            if not should_vision:
+                continue
+
+            try:
+                image_b64 = await run_in_threadpool(
+                    render_page_to_b64, doc, page_num
+                )
+                items_dicts = await self._extract_items(
+                    image_b64, page_num
+                )
+            except Exception as e:
+                logger.warning(
+                    "TD-17g vision extract failed",
+                    extra={"page": page_num + 1, "error": str(e)},
+                )
+                continue
+
+            if not items_dicts:
+                continue
+
+            new_rows: list[TableRow] = []
+            for idx, it in enumerate(items_dicts):
+                qty_val = it.get("quantity")
+                if qty_val is None:
+                    qty_val = it.get("qty")
+                qty_str = (
+                    str(qty_val).strip() if qty_val not in (None, "") else ""
+                )
+                cells = {
+                    "name": str(it.get("name", "") or "").strip(),
+                    "model": str(it.get("model_name", "") or "").strip(),
+                    "brand": str(it.get("brand", "") or "").strip(),
+                    "manufacturer": str(
+                        it.get("manufacturer", "") or ""
+                    ).strip(),
+                    "unit": str(it.get("unit", "") or "").strip() or "шт",
+                    "qty": qty_str,
+                    "comments": str(
+                        it.get("tech_specs", "") or it.get("comments", "")
+                        or ""
+                    ).strip(),
+                }
+                if not cells["name"] or not qty_str:
+                    continue
+                if _parse_qty(qty_str) is None:
+                    continue
+                new_rows.append(TableRow(
+                    page_number=page_num + 1,
+                    y_mid=float(idx),
+                    row_index=idx,
+                    cells=cells,
+                    raw_blocks=[],
+                    is_header=False,
+                    is_section_heading=False,
+                ))
+
+            if new_rows:
+                docling_rows_by_page[page_num + 1] = new_rows
+                intervened_pages.append({
+                    "page": page_num + 1,
+                    "trigger": (
+                        "scanned" if is_scanned
+                        else "broken_encoding" if broken_encoding
+                        else "count_mismatch" if count_mismatch
+                        else "empty_parsed"
+                    ),
+                    "before": parsed_count,
+                    "after": len(new_rows),
+                    "vision_count": vision_count if need_count_check else None,
+                })
+
+        if intervened_pages:
+            logger.info(
+                "TD-17g vision intervention applied",
+                extra={"pages": intervened_pages},
+            )
+        return docling_rows_by_page
 
     async def _process_page_legacy_text(
         self, page: fitz.Page, page_num: int

@@ -53,6 +53,18 @@ class Settings(BaseSettings):
     # column boundaries → работает на continuation pages БЕЗ header
     # (Spec-9). При flag=true путь Docling обходится полностью.
     pdf_extract_via_camelot: bool = False
+    # TD-17g: targeted LLM Vision intervention поверх Docling+Camelot.
+    # Universal triggers, НЕ spec-id:
+    # - scanned PDF (avg chars/page < scanned_threshold) → full Vision
+    #   extract вместо OCR (RapidOcr garbage на русских scanned PDFs).
+    # - encoding broken (cyrillic ratio в text layer < threshold ИЛИ
+    #   есть `(cid:N)` markers) → Vision extract per page.
+    # - Vision Counter mismatch: parsed_count < vision_count - tolerance
+    #   → Vision retry full extract на этой page.
+    pdf_llm_vision_fallback: bool = False
+    pdf_llm_scanned_threshold: int = 200
+    pdf_llm_cyrillic_ratio_threshold: float = 0.3
+    pdf_llm_vision_count_tolerance: int = 2
     # DeepSeek V4 thinking mode: "" (не передавать, использовать дефолт модели),
     # "disabled" (быстрый non-thinking, экономит max_tokens для content),
     # "enabled" (reasoning_content генерится перед content — нужно поднять
