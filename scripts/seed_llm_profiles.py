@@ -33,10 +33,13 @@ import psycopg2
 from cryptography.fernet import Fernet
 
 
+# base_url БЕЗ /v1 — OpenAIVisionProvider._chat_url() добавляет /v1 сам
+# (recognition/app/providers/openai_vision.py:155). Исключение — Gemini,
+# у которого Google OpenAI-compat endpoint включает /v1beta/openai как стандарт.
 PROFILES = [
     {
         "name": "DeepSeek",
-        "base_url": "https://api.deepseek.com/v1",
+        "base_url": "https://api.deepseek.com",
         "extract_model": "deepseek-chat",
         "multimodal_model": "",
         "classify_model": "deepseek-chat",
@@ -46,7 +49,7 @@ PROFILES = [
     },
     {
         "name": "OpenAI GPT-4o",
-        "base_url": "https://api.openai.com/v1",
+        "base_url": "https://api.openai.com",
         "extract_model": "gpt-4o",
         "multimodal_model": "gpt-4o",
         "classify_model": "gpt-4o-mini",
@@ -66,11 +69,14 @@ PROFILES = [
     },
     {
         "name": "Grok 4",
-        "base_url": "https://api.x.ai/v1",
+        "base_url": "https://api.x.ai",
         "extract_model": "grok-4",
         "multimodal_model": "grok-2-vision-1212",
         "classify_model": "grok-2-1212",
-        "vision_supported": True,
+        # vision_supported=False по умолчанию для нового провайдера (F8-04
+        # management command такой же default). Включает Vision-Counter +
+        # Multimodal-Retry в pipeline — без verify-прогона может виснуть.
+        "vision_supported": False,
         "is_default": False,
         "api_key_env": "LLM_API_KEY_XAI",
     },
