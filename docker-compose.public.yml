@@ -1,0 +1,74 @@
+# F8-01: Production-ready recognition (TD-17g) для публичного hvac-info.com.
+# Слушает 8004, отдельно от старого `recognition` (ismeta-recognition:8003) —
+# тот обслуживает internal MVP, не трогается.
+#
+# **Источник истины service definition.** В F8-00 `docker-compose.local.yml`
+# этот сервис подключается через `extends: file: docker-compose.public.yml,
+# service: recognition-public` — тот же образ и ENV-контракт работают и
+# локально (порт 8004, volume `./storage/ismeta-uploads`, LLM ключ
+# `LLM_API_KEY_OPENAI` из `.env.local`), и в проде (deploy/.env.prod).
+#
+# Usage (standalone):
+#   docker compose -f docker-compose.public.yml build recognition-public
+#   docker compose -f docker-compose.public.yml up -d recognition-public
+#   curl http://localhost:8004/v1/healthz
+#
+# Usage (через локальный стенд F8-00):
+#   docker compose -f docker-compose.local.yml up -d recognition-public
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+services:
+  recognition-public:
+    build:
+      context: ./recognition
+      dockerfile: Dockerfile
+    image: recognition-public:1.0
+    container_name: recognition-public
+    ports:
+      - "${RECOGNITION_PUBLIC_PORT:-8004}:8003"
+    mem_limit: 14g
+    mem_reservation: 8g
+    volumes:
+      # Host path конфигурируется через ENV — local: `./storage/ismeta-uploads`
+      # (default), prod: `/data/ismeta-uploads` или подобный absolute path.
+      - ${PDF_STORAGE_HOST_PATH:-./storage/ismeta-uploads}:/uploads:rw
+    environment:
+      RECOGNITION_API_KEY: ${RECOGNITION_API_KEY:-dev-recognition-key-change-me}
+      # F8-01: единый секрет — `LLM_API_KEY_OPENAI` (тот же ENV что в backend
+      # и .env.local). На local подсовывается тестовый OpenAI key, в проде —
+      # production key из deploy/.env.prod.
+      LLM_API_KEY: ${LLM_API_KEY_OPENAI:-}
+      OPENAI_API_BASE: ${OPENAI_API_BASE:-https://api.openai.com}
+      LLM_MULTIMODAL_MODEL: ${RECOGNITION_LLM_MULTIMODAL_MODEL:-gpt-4o}
+      LLM_EXTRACT_MODEL: ${RECOGNITION_LLM_EXTRACT_MODEL:-gpt-4o}
+      LLM_CLASSIFY_MODEL: ${RECOGNITION_LLM_CLASSIFY_MODEL:-gpt-4o-mini}
+      # TD-17g pipeline: Docling (TableFormer) + Camelot lattice routing +
+      # targeted LLM Vision на scanned/Cyrillic-broken страницах.
+      PDF_EXTRACT_VIA_DOCLING: "true"
+      PDF_DOCLING_BYPASS_LLM: "true"
+      PDF_EXTRACT_VIA_CAMELOT: "true"
+      PDF_DOCLING_INJECT_HEADER: "true"
+      PDF_DOCLING_HEADER_HEIGHT_PT: "110.0"
+      PDF_LLM_VISION_FALLBACK: "true"
+      PDF_LLM_SCANNED_THRESHOLD: "200"
+      PDF_LLM_CYRILLIC_RATIO_THRESHOLD: "0.3"
+      PDF_LLM_VISION_COUNT_TOLERANCE: "2"
+      # Внутрь контейнера всегда `/uploads` (volume mount). Host-путь — через
+      # PDF_STORAGE_HOST_PATH выше.
+      PDF_STORAGE_PATH: /uploads
+      LOG_LEVEL: ${RECOGNITION_LOG_LEVEL:-INFO}
+      MAX_FILE_SIZE_MB: ${RECOGNITION_MAX_FILE_SIZE_MB:-50}
+      PARSE_TIMEOUT_SECONDS: ${RECOGNITION_PARSE_TIMEOUT_SECONDS:-3600}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8003/v1/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+    restart: unless-stopped

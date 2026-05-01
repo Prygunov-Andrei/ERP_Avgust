@@ -6,6 +6,24 @@ pydantic-settings>=2.2
 httpx[http2]>=0.27
 PyMuPDF>=1.24
 
+# TD-17: IBM Docling — open-source table structure recognition
+# (Apache 2.0, AAAI 2025, 97.9% cell accuracy via TableFormer).
+# Активируется через PDF_EXTRACT_VIA_DOCLING=true.
+docling>=2.92
+docling-core>=2.74
+# Docling TableFormer/DocLayNet — torch-based vision models.
+transformers>=4.40
+timm>=0.9
+# TD-17 force_full_page_ocr (RapidOcrOptions) requires onnxruntime backend.
+onnxruntime>=1.17
+
+# TD-17e: Camelot lattice — fallback для отсканированных и border-heavy
+# таблиц (Spec-9 41%→100%). Активируется через PDF_EXTRACT_VIA_CAMELOT=true.
+camelot-py>=1.0
+opencv-python-headless>=4.13
+# Python binding для Ghostscript (Camelot lattice rasterizer).
+ghostscript>=0.8
+
 # Dev/test
 pytest>=8.2
 pytest-asyncio>=0.23

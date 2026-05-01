@@ -19,6 +19,7 @@
 
 import re
 from dataclasses import dataclass, field
+from io import BytesIO
 from typing import Any
 
 # Единая точка истины для порога text layer — используется SpecParser'ом при
@@ -514,6 +515,22 @@ _HEADER_MARKER_PATTERNS: list[tuple[str, tuple[str, ...]]] = [
 ]
 
 
+def _normalize_header_text(text: str) -> str:
+    """TD-17 fix: нормализовать header text для match (word-break dashes).
+
+    «Коли-чест-во» (с word-break dashes из Docling header) НЕ матчит patterns
+    {"количество", "кол-во"} substring'ом. После normalization («коли-чест-во»
+    → «количество», убрав dashes/spaces) — match работает.
+    """
+    if not text:
+        return ""
+    s = text.lower().strip()
+    # Убрать word-break dashes («коли-чест-во» → «количество», «ед.изме-ре-
+    # ния» → «единицаизмерения»). Сохраняем буквы, цифры, точки.
+    s = re.sub(r"[\s\-\n]+", "", s)
+    return s
+
+
 def _match_column_from_merged_text(
     merged_text: str,
     *,
@@ -525,6 +542,10 @@ def _match_column_from_merged_text(
     хвостовой пунктуации. Порядок patterns критичен — см. комментарий
     в `_HEADER_MARKER_PATTERNS`.
 
+    TD-17: при отсутствии прямого match — пробуем normalized match
+    (убирая word-break dashes/spaces). Это лечит case Docling header
+    «Коли-чест-во» который не matches «количество» substring'ом.
+
     `patterns` — переопределяемый набор (спецификация vs счёт-фактура vs
     другой тип документа). Default — `_HEADER_MARKER_PATTERNS` для
     ЕСКД-таблиц (spec parser backward-compat).
@@ -533,9 +554,19 @@ def _match_column_from_merged_text(
     t = re.sub(r"[\s\-,.:;]+$", "", t)
     if not t:
         return None
-    for col, pats in patterns or _HEADER_MARKER_PATTERNS:
+    active = patterns or _HEADER_MARKER_PATTERNS
+    for col, pats in active:
         for p in pats:
             if p in t:
+                return col
+    # Normalized fallback (TD-17): убрать ВСЕ dashes/spaces в обеих сторонах.
+    t_norm = _normalize_header_text(merged_text)
+    if not t_norm:
+        return None
+    for col, pats in active:
+        for p in pats:
+            p_norm = _normalize_header_text(p)
+            if p_norm and p_norm in t_norm:
                 return col
     return None
 
@@ -1020,6 +1051,751 @@ _MODEL_OR_SIZE_LIKE_RE = re.compile(
 _LONG_NAME_RE = re.compile(
     r"[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё\s\-]{11,}",
 )
+
+
+def _docling_get_cell_text(table_data: Any, ri: int, ci: int) -> str:
+    """Достать text из ячейки Docling TableData (с защитой от out-of-bounds)."""
+    try:
+        cell = table_data.grid[ri][ci]
+    except (IndexError, AttributeError):
+        return ""
+    if cell is None:
+        return ""
+    text = getattr(cell, "text", None)
+    if text is None:
+        text = str(cell)
+    return text.strip()
+
+
+# TD-17 Spec-9: side-effect cache column x-ranges from последняя
+# successful Docling page (in display coords). Используется hybrid
+# fallback для skipped pages в multi-page tables.
+_LAST_DOCLING_COLUMN_RANGES: dict[str, tuple[float, float]] = {}
+
+
+def get_last_docling_column_ranges() -> dict[str, tuple[float, float]]:
+    return dict(_LAST_DOCLING_COLUMN_RANGES)
+
+
+# TD-17a: keywords ОВиК-таблицы header. Используется для conditional
+# injection — если top портion continuation page УЖЕ содержит хотя бы
+# 2 из этих keywords, страница не требует injection (Docling её видит).
+_HEADER_DETECT_KEYWORDS = (
+    "Поз",
+    "Наимен",
+    "Кол",
+    "Обозн",
+    "Изготов",
+    "Прим",
+    "Масс",
+    "Ед.",
+)
+
+
+def _page_has_header_keywords(
+    src_doc, page_idx: int, min_matches: int = 2
+) -> bool:
+    """Возвращает True, если page содержит >=min_matches header keywords.
+
+    Используется для conditional injection: если page уже имеет «Поз»,
+    «Наименование», «Кол-во» и т.д. — она self-contained, injection
+    создаст dual-header и сломает Docling. Если keywords нет — это
+    continuation page без header (Spec-9), injection нужен.
+
+    Используем full-page text (page.get_text("text")) вместо clip rect,
+    т.к. clip rect требует rotation-aware coordinates (Spec-1 rotation=90).
+    Continuation pages multi-page tables не содержат keywords нигде —
+    fullpage check достаточен.
+    """
+    try:
+        page = src_doc[page_idx]
+        text = page.get_text("text") or ""
+        matches = sum(1 for kw in _HEADER_DETECT_KEYWORDS if kw in text)
+        return matches >= min_matches
+    except Exception:
+        return False
+
+
+def _inject_header_overlay(
+    pdf_bytes: bytes, header_height_pt: float = 110.0
+) -> bytes:
+    """TD-17a: copy header (top header_height_pt of page 0) ТОЛЬКО на continuation pages БЕЗ собственного header.
+
+    Multi-page ОВиК-таблицы (Spec-9) имеют header только на page 1 — Docling
+    page-by-page split на pages 2+ видит continuation rows без header,
+    cells остаются на col 0 (garbage), qty column не мапится.
+
+    Conditional injection (v2): для каждой page > 0 проверяем top
+    портион (header_height_pt + 30 pt) на наличие header keywords
+    («Поз», «Наимен», «Кол», ...). Если найдено хотя бы 2 — страница
+    уже имеет собственный header (как Spec-1, Spec-3) → копируется
+    без изменений. Иначе расширяем page на header_height_pt и инжектируем
+    header page 0 в верх (Spec-9 multi-page без header).
+
+    Page 0 не модифицируется. Возвращает новый PDF bytes;
+    при ошибке возвращает оригинальные bytes.
+    """
+    try:
+        import pymupdf as fitz
+        import logging as _logging
+        _log = _logging.getLogger(__name__)
+        src = fitz.open(stream=pdf_bytes, filetype="pdf")
+        if len(src) < 2:
+            src.close()
+            return pdf_bytes
+
+        # TD-17a v3: skip injection on scanned PDFs (Spec-7).
+        # Text layer пуст → detector ВСЕГДА говорит «no header» → injекcим
+        # изображение header через show_pdf_page, но Docling использует OCR
+        # на каждой continuation page → injected image создаёт визуальный
+        # шум в OCR layer и отсутствие текстового header не помогает.
+        # Pre-scan avg chars per page; если scanned — skip injection.
+        try:
+            total_chars = sum(len(p.get_text("text")) for p in src)
+            avg_chars = total_chars / max(len(src), 1)
+            if avg_chars < 200:
+                src.close()
+                _log.info(
+                    f"TD-17a v3: skip injection — scanned PDF "
+                    f"(avg_chars={avg_chars:.1f})"
+                )
+                return pdf_bytes
+        except Exception:
+            pass
+
+        out_doc = fitz.open()
+        # Page 0 — копируем без изменений.
+        out_doc.insert_pdf(src, from_page=0, to_page=0)
+
+        # Используем .rect — он учитывает rotation, нам нужен display-size.
+        p0_rect = src[0].rect
+        src_width = p0_rect.width
+        src_clip_header = fitz.Rect(0, 0, src_width, header_height_pt)
+
+        injected_count = 0
+        skipped_count = 0
+        for pi in range(1, len(src)):
+            # Conditional skip: если на странице уже есть header keywords.
+            if _page_has_header_keywords(src, pi):
+                # Page уже самодостаточна — копируем без изменений.
+                out_doc.insert_pdf(src, from_page=pi, to_page=pi)
+                skipped_count += 1
+                continue
+
+            page_rect = src[pi].rect
+            page_w = page_rect.width
+            page_h = page_rect.height
+            new_h = page_h + header_height_pt
+            new_page = out_doc.new_page(width=page_w, height=new_h)
+            # Top: header from page 0 (clip top header_height_pt of page 0).
+            header_target = fitz.Rect(0, 0, page_w, header_height_pt)
+            try:
+                new_page.show_pdf_page(
+                    header_target, src, 0, clip=src_clip_header
+                )
+            except Exception as e:
+                _log.warning(
+                    f"TD-17a header inject failed for page {pi+1}: {e}"
+                )
+            # Bottom: original page content shifted down by header_height_pt.
+            content_target = fitz.Rect(0, header_height_pt, page_w, new_h)
+            full_clip = fitz.Rect(0, 0, page_w, page_h)
+            try:
+                new_page.show_pdf_page(
+                    content_target, src, pi, clip=full_clip
+                )
+            except Exception as e:
+                _log.warning(
+                    f"TD-17a content paste failed for page {pi+1}: {e}"
+                )
+            injected_count += 1
+
+        buf = BytesIO()
+        out_doc.save(buf)
+        out_doc.close()
+        src.close()
+        _log.info(
+            f"TD-17a v2: injected={injected_count}, "
+            f"skipped(already-has-header)={skipped_count}, "
+            f"height={header_height_pt}pt"
+        )
+        return buf.getvalue()
+    except Exception as e:
+        try:
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                f"TD-17a inject_header_overlay failed: {e}"
+            )
+        except Exception:
+            pass
+        return pdf_bytes
+
+
+def extract_via_camelot_page(
+    pdf_bytes: bytes, page_no: int
+) -> list[TableRow]:
+    """TD-17e: Camelot extract для одной страницы (1-based page_no).
+
+    Используется как fallback в hybrid pipeline когда Docling вернул
+    empty qty rows для этой page (multi-page без header — Spec-9).
+    Прямой вызов Camelot per-page минимизирует overhead.
+    """
+    try:
+        full = extract_via_camelot_subset(pdf_bytes, str(page_no))
+    except Exception:
+        return []
+    return full.get(page_no, [])
+
+
+def extract_via_camelot_subset(
+    pdf_bytes: bytes, pages: str
+) -> dict[int, list[TableRow]]:
+    """Camelot extract для подмножества страниц. pages — Camelot syntax
+    («1», «2», «1,3,5», «2-7»).
+    """
+    try:
+        import camelot
+        import logging as _logging
+        import tempfile
+        import os
+        _log = _logging.getLogger(__name__)
+    except ImportError:
+        return {}
+
+    tmp_path: str = ""
+    try:
+        with tempfile.NamedTemporaryFile(
+            suffix=".pdf", delete=False
+        ) as tmp:
+            tmp.write(pdf_bytes)
+            tmp_path = tmp.name
+        tables = camelot.read_pdf(
+            tmp_path, pages=pages, flavor="lattice"
+        )
+    except Exception as e:
+        _log.warning(f"TD-17e camelot subset failed: {e}")
+        return {}
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
+
+    return _camelot_tables_to_rows(tables)
+
+
+def _camelot_tables_to_rows(tables) -> dict[int, list[TableRow]]:
+    """Конверсия Camelot tables → dict[page_no, list[TableRow]]."""
+    col_to_key = {
+        0: "pos", 1: "name", 2: "model", 3: "brand",
+        4: "manufacturer", 5: "unit", 6: "qty",
+        7: "mass", 8: "comments",
+    }
+    HEADER_KEYWORDS = (
+        "Поз", "Наимен", "Кол", "Обозн", "Изготов",
+        "Прим", "Масс", "Ед.",
+    )
+    out: dict[int, list[TableRow]] = {}
+    for tbl in tables:
+        try:
+            page_no = int(tbl.page)
+        except Exception:
+            page_no = 1
+        df = tbl.df
+        rows_for_page = out.setdefault(page_no, [])
+        n_rows, n_cols = df.shape
+        for ri in range(n_rows):
+            cells: dict[str, str] = {}
+            row_text_concat = ""
+            for ci in range(min(n_cols, 9)):
+                val = str(df.iloc[ri, ci]).strip()
+                if val:
+                    key = col_to_key.get(ci)
+                    if key:
+                        cells[key] = val
+                    row_text_concat += val + " "
+            kw_count = sum(
+                1 for kw in HEADER_KEYWORDS if kw in row_text_concat
+            )
+            if kw_count >= 2:
+                continue
+            text_vals = [
+                cells.get(k, "")
+                for k in (
+                    "name", "model", "brand",
+                    "manufacturer", "unit", "comments",
+                )
+                if cells.get(k)
+            ]
+            if (
+                len(text_vals) >= 2
+                and all(v in "123456789" for v in text_vals)
+            ):
+                continue
+            if not cells:
+                continue
+            is_section = bool(
+                cells.get("name")
+                and not any(
+                    cells.get(k)
+                    for k in ("pos", "qty", "unit", "model", "brand")
+                )
+            )
+            rows_for_page.append(TableRow(
+                page_number=page_no,
+                y_mid=float(ri),
+                row_index=len(rows_for_page),
+                cells=cells,
+                raw_blocks=[],
+                is_header=False,
+                is_section_heading=is_section,
+            ))
+    return out
+
+
+def extract_via_camelot(pdf_bytes: bytes) -> dict[int, list[TableRow]]:
+    """TD-17e: extract таблиц через Camelot lattice flavor.
+
+    Camelot designed для multi-page bordered tables. Lattice flavor
+    использует grid-line detection (PDF cv2) вместо ML — для ОВиК ЕСКД
+    с рамками на continuation pages работает там, где Docling
+    page-by-page split падает (Spec-9 multi-page без header).
+
+    Возвращает dict[page_no, list[TableRow]] — same structure как
+    extract_via_docling для compat с _build_items_from_docling_rows.
+
+    GOST 21.110 col layout (9 cols по позиции):
+    0=Поз, 1=Наименование, 2=Тип/Марка, 3=Поставщик, 4=Изготовитель,
+    5=Ед.изм, 6=Кол-во, 7=Масса, 8=Примечание.
+    """
+    try:
+        import camelot
+        import logging as _logging
+        import tempfile
+        import os
+        _log = _logging.getLogger(__name__)
+    except ImportError:
+        return {}
+
+    # Camelot требует path; пишем в temp.
+    tmp_path: str = ""
+    try:
+        with tempfile.NamedTemporaryFile(
+            suffix=".pdf", delete=False
+        ) as tmp:
+            tmp.write(pdf_bytes)
+            tmp_path = tmp.name
+        tables = camelot.read_pdf(
+            tmp_path, pages="all", flavor="lattice"
+        )
+    except Exception as e:
+        _log.warning(f"TD-17e camelot read_pdf failed: {e}")
+        return {}
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
+
+    return _camelot_tables_to_rows(tables)
+
+
+def extract_via_docling(pdf_bytes: bytes) -> dict[int, list[TableRow]]:
+    """TD-17: extract таблиц через IBM Docling (97.9% cell accuracy, AAAI 2025).
+
+    Docling использует TableFormer (vision transformer обучен на 1M+
+    scientific и financial tables) + DocLayNet для layout. Cell binding
+    (pos+name+model+qty одной row) делается ML-моделью на уровне
+    bbox attention, что устраняет shift bug нашего bbox-extract.
+
+    Возвращает dict[page_no, list[TableRow]] — group по страницам для
+    совместимости с downstream pipeline (sticky cross-page, post-process).
+    page_no — 1-based как в наших TableRow.
+
+    Column mapping: header.names[ci] прогоняется через
+    `_match_column_from_merged_text` (тот же алгоритм что в bbox-extract).
+    Header row (ri=0) и col-numbers row (ri=1, all-digits) skipped.
+    Section heading detection: row с непустым `name` и пустыми остальными
+    cells → `is_section_heading=True`.
+
+    Использует CPU (TableFormer + DocLayNet PyTorch models). Размер
+    скачиваемых весов ~1.2 GB при первом запуске, затем cached.
+
+    Возвращает {} если Docling упал или не нашёл tables.
+    """
+    try:
+        import pymupdf as _fitz
+        from docling.datamodel.base_models import DocumentStream, InputFormat
+        from docling.datamodel.pipeline_options import (
+            PdfPipelineOptions,
+            TableFormerMode,
+            TableStructureOptions,
+        )
+        from docling.document_converter import DocumentConverter, PdfFormatOption
+        import logging as _logging
+        _log = _logging.getLogger(__name__)
+    except ImportError:
+        return {}
+
+    # TD-17: detect scanned PDFs (text layer < threshold) → force_full_page_ocr.
+    # Spec-7 (rotation 270, scanned image PDF) имеет text layer 205 chars total —
+    # Docling default OCR находит только footer fragments.
+    is_scanned = False
+    try:
+        _doc = _fitz.open(stream=pdf_bytes, filetype="pdf")
+        total_chars = sum(len(p.get_text("text")) for p in _doc)
+        avg_chars = total_chars / max(len(_doc), 1)
+        is_scanned = avg_chars < 200
+        _doc.close()
+    except Exception:
+        pass
+
+    # TD-17a: synthetic header injection (multi-page tables без header).
+    # ENV PDF_DOCLING_INJECT_HEADER=true → копируем header page 0 на верх
+    # каждой continuation page. Размер header задаётся
+    # PDF_DOCLING_HEADER_HEIGHT_PT (default 110.0).
+    try:
+        from ..config import settings as _settings
+        if getattr(_settings, "pdf_docling_inject_header", False):
+            header_h = float(
+                getattr(_settings, "pdf_docling_header_height_pt", 110.0)
+            )
+            pdf_bytes = _inject_header_overlay(pdf_bytes, header_h)
+    except Exception as _e:
+        _log.warning(f"TD-17a inject_header wrapper failed: {_e}")
+
+    # TD-17: TableFormerMode.ACCURATE даёт более точный structure recovery
+    # (медленнее но качественнее). Для ЕСКД-таблиц с многоуровневой нумерацией
+    # и тонкими grid lines accurate mode критичен.
+    try:
+        pipe_opts = PdfPipelineOptions()
+        pipe_opts.do_table_structure = True
+        pipe_opts.table_structure_options = TableStructureOptions(
+            mode=TableFormerMode.ACCURATE,
+            do_cell_matching=True,
+        )
+        if is_scanned:
+            # TD-17 Spec-7 fix: force OCR на отсканированных PDF.
+            try:
+                from docling.datamodel.pipeline_options import RapidOcrOptions
+                pipe_opts.do_ocr = True
+                pipe_opts.ocr_options = RapidOcrOptions(
+                    force_full_page_ocr=True, lang=["ru"]
+                )
+                pipe_opts.images_scale = 2.0
+            except Exception:
+                pass
+        converter = DocumentConverter(
+            format_options={
+                InputFormat.PDF: PdfFormatOption(pipeline_options=pipe_opts)
+            }
+        )
+    except Exception:
+        return {}
+
+    # TD-17 page-by-page: Docling детектит tables только на pages с явным
+    # header (Spec-9: 1/20, Spec-8: 2/14). Многостраничные таблицы без
+    # header на page 2-N skipped. Workaround: split PDF на single-page
+    # PDFs → Docling каждую отдельно → каждая видится как complete table.
+    pages_pdfs: list[bytes] = []
+    try:
+        src_doc = _fitz.open(stream=pdf_bytes, filetype="pdf")
+        for pi in range(len(src_doc)):
+            single = _fitz.open()
+            single.insert_pdf(src_doc, from_page=pi, to_page=pi)
+            buf = BytesIO()
+            single.save(buf)
+            single.close()
+            pages_pdfs.append(buf.getvalue())
+        src_doc.close()
+    except Exception as e:
+        _log.warning(f"TD-17 page split failed: {e}")
+        # Fallback на single-document path.
+        try:
+            source = DocumentStream(name="doc.pdf", stream=BytesIO(pdf_bytes))
+            result = converter.convert(source)
+        except Exception:
+            return {}
+
+    out_per_page: list[Any] = []  # results per page (или None если упало)
+    if pages_pdfs:
+        for pi, pbytes in enumerate(pages_pdfs):
+            try:
+                source = DocumentStream(
+                    name=f"page-{pi+1}.pdf", stream=BytesIO(pbytes)
+                )
+                page_result = converter.convert(source)
+                out_per_page.append(page_result.document)
+            except Exception as e:
+                _log.warning(f"TD-17 docling page {pi+1} failed: {e}")
+                out_per_page.append(None)
+
+    # Reset cache before this run.
+    global _LAST_DOCLING_COLUMN_RANGES
+    _LAST_DOCLING_COLUMN_RANGES = {}
+
+    out: dict[int, list[TableRow]] = {}
+    # GOST col-numbers fallback (ГОСТ 21.110): row[1] = «1, 2, ..., 9» nums.
+    gost_col_to_key = {
+        "1": "pos",
+        "2": "name",
+        "3": "model",
+        "4": "brand",
+        "5": "manufacturer",
+        "6": "unit",
+        "7": "qty",
+        "8": "mass",
+        "9": "comments",
+    }
+    # TD-17 page-by-page: prev_col_to_cell — header mapping последней
+    # обработанной страницы. Используется как fallback для следующих
+    # страниц без header (multi-page tables Spec-8/9).
+    prev_col_to_cell: dict[int, str] = {}
+    prev_col_count = 0
+
+    # Build list of (page_no, doc) tuples — either from page-by-page split
+    # (preferred) or fallback single doc.
+    docs_iter: list[tuple[int, Any]] = []
+    if out_per_page:
+        for pi, pdoc in enumerate(out_per_page):
+            if pdoc is not None:
+                docs_iter.append((pi + 1, pdoc))
+    else:
+        # Fallback single-doc path (если split упал).
+        try:
+            docs_iter.append((None, result.document))  # type: ignore[name-defined]
+        except NameError:
+            return {}
+
+    for page_no_override, pdoc in docs_iter:
+        for table in pdoc.tables:
+            page_no = page_no_override if page_no_override else 1
+            if page_no_override is None and table.prov:
+                page_no = table.prov[0].page_no
+            td = table.data
+            if td is None or td.num_rows == 0:
+                continue
+
+            # Header row → cells mapping per table.
+            col_to_cell: dict[int, str] = {}
+            for ci in range(td.num_cols):
+                text = _docling_get_cell_text(td, 0, ci)
+                if not text:
+                    continue
+                cell_key = _match_column_from_merged_text(text)
+                if cell_key:
+                    col_to_cell[ci] = cell_key
+
+            # Fallback по col-numbers row (если row 1 = «1, 2, ..., 9»).
+            if td.num_rows >= 2:
+                for ci in range(td.num_cols):
+                    if ci in col_to_cell:
+                        continue
+                    num_text = _docling_get_cell_text(td, 1, ci).strip()
+                    if num_text in gost_col_to_key:
+                        col_to_cell[ci] = gost_col_to_key[num_text]
+
+            # TD-17 multi-page: если на этой странице header не нашёлся
+            # (col_to_cell пуст или почти пуст) — наследуем mapping от
+            # предыдущей страницы того же документа (если cols совпадают).
+            if (
+                len(col_to_cell) < 3
+                and prev_col_to_cell
+                and abs(td.num_cols - prev_col_count) <= 1
+            ):
+                col_to_cell = dict(prev_col_to_cell)
+
+            # Update state if this page имеет valid header.
+            if len(col_to_cell) >= 3:
+                prev_col_to_cell = dict(col_to_cell)
+                prev_col_count = td.num_cols
+                # TD-17 Spec-9: column x-ranges. Try cell bbox; fallback
+                # to TableData.table_cells (alternative API), and last —
+                # equal-width split of table.bbox.
+                col_ranges_per_key: dict[str, list[tuple[float, float]]] = {}
+                try:
+                    # Pass 1: iterate ALL data rows (not first 5).
+                    for ci, cell_key in col_to_cell.items():
+                        for ri in range(td.num_rows):
+                            try:
+                                cell = td.grid[ri][ci]
+                            except (IndexError, AttributeError):
+                                continue
+                            if cell is None:
+                                continue
+                            bbox = getattr(cell, "bbox", None)
+                            if bbox is None:
+                                continue
+                            l = getattr(bbox, "l", None)
+                            r = getattr(bbox, "r", None)
+                            if l is None or r is None:
+                                continue
+                            col_ranges_per_key.setdefault(cell_key, []).append(
+                                (float(l), float(r))
+                            )
+                except Exception:
+                    pass
+
+                # Aggregate to single (x_min, x_max) per cell_key.
+                new_ranges: dict[str, tuple[float, float]] = {}
+                for cell_key, lst in col_ranges_per_key.items():
+                    if not lst:
+                        continue
+                    xs_min = min(p[0] for p in lst)
+                    xs_max = max(p[1] for p in lst)
+                    new_ranges[cell_key] = (xs_min, xs_max)
+
+                # Fallback: equal-width split of table.bbox if not all
+                # mapped columns got bboxes.
+                if len(new_ranges) < len(col_to_cell):
+                    try:
+                        tbbox = table.bbox
+                        if tbbox and td.num_cols > 0:
+                            t_l = float(tbbox[0])
+                            t_r = float(tbbox[2])
+                            col_w = (t_r - t_l) / td.num_cols
+                            for ci, cell_key in col_to_cell.items():
+                                if cell_key in new_ranges:
+                                    continue
+                                lo = t_l + ci * col_w
+                                hi = t_l + (ci + 1) * col_w
+                                new_ranges[cell_key] = (lo, hi)
+                    except Exception:
+                        pass
+
+                if len(new_ranges) >= 3:
+                    _LAST_DOCLING_COLUMN_RANGES = new_ranges
+
+            rows_for_page = out.setdefault(page_no, [])
+            # На multi-page tables (когда наследовали header) row[0] —
+            # это уже data, не header. Skip row 0 ТОЛЬКО если на этой же
+            # странице был полный native header (т.е. prev_col_to_cell
+            # был обновлён ИЗ ЭТОЙ ЖЕ страницы только что).
+            had_native_header = any(
+                _match_column_from_merged_text(_docling_get_cell_text(td, 0, ci))
+                for ci in range(td.num_cols)
+            )
+            start_ri = 1 if had_native_header else 0
+            for ri in range(start_ri, td.num_rows):
+                cells: dict[str, str] = {}
+                raw_blocks: list[str] = []
+                for ci in range(td.num_cols):
+                    text = _docling_get_cell_text(td, ri, ci)
+                    if not text:
+                        continue
+                    raw_blocks.append(text)
+                    cell_key = col_to_cell.get(ci)
+                    if not cell_key:
+                        continue
+                    if cell_key not in cells:
+                        cells[cell_key] = text
+                if not raw_blocks:
+                    continue
+                if all(c.replace(",", "").replace(".", "").isdigit() and len(c) <= 2
+                       for c in raw_blocks):
+                    continue
+                if any(is_stamp_text(c) for c in raw_blocks):
+                    continue
+                if not cells:
+                    continue
+                is_section_heading = bool(
+                    cells.get("name")
+                    and not cells.get("pos")
+                    and not cells.get("qty")
+                    and not cells.get("unit")
+                    and not cells.get("model")
+                    and not cells.get("brand")
+                )
+                rows_for_page.append(
+                    TableRow(
+                        page_number=page_no,
+                        y_mid=float(ri),
+                        row_index=len(rows_for_page),
+                        cells=cells,
+                        raw_blocks=raw_blocks,
+                        is_header=False,
+                        is_section_heading=is_section_heading,
+                    )
+                )
+    return out
+
+
+def extract_with_explicit_columns(
+    page: object,
+    column_ranges: dict[str, tuple[float, float]],
+) -> list[TableRow]:
+    """TD-17 Spec-9: extract page spans с явно заданными column x-ranges.
+
+    Используется для multi-page tables где первая страница имеет header
+    (Docling нашёл tables → знаем column bboxes), а последующие страницы —
+    continuation без header. Применяем те же x-ranges к page N spans.
+
+    column_ranges: {cell_key: (x_min, x_max)} в derotated display space.
+    """
+    page_number = int(getattr(page, "number", 0)) + 1
+    spans = _collect_spans(page)
+    if not spans:
+        return []
+
+    page_rect = getattr(page, "rect", None)
+    buckets = _bucket_by_y(spans)
+
+    rows: list[TableRow] = []
+    out_idx = 0
+    for bucket in buckets:
+        if page_rect is not None and _is_title_block_bucket(bucket, page_rect):
+            continue
+        kept = [s for s in bucket if not is_stamp_text(s.text)]
+        if not kept:
+            continue
+
+        cells: dict[str, list[_Span]] = {k: [] for k in column_ranges}
+        raw_blocks: list[str] = []
+        for span in sorted(kept, key=lambda s: s.disp_x):
+            center = span.disp_x + span.width / 2
+            raw_blocks.append(span.text)
+            for col, (lo, hi) in column_ranges.items():
+                if lo <= center <= hi:
+                    cells[col].append(span)
+                    break
+
+        merged: dict[str, str] = {}
+        for col, col_spans in cells.items():
+            if not col_spans:
+                continue
+            text = " ".join(s.text for s in col_spans).strip()
+            if text:
+                merged[col] = text
+        if not merged:
+            continue
+
+        # Skip stamp/header rows.
+        if any(is_stamp_cell(v) for v in merged.values()):
+            continue
+
+        is_section = bool(
+            merged.get("name")
+            and not merged.get("pos")
+            and not merged.get("qty")
+            and not merged.get("unit")
+            and not merged.get("model")
+        )
+
+        rows.append(
+            TableRow(
+                page_number=page_number,
+                y_mid=bucket[0].disp_y if bucket else 0.0,
+                row_index=out_idx,
+                cells=merged,
+                raw_blocks=raw_blocks,
+                is_header=False,
+                is_section_heading=is_section,
+            )
+        )
+        out_idx += 1
+    return rows
 
 
 def extract_structured_rows(page: object) -> list[TableRow]:

@@ -184,6 +184,9 @@ class SpecParser:
         # (sync-роут /v1/parse/spec не передаёт callback — поведение
         # идентично текущему).
         self._on_page_done = on_page_done
+        # TD-17: при PDF_EXTRACT_VIA_DOCLING=true сохраним bytes для
+        # `_process_batch_column_aware` (Docling работает на PDF целиком).
+        self._pdf_bytes = pdf_bytes
         state = self.state
         doc = await run_in_threadpool(fitz.open, stream=pdf_bytes, filetype="pdf")
         try:
@@ -192,6 +195,231 @@ class SpecParser:
                 "spec_parse start",
                 extra={"doc_filename": filename, "pages_total": state.pages_total},
             )
+
+            # TD-17a-pure: Docling extract без LLM. Items строятся напрямую
+            # из cells, минуя normalize_via_llm (нулевые $-затраты, 0 noise).
+            if settings.pdf_extract_via_docling and settings.pdf_docling_bypass_llm:
+                from .pdf_text import (
+                    TEXT_LAYER_MIN_CHARS_PER_PAGE,
+                    extract_structured_rows,
+                    extract_via_docling,
+                    has_usable_text_layer,
+                )
+                # TD-17e: hybrid Docling + Camelot. Docling primary
+                # (точнее на single-page tables — Spec-1, 2, 3, 6, 7, 8, 11),
+                # Camelot per-page fallback (Spec-9 multi-page без header
+                # → Camelot lattice работает на 100%).
+                docling_rows_by_page = await run_in_threadpool(
+                    extract_via_docling, pdf_bytes
+                )
+
+                # TD-17e routing: если >50% pages без parseable qty в
+                # Docling rows — это multi-page без header (Spec-9 style).
+                # Используем Camelot полностью — inject+Docling combo даёт
+                # phantom (col-numbers row leak в data row binding).
+                from .pdf_text import (
+                    extract_via_camelot,
+                    parse_quantity as _parse_qty_route,
+                )
+
+                def _real_qty_count(rows):
+                    n = 0
+                    for r in rows:
+                        q = (r.cells.get("qty") or "").strip()
+                        if q and _parse_qty_route(q) is not None:
+                            n += 1
+                    return n
+
+                _no_qty_pages = 0
+                for _pn in range(state.pages_total):
+                    _rows = docling_rows_by_page.get(_pn + 1) or []
+                    _has = any(
+                        (r.cells.get("qty") or "").strip()
+                        and _parse_qty_route(
+                            (r.cells.get("qty") or "").strip()
+                        ) is not None
+                        for r in _rows
+                    )
+                    if not _has:
+                        _no_qty_pages += 1
+                _no_qty_ratio = (
+                    _no_qty_pages / state.pages_total
+                    if state.pages_total else 0.0
+                )
+                if (
+                    _no_qty_ratio >= 0.5
+                    and getattr(settings, "pdf_extract_via_camelot", False)
+                ):
+                    logger.info(
+                        "TD-17e routing: pure Camelot (multi-page без header)",
+                        extra={
+                            "no_qty_pages": _no_qty_pages,
+                            "total_pages": state.pages_total,
+                            "ratio": _no_qty_ratio,
+                        },
+                    )
+                    camelot_full = await run_in_threadpool(
+                        extract_via_camelot, pdf_bytes
+                    )
+                    # Validate Camelot extracted ≥ what Docling did.
+                    _docling_total_qty = sum(
+                        1 for _rs in docling_rows_by_page.values()
+                        for r in _rs
+                        if (r.cells.get("qty") or "").strip()
+                        and _parse_qty_route(
+                            (r.cells.get("qty") or "").strip()
+                        ) is not None
+                    )
+                    _camelot_total_qty = sum(
+                        1 for _rs in camelot_full.values()
+                        for r in _rs
+                        if (r.cells.get("qty") or "").strip()
+                        and _parse_qty_route(
+                            (r.cells.get("qty") or "").strip()
+                        ) is not None
+                    )
+                    if _camelot_total_qty >= _docling_total_qty:
+                        docling_rows_by_page = camelot_full
+                # TD-17 hybrid: для страниц без Docling tables — legacy
+                # span-based extract. Многостраничные таблицы Docling
+                # видит только page 1 (с header); страницы 2-N без header
+                # skipped. Spec-9 (1/20), Spec-8 (2/14) — типичный кейс.
+                # Legacy extract применяет shift-калибровку на
+                # _DEFAULT_COLUMN_BOUNDS — работает на ГОСТ ЕСКД-таблицах
+                # без header.
+                missing_pages = []
+                docling_empty = not docling_rows_by_page
+                # TD-17 multi-page fix priority order:
+                # 1. extract_with_explicit_columns (column ranges from
+                #    Docling page 1) — наиболее точный для multi-page
+                #    tables (Spec-9: каждая 2-я страница без header).
+                # 2. PyMuPDF page.find_tables (lines) — для PDFs где
+                #    grid явно нарисована.
+                # 3. Legacy span-based extract_structured_rows — last resort.
+                from .pdf_text import (
+                    extract_with_explicit_columns,
+                    get_last_docling_column_ranges,
+                )
+                docling_col_ranges = get_last_docling_column_ranges()
+                # TD-17e: collect pages where Docling returned no parseable
+                # qty. Validate via parse_quantity — garbage in qty cell
+                # (col-numbers row, mismapping) does NOT count as qty.
+                from .pdf_text import parse_quantity as _parse_qty
+                pages_without_qty: list[int] = []
+
+                def _has_real_qty(rows):
+                    for r in rows:
+                        q = (r.cells.get("qty") or "").strip()
+                        if q and _parse_qty(q) is not None:
+                            return True
+                    return False
+
+                for pn in range(state.pages_total):
+                    existing = docling_rows_by_page.get(pn + 1) or []
+                    if not _has_real_qty(existing):
+                        pages_without_qty.append(pn + 1)
+
+                camelot_rows: dict[int, list] = {}
+                if (
+                    pages_without_qty
+                    and getattr(settings, "pdf_extract_via_camelot", False)
+                ):
+                    from .pdf_text import extract_via_camelot_subset
+                    pages_str = ",".join(str(p) for p in pages_without_qty)
+                    camelot_rows = await run_in_threadpool(
+                        extract_via_camelot_subset, pdf_bytes, pages_str
+                    )
+                    logger.info(
+                        "TD-17e camelot subset",
+                        extra={
+                            "requested_pages": pages_without_qty,
+                            "got_pages": sorted(camelot_rows.keys()),
+                            "rows_per_page": {
+                                p: len(rs) for p, rs in camelot_rows.items()
+                            },
+                        },
+                    )
+
+                for page_num in range(state.pages_total):
+                    # Trigger hybrid fallback если:
+                    # - Docling вернул empty rows для этой страницы;
+                    # - rows есть но НИ В ОДНОЙ нет parseable qty
+                    #   (mapping broken, garbage в qty cell).
+                    existing = docling_rows_by_page.get(page_num + 1) or []
+                    if _has_real_qty(existing):
+                        continue
+                    try:
+                        page = doc[page_num]
+                        if not has_usable_text_layer(
+                            page, min_chars=TEXT_LAYER_MIN_CHARS_PER_PAGE
+                        ):
+                            continue
+                        rows = []
+                        # Step 0 (TD-17e): Camelot lattice — для multi-page
+                        # без header (Spec-9). Lattice использует grid-lines.
+                        camelot_page_rows = camelot_rows.get(page_num + 1) or []
+                        if camelot_page_rows:
+                            camelot_has_qty = any(
+                                (r.cells.get("qty") or "").strip()
+                                for r in camelot_page_rows
+                            )
+                            if camelot_has_qty:
+                                rows = camelot_page_rows
+                        # Step 1: explicit columns from Docling page 1.
+                        if not rows and docling_col_ranges:
+                            rows = await run_in_threadpool(
+                                extract_with_explicit_columns,
+                                page,
+                                docling_col_ranges,
+                            )
+                        # Step 2: PyMuPDF find_tables.
+                        if not rows:
+                            rows = await run_in_threadpool(
+                                _extract_rows_via_pymupdf_tables, page,
+                                page_num + 1,
+                            )
+                        # Step 3: legacy span-based.
+                        if not rows:
+                            rows = await run_in_threadpool(
+                                extract_structured_rows, page
+                            )
+                        # Use new rows ONLY if it has qty (better than existing).
+                        rows_has_qty = any(
+                            (r.cells.get("qty") or "").strip() for r in rows
+                        )
+                        if rows and rows_has_qty:
+                            docling_rows_by_page[page_num + 1] = rows
+                            missing_pages.append(page_num + 1)
+                    except Exception as e:
+                        logger.warning(
+                            "TD-17 hybrid fallback failed",
+                            extra={"page": page_num + 1, "error": str(e)},
+                        )
+                if docling_empty and missing_pages:
+                    logger.info(
+                        "TD-17 docling empty (rotation issue?) → full legacy fallback",
+                        extra={"pages_recovered": len(missing_pages)},
+                    )
+                if missing_pages:
+                    logger.info(
+                        "TD-17 hybrid: legacy fallback for pages without docling tables",
+                        extra={"pages": missing_pages, "count": len(missing_pages)},
+                    )
+
+                # TD-17g: targeted LLM Vision intervention поверх
+                # Docling+Camelot. Universal triggers (НЕ spec-id):
+                # - scanned PDF (avg_chars < threshold) + page без parsed
+                #   rows → Vision extract
+                # - encoding broken (low cyrillic ratio / cid: markers)
+                #   на page → Vision extract
+                # - Vision Counter mismatch на page → Vision retry
+                if getattr(settings, "pdf_llm_vision_fallback", False):
+                    docling_rows_by_page = await self._td17g_vision_intervene(
+                        doc, docling_rows_by_page, _real_qty_count
+                    )
+
+                self._build_items_from_docling_rows(docling_rows_by_page)
+                return self._finalize()
 
             # E15.04: сначала пробуем column-aware batch (параллельные LLM
             # calls, best-effort sticky из предыдущих страниц). Для страниц
@@ -229,8 +457,29 @@ class SpecParser:
         self._processed_pages: set[int] = getattr(self, "_processed_pages", set())
 
         # Фаза 1 — extract rows per page (sync, быстро).
+        # TD-17: Docling extract path (97.9% cell accuracy, локально, без LLM).
         pages_rows: list[list[TableRow]] = []
+        docling_rows_by_page: dict[int, list[TableRow]] = {}
+        if settings.pdf_extract_via_docling:
+            from .pdf_text import extract_via_docling
+            pdf_bytes = getattr(self, "_pdf_bytes", b"")
+            if pdf_bytes:
+                docling_rows_by_page = await run_in_threadpool(
+                    extract_via_docling, pdf_bytes
+                )
+                logger.info(
+                    "TD-17 docling extract",
+                    extra={
+                        "pages_with_tables": len(docling_rows_by_page),
+                        "total_rows": sum(len(r) for r in docling_rows_by_page.values()),
+                    },
+                )
+
         for page_num in range(state.pages_total):
+            # TD-17: при наличии Docling rows для страницы — приоритетный путь.
+            if settings.pdf_extract_via_docling and (page_num + 1) in docling_rows_by_page:
+                pages_rows.append(docling_rows_by_page[page_num + 1])
+                continue
             try:
                 page = doc[page_num]
                 if not has_usable_text_layer(page, min_chars=TEXT_LAYER_MIN_CHARS_PER_PAGE):
@@ -707,6 +956,147 @@ class SpecParser:
             )
         return page_num, norm_p2
 
+    def _build_items_from_docling_rows(
+        self, rows_by_page: dict[int, list[TableRow]]
+    ) -> None:
+        """TD-17a-pure: строит SpecItem напрямую из Docling rows без LLM.
+
+        Минимальный rule-based pipeline:
+        - section heading rows → state.current_section (не item)
+        - data rows → SpecItem с cells.{name, model, brand, manufacturer,
+          unit, qty, comments, pos→system_prefix}
+        - sticky parent: если cells.name пуст и есть qty/model → name
+          inherit'ится с предыдущего non-section name
+        - cross-page: row начала p_N с пустым cells.{pos,qty,unit,model,
+          brand} но непустым name → продолжение last item p_N-1
+
+        PO правило (3×): cells.qty primary signal — row с qty всегда даёт
+        item; row без qty (и без model/unit) — section heading или
+        continuation, не item.
+        """
+        from .pdf_text import parse_quantity
+        from .spec_postprocess import _has_variant_marker
+        state = self.state
+
+        for page_no in sorted(rows_by_page.keys()):
+            page_rows = rows_by_page[page_no]
+            page_first_idx = len(state.items)
+
+            # Cross-page continuation: первая row страницы с пустым pos+qty+
+            # unit+model+brand но непустым name → склеить в name last item.
+            if state.items and page_rows:
+                head = page_rows[0]
+                hc = head.cells
+                if (
+                    hc.get("name")
+                    and not hc.get("pos")
+                    and not hc.get("qty")
+                    and not hc.get("unit")
+                    and not hc.get("model")
+                    and not hc.get("brand")
+                    and not head.is_section_heading
+                ):
+                    last = state.items[-1]
+                    tail = (hc.get("name") or "").strip()
+                    if tail and tail not in last.name:
+                        last.name = f"{last.name.rstrip()} {tail}".strip()
+                    page_rows = page_rows[1:]
+
+            sticky_name = state.sticky_parent_name
+            for row in page_rows:
+                cells = row.cells
+                name_val = (cells.get("name") or "").strip()
+                pos_val = (cells.get("pos") or "").strip()
+                qty_raw = (cells.get("qty") or "").strip()
+                unit_val = (cells.get("unit") or "шт").strip() or "шт"
+                model_val = (cells.get("model") or "").strip()
+                brand_val = (cells.get("brand") or "").strip()
+                manuf_val = (cells.get("manufacturer") or "").strip()
+                comments_val = (cells.get("comments") or "").strip()
+
+                # TD-17a v7: skip GOST col-numbers row («1, 2, ..., 9»).
+                # Native col-numbers row на странице (или injected) может
+                # быть прочитана Docling как data row, qty приклеивается
+                # из соседних cells. Detection: text cells (name/model/
+                # brand/manufacturer/unit/comments) — все single digits
+                # 1-9, qty игнорируется. Реальный data row никогда не
+                # имеет name=«2», model=«3» etc.
+                # ВАЖНО: используем raw cells.get(), не fallback'нутые
+                # значения (unit_val подменяется на «шт» если пусто).
+                _raw_vals = [
+                    (cells.get(k) or "").strip()
+                    for k in (
+                        "name", "model", "brand",
+                        "manufacturer", "unit", "comments",
+                    )
+                ]
+                _digit_vals = [v for v in _raw_vals if v]
+                if (
+                    len(_digit_vals) >= 2
+                    and all(v in "123456789" for v in _digit_vals)
+                ):
+                    continue
+
+                # Section heading: only `name`, no pos/qty/unit/model/brand.
+                if row.is_section_heading and name_val:
+                    state.current_section = name_val
+                    continue
+
+                # Sticky inheritance: пустой name но есть qty/model → варианте
+                # серии, name = sticky.
+                if not name_val and (qty_raw or model_val):
+                    if sticky_name:
+                        name_val = sticky_name
+                if name_val and not _has_variant_marker(name_val):
+                    sticky_name = name_val
+                    state.sticky_parent_name = name_val
+
+                # PO правило (3×): cells.qty primary signal позиции.
+                # Row БЕЗ непустого qty → НЕ item. Это либо section heading,
+                # либо continuation, либо orphan name. Continuation merge'ится
+                # в last item (если он есть).
+                if not qty_raw:
+                    if name_val and state.items:
+                        last = state.items[-1]
+                        if name_val not in last.name:
+                            last.name = f"{last.name.rstrip()} {name_val}".strip()
+                    continue
+
+                qty_parsed = parse_quantity(qty_raw)
+                if qty_parsed is None or qty_parsed <= 0:
+                    # qty не парсится → не item.
+                    continue
+                qty = qty_parsed
+
+                state.sort_order += 1
+                final_name = name_val
+                if pos_val and not final_name.startswith(pos_val):
+                    # «ПВ-ИТП» (буквенный) клеится в name. Чистый номер «1»,
+                    # «2.4» — system_prefix без склейки.
+                    if not pos_val.replace(".", "").replace(",", "").isdigit():
+                        final_name = f"{pos_val}-{final_name}"
+
+                state.items.append(
+                    SpecItem(
+                        name=final_name[:500],
+                        model_name=model_val[:500],
+                        brand=brand_val[:200],
+                        manufacturer=manuf_val[:200],
+                        unit=unit_val,
+                        quantity=qty,
+                        tech_specs="",
+                        comments=comments_val,
+                        section_name=state.current_section,
+                        page_number=page_no,
+                        sort_order=state.sort_order,
+                    )
+                )
+
+            if len(state.items) > page_first_idx:
+                state.pages_processed += 1
+            else:
+                state.pages_skipped += 1
+
     async def _process_page_sequential(self, doc: fitz.Document, page_num: int) -> None:
         """Обработка страницы по старой (pre-batch) последовательной схеме —
         используется как fallback для страниц без text layer и в случае,
@@ -1009,6 +1399,189 @@ class SpecParser:
                 )
             )
 
+    async def _td17g_vision_intervene(
+        self,
+        doc: "fitz.Document",
+        docling_rows_by_page: dict[int, list[TableRow]],
+        real_qty_count_fn,
+    ) -> dict[int, list[TableRow]]:
+        """TD-17g: targeted Vision LLM intervention.
+
+        Universal triggers (page-level, не spec-id):
+        - scanned page: text layer < scanned_threshold chars/page
+        - broken encoding: cyrillic ratio < threshold или есть «(cid:N)»
+        - Vision Counter mismatch: parsed_count < vision_count - tolerance
+
+        Если any trigger fires — Vision extract на эту page заменяет
+        existing Docling/Camelot rows.
+
+        Provider: self.provider (из spec_parser).
+        """
+        from .pdf_text import parse_quantity as _parse_qty
+        scanned_threshold = float(
+            getattr(settings, "pdf_llm_scanned_threshold", 200)
+        )
+        cyrillic_ratio_threshold = float(
+            getattr(settings, "pdf_llm_cyrillic_ratio_threshold", 0.3)
+        )
+        count_tolerance = int(
+            getattr(settings, "pdf_llm_vision_count_tolerance", 2)
+        )
+
+        def _is_cyrillic(ch: str) -> bool:
+            cp = ord(ch)
+            return 0x0400 <= cp <= 0x04FF
+
+        # PDF-level scanned detection: avg chars/page across ВСЕХ
+        # страниц. Если pdf scanned — все pages в Vision (даже если
+        # одна имеет footer text > threshold).
+        pdf_total_chars = 0
+        for _pn in range(self.state.pages_total):
+            try:
+                pdf_total_chars += len(doc[_pn].get_text("text") or "")
+            except Exception:
+                pass
+        pdf_avg_chars = (
+            pdf_total_chars / self.state.pages_total
+            if self.state.pages_total else 0
+        )
+        pdf_is_scanned = pdf_avg_chars < scanned_threshold
+
+        intervened_pages: list[dict] = []
+        for page_num in range(self.state.pages_total):
+            try:
+                page = doc[page_num]
+            except Exception:
+                continue
+            page_text = page.get_text("text") or ""
+
+            # Trigger A: scanned PDF (PDF-level avg < threshold).
+            is_scanned = pdf_is_scanned
+
+            # Trigger B: broken encoding (low cyrillic ratio).
+            cyr_count = sum(1 for ch in page_text if _is_cyrillic(ch))
+            alpha_count = sum(1 for ch in page_text if ch.isalpha())
+            cyr_ratio = (
+                cyr_count / alpha_count if alpha_count > 0 else 1.0
+            )
+            has_cid_marker = "(cid:" in page_text
+            broken_encoding = (
+                alpha_count > 50
+                and (cyr_ratio < cyrillic_ratio_threshold or has_cid_marker)
+            )
+
+            existing = docling_rows_by_page.get(page_num + 1) or []
+            parsed_count = real_qty_count_fn(existing)
+
+            # Trigger C: Vision Counter mismatch (cheap call).
+            need_count_check = (
+                not is_scanned
+                and not broken_encoding
+                and parsed_count > 0
+            )
+            vision_count = 0
+            count_mismatch = False
+            if need_count_check:
+                try:
+                    vision_count = await self._run_vision_counter(
+                        doc, page_num
+                    )
+                    if (
+                        vision_count > 0
+                        and parsed_count < vision_count - count_tolerance
+                    ):
+                        count_mismatch = True
+                except Exception as e:
+                    logger.warning(
+                        "TD-17g vision_counter failed",
+                        extra={"page": page_num + 1, "error": str(e)},
+                    )
+
+            should_vision = (
+                is_scanned
+                or broken_encoding
+                or count_mismatch
+                or (parsed_count == 0 and len(page_text) > 100)
+            )
+
+            if not should_vision:
+                continue
+
+            try:
+                image_b64 = await run_in_threadpool(
+                    render_page_to_b64, doc, page_num
+                )
+                items_dicts = await self._extract_items(
+                    image_b64, page_num
+                )
+            except Exception as e:
+                logger.warning(
+                    "TD-17g vision extract failed",
+                    extra={"page": page_num + 1, "error": str(e)},
+                )
+                continue
+
+            if not items_dicts:
+                continue
+
+            new_rows: list[TableRow] = []
+            for idx, it in enumerate(items_dicts):
+                qty_val = it.get("quantity")
+                if qty_val is None:
+                    qty_val = it.get("qty")
+                qty_str = (
+                    str(qty_val).strip() if qty_val not in (None, "") else ""
+                )
+                cells = {
+                    "name": str(it.get("name", "") or "").strip(),
+                    "model": str(it.get("model_name", "") or "").strip(),
+                    "brand": str(it.get("brand", "") or "").strip(),
+                    "manufacturer": str(
+                        it.get("manufacturer", "") or ""
+                    ).strip(),
+                    "unit": str(it.get("unit", "") or "").strip() or "шт",
+                    "qty": qty_str,
+                    "comments": str(
+                        it.get("tech_specs", "") or it.get("comments", "")
+                        or ""
+                    ).strip(),
+                }
+                if not cells["name"] or not qty_str:
+                    continue
+                if _parse_qty(qty_str) is None:
+                    continue
+                new_rows.append(TableRow(
+                    page_number=page_num + 1,
+                    y_mid=float(idx),
+                    row_index=idx,
+                    cells=cells,
+                    raw_blocks=[],
+                    is_header=False,
+                    is_section_heading=False,
+                ))
+
+            if new_rows:
+                docling_rows_by_page[page_num + 1] = new_rows
+                intervened_pages.append({
+                    "page": page_num + 1,
+                    "trigger": (
+                        "scanned" if is_scanned
+                        else "broken_encoding" if broken_encoding
+                        else "count_mismatch" if count_mismatch
+                        else "empty_parsed"
+                    ),
+                    "before": parsed_count,
+                    "after": len(new_rows),
+                    "vision_count": vision_count if need_count_check else None,
+                })
+
+        if intervened_pages:
+            logger.info(
+                "TD-17g vision intervention applied",
+                extra={"pages": intervened_pages},
+            )
+        return docling_rows_by_page
+
     async def _process_page_legacy_text(
         self, page: fitz.Page, page_num: int
     ) -> bool:
@@ -1155,3 +1728,113 @@ def _merge_system_prefix(item: NormalizedItem) -> str:
     if not name:
         return prefix
     return f"{prefix}-{name}"
+
+
+def _extract_rows_via_pymupdf_tables(page, page_no: int) -> list[TableRow]:
+    """TD-17 multi-page fallback: PyMuPDF page.find_tables по grid lines.
+
+    Используется для страниц где Docling не нашёл tables (multi-page
+    таблицы без header на page > 1, Spec-9 case). PyMuPDF.find_tables
+    с strategy='lines' детектит tables по vector graphics independently
+    от header. Mapping cells → keys по col-number row или GOST 21.110.
+    """
+    try:
+        tabs = page.find_tables(strategy="lines")
+    except Exception:
+        return []
+    if not tabs.tables:
+        return []
+    tab = max(tabs.tables, key=lambda t: t.bbox[2] - t.bbox[0])
+    try:
+        extracted = tab.extract()
+    except Exception:
+        return []
+    if not extracted:
+        return []
+
+    from .pdf_text import _match_column_from_merged_text, is_stamp_text
+
+    # Try header row 0 mapping.
+    col_to_cell: dict[int, str] = {}
+    if extracted:
+        for ci, val in enumerate(extracted[0]):
+            if not val:
+                continue
+            cell_key = _match_column_from_merged_text(str(val))
+            if cell_key:
+                col_to_cell[ci] = cell_key
+    # GOST col-numbers (row[1]) fallback.
+    gost_col_to_key = {
+        "1": "pos", "2": "name", "3": "model", "4": "brand",
+        "5": "manufacturer", "6": "unit", "7": "qty",
+        "8": "mass", "9": "comments",
+    }
+    if len(extracted) >= 2:
+        for ci, val in enumerate(extracted[1]):
+            if ci in col_to_cell:
+                continue
+            v = str(val or "").strip()
+            if v in gost_col_to_key:
+                col_to_cell[ci] = gost_col_to_key[v]
+    # Если на этой странице нет header, всё равно попробуем GOST через
+    # row[0] (вдруг это уже data со scrambled mapping).
+    if len(col_to_cell) < 3:
+        # Default GOST: col 0=pos, 1=name, 2=model, ..., based on standard
+        # ЕСКД 9-column table.
+        n_cols = len(extracted[0]) if extracted else 0
+        for ci in range(min(n_cols, 9)):
+            num_text = str(ci + 1)
+            if num_text in gost_col_to_key:
+                col_to_cell.setdefault(ci, gost_col_to_key[num_text])
+
+    had_native_header = any(
+        _match_column_from_merged_text(str(extracted[0][ci] or ""))
+        for ci in range(len(extracted[0]))
+    ) if extracted else False
+    start_ri = 1 if had_native_header else 0
+
+    rows_out: list[TableRow] = []
+    for ri in range(start_ri, len(extracted)):
+        row = extracted[ri]
+        if not row:
+            continue
+        clean = [(v.strip() if isinstance(v, str) else "") for v in row]
+        nonempty = [c for c in clean if c]
+        if not nonempty:
+            continue
+        if all(c.replace(",", "").replace(".", "").isdigit() and len(c) <= 2
+               for c in nonempty):
+            continue
+        if any(is_stamp_text(c) for c in nonempty):
+            continue
+        cells: dict[str, str] = {}
+        raw_blocks: list[str] = []
+        for ci, val in enumerate(clean):
+            if not val:
+                continue
+            raw_blocks.append(val)
+            cell_key = col_to_cell.get(ci)
+            if cell_key and cell_key not in cells:
+                cells[cell_key] = val
+        if not cells:
+            continue
+        is_section_heading = bool(
+            cells.get("name")
+            and not cells.get("pos")
+            and not cells.get("qty")
+            and not cells.get("unit")
+            and not cells.get("model")
+            and not cells.get("brand")
+        )
+        rows_out.append(
+            TableRow(
+                page_number=page_no,
+                y_mid=float(ri),
+                row_index=len(rows_out),
+                cells=cells,
+                raw_blocks=raw_blocks,
+                is_header=False,
+                is_section_heading=is_section_heading,
+            )
+        )
+    return rows_out

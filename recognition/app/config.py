@@ -35,6 +35,36 @@ class Settings(BaseSettings):
     # быстрого rollback в случае проблем).
     llm_normalize_enabled: bool = True
     llm_normalize_max_tokens: int = 6000  # достаточно для ~30 items/стр в JSON
+    # TD-17: IBM Docling extract path (97.9% cell accuracy, Apache 2.0).
+    # При flag=true PDF идёт через DocumentConverter, table cells → TableRow
+    # via adapter. При pdf_docling_bypass_llm=true normalize_via_llm
+    # пропускается полностью (pure path, без LLM costs/noise).
+    pdf_extract_via_docling: bool = False
+    pdf_docling_bypass_llm: bool = False
+    # TD-17a: Synthetic header injection. Перед page-by-page split копируем
+    # верхнюю часть page 0 (header_height_pt в pt) поверх каждой continuation
+    # page. Каждая страница расширяется на header_height_pt и оригинальный
+    # контент сдвигается вниз. Docling видит каждую страницу с phantom-header
+    # → корректно мапит qty column для multi-page без header (Spec-9).
+    pdf_docling_inject_header: bool = False
+    pdf_docling_header_height_pt: float = 110.0
+    # TD-17e: Camelot lattice flavor — альтернативный extractor для PDF
+    # с border-line tables (ОВиК ЕСКД). Lattice использует grid-lines для
+    # column boundaries → работает на continuation pages БЕЗ header
+    # (Spec-9). При flag=true путь Docling обходится полностью.
+    pdf_extract_via_camelot: bool = False
+    # TD-17g: targeted LLM Vision intervention поверх Docling+Camelot.
+    # Universal triggers, НЕ spec-id:
+    # - scanned PDF (avg chars/page < scanned_threshold) → full Vision
+    #   extract вместо OCR (RapidOcr garbage на русских scanned PDFs).
+    # - encoding broken (cyrillic ratio в text layer < threshold ИЛИ
+    #   есть `(cid:N)` markers) → Vision extract per page.
+    # - Vision Counter mismatch: parsed_count < vision_count - tolerance
+    #   → Vision retry full extract на этой page.
+    pdf_llm_vision_fallback: bool = False
+    pdf_llm_scanned_threshold: int = 200
+    pdf_llm_cyrillic_ratio_threshold: float = 0.3
+    pdf_llm_vision_count_tolerance: int = 2
     # DeepSeek V4 thinking mode: "" (не передавать, использовать дефолт модели),
     # "disabled" (быстрый non-thinking, экономит max_tokens для content),
     # "enabled" (reasoning_content генерится перед content — нужно поднять
@@ -82,6 +112,11 @@ class Settings(BaseSettings):
     dpi: int = 200
     max_page_retries: int = 2
     port: int = 8003
+    # F8-01: путь внутри контейнера, в который копируется каждый загруженный
+    # PDF до парсинга. Если "" — не копируем. На production-стенде маунтится
+    # как volume `./storage/ismeta-uploads:/uploads:rw`, чтобы держать архив
+    # принятых документов отдельно от стейтлесс-сервиса.
+    pdf_storage_path: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
