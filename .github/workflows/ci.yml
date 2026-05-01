@@ -117,7 +117,7 @@ jobs:
           CELERY_RESULT_BACKEND: redis://localhost:6379/0
       - name: Lint with ruff
         run: pip install ruff && ruff check . --select=E,F,W --ignore=E501,E402 --exclude=migrations,__pycache__,.venv
-    timeout-minutes: 10
+    timeout-minutes: 15
 
   env-keys:
     name: Env keys drift check
