@@ -84,7 +84,7 @@ describe('useIsmetaJob — state transitions', () => {
     expect(mocked.getResult).toHaveBeenCalledWith('job-1');
   });
 
-  it('429 на parsePdf → error.concurrency=true', async () => {
+  it('429 без code (legacy) → error.concurrency=true', async () => {
     mocked.parsePdf.mockRejectedValue(new IsmetaApiError(429, 'rate limited'));
     const { result } = renderHook(() => useIsmetaJob());
     await act(async () => {
@@ -93,7 +93,70 @@ describe('useIsmetaJob — state transitions', () => {
     expect(result.current.state.status).toBe('error');
     if (result.current.state.status === 'error') {
       expect(result.current.state.concurrency).toBe(true);
+      expect(result.current.state.rateLimited).toBeFalsy();
       expect(result.current.state.message).toMatch(/обработка/i);
+    }
+  });
+
+  it('429 code=concurrency → concurrency=true, специфичный текст', async () => {
+    mocked.parsePdf.mockRejectedValue(
+      new IsmetaApiError(429, 'У вас уже идёт обработка', 'concurrency'),
+    );
+    const { result } = renderHook(() => useIsmetaJob());
+    await act(async () => {
+      await result.current.start(fakeFile(), {});
+    });
+    expect(result.current.state.status).toBe('error');
+    if (result.current.state.status === 'error') {
+      expect(result.current.state.concurrency).toBe(true);
+      expect(result.current.state.rateLimited).toBeFalsy();
+      expect(result.current.state.rateLimitCode).toBe('concurrency');
+    }
+  });
+
+  it('429 code=rate_session → rateLimited=true, текст про сессию', async () => {
+    mocked.parsePdf.mockRejectedValue(
+      new IsmetaApiError(429, 'Превышен лимит', 'rate_session'),
+    );
+    const { result } = renderHook(() => useIsmetaJob());
+    await act(async () => {
+      await result.current.start(fakeFile(), {});
+    });
+    if (result.current.state.status === 'error') {
+      expect(result.current.state.rateLimited).toBe(true);
+      expect(result.current.state.concurrency).toBeFalsy();
+      expect(result.current.state.rateLimitCode).toBe('rate_session');
+      expect(result.current.state.message).toMatch(/сесси/i);
+    }
+  });
+
+  it('429 code=rate_ip_hourly → rateLimited=true, текст про IP', async () => {
+    mocked.parsePdf.mockRejectedValue(
+      new IsmetaApiError(429, 'Превышен лимит', 'rate_ip_hourly'),
+    );
+    const { result } = renderHook(() => useIsmetaJob());
+    await act(async () => {
+      await result.current.start(fakeFile(), {});
+    });
+    if (result.current.state.status === 'error') {
+      expect(result.current.state.rateLimited).toBe(true);
+      expect(result.current.state.rateLimitCode).toBe('rate_ip_hourly');
+      expect(result.current.state.message).toMatch(/IP/);
+    }
+  });
+
+  it('429 code=rate_ip_daily → rateLimited=true, текст про сутки', async () => {
+    mocked.parsePdf.mockRejectedValue(
+      new IsmetaApiError(429, 'Превышен лимит', 'rate_ip_daily'),
+    );
+    const { result } = renderHook(() => useIsmetaJob());
+    await act(async () => {
+      await result.current.start(fakeFile(), {});
+    });
+    if (result.current.state.status === 'error') {
+      expect(result.current.state.rateLimited).toBe(true);
+      expect(result.current.state.rateLimitCode).toBe('rate_ip_daily');
+      expect(result.current.state.message).toMatch(/завтра|суточн/i);
     }
   });
 

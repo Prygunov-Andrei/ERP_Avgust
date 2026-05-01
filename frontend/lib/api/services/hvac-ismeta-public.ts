@@ -43,9 +43,11 @@ async function handle<T>(res: Response): Promise<T> {
 
 export class IsmetaApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  code?: string;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
     this.name = 'IsmetaApiError';
   }
 }
@@ -72,13 +74,15 @@ async function realParsePdf(
   const res = await fetch(`${BASE}/parse`, { method: 'POST', body: fd });
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
+    let code: string | undefined;
     try {
       const body = await res.json();
       detail = body.detail || body.error || JSON.stringify(body);
+      code = typeof body.code === 'string' ? body.code : undefined;
     } catch {
       /* not JSON */
     }
-    throw new IsmetaApiError(res.status, detail);
+    throw new IsmetaApiError(res.status, detail, code);
   }
   return res.json();
 }

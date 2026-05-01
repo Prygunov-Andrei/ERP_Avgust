@@ -1,0 +1,120 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url 'admin:hvac_ismeta_ismetajob_changelist' %}">ISMeta jobs</a>
+  &rsaquo; Статистика
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  .ismeta-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .ismeta-stats .card { padding: 14px 16px; border: 1px solid var(--border-color, #ddd); border-radius: 6px; background: var(--body-bg, #fff); }
+  .ismeta-stats h3 { margin: 0 0 8px 0; font-size: 14px; color: var(--body-fg, #333); }
+  .ismeta-stats dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px; }
+  .ismeta-stats dt { color: var(--body-quiet-color, #666); }
+  .ismeta-stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .ismeta-stats dd.num { font-weight: 600; }
+  table.ismeta-grid { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  table.ismeta-grid th, table.ismeta-grid td { padding: 6px 10px; border-bottom: 1px solid var(--border-color, #eee); text-align: left; font-size: 13px; }
+  table.ismeta-grid th { background: var(--header-bg, #f5f5f5); }
+  .ismeta-section { margin-bottom: 24px; }
+  .ismeta-error { color: var(--error-fg, #c00); }
+</style>
+
+<h1>Статистика ISMeta</h1>
+
+<div class="ismeta-stats">
+  {% with s=stats_by_period.today %}
+  <div class="card">
+    <h3>За 24 часа</h3>
+    <dl>
+      <dt>Всего jobs</dt><dd class="num">{{ s.total }}</dd>
+      <dt>Успешно</dt><dd class="num">{{ s.done }}</dd>
+      <dt>Ошибки</dt><dd class="num">{{ s.errors }}</dd>
+      <dt>В очереди / процесс</dt><dd class="num">{{ s.queued }} / {{ s.processing }}</dd>
+      <dt>Стоимость, $</dt><dd class="num">{{ s.total_cost_usd|floatformat:4 }}</dd>
+      <dt>Avg / median, с</dt><dd class="num">{{ s.avg_duration_s|floatformat:0 }} / {{ s.median_duration_s|floatformat:0 }}</dd>
+      <dt>p95 длительность, с</dt><dd class="num">{{ s.p95_duration_s|floatformat:0 }}</dd>
+      <dt>Avg pages</dt><dd class="num">{{ s.avg_pages|floatformat:1 }}</dd>
+    </dl>
+  </div>
+  {% endwith %}
+
+  {% with s=stats_by_period.last_7d %}
+  <div class="card">
+    <h3>За 7 дней</h3>
+    <dl>
+      <dt>Всего jobs</dt><dd class="num">{{ s.total }}</dd>
+      <dt>Успешно</dt><dd class="num">{{ s.done }}</dd>
+      <dt>Ошибки</dt><dd class="num">{{ s.errors }}</dd>
+      <dt>Стоимость, $</dt><dd class="num">{{ s.total_cost_usd|floatformat:4 }}</dd>
+      <dt>Avg / median, с</dt><dd class="num">{{ s.avg_duration_s|floatformat:0 }} / {{ s.median_duration_s|floatformat:0 }}</dd>
+      <dt>p95, с</dt><dd class="num">{{ s.p95_duration_s|floatformat:0 }}</dd>
+      <dt>Avg pages</dt><dd class="num">{{ s.avg_pages|floatformat:1 }}</dd>
+    </dl>
+  </div>
+  {% endwith %}
+
+  {% with s=stats_by_period.last_30d %}
+  <div class="card">
+    <h3>За 30 дней</h3>
+    <dl>
+      <dt>Всего jobs</dt><dd class="num">{{ s.total }}</dd>
+      <dt>Успешно</dt><dd class="num">{{ s.done }}</dd>
+      <dt>Ошибки</dt><dd class="num">{{ s.errors }}</dd>
+      <dt>Стоимость, $</dt><dd class="num">{{ s.total_cost_usd|floatformat:4 }}</dd>
+      <dt>Avg / median, с</dt><dd class="num">{{ s.avg_duration_s|floatformat:0 }} / {{ s.median_duration_s|floatformat:0 }}</dd>
+      <dt>p95, с</dt><dd class="num">{{ s.p95_duration_s|floatformat:0 }}</dd>
+      <dt>Avg pages</dt><dd class="num">{{ s.avg_pages|floatformat:1 }}</dd>
+    </dl>
+  </div>
+  {% endwith %}
+</div>
+
+<div class="ismeta-section">
+  <h2>Распределение по pipeline (30 дней)</h2>
+  {% if pipeline_dist %}
+  <table class="ismeta-grid">
+    <thead><tr><th>Pipeline</th><th>Кол-во jobs</th><th>Сумма стоимости, $</th></tr></thead>
+    <tbody>
+      {% for row in pipeline_dist %}
+      <tr>
+        <td>{{ row.pipeline }}</td>
+        <td>{{ row.count }}</td>
+        <td>{{ row.cost|default:0|floatformat:4 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Пока нет данных за 30 дней.</p>
+  {% endif %}
+</div>
+
+<div class="ismeta-section">
+  <h2>Последние ошибки (20)</h2>
+  {% if recent_errors %}
+  <table class="ismeta-grid">
+    <thead><tr><th>Когда</th><th>Job ID</th><th>Pipeline</th><th>PDF</th><th>Ошибка</th></tr></thead>
+    <tbody>
+      {% for err in recent_errors %}
+      <tr>
+        <td>{{ err.created_at|date:"Y-m-d H:i" }}</td>
+        <td><a href="{% url 'admin:hvac_ismeta_ismetajob_change' err.id %}">{{ err.id|stringformat:'.8s' }}…</a></td>
+        <td>{{ err.pipeline }}</td>
+        <td>{{ err.pdf_filename|truncatechars:40 }}</td>
+        <td class="ismeta-error">{{ err.error_message|truncatechars:120 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Ошибок не было.</p>
+  {% endif %}
+</div>
+{% endblock %}

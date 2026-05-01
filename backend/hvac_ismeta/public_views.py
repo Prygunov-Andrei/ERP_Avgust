@@ -32,7 +32,9 @@ from rest_framework.response import Response
 
 from .excel import build_workbook
 from .llm_profile_client import list_llm_profiles
+from .logging import log_concurrency_block, log_rate_limit_hit
 from .models import HvacIsmetaSettings, IsmetaFeedback, IsmetaJob
+from .ratelimit import check_daily_ip, check_hourly_ip, check_hourly_session
 from .tasks import process_ismeta_job
 
 logger = logging.getLogger(__name__)
@@ -133,17 +135,83 @@ class IsmetaPublicViewSet(viewsets.ViewSet):
             active = IsmetaJob.objects.filter(
                 Q(session_key=session_key) | Q(ip_address=ip),
                 status__in=IsmetaJob.ACTIVE_STATUSES,
-            ).exists()
-            if active:
+            ).first()
+            if active is not None:
+                log_concurrency_block(session_key=session_key, ip=ip, active_job_id=str(active.id))
                 resp = Response(
                     {
                         "error": "У вас уже идёт обработка PDF. Дождитесь завершения "
-                        "и попробуйте снова."
+                        "и попробуйте снова.",
+                        "code": "concurrency",
+                        "active_job_id": str(active.id),
                     },
                     status=status.HTTP_429_TOO_MANY_REQUESTS,
                 )
                 _set_session_cookie_if_needed(resp, session_key, session_created)
                 return resp
+
+        rate_outcome = check_hourly_session(session_key, settings_obj.hourly_per_session)
+        if not rate_outcome.allowed:
+            log_rate_limit_hit(
+                session_key=session_key,
+                ip=ip,
+                code=rate_outcome.code,
+                limit=rate_outcome.limit,
+                current=rate_outcome.current,
+            )
+            resp = Response(
+                {
+                    "error": "Превышен часовой лимит загрузок с вашей сессии. "
+                    "Попробуйте через час.",
+                    "code": rate_outcome.code,
+                    "limit": rate_outcome.limit,
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+            _set_session_cookie_if_needed(resp, session_key, session_created)
+            return resp
+
+        rate_outcome = check_hourly_ip(ip, settings_obj.hourly_per_ip)
+        if not rate_outcome.allowed:
+            log_rate_limit_hit(
+                session_key=session_key,
+                ip=ip,
+                code=rate_outcome.code,
+                limit=rate_outcome.limit,
+                current=rate_outcome.current,
+            )
+            resp = Response(
+                {
+                    "error": "Превышен часовой лимит загрузок с вашего IP. "
+                    "Попробуйте через час.",
+                    "code": rate_outcome.code,
+                    "limit": rate_outcome.limit,
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+            _set_session_cookie_if_needed(resp, session_key, session_created)
+            return resp
+
+        rate_outcome = check_daily_ip(ip, settings_obj.daily_per_ip)
+        if not rate_outcome.allowed:
+            log_rate_limit_hit(
+                session_key=session_key,
+                ip=ip,
+                code=rate_outcome.code,
+                limit=rate_outcome.limit,
+                current=rate_outcome.current,
+            )
+            resp = Response(
+                {
+                    "error": "Превышен суточный лимит загрузок с вашего IP. "
+                    "Попробуйте завтра.",
+                    "code": rate_outcome.code,
+                    "limit": rate_outcome.limit,
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+            _set_session_cookie_if_needed(resp, session_key, session_created)
+            return resp
 
         pdf_file = request.FILES.get("file")
         if not pdf_file:

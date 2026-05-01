@@ -700,3 +700,23 @@ ISMETA_DATABASE_URL = os.environ.get('ISMETA_DATABASE_URL', '')
 # Fernet-ключ для расшифровки api_key_encrypted из llm_profile (должен совпадать
 # с прод-ключом ismeta-backend, иначе расшифровать не получится).
 LLM_PROFILE_ENCRYPTION_KEY = os.environ.get('LLM_PROFILE_ENCRYPTION_KEY', '')
+
+# =============================================================================
+# Cache (F8-06) — Redis для rate-limit публичного ISMeta
+# =============================================================================
+# Отдельная Redis-БД (1) под counter-buckets, чтобы не пересекаться с Celery (0).
+# При недоступности Redis ratelimit fail-open (см. hvac_ismeta/ratelimit.py).
+def _default_ismeta_cache_url() -> str:
+    base = CELERY_BROKER_URL.rsplit('/', 1)[0] if '/' in CELERY_BROKER_URL else 'redis://localhost:6379'
+    return f'{base}/1'
+
+
+ISMETA_CACHE_URL = os.environ.get('ISMETA_CACHE_URL', _default_ismeta_cache_url())
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': ISMETA_CACHE_URL,
+        'KEY_PREFIX': 'ismeta',
+        'TIMEOUT': 300,
+    }
+}

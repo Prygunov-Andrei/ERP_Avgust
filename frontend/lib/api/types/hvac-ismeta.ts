@@ -11,6 +11,9 @@ export interface HvacIsmetaSettings {
   default_pipeline: HvacIsmetaPipeline;
   default_llm_profile_id: number | null;
   concurrency_limit_enabled: boolean;
+  hourly_per_session: number;
+  hourly_per_ip: number;
+  daily_per_ip: number;
   pdf_storage_path: string;
   require_registration: boolean;
   max_file_size_mb: number;

@@ -1,4 +1,11 @@
+from datetime import timedelta
+from decimal import Decimal
+
 from django.contrib import admin
+from django.db.models import Avg, Count, Sum
+from django.template.response import TemplateResponse
+from django.urls import path
+from django.utils import timezone
 
 from .models import HvacIsmetaSettings, IsmetaFeedback, IsmetaJob
 
@@ -15,6 +22,10 @@ class HvacIsmetaSettingsAdmin(admin.ModelAdmin):
         (
             "Распознавание",
             {"fields": ("default_pipeline", "default_llm_profile_id")},
+        ),
+        (
+            "Лимиты загрузок (rate limit, F8-06)",
+            {"fields": ("hourly_per_session", "hourly_per_ip", "daily_per_ip")},
         ),
         (
             "Хранение и лимиты",
@@ -38,8 +49,33 @@ class HvacIsmetaSettingsAdmin(admin.ModelAdmin):
         return False
 
 
+def _aggregate_jobs_for_period(start_at):
+    """Срез статистики по IsmetaJob за период [start_at, now]."""
+    qs = IsmetaJob.objects.filter(created_at__gte=start_at)
+    completed = qs.filter(status=IsmetaJob.STATUS_DONE, started_at__isnull=False, completed_at__isnull=False)
+    durations = list(
+        completed.values_list("started_at", "completed_at")
+    )
+    seconds = sorted((c - s).total_seconds() for s, c in durations) if durations else []
+    median = seconds[len(seconds) // 2] if seconds else 0
+    p95 = seconds[int(len(seconds) * 0.95)] if seconds else 0
+    return {
+        "total": qs.count(),
+        "done": completed.count(),
+        "errors": qs.filter(status=IsmetaJob.STATUS_ERROR).count(),
+        "queued": qs.filter(status=IsmetaJob.STATUS_QUEUED).count(),
+        "processing": qs.filter(status=IsmetaJob.STATUS_PROCESSING).count(),
+        "total_cost_usd": qs.aggregate(s=Sum("cost_usd"))["s"] or Decimal("0"),
+        "avg_duration_s": (sum(seconds) / len(seconds)) if seconds else 0,
+        "median_duration_s": median,
+        "p95_duration_s": p95,
+        "avg_pages": qs.aggregate(a=Avg("pages_total"))["a"] or 0,
+    }
+
+
 @admin.register(IsmetaJob)
 class IsmetaJobAdmin(admin.ModelAdmin):
+    change_list_template = "admin/hvac_ismeta/ismetajob/change_list.html"
     list_display = (
         "id",
         "status",
@@ -77,6 +113,47 @@ class IsmetaJobAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "stats/",
+                self.admin_site.admin_view(self.stats_view),
+                name="hvac_ismeta_ismetajob_stats",
+            ),
+        ]
+        return custom + urls
+
+    def stats_view(self, request):
+        now = timezone.now()
+        periods = {
+            "today": now - timedelta(hours=24),
+            "last_7d": now - timedelta(days=7),
+            "last_30d": now - timedelta(days=30),
+        }
+        stats_by_period = {key: _aggregate_jobs_for_period(start) for key, start in periods.items()}
+
+        last_30d_qs = IsmetaJob.objects.filter(created_at__gte=periods["last_30d"])
+        pipeline_dist = list(
+            last_30d_qs.values("pipeline")
+            .annotate(count=Count("id"), cost=Sum("cost_usd"))
+            .order_by("-count")
+        )
+        recent_errors = list(
+            IsmetaJob.objects.filter(status=IsmetaJob.STATUS_ERROR)
+            .order_by("-created_at")
+            .values("id", "pipeline", "pdf_filename", "error_message", "created_at")[:20]
+        )
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Статистика ISMeta",
+            "stats_by_period": stats_by_period,
+            "pipeline_dist": pipeline_dist,
+            "recent_errors": recent_errors,
+            "opts": self.model._meta,
+        }
+        return TemplateResponse(request, "admin/hvac_ismeta/stats.html", context)
 
 
 @admin.register(IsmetaFeedback)

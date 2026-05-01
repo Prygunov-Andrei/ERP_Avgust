@@ -38,6 +38,18 @@ class HvacIsmetaSettings(models.Model):
         default=True,
         help_text="Ограничить 1 PDF одновременно с одной сессии.",
     )
+    hourly_per_session = models.IntegerField(
+        default=5,
+        help_text="Лимит загрузок PDF в час с одной сессии (через Redis).",
+    )
+    hourly_per_ip = models.IntegerField(
+        default=10,
+        help_text="Лимит загрузок PDF в час с одного IP-адреса.",
+    )
+    daily_per_ip = models.IntegerField(
+        default=30,
+        help_text="Лимит загрузок PDF в день с одного IP-адреса.",
+    )
     pdf_storage_path = models.CharField(
         max_length=500,
         default="/storage/ismeta-uploads/",
