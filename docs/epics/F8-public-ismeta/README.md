@@ -23,13 +23,14 @@
 | **Прогресс** | Страница X из Y + опциональное email-поле «пришлю ссылку». |
 | **Подключение agents** | НЕ предупреждаем команду AC Rating пока. |
 
-## Этапы (7 шт., 9-13 рабочих дней)
+## Этапы (8 шт., 9.5-14 рабочих дней)
 
 | # | Этап | Effort | Может параллельно? |
 |---|------|--------|------|
+| 00 | [Локальный стенд](00-local-stand.md) | 0.5-1 день | Да (либо первым) |
 | 01 | [Pipeline TD-17g production-ready](01-pipeline-production.md) | 1-2 дня | Да |
 | 02 | [ERP HVAC меню + ISMeta settings](02-erp-hvac-menu.md) | 1-2 дня | Да |
-| 03 | [ERP backend API](03-erp-backend-api.md) | 2 дня | Зависит от 01, 02 |
+| 03 | [ERP backend API](03-erp-backend-api.md) | 2 дня | Зависит от 01, 02, 00 |
 | 04 | [Grok LLM provider](04-grok-provider.md) | 1 день | Да |
 | 05 | [Public frontend](05-public-frontend.md) | 3-4 дня | Зависит от 03 |
 | 06 | [Concurrency limit + monitoring](06-concurrency-monitoring.md) | 1 день | Зависит от 05 |
@@ -38,12 +39,19 @@
 ## Граф зависимостей
 
 ```
-[01 Pipeline] ─┐
-                ├─→ [03 Backend API] ─┐
-[02 HVAC menu]─┘                       │
-                                        ├─→ [05 Frontend] ─→ [06 Concurrency] ─→ [07 Launch]
-[04 Grok]   ──────────────────────────┘
+[00 Local stand] ──┐  (БД, recognition-public, frontend, redis — всё локально)
+                    │
+[01 Pipeline] ─────┤
+                    ├─→ [03 Backend API] ─┐
+[02 HVAC menu]─────┘                       │
+                                            ├─→ [05 Frontend] ─→ [06 Concurrency] ─→ [07 Launch]
+[04 Grok]   ──────────────────────────────┘
 ```
+
+**Важно:** F8-00 разворачивает локальный стенд (отдельные локальные
+postgres'ы для ERP и ismeta-postgres, recognition-public:8004, redis,
+PDF storage, frontend) — без зависимости от прод-БД через SSH-туннель.
+Все F8 миграции и тестовые данные идут ТОЛЬКО локально до F8-07 (Launch).
 
 ## Команды (агенты)
 
