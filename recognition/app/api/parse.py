@@ -2,6 +2,9 @@
 
 import asyncio
 import logging
+import os
+import re
+import time
 import uuid
 from typing import Any, cast
 
@@ -61,6 +64,35 @@ async def _read_pdf(file: UploadFile) -> tuple[bytes, str]:
         raise UnsupportedMediaTypeError(detail="not a valid PDF (magic bytes)")
 
     return content, filename
+
+
+_SAFE_FILENAME_RE = re.compile(r"[^A-Za-z0-9._\-А-Яа-яЁё ]+")
+
+
+def _archive_pdf(content: bytes, filename: str) -> None:
+    """F8-01: skopirovat PDF v `settings.pdf_storage_path` s timestamp-prefix.
+
+    No-op esli path pust. Oshibki ne probrasyvayutsya naverkh — arkhivirovanie
+    auxiliary, nelzya valit parse iz-za nedostupnogo volume."""
+    storage = settings.pdf_storage_path
+    if not storage:
+        return
+    safe_name = _SAFE_FILENAME_RE.sub("_", filename) or "document.pdf"
+    ts = time.strftime("%Y%m%dT%H%M%S")
+    dst_path = os.path.join(storage, f"{ts}-{safe_name}")
+    try:
+        os.makedirs(storage, exist_ok=True)
+        with open(dst_path, "wb") as fh:
+            fh.write(content)
+    except OSError as e:
+        logger.warning(
+            "pdf_archive failed",
+            extra={
+                "doc_filename": filename,
+                "storage_path": storage,
+                "error": str(e),
+            },
+        )
 
 
 async def _run_with_timeout(
@@ -200,6 +232,7 @@ async def parse_spec(
     provider: BaseLLMProvider = Depends(get_provider),
 ) -> SpecParseResponse:
     content, filename = await _read_pdf(file)
+    _archive_pdf(content, filename)
     parser = SpecParser(provider)
     try:
         result = await _run_with_timeout(parser, content, filename, "spec_parse")
@@ -218,6 +251,7 @@ async def parse_invoice(
     provider: BaseLLMProvider = Depends(get_provider),
 ) -> InvoiceParseResponse:
     content, filename = await _read_pdf(file)
+    _archive_pdf(content, filename)
     parser = InvoiceParser(provider)
     try:
         result = await _run_with_timeout(parser, content, filename, "invoice_parse")
@@ -235,6 +269,7 @@ async def parse_quote(
     provider: BaseLLMProvider = Depends(get_provider),
 ) -> QuoteParseResponse:
     content, filename = await _read_pdf(file)
+    _archive_pdf(content, filename)
     parser = QuoteParser(provider)
     try:
         result = await _run_with_timeout(parser, content, filename, "quote_parse")
@@ -298,6 +333,7 @@ async def parse_spec_async(
     singleton provider из app.state как и sync endpoint.
     """
     content, filename = await _read_pdf(file)
+    _archive_pdf(content, filename)
 
     job_id = x_job_id or str(uuid.uuid4())
     logger.info(

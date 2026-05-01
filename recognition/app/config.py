@@ -112,6 +112,11 @@ class Settings(BaseSettings):
     dpi: int = 200
     max_page_retries: int = 2
     port: int = 8003
+    # F8-01: путь внутри контейнера, в который копируется каждый загруженный
+    # PDF до парсинга. Если "" — не копируем. На production-стенде маунтится
+    # как volume `./storage/ismeta-uploads:/uploads:rw`, чтобы держать архив
+    # принятых документов отдельно от стейтлесс-сервиса.
+    pdf_storage_path: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
