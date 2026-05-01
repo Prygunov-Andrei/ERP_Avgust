@@ -11,7 +11,7 @@ import type { JobState } from './types';
 type Action =
   | { type: 'reset' }
   | { type: 'upload-start' }
-  | { type: 'upload-failed'; message: string; status?: number }
+  | { type: 'upload-failed'; message: string; status?: number; code?: string }
   | { type: 'processing-start'; jobId: string }
   | {
       type: 'progress-tick';
@@ -45,13 +45,23 @@ function reducer(state: JobState, action: Action): JobState {
       return { status: 'idle' };
     case 'upload-start':
       return { status: 'uploading' };
-    case 'upload-failed':
+    case 'upload-failed': {
+      // Если backend не прислал code (legacy F8-03 / network error), но статус 429 —
+      // считаем concurrency (старый default из F8-03).
+      const isRate429 =
+        action.status === 429 &&
+        (action.code === 'rate_session' ||
+          action.code === 'rate_ip_hourly' ||
+          action.code === 'rate_ip_daily');
       return {
         status: 'error',
         message: action.message,
-        concurrency: action.status === 429,
+        concurrency: action.status === 429 && !isRate429,
+        rateLimited: isRate429,
+        rateLimitCode: action.code,
         serviceDown: action.status === 503,
       };
+    }
     case 'processing-start':
       return {
         status: 'processing',
@@ -188,16 +198,31 @@ export function useIsmetaJob(): UseIsmetaJob {
         await pollProgress(job_id);
       } catch (err) {
         const status = err instanceof IsmetaApiError ? err.status : undefined;
+        const code = err instanceof IsmetaApiError ? err.code : undefined;
         let message = err instanceof Error ? err.message : 'Не удалось загрузить файл';
         if (status === 429) {
-          message =
-            'У вас уже идёт обработка PDF. Дождитесь её завершения и попробуйте снова.';
+          if (code === 'concurrency') {
+            message =
+              'У вас уже идёт обработка PDF. Дождитесь её завершения и попробуйте снова.';
+          } else if (code === 'rate_session') {
+            message =
+              'Превышен лимит загрузок с вашей сессии за час. Попробуйте через час.';
+          } else if (code === 'rate_ip_hourly') {
+            message =
+              'Превышен часовой лимит загрузок с вашего IP. Попробуйте через час.';
+          } else if (code === 'rate_ip_daily') {
+            message =
+              'Превышен суточный лимит загрузок с вашего IP. Попробуйте завтра.';
+          } else {
+            message =
+              'У вас уже идёт обработка PDF. Дождитесь её завершения и попробуйте снова.';
+          }
         } else if (status === 503) {
           message = 'Сервис временно на обслуживании. Попробуйте позже.';
         } else if (status === 400) {
           message = message || 'Файл некорректен или слишком большой.';
         }
-        dispatch({ type: 'upload-failed', message, status });
+        dispatch({ type: 'upload-failed', message, status, code });
       }
     },
     [pollProgress, stopPolling],

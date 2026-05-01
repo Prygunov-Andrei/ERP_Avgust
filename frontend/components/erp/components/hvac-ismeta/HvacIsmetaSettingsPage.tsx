@@ -177,6 +177,60 @@ export default function HvacIsmetaSettingsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Лимиты загрузок</CardTitle>
+          <CardDescription>
+            Защита от злоупотреблений: ограничение количества PDF в час и в сутки.
+            Хранятся в Redis (бэкенд fail-open при недоступности кэша).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="hourly-per-session">PDF в час с одной сессии</Label>
+            <Input
+              id="hourly-per-session"
+              type="number"
+              min={0}
+              max={10000}
+              value={form.hourly_per_session}
+              onChange={(e) => update('hourly_per_session', Number(e.target.value) || 0)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Default 5. 0 — без ограничений (не рекомендовано на проде).
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="hourly-per-ip">PDF в час с одного IP</Label>
+            <Input
+              id="hourly-per-ip"
+              type="number"
+              min={0}
+              max={10000}
+              value={form.hourly_per_ip}
+              onChange={(e) => update('hourly_per_ip', Number(e.target.value) || 0)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Default 10. Покрывает офисы с общим IP.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="daily-per-ip">PDF в сутки с одного IP</Label>
+            <Input
+              id="daily-per-ip"
+              type="number"
+              min={0}
+              max={100000}
+              value={form.daily_per_ip}
+              onChange={(e) => update('daily_per_ip', Number(e.target.value) || 0)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Default 30. Если офис с 30 сметчиками — увеличить.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Хранение и лимиты</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">

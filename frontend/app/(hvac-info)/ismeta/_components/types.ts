@@ -23,7 +23,14 @@ export type JobState =
       pagesStats: IsmetaPagesStats;
       costUsd: number;
     }
-  | { status: 'error'; message: string; concurrency?: boolean; serviceDown?: boolean };
+  | {
+      status: 'error';
+      message: string;
+      concurrency?: boolean;
+      rateLimited?: boolean;
+      rateLimitCode?: string;
+      serviceDown?: boolean;
+    };
 
 export const PIPELINE_AVG_SEC_PER_PAGE: Record<string, number> = {
   td17g: 5,

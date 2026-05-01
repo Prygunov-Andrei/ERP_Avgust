@@ -16,6 +16,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from .llm_profile_client import LLMProfileLookupError, fetch_llm_credentials
+from .logging import log_job_completed, log_job_failed, log_job_started
 from .models import IsmetaJob
 
 logger = logging.getLogger(__name__)
@@ -75,6 +76,7 @@ def process_ismeta_job(self, job_id: str) -> str:
     job.status = IsmetaJob.STATUS_PROCESSING
     job.started_at = timezone.now()
     job.save(update_fields=["status", "started_at"])
+    log_job_started(job)
 
     try:
         recognition_url = _resolve_recognition_url(job.pipeline)
@@ -111,6 +113,8 @@ def process_ismeta_job(self, job_id: str) -> str:
         job.status = IsmetaJob.STATUS_DONE
         job.completed_at = timezone.now()
         job.save()
+        duration = (job.completed_at - job.started_at).total_seconds() if job.started_at else None
+        log_job_completed(job, duration_seconds=duration)
         return "done"
 
     except Exception as exc:  # noqa: BLE001 — фиксируем любую ошибку в job
@@ -119,4 +123,5 @@ def process_ismeta_job(self, job_id: str) -> str:
         job.error_message = str(exc)[:2000]
         job.completed_at = timezone.now()
         job.save(update_fields=["status", "error_message", "completed_at"])
+        log_job_failed(job, error=str(exc))
         return "error"
