@@ -21,6 +21,14 @@ from tests.conftest import (
 # Commands — /start
 # =========================================================================
 
+def _make_cmd_start_args(deep_link=None):
+    """Моки для CommandObject и FSMContext, которые требует cmd_start."""
+    command = MagicMock()
+    command.args = deep_link
+    state = AsyncMock()
+    return command, state
+
+
 class TestCmdStart:
     @pytest.mark.asyncio
     @patch('handlers.commands.get_supergroup_invite_link', new_callable=AsyncMock, return_value='https://t.me/+invite')
@@ -32,8 +40,9 @@ class TestCmdStart:
 
         mock_find.return_value = {**WORKER_DICT, 'bot_started': False}
         message = make_mock_message()
+        command, state = _make_cmd_start_args()
 
-        await cmd_start(message)
+        await cmd_start(message, command, state)
 
         message.answer.assert_called_once()
         text = message.answer.call_args[0][0]
@@ -47,7 +56,8 @@ class TestCmdStart:
         from handlers.commands import cmd_start
 
         message = make_mock_message()
-        await cmd_start(message)
+        command, state = _make_cmd_start_args()
+        await cmd_start(message, command, state)
 
         message.answer.assert_called_once()
         text = message.answer.call_args[0][0]
@@ -63,8 +73,9 @@ class TestCmdStart:
 
         mock_find.return_value = {**WORKER_DICT, 'bot_started': False}
         message = make_mock_message(user_id=54321)
+        command, state = _make_cmd_start_args()
 
-        await cmd_start(message)
+        await cmd_start(message, command, state)
 
         mock_mark.assert_called_once_with(54321)
 
@@ -78,8 +89,9 @@ class TestCmdStart:
 
         mock_find.return_value = {**WORKER_DICT, 'bot_started': True}
         message = make_mock_message()
+        command, state = _make_cmd_start_args()
 
-        await cmd_start(message)
+        await cmd_start(message, command, state)
 
         mock_mark.assert_not_called()
 
