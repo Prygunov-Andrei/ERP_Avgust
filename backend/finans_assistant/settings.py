@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     'supplier_integrations',
     'api_public',
     'hvac_bridge',
+    'hvac_ismeta',
     'references',
     'news',
     'feedback',

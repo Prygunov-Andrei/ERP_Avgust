@@ -207,55 +207,73 @@ const menuItems: MenuItem[] = [
     ],
   },
 
-  // 9. HVAC-СМЕТЫ
+  // 9. HVAC — единый блок (Сметы, Новости, Рейтинг, ISMeta)
   {
-    id: 'portal',
-    label: 'HVAC-сметы',
+    id: 'hvac-block',
+    label: 'HVAC',
     icon: <Globe className="w-5 h-5" />,
-    path: '/portal',
-    section: 'commercial.estimates',
-    children: [
-      { id: 'portal-requests', label: 'Запросы', icon: <FileText className="w-4 h-4" />, path: '/portal/requests', section: 'commercial.estimates' },
-      { id: 'portal-callbacks', label: 'Заявки на звонок', icon: <Phone className="w-4 h-4" />, path: '/portal/callbacks', section: 'commercial.estimates' },
-      { id: 'portal-settings', label: 'Настройки', icon: <Settings className="w-4 h-4" />, path: '/portal/settings', section: 'commercial.estimates' },
-    ],
-  },
-
-  // 10. HVAC-НОВОСТИ (управление новостями и каталогом)
-  {
-    id: 'hvac',
-    label: 'HVAC-новости',
-    icon: <Globe className="w-5 h-5" />,
-    path: '/hvac',
+    path: '/hvac-block',
     section: 'dashboard',
     children: [
-      { id: 'hvac-news', label: 'Новости', icon: <FileText className="w-4 h-4" />, path: '/hvac/news', section: 'dashboard' },
-      { id: 'hvac-news-categories', label: 'Категории новостей', icon: <FolderOpen className="w-4 h-4" />, path: '/hvac/news-categories', section: 'dashboard' },
-      { id: 'hvac-manufacturers', label: 'Производители', icon: <Building2 className="w-4 h-4" />, path: '/hvac/manufacturers', section: 'dashboard' },
-      { id: 'hvac-brands', label: 'Бренды', icon: <Package className="w-4 h-4" />, path: '/hvac/brands', section: 'dashboard' },
-      { id: 'hvac-resources', label: 'Ресурсы', icon: <Globe className="w-4 h-4" />, path: '/hvac/resources', section: 'dashboard' },
-      { id: 'hvac-search', label: 'Настройки поиска', icon: <Settings className="w-4 h-4" />, path: '/hvac/search-settings', section: 'dashboard' },
-      { id: 'hvac-rating-settings', label: 'Настройки рейтинга', icon: <Settings className="w-4 h-4" />, path: '/hvac/rating-settings', section: 'dashboard' },
-      { id: 'hvac-rating-criteria', label: 'Критерии рейтинга', icon: <FileText className="w-4 h-4" />, path: '/hvac/rating-criteria', section: 'dashboard' },
-      { id: 'hvac-instructions', label: 'Инструкции', icon: <FileText className="w-4 h-4" />, path: '/hvac/instructions', section: 'dashboard' },
-    ],
-  },
-
-  // 11. HVAC-РЕЙТИНГ (рейтинг кондиционеров для портала hvac-info.com)
-  {
-    id: 'hvac-rating',
-    label: 'HVAC-Рейтинг',
-    icon: <BarChart3 className="w-5 h-5" />,
-    path: '/hvac-rating',
-    section: 'dashboard',
-    children: [
-      { id: 'hvac-rating-models', label: 'Модели', icon: <Package className="w-4 h-4" />, path: '/hvac-rating/models', section: 'dashboard' },
-      { id: 'hvac-rating-brands', label: 'Бренды', icon: <Building2 className="w-4 h-4" />, path: '/hvac-rating/brands', section: 'dashboard' },
-      { id: 'hvac-rating-criteria', label: 'Критерии', icon: <Sliders className="w-4 h-4" />, path: '/hvac-rating/criteria', section: 'dashboard' },
-      { id: 'hvac-rating-methodology', label: 'Методика', icon: <Scale className="w-4 h-4" />, path: '/hvac-rating/methodology', section: 'dashboard' },
-      { id: 'hvac-rating-presets', label: 'Пресеты «Свой рейтинг»', icon: <Layers className="w-4 h-4" />, path: '/hvac-rating/presets', section: 'dashboard' },
-      { id: 'hvac-rating-reviews', label: 'Отзывы (модерация)', icon: <MessageSquare className="w-4 h-4" />, path: '/hvac-rating/reviews', section: 'dashboard' },
-      { id: 'hvac-rating-submissions', label: 'Заявки', icon: <Inbox className="w-4 h-4" />, path: '/hvac-rating/submissions', section: 'dashboard' },
+      {
+        id: 'portal',
+        label: 'HVAC-сметы',
+        icon: <Globe className="w-4 h-4" />,
+        path: '/portal',
+        section: 'commercial.estimates',
+        children: [
+          { id: 'portal-requests', label: 'Запросы', icon: <FileText className="w-4 h-4" />, path: '/portal/requests', section: 'commercial.estimates' },
+          { id: 'portal-callbacks', label: 'Заявки на звонок', icon: <Phone className="w-4 h-4" />, path: '/portal/callbacks', section: 'commercial.estimates' },
+          { id: 'portal-settings', label: 'Настройки', icon: <Settings className="w-4 h-4" />, path: '/portal/settings', section: 'commercial.estimates' },
+        ],
+      },
+      {
+        id: 'hvac',
+        label: 'HVAC-новости',
+        icon: <Globe className="w-4 h-4" />,
+        // Префикс /hvac (без слэша после) пересёкся бы с /hvac/ismeta/...,
+        // подсвечивая два пункта одновременно. Используем /hvac/news как
+        // дефолтный URL — он не префикс HVAC-ISMeta.
+        path: '/hvac/news',
+        section: 'dashboard',
+        children: [
+          { id: 'hvac-news', label: 'Новости', icon: <FileText className="w-4 h-4" />, path: '/hvac/news', section: 'dashboard' },
+          { id: 'hvac-news-categories', label: 'Категории новостей', icon: <FolderOpen className="w-4 h-4" />, path: '/hvac/news-categories', section: 'dashboard' },
+          { id: 'hvac-manufacturers', label: 'Производители', icon: <Building2 className="w-4 h-4" />, path: '/hvac/manufacturers', section: 'dashboard' },
+          { id: 'hvac-brands', label: 'Бренды', icon: <Package className="w-4 h-4" />, path: '/hvac/brands', section: 'dashboard' },
+          { id: 'hvac-resources', label: 'Ресурсы', icon: <Globe className="w-4 h-4" />, path: '/hvac/resources', section: 'dashboard' },
+          { id: 'hvac-search', label: 'Настройки поиска', icon: <Settings className="w-4 h-4" />, path: '/hvac/search-settings', section: 'dashboard' },
+          { id: 'hvac-rating-settings', label: 'Настройки рейтинга', icon: <Settings className="w-4 h-4" />, path: '/hvac/rating-settings', section: 'dashboard' },
+          { id: 'hvac-rating-criteria', label: 'Критерии рейтинга', icon: <FileText className="w-4 h-4" />, path: '/hvac/rating-criteria', section: 'dashboard' },
+          { id: 'hvac-instructions', label: 'Инструкции', icon: <FileText className="w-4 h-4" />, path: '/hvac/instructions', section: 'dashboard' },
+        ],
+      },
+      {
+        id: 'hvac-rating',
+        label: 'HVAC-Рейтинг',
+        icon: <BarChart3 className="w-4 h-4" />,
+        path: '/hvac-rating',
+        section: 'dashboard',
+        children: [
+          { id: 'hvac-rating-models', label: 'Модели', icon: <Package className="w-4 h-4" />, path: '/hvac-rating/models', section: 'dashboard' },
+          { id: 'hvac-rating-brands', label: 'Бренды', icon: <Building2 className="w-4 h-4" />, path: '/hvac-rating/brands', section: 'dashboard' },
+          { id: 'hvac-rating-criteria', label: 'Критерии', icon: <Sliders className="w-4 h-4" />, path: '/hvac-rating/criteria', section: 'dashboard' },
+          { id: 'hvac-rating-methodology', label: 'Методика', icon: <Scale className="w-4 h-4" />, path: '/hvac-rating/methodology', section: 'dashboard' },
+          { id: 'hvac-rating-presets', label: 'Пресеты «Свой рейтинг»', icon: <Layers className="w-4 h-4" />, path: '/hvac-rating/presets', section: 'dashboard' },
+          { id: 'hvac-rating-reviews', label: 'Отзывы (модерация)', icon: <MessageSquare className="w-4 h-4" />, path: '/hvac-rating/reviews', section: 'dashboard' },
+          { id: 'hvac-rating-submissions', label: 'Заявки', icon: <Inbox className="w-4 h-4" />, path: '/hvac-rating/submissions', section: 'dashboard' },
+        ],
+      },
+      {
+        id: 'hvac-ismeta',
+        label: 'HVAC-ISMeta',
+        icon: <FileText className="w-4 h-4" />,
+        path: '/hvac/ismeta',
+        section: 'dashboard',
+        children: [
+          { id: 'hvac-ismeta-settings', label: 'Настройки', icon: <Settings className="w-4 h-4" />, path: '/hvac/ismeta/settings', section: 'dashboard' },
+        ],
+      },
     ],
   },
 
@@ -380,6 +398,8 @@ const pageTitles: Record<string, string> = {
   'hvac-rating/presets/create': 'Новый пресет',
   'hvac-rating/reviews': 'Отзывы (модерация)',
   'hvac-rating/submissions': 'Заявки (модерация)',
+  // HVAC-ISMeta
+  'hvac/ismeta/settings': 'Настройки ISMeta',
   // 11. Справочники и Настройки
   'references/work-conditions': 'Фронт работ и монтажные условия',
   personnel: 'Персонал',
@@ -408,82 +428,73 @@ const pageTitles: Record<string, string> = {
 };
 
 // Menu group paths that have no direct route (only children) — clicking them in breadcrumbs should be non-navigable
-const menuGroupPaths = new Set(
-  menuItems.filter(item => item.children?.length).map(item => item.path)
-);
+const collectGroupPaths = (items: MenuItem[]): string[] =>
+  items.flatMap(item =>
+    item.children?.length
+      ? [item.path, ...collectGroupPaths(item.children)]
+      : []
+  );
+const menuGroupPaths = new Set(collectGroupPaths(menuItems));
 
-// Build path-to-parent mapping for hierarchical breadcrumbs
+// Build path-to-parent mapping for hierarchical breadcrumbs (works at any nesting depth)
 const pathToParent: Record<string, { label: string; path: string }> = {};
-for (const item of menuItems) {
-  if (item.children) {
+const buildPathToParent = (items: MenuItem[]): void => {
+  for (const item of items) {
+    if (!item.children) continue;
     for (const child of item.children) {
       const cleanPath = child.path.split('?')[0].slice(1);
       if (cleanPath && !pathToParent[cleanPath]) {
         pathToParent[cleanPath] = { label: item.label, path: item.path };
       }
+      if (child.children?.length) buildPathToParent([child]);
     }
   }
-}
+};
+buildPathToParent(menuItems);
 // Manual parents for pages that aren't direct menu children
 pathToParent['supply/invoices'] = { label: 'Финансы', path: '/finance/payments' };
 pathToParent['supply/income'] = { label: 'Финансы', path: '/finance/payments' };
 pathToParent['payment-registry'] = { label: 'Финансы', path: '/finance/payments' };
 pathToParent['estimates/invoices'] = { label: 'Сметы', path: '/estimates/estimates' };
 
-// HVAC breadcrumbs
-pathToParent['hvac/news'] = { label: 'HVAC-новости', path: '/hvac/news' };
+// HVAC breadcrumbs (детальные/edit-страницы и нестандартные ветки, не покрытые автоматическим mapping)
 pathToParent['hvac/news/create'] = { label: 'Новости', path: '/hvac/news' };
 pathToParent['hvac/news/edit'] = { label: 'Новости', path: '/hvac/news' };
 pathToParent['hvac/scheduled'] = { label: 'Новости', path: '/hvac/news' };
-pathToParent['hvac/news-categories'] = { label: 'HVAC-новости', path: '/hvac/news' };
-pathToParent['hvac/manufacturers'] = { label: 'HVAC-новости', path: '/hvac/news' };
-pathToParent['hvac/brands'] = { label: 'HVAC-новости', path: '/hvac/news' };
-pathToParent['hvac/resources'] = { label: 'HVAC-новости', path: '/hvac/news' };
-pathToParent['hvac/search-settings'] = { label: 'HVAC-новости', path: '/hvac/news' };
-pathToParent['hvac/rating-settings'] = { label: 'HVAC-новости', path: '/hvac/news' };
-pathToParent['hvac/rating-criteria'] = { label: 'HVAC-новости', path: '/hvac/news' };
-pathToParent['hvac/instructions'] = { label: 'HVAC-новости', path: '/hvac/news' };
 pathToParent['hvac/analytics'] = { label: 'HVAC-новости', path: '/hvac/news' };
 
-// HVAC-Рейтинг breadcrumbs
-pathToParent['hvac-rating/models'] = { label: 'HVAC-Рейтинг', path: '/hvac-rating/models' };
+// HVAC-Рейтинг breadcrumbs (детальные/edit-страницы)
 pathToParent['hvac-rating/models/create'] = { label: 'Модели', path: '/hvac-rating/models' };
 pathToParent['hvac-rating/models/edit'] = { label: 'Модели', path: '/hvac-rating/models' };
-pathToParent['hvac-rating/brands'] = { label: 'HVAC-Рейтинг', path: '/hvac-rating/brands' };
 pathToParent['hvac-rating/brands/create'] = { label: 'Бренды', path: '/hvac-rating/brands' };
 pathToParent['hvac-rating/brands/edit'] = { label: 'Бренды', path: '/hvac-rating/brands' };
-pathToParent['hvac-rating/criteria'] = { label: 'HVAC-Рейтинг', path: '/hvac-rating/criteria' };
 pathToParent['hvac-rating/criteria/create'] = { label: 'Критерии', path: '/hvac-rating/criteria' };
 pathToParent['hvac-rating/criteria/edit'] = { label: 'Критерии', path: '/hvac-rating/criteria' };
-pathToParent['hvac-rating/methodology'] = { label: 'HVAC-Рейтинг', path: '/hvac-rating/methodology' };
-pathToParent['hvac-rating/presets'] = { label: 'HVAC-Рейтинг', path: '/hvac-rating/presets' };
 pathToParent['hvac-rating/presets/create'] = { label: 'Пресеты', path: '/hvac-rating/presets' };
 pathToParent['hvac-rating/presets/edit'] = { label: 'Пресеты', path: '/hvac-rating/presets' };
-pathToParent['hvac-rating/reviews'] = { label: 'HVAC-Рейтинг', path: '/hvac-rating/reviews' };
-pathToParent['hvac-rating/submissions'] = { label: 'HVAC-Рейтинг', path: '/hvac-rating/submissions' };
 
 export function Layout({ children, onLogout, user }: LayoutProps) {
   const { hasAccess } = usePermissions();
   const { detailLabel, parentCrumb } = useBreadcrumb();
 
   const filteredMenuItems = useMemo(() => {
-    return menuItems
-      .map((item) => {
-        if (item.isSeparator) return item;
-        if (item.section && !hasAccess(item.section)) return null;
+    const filterTree = (items: MenuItem[]): MenuItem[] =>
+      items
+        .map((item) => {
+          if (item.isSeparator) return item;
+          if (item.section && !hasAccess(item.section)) return null;
+          if (item.isShortcut && item.shortcutSection && !hasAccess(item.shortcutSection)) return null;
 
-        if (item.children) {
-          const visibleChildren = item.children.filter((child) => {
-            if (child.section && !hasAccess(child.section)) return false;
-            if (child.isShortcut && child.shortcutSection && !hasAccess(child.shortcutSection)) return false;
-            return true;
-          });
-          if (visibleChildren.length === 0 && item.section) return null;
-          return { ...item, children: visibleChildren };
-        }
-        return item;
-      })
-      .filter(Boolean) as MenuItem[];
+          if (item.children?.length) {
+            const visibleChildren = filterTree(item.children);
+            if (visibleChildren.length === 0 && item.section) return null;
+            return { ...item, children: visibleChildren };
+          }
+          return item;
+        })
+        .filter(Boolean) as MenuItem[];
+
+    return filterTree(menuItems);
   }, [hasAccess]);
 
   const homePath = useMemo(() => {
@@ -494,7 +505,7 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
   }, [filteredMenuItems]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['commercial', 'finance', 'contracts', 'supply', 'goods', 'pto', 'references']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['commercial', 'finance', 'contracts', 'supply', 'goods', 'pto', 'references', 'hvac-block']);
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem('sidebarWidth');
     return saved ? parseInt(saved) : 256;
@@ -602,104 +613,79 @@ export function Layout({ children, onLogout, user }: LayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {filteredMenuItems.map((item) => {
-            // Разделитель
-            if (item.isSeparator) {
-              if (!isSidebarOpen) return null;
+          {(() => {
+            // startsWith с '/' в конце — иначе `/hvac-rating/...` ловится префиксом
+            // `/hvac` (HVAC-новости), и активны два пункта одновременно.
+            const isPathActive = (path: string) =>
+              location.pathname === path ||
+              (path !== '/' && path !== '' && location.pathname.startsWith(path + '/'));
+
+            const isItemOrDescendantActive = (item: MenuItem): boolean => {
+              if (isPathActive(item.path)) return true;
+              return item.children?.some(isItemOrDescendantActive) ?? false;
+            };
+
+            const renderItem = (item: MenuItem, depth: number): ReactNode => {
+              if (item.isSeparator) {
+                if (!isSidebarOpen) return null;
+                return (
+                  <div key={item.id} className="py-2">
+                    <div className="border-t border-border" />
+                  </div>
+                );
+              }
+
+              const hasChildren = !!item.children?.length;
+              const isActive = isItemOrDescendantActive(item);
+              const isExpanded = expandedMenus.includes(item.id);
+
               return (
-                <div key={item.id} className="py-2">
-                  <div className="border-t border-border" />
+                <div key={item.id}>
+                  {item.subGroupLabel && (
+                    <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                      {item.subGroupLabel}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (hasChildren) {
+                        toggleMenu(item.id);
+                      } else {
+                        navigate(item.path);
+                      }
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    <div className="flex-shrink-0">
+                      {item.icon}
+                    </div>
+                    {isSidebarOpen && (
+                      <>
+                        <span className="truncate flex items-center gap-1">
+                          {item.label}
+                          {item.isShortcut && (
+                            <ExternalLink className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
+                          )}
+                        </span>
+                        {item.id === 'contracts' && <NotificationBadge type="expiring-contracts" />}
+                      </>
+                    )}
+                  </button>
+                  {hasChildren && isSidebarOpen && isExpanded && (
+                    <div className={depth === 0 ? 'pl-8' : 'pl-4'}>
+                      {item.children!.map((child) => renderItem(child, depth + 1))}
+                    </div>
+                  )}
                 </div>
               );
-            }
+            };
 
-            // Проверяем, активен ли какой-либо дочерний пункт.
-            // startsWith с '/' в конце — иначе `/hvac-rating/...` ловится
-            // префиксом `/hvac` (HVAC-новости), и активны два пункта одновременно.
-            const isAnyChildActive = item.children?.some(child =>
-              location.pathname === child.path ||
-              (child.path !== '/' && child.path !== '' &&
-               location.pathname.startsWith(child.path + '/'))
-            ) || false;
-
-            // Родительский пункт активен, если совпадает его путь ИЛИ активен любой дочерний пункт
-            const isActive = location.pathname === item.path ||
-                            (item.path !== '/' && item.path !== '' &&
-                             location.pathname.startsWith(item.path + '/')) ||
-                            isAnyChildActive;
-            
-            return (
-              <div key={item.id}>
-                <button
-                  onClick={() => {
-                    if (item.children) {
-                      toggleMenu(item.id);
-                    } else {
-                      navigate(item.path);
-                    }
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <div className="flex-shrink-0">
-                    {item.icon}
-                  </div>
-                  {isSidebarOpen && (
-                    <>
-                      <span className="truncate">
-                        {item.label}
-                      </span>
-                      {item.id === 'contracts' && <NotificationBadge type="expiring-contracts" />}
-                    </>
-                  )}
-                </button>
-                {item.children && isSidebarOpen && expandedMenus.includes(item.id) && (
-                  <div className="pl-8">
-                    {(item.children || []).map(child => {
-                      // startsWith с '/' в конце — чтобы edit-страницы типа
-                      // `/hvac-rating/models/edit/5` подсвечивали child «Модели».
-                      const isChildActive = location.pathname === child.path ||
-                        (child.path !== '/' && child.path !== '' &&
-                         location.pathname.startsWith(child.path + '/'));
-
-                      return (
-                        <div key={child.id}>
-                        {child.subGroupLabel && (
-                          <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                            {child.subGroupLabel}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => navigate(child.path)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                            isChildActive
-                              ? 'bg-primary/10 text-primary'
-                              : 'text-foreground hover:bg-accent'
-                          }`}
-                        >
-                          <div className="flex-shrink-0">
-                            {child.icon}
-                          </div>
-                          {isSidebarOpen && (
-                            <span className="truncate flex items-center gap-1">
-                              {child.label}
-                              {child.isShortcut && (
-                                <ExternalLink className="w-3 h-3 text-muted-foreground/60 flex-shrink-0" />
-                              )}
-                            </span>
-                          )}
-                        </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+            return filteredMenuItems.map((item) => renderItem(item, 0));
+          })()}
         </nav>
 
         {/* User section */}
