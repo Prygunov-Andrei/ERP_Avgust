@@ -667,6 +667,9 @@ STORAGES = {
 CELERY_TASK_ROUTES = {
     'api_public.tasks.*': {'queue': 'public_tasks'},
     'news.tasks.translate_news_task': {'queue': 'translations'},
+    # F8-03: long-running PDF recognition (3-30 мин) идёт в public_tasks,
+    # чтобы не блокировать обычный celery-worker.
+    'hvac_ismeta.process_ismeta_job': {'queue': 'public_tasks'},
 }
 
 # =============================================================================
@@ -681,3 +684,19 @@ ISMETA_JWT_EXPIRY_SECONDS = int(os.environ.get('ISMETA_JWT_EXPIRY_SECONDS', '360
 # =============================================================================
 RECOGNITION_URL = os.environ.get('RECOGNITION_URL', 'http://recognition:8003')
 RECOGNITION_API_KEY = os.environ.get('RECOGNITION_API_KEY', '')
+
+# =============================================================================
+# Public ISMeta (F8-03) — публичные endpoints под /api/hvac/ismeta/
+# =============================================================================
+# URL recognition контейнера для публичной обработки. По умолчанию
+# отдельный контейнер recognition-public:8003 (F8-01); pipeline "main"
+# исторически жил на ismeta-recognition:8003. Если не задан — используем
+# RECOGNITION_URL.
+RECOGNITION_PUBLIC_URL = os.environ.get('RECOGNITION_PUBLIC_URL', 'http://recognition-public:8003')
+RECOGNITION_MAIN_URL = os.environ.get('RECOGNITION_MAIN_URL', RECOGNITION_URL)
+# Прямое подключение к ismeta-postgres для чтения LLMProfile (раз psycopg2,
+# Django ORM не подключен — кросс-БД). См. memory feedback_no_wrappers.
+ISMETA_DATABASE_URL = os.environ.get('ISMETA_DATABASE_URL', '')
+# Fernet-ключ для расшифровки api_key_encrypted из llm_profile (должен совпадать
+# с прод-ключом ismeta-backend, иначе расшифровать не получится).
+LLM_PROFILE_ENCRYPTION_KEY = os.environ.get('LLM_PROFILE_ENCRYPTION_KEY', '')
