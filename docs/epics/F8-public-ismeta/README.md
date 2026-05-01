@@ -23,7 +23,7 @@
 | **Прогресс** | Страница X из Y + опциональное email-поле «пришлю ссылку». |
 | **Подключение agents** | НЕ предупреждаем команду AC Rating пока. |
 
-## Этапы (8 шт., 9.5-14 рабочих дней)
+## Этапы (9 шт., 10-16 рабочих дней)
 
 | # | Этап | Effort | Может параллельно? |
 |---|------|--------|------|
@@ -34,6 +34,7 @@
 | 04 | [Grok LLM provider](04-grok-provider.md) | 1 день | Да |
 | 05 | [Public frontend](05-public-frontend.md) | 3-4 дня | Зависит от 03 |
 | 06 | [Concurrency limit + monitoring](06-concurrency-monitoring.md) | 1 день | Зависит от 05 |
+| 06b | [UI polish на локальном стенде](06b-ui-polish.md) | 0.5-2 дня | После 06, до 07 |
 | 07 | [Launch](07-launch.md) | 1 день | Зависит от всего |
 
 ## Граф зависимостей
@@ -44,9 +45,14 @@
 [01 Pipeline] ─────┤
                     ├─→ [03 Backend API] ─┐
 [02 HVAC menu]─────┘                       │
-                                            ├─→ [05 Frontend] ─→ [06 Concurrency] ─→ [07 Launch]
+                                            ├─→ [05 Frontend] ─→ [06 Concurrency] ─→ [06b UI polish] ─→ [07 Launch]
 [04 Grok]   ──────────────────────────────┘
 ```
+
+**F8-06b** — отдельный этап «UI polish на локальном стенде» по решению
+PO 2026-05-01. После того как F8-06 закрыт и полный стек работает
+end-to-end локально, PO активно работает с UI и фиксит мелкие
+неудобства БАТЧАМИ ДО production launch. См. `06b-ui-polish.md`.
 
 **Важно:** F8-00 разворачивает локальный стенд (отдельные локальные
 postgres'ы для ERP и ismeta-postgres, recognition-public:8004, redis,
