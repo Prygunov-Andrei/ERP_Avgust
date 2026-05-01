@@ -24,7 +24,11 @@ const NAV_ITEMS: NavItem[] = [
     match: (p) =>
       p.startsWith('/rating-split-system') || p.startsWith('/konditsioner'),
   },
-  { label: 'ISmeta', muted: true },
+  {
+    label: 'ISmeta',
+    href: '/ismeta',
+    match: (p) => p === '/ismeta' || p.startsWith('/ismeta/'),
+  },
   { label: 'Мешок Монтажников', muted: true },
   { label: 'Анализ проектов', muted: true },
   { label: 'Франшиза', muted: true },

@@ -68,8 +68,22 @@ describe('HvacInfoHeader active-state', () => {
     pathnameMock.mockReturnValue('/');
     render(<HvacInfoHeader />);
     expect(screen.queryByRole('link', { hidden: true, name: 'Мешок Монтажников' })).toBeNull();
-    // ISmeta сейчас тоже muted (bc58e69): скрываем пока раздел не готов
-    expect(screen.queryByRole('link', { hidden: true, name: 'ISmeta' })).toBeNull();
+  });
+
+  it('/ismeta: «ISmeta» active (F8-05 — публичная страница активирована)', () => {
+    pathnameMock.mockReturnValue('/ismeta');
+    render(<HvacInfoHeader />);
+    const ismeta = screen.getByRole('link', { hidden: true, name: 'ISmeta' });
+    expect(ismeta).toHaveAttribute('aria-current', 'page');
+    expect(ismeta).toHaveAttribute('href', '/ismeta');
+  });
+
+  it('корневая /: «ISmeta» — активная ссылка, но без aria-current', () => {
+    pathnameMock.mockReturnValue('/');
+    render(<HvacInfoHeader />);
+    const ismeta = screen.getByRole('link', { hidden: true, name: 'ISmeta' });
+    expect(ismeta).not.toHaveAttribute('aria-current', 'page');
+    expect(ismeta).toHaveAttribute('href', '/ismeta');
   });
 });
 
