@@ -343,6 +343,14 @@ services:
       LLM_MULTIMODAL_MODEL: ${RECOGNITION_LLM_MULTIMODAL_MODEL:-gpt-4o}
       LLM_MULTIMODAL_RETRY_ENABLED: ${RECOGNITION_LLM_MULTIMODAL_RETRY_ENABLED:-true}
       LLM_MULTIMODAL_RETRY_THRESHOLD: ${RECOGNITION_LLM_MULTIMODAL_RETRY_THRESHOLD:-0.7}
+      # F8-Sprint4: live-progress в Redis. DB=2 чтобы не пересекаться с
+      # Celery (DB=0) и rate-limit (DB=1).
+      REDIS_URL: ${RECOGNITION_REDIS_URL:-redis://redis:6379/2}
+      PROGRESS_TTL_SECONDS: ${RECOGNITION_PROGRESS_TTL_SECONDS:-3600}
+      PROGRESS_EMITTER_ENABLED: ${RECOGNITION_PROGRESS_EMITTER_ENABLED:-true}
+    depends_on:
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8003/v1/healthz"]
       interval: 30s

@@ -279,6 +279,85 @@ def test_progress_returns_status(db, client):
     body = resp.json()
     assert body["status"] == "processing"
     assert body["pages_processed"] == 1
+    # F8-Sprint4: live-state поля присутствуют в ответе (пустые при отсутствии Redis).
+    for key in (
+        "phase",
+        "current_page_label",
+        "elapsed_seconds",
+        "eta_seconds",
+        "last_event_ts",
+    ):
+        assert key in body
+
+
+def test_progress_merges_redis_live_state(db, client, monkeypatch):
+    """F8-Sprint4: /progress должен слить БД + Redis live-state.
+
+    Redis в тестовом окружении нет, поэтому monkeypatch'им helper и
+    проверяем, что поля live-state попадают в ответ и переопределяют
+    БД-нули pages_processed/items_count.
+    """
+    job = _make_job(
+        status=IsmetaJob.STATUS_PROCESSING,
+        pages_processed=0,
+        pages_total=0,
+        items_count=0,
+    )
+
+    fake_live = {
+        "phase": "llm_normalize",
+        "pages_processed": 4,
+        "pages_total": 10,
+        "items_count": 57,
+        "current_page_label": "Страница 4 из 10",
+        "elapsed_seconds": 22,
+        "eta_seconds": 38,
+        "last_event_ts": "2026-05-03T10:30:00+00:00",
+    }
+    monkeypatch.setattr(
+        "hvac_ismeta.public_views.read_live_progress",
+        lambda job_id: fake_live,
+    )
+    resp = client.get(reverse("ismeta-public-progress", kwargs={"pk": str(job.id)}))
+    assert resp.status_code == status.HTTP_200_OK
+    body = resp.json()
+    assert body["phase"] == "llm_normalize"
+    assert body["pages_processed"] == 4
+    assert body["pages_total"] == 10
+    assert body["items_count"] == 57
+    assert body["current_page_label"] == "Страница 4 из 10"
+    assert body["eta_seconds"] == 38
+
+
+def test_progress_ignores_live_state_when_done(db, client, monkeypatch):
+    """Финальное состояние — БД источник истины. Live даже если протух,
+    не должен сбить статус done."""
+    job = _make_job(status=IsmetaJob.STATUS_DONE, pages_processed=10, pages_total=10)
+    monkeypatch.setattr(
+        "hvac_ismeta.public_views.read_live_progress",
+        lambda job_id: {"phase": "llm_normalize", "pages_processed": 1},
+    )
+    resp = client.get(reverse("ismeta-public-progress", kwargs={"pk": str(job.id)}))
+    assert resp.status_code == status.HTTP_200_OK
+    body = resp.json()
+    assert body["status"] == "done"
+    assert body["phase"] == "done"
+    # БД-значения сохранены, не перетёрты Redis-snapshot'ом.
+    assert body["pages_processed"] == 10
+
+
+def test_progress_no_redis_returns_db_only(db, client, monkeypatch):
+    """Redis недоступен → /progress всё равно отвечает (БД-данные)."""
+    job = _make_job(status=IsmetaJob.STATUS_PROCESSING, pages_processed=2)
+    monkeypatch.setattr(
+        "hvac_ismeta.public_views.read_live_progress",
+        lambda job_id: None,
+    )
+    resp = client.get(reverse("ismeta-public-progress", kwargs={"pk": str(job.id)}))
+    assert resp.status_code == status.HTTP_200_OK
+    body = resp.json()
+    assert body["pages_processed"] == 2
+    assert body["phase"] == ""
 
 
 def test_progress_404_for_unknown(db, client):

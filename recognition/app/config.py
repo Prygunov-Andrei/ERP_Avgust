@@ -117,6 +117,14 @@ class Settings(BaseSettings):
     # как volume `./storage/ismeta-uploads:/uploads:rw`, чтобы держать архив
     # принятых документов отдельно от стейтлесс-сервиса.
     pdf_storage_path: str = ""
+    # F8-Sprint4: live-progress writer в Redis. Recognition emit'ит state
+    # `recognition:progress:<job_id>` с TTL=progress_ttl_seconds после каждой
+    # фазы парсинга. Backend /progress endpoint мерджит БД + Redis live state.
+    # Если redis_url пуст / redis недоступен — emitter работает в noop режиме,
+    # parse продолжается без live updates (backend всё равно увидит финал из БД).
+    redis_url: str = ""
+    progress_ttl_seconds: int = 3600  # 1 час, отрабатывает таймауты parse'а
+    progress_emitter_enabled: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

@@ -25,6 +25,7 @@ from ..schemas.spec import SpecParseResponse
 from ..services import job_registry
 from ..services.invoice_parser import InvoiceParser
 from ..services.pdf_text import TEXT_LAYER_MIN_CHARS_PER_PAGE
+from ..services.progress_emitter import ProgressEmitter
 from ..services.quote_parser import QuoteParser
 from ..services.spec_parser import SpecParser
 from .errors import (
@@ -225,15 +226,40 @@ async def probe(
     )
 
 
+def _build_progress_emitter(job_id: str) -> ProgressEmitter:
+    """F8-Sprint4: factory для optional Redis-emitter'а.
+
+    Если конфиг отключил emitter (`progress_emitter_enabled=false`) или
+    job_id пуст — возвращаем noop. Иначе берём `redis_url` из settings;
+    при пустом URL ProgressEmitter сам уйдёт в noop без bullet'а ошибок.
+    """
+    if not settings.progress_emitter_enabled:
+        return ProgressEmitter(redis_url=None, job_id=None)
+    return ProgressEmitter(
+        redis_url=settings.redis_url or None,
+        job_id=job_id or None,
+        ttl_seconds=settings.progress_ttl_seconds,
+    )
+
+
 @router.post("/v1/parse/spec", response_model=SpecParseResponse)
 async def parse_spec(
     file: UploadFile = File(...),
+    x_job_id: str = Header("", alias="X-Job-Id"),
     _auth: None = Depends(verify_api_key),
     provider: BaseLLMProvider = Depends(get_provider),
 ) -> SpecParseResponse:
+    """Sync парсинг спецификации.
+
+    F8-Sprint4: при наличии заголовка `X-Job-Id` recognition пишет live-state
+    в Redis по ключу `recognition:progress:<job_id>`. Backend `/progress`
+    endpoint сливает БД + Redis. Если backend не передал X-Job-Id или
+    REDIS_URL пуст — emitter no-op, поведение совпадает с pre-Sprint-4.
+    """
     content, filename = await _read_pdf(file)
     _archive_pdf(content, filename)
-    parser = SpecParser(provider)
+    progress = _build_progress_emitter(x_job_id)
+    parser = SpecParser(provider, progress=progress)
     try:
         result = await _run_with_timeout(parser, content, filename, "spec_parse")
     finally:
@@ -401,7 +427,8 @@ async def _run_async_spec_job(
     provider: BaseLLMProvider,
 ) -> None:
     """Background-обёртка над SpecParser. Шлёт callbacks по progress + final."""
-    parser = SpecParser(provider)
+    progress = _build_progress_emitter(job_id)
+    parser = SpecParser(provider, progress=progress)
     partial_count = 0
 
     async def send_callback(event: str, payload: dict[str, Any]) -> None:

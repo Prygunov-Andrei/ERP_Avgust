@@ -269,6 +269,10 @@ export default function IsmetaApp() {
           itemsCount={state.itemsCount}
           pipelineId={pipelineId}
           backendStatus={state.backendStatus}
+          phase={state.phase}
+          currentPageLabel={state.currentPageLabel}
+          elapsedSeconds={state.elapsedSeconds}
+          etaSeconds={state.etaSeconds}
         />
       )}
 
