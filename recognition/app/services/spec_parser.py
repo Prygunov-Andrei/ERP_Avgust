@@ -33,6 +33,7 @@ from .pdf_text import (
     parse_page_items,
 )
 from .pricing import build_llm_costs
+from .progress_emitter import ProgressEmitter, noop_emitter
 from .spec_normalizer import (
     LLMNormalizationError,
     NormalizedItem,
@@ -164,7 +165,12 @@ class _ParseState:
 class SpecParser:
     """Async PDF specification parser via LLM Vision."""
 
-    def __init__(self, provider: BaseLLMProvider) -> None:
+    def __init__(
+        self,
+        provider: BaseLLMProvider,
+        *,
+        progress: ProgressEmitter | None = None,
+    ) -> None:
         self.provider = provider
         self.state = _ParseState()
         self._on_page_done: PageDoneCallback | None = None
@@ -172,6 +178,26 @@ class SpecParser:
         # run_one (Phase 3 inline). Phase 5 пропустит их дублирование, но
         # выполнит cross-page merge как обычно.
         self._inline_processed_pages: set[int] = set()
+        # F8-Sprint4: best-effort live-progress writer (Redis). None → noop.
+        self._progress: ProgressEmitter = progress or noop_emitter()
+
+    def _progress_phase(
+        self,
+        phase: str,
+        *,
+        label: str = "",
+        eta_seconds: int | None = None,
+    ) -> None:
+        """Helper: emit Redis progress используя текущее состояние state."""
+        st = self.state
+        self._progress.emit(
+            phase=phase,
+            pages_processed=st.pages_processed,
+            pages_total=st.pages_total,
+            items_count=len(st.items),
+            label=label,
+            eta_seconds=eta_seconds,
+        )
 
     async def parse(
         self,
@@ -195,6 +221,12 @@ class SpecParser:
                 "spec_parse start",
                 extra={"doc_filename": filename, "pages_total": state.pages_total},
             )
+            # F8-Sprint4: первый emit — backend увидит pages_total мгновенно,
+            # frontend выйдет из «queued»/индетерминатной полоски.
+            self._progress_phase(
+                "extract",
+                label=f"Открытие PDF — {state.pages_total} стр.",
+            )
 
             # TD-17a-pure: Docling extract без LLM. Items строятся напрямую
             # из cells, минуя normalize_via_llm (нулевые $-затраты, 0 noise).
@@ -209,6 +241,10 @@ class SpecParser:
                 # (точнее на single-page tables — Spec-1, 2, 3, 6, 7, 8, 11),
                 # Camelot per-page fallback (Spec-9 multi-page без header
                 # → Camelot lattice работает на 100%).
+                self._progress_phase(
+                    "tabletransformer",
+                    label="Распознавание таблиц (Docling)",
+                )
                 docling_rows_by_page = await run_in_threadpool(
                     extract_via_docling, pdf_bytes
                 )
@@ -326,6 +362,13 @@ class SpecParser:
                 ):
                     from .pdf_text import extract_via_camelot_subset
                     pages_str = ",".join(str(p) for p in pages_without_qty)
+                    self._progress_phase(
+                        "camelot",
+                        label=(
+                            "Camelot lattice — стр. "
+                            f"{len(pages_without_qty)}/{state.pages_total}"
+                        ),
+                    )
                     camelot_rows = await run_in_threadpool(
                         extract_via_camelot_subset, pdf_bytes, pages_str
                     )
@@ -414,10 +457,18 @@ class SpecParser:
                 #   на page → Vision extract
                 # - Vision Counter mismatch на page → Vision retry
                 if getattr(settings, "pdf_llm_vision_fallback", False):
+                    self._progress_phase(
+                        "vision_llm",
+                        label="Vision LLM — точечная коррекция",
+                    )
                     docling_rows_by_page = await self._td17g_vision_intervene(
                         doc, docling_rows_by_page, _real_qty_count
                     )
 
+                self._progress_phase(
+                    "merge",
+                    label="Сборка результата",
+                )
                 self._build_items_from_docling_rows(docling_rows_by_page)
                 return self._finalize()
 
@@ -460,10 +511,18 @@ class SpecParser:
         # TD-17: Docling extract path (97.9% cell accuracy, локально, без LLM).
         pages_rows: list[list[TableRow]] = []
         docling_rows_by_page: dict[int, list[TableRow]] = {}
+        self._progress_phase(
+            "extract",
+            label="Извлечение текста и таблиц",
+        )
         if settings.pdf_extract_via_docling:
             from .pdf_text import extract_via_docling
             pdf_bytes = getattr(self, "_pdf_bytes", b"")
             if pdf_bytes:
+                self._progress_phase(
+                    "tabletransformer",
+                    label="Распознавание таблиц (Docling)",
+                )
                 docling_rows_by_page = await run_in_threadpool(
                     extract_via_docling, pdf_bytes
                 )
@@ -621,6 +680,13 @@ class SpecParser:
         # concurrent OpenAI calls → rate-limit 429. Semaphore(6) достаточно.
         import asyncio as _asyncio
         llm_sema = _asyncio.Semaphore(settings.llm_max_concurrency)
+        # F8-Sprint4: emit что начали LLM normalize (фронт показывает фазу).
+        # ETA — грубая оценка по avg 5s на page для main pipeline.
+        self._progress_phase(
+            "llm_normalize",
+            label="Нормализация LLM",
+            eta_seconds=max(1, state.pages_total * 5),
+        )
 
         async def run_one(
             page_num: int, rows: list[TableRow], section: str, sticky: str
@@ -783,6 +849,10 @@ class SpecParser:
                 state.confidence_scores.append((page_num + 1, conf, retried))
 
             if retry_jobs:
+                self._progress_phase(
+                    "vision_llm",
+                    label=f"Vision LLM retry — {len(retry_jobs)} стр.",
+                )
                 retry_outcomes = await _asyncio.gather(
                     *retry_jobs, return_exceptions=True
                 )
@@ -842,6 +912,10 @@ class SpecParser:
 
         # Фаза 5 — применяем финальные результаты (после возможного retry) в
         # порядке страниц + обновление sequential state + PageSummary.
+        self._progress_phase(
+            "merge",
+            label="Сборка результата",
+        )
         tolerance = settings.llm_expected_count_tolerance
         v_tolerance = settings.llm_vision_count_tolerance
         for page_num in sorted(final_by_page.keys()):
@@ -1096,6 +1170,12 @@ class SpecParser:
                 state.pages_processed += 1
             else:
                 state.pages_skipped += 1
+            # F8-Sprint4: live-progress в TD-17 path (без LLM). После каждой
+            # docling page обновляем state в Redis — фронт видит как растёт K/N.
+            self._progress_phase(
+                "merge",
+                label=f"Сборка — стр. {page_no} из {state.pages_total}",
+            )
 
     async def _process_page_sequential(self, doc: fitz.Document, page_num: int) -> None:
         """Обработка страницы по старой (pre-batch) последовательной схеме —
@@ -1115,6 +1195,23 @@ class SpecParser:
         Принимает список `NormalizedItem` (column-aware/batch path) или
         `SpecItem` (Vision/legacy fallback) и сериализует в plain dicts.
         """
+        # F8-Sprint4: emit live-progress per-page. На batch column-aware path
+        # state.pages_processed обновляется уже в Phase 5 (после gather), но
+        # для UI важнее сразу показать «K из N» по факту LLM-ответа на page —
+        # счётчик ведём отдельно от state, по числу `_inline_processed_pages`.
+        try:
+            inline_done = len(self._inline_processed_pages)
+            # Items items_count — используем накопленный state + текущий batch
+            # (state ещё не обновлён в Phase 5 когда сюда попали из run_one).
+            self._progress.emit(
+                phase="llm_normalize",
+                pages_processed=max(inline_done, page_1based),
+                pages_total=self.state.pages_total,
+                items_count=len(self.state.items) + len(items),
+                label=f"Страница {page_1based} из {self.state.pages_total}",
+            )
+        except Exception:  # pragma: no cover — defensive
+            pass
         if self._on_page_done is None:
             return
         try:
@@ -1661,6 +1758,17 @@ class SpecParser:
             status = "partial"
         elif state.errors and not state.items:
             status = "error"
+        # F8-Sprint4: финальный emit — фаза done, items_count = итог.
+        # Backend всё равно увидит финал из БД (job.status=done), но у Redis
+        # TTL 1ч — если пользователь успеет poll'нуть до того как backend
+        # сохранит результат, отдадим консистентное значение.
+        self._progress.emit(
+            phase="done",
+            pages_processed=state.pages_processed,
+            pages_total=state.pages_total,
+            items_count=len(state.items),
+            label="Готово",
+        )
         if state.llm_calls:
             logger.info(
                 "spec_parse llm metrics",

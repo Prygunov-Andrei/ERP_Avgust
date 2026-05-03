@@ -34,12 +34,36 @@ export type IsmetaJobStatus =
   | 'error'
   | 'cancelled';
 
+/**
+ * F8-Sprint4: фазы recognition'а, которые отдаёт live-progress в Redis.
+ * UI рисует чек-лист по этой последовательности (queued → done).
+ */
+export type IsmetaProgressPhase =
+  | ''
+  | 'queued'
+  | 'extract'
+  | 'tabletransformer'
+  | 'camelot'
+  | 'vision_llm'
+  | 'llm_normalize'
+  | 'merge'
+  | 'done'
+  // backend кладёт error/cancelled в phase когда status терминальный
+  | 'error'
+  | 'cancelled';
+
 export interface IsmetaJobProgress {
   status: IsmetaJobStatus;
   pages_total: number;
   pages_processed: number;
   items_count: number;
   error_message: string;
+  /** F8-Sprint4 — все поля ниже опциональны (legacy backend без Redis вернёт ''). */
+  phase?: IsmetaProgressPhase;
+  current_page_label?: string;
+  elapsed_seconds?: number | null;
+  eta_seconds?: number | null;
+  last_event_ts?: string | null;
 }
 
 /**

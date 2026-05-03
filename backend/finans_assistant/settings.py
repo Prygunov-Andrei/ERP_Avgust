@@ -720,3 +720,21 @@ CACHES = {
         'TIMEOUT': 300,
     }
 }
+
+# F8-Sprint4 — live-progress writer recognition'а. Recognition пишет state в
+# Redis по ключу `recognition:progress:<job_id>` (без django KEY_PREFIX, raw
+# redis-py). DB=2 чтобы не конфликтовать с Celery (0) и rate-limit (1). При
+# недоступности Redis backend /progress возвращает только БД-state (см.
+# hvac_ismeta/progress_redis.py — fail-open).
+def _default_recognition_progress_url() -> str:
+    base = (
+        CELERY_BROKER_URL.rsplit('/', 1)[0]
+        if '/' in CELERY_BROKER_URL
+        else 'redis://localhost:6379'
+    )
+    return f'{base}/2'
+
+
+RECOGNITION_PROGRESS_REDIS_URL = os.environ.get(
+    'RECOGNITION_PROGRESS_REDIS_URL', _default_recognition_progress_url()
+)

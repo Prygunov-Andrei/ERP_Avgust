@@ -2,6 +2,7 @@ import type {
   IsmetaItem,
   IsmetaJobStatus,
   IsmetaPagesStats,
+  IsmetaProgressPhase,
 } from '@/lib/api/types/hvac-ismeta-public';
 
 export type JobState =
@@ -14,6 +15,11 @@ export type JobState =
       pagesTotal: number;
       itemsCount: number;
       backendStatus: IsmetaJobStatus;
+      // F8-Sprint4 — live-state из Redis (опц.).
+      phase?: IsmetaProgressPhase | '';
+      currentPageLabel?: string;
+      elapsedSeconds?: number | null;
+      etaSeconds?: number | null;
     }
   | {
       status: 'done';
@@ -32,9 +38,9 @@ export type JobState =
       serviceDown?: boolean;
     };
 
-export const PIPELINE_AVG_SEC_PER_PAGE: Record<string, number> = {
-  td17g: 5,
-  main: 30,
-};
-
-export const DEFAULT_AVG_SEC_PER_PAGE = 8;
+// F8-Sprint4: константы переехали в общий ProgressView (frontend/components/ismeta).
+// Re-export сохраняем для обратной совместимости с тестами/виджетами.
+export {
+  PIPELINE_AVG_SEC_PER_PAGE,
+  DEFAULT_AVG_SEC_PER_PAGE,
+} from '@/components/ismeta/ProgressView';

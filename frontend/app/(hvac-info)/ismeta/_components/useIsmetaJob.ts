@@ -5,8 +5,37 @@ import {
   IsmetaApiError,
   hvacIsmetaPublicService,
 } from '@/lib/api/services/hvac-ismeta-public';
-import type { IsmetaParseRequest } from '@/lib/api/types/hvac-ismeta-public';
+import type {
+  IsmetaParseRequest,
+  IsmetaProgressPhase,
+} from '@/lib/api/types/hvac-ismeta-public';
 import type { JobState } from './types';
+
+// F8-Sprint4: localStorage ключ для resume на refresh страницы.
+const ACTIVE_JOB_STORAGE_KEY = 'ismeta_active_job';
+
+function readActiveJobId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const v = window.localStorage.getItem(ACTIVE_JOB_STORAGE_KEY);
+    return v && v.trim() ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeActiveJobId(jobId: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (jobId) {
+      window.localStorage.setItem(ACTIVE_JOB_STORAGE_KEY, jobId);
+    } else {
+      window.localStorage.removeItem(ACTIVE_JOB_STORAGE_KEY);
+    }
+  } catch {
+    // private mode / quota — игнорируем, не блокируем основной flow.
+  }
+}
 
 type Action =
   | { type: 'reset' }
@@ -25,6 +54,10 @@ type Action =
           | 'done'
           | 'error'
           | 'cancelled';
+        phase?: IsmetaProgressPhase | '';
+        currentPageLabel?: string;
+        elapsedSeconds?: number | null;
+        etaSeconds?: number | null;
       };
     }
   | {
@@ -70,6 +103,10 @@ function reducer(state: JobState, action: Action): JobState {
         pagesTotal: 0,
         itemsCount: 0,
         backendStatus: 'queued',
+        phase: '',
+        currentPageLabel: '',
+        elapsedSeconds: null,
+        etaSeconds: null,
       };
     case 'progress-tick':
       if (state.status !== 'processing') return state;
@@ -79,6 +116,12 @@ function reducer(state: JobState, action: Action): JobState {
         pagesTotal: action.payload.pagesTotal,
         itemsCount: action.payload.itemsCount,
         backendStatus: action.payload.backendStatus,
+        phase: action.payload.phase ?? state.phase ?? '',
+        currentPageLabel:
+          action.payload.currentPageLabel ?? state.currentPageLabel ?? '',
+        elapsedSeconds:
+          action.payload.elapsedSeconds ?? state.elapsedSeconds ?? null,
+        etaSeconds: action.payload.etaSeconds ?? state.etaSeconds ?? null,
       };
     case 'finish':
       return {
@@ -141,11 +184,16 @@ export function useIsmetaJob(): UseIsmetaJob {
             pagesTotal: progress.pages_total,
             itemsCount: progress.items_count,
             backendStatus: progress.status,
+            phase: progress.phase,
+            currentPageLabel: progress.current_page_label,
+            elapsedSeconds: progress.elapsed_seconds,
+            etaSeconds: progress.eta_seconds,
           },
         });
         if (progress.status === 'done') {
           const result = await hvacIsmetaPublicService.getResult(jobId);
           if (cancelledRef.current) return;
+          writeActiveJobId(null);
           dispatch({
             type: 'finish',
             payload: {
@@ -159,6 +207,7 @@ export function useIsmetaJob(): UseIsmetaJob {
           return;
         }
         if (progress.status === 'error' || progress.status === 'cancelled') {
+          writeActiveJobId(null);
           dispatch({
             type: 'fail',
             message:
@@ -178,6 +227,11 @@ export function useIsmetaJob(): UseIsmetaJob {
         if (cancelledRef.current) return;
         const message =
           err instanceof Error ? err.message : 'Ошибка соединения';
+        // 404 означает что job стерт (TTL базы или дев-перезапуск); не оставляем
+        // зомби в localStorage, иначе резюмим в бесконечный цикл fail на refresh.
+        if (err instanceof IsmetaApiError && err.status === 404) {
+          writeActiveJobId(null);
+        }
         dispatch({ type: 'fail', message });
       }
     },
@@ -194,6 +248,8 @@ export function useIsmetaJob(): UseIsmetaJob {
           file,
           options,
         );
+        // F8-Sprint4: persist для resume на refresh.
+        writeActiveJobId(job_id);
         dispatch({ type: 'processing-start', jobId: job_id });
         await pollProgress(job_id);
       } catch (err) {
@@ -231,8 +287,77 @@ export function useIsmetaJob(): UseIsmetaJob {
   const reset = useCallback(() => {
     stopPolling();
     cancelledRef.current = false;
+    writeActiveJobId(null);
     dispatch({ type: 'reset' });
   }, [stopPolling]);
+
+  // F8-Sprint4: resume на mount если в localStorage есть active job.
+  // Поведение: первый /progress определяет, жив ли job:
+  //   - status=processing/queued → переходим в state=processing и poll'им
+  //   - status=done → вытаскиваем result, переходим в state=done
+  //   - status=error/cancelled или 404 → чистим storage, остаёмся в idle
+  // Не выставляем зависимости — effect должен сработать ровно один раз
+  // при монтировании. Cleanup-ref внутри pollProgress остановит цикл если
+  // user уйдёт с страницы.
+  useEffect(() => {
+    const stored = readActiveJobId();
+    if (!stored) return;
+    let aborted = false;
+    void (async () => {
+      try {
+        const progress = await hvacIsmetaPublicService.getProgress(stored);
+        if (aborted || cancelledRef.current) return;
+        if (progress.status === 'done') {
+          const result = await hvacIsmetaPublicService.getResult(stored);
+          if (aborted || cancelledRef.current) return;
+          writeActiveJobId(null);
+          dispatch({
+            type: 'finish',
+            payload: {
+              jobId: stored,
+              items: result.items,
+              itemsCount: result.items.length,
+              pagesStats: result.pages_stats,
+              costUsd: result.cost_usd,
+            },
+          });
+          return;
+        }
+        if (
+          progress.status === 'error' ||
+          progress.status === 'cancelled'
+        ) {
+          writeActiveJobId(null);
+          return;
+        }
+        // active → resume polling.
+        dispatch({ type: 'processing-start', jobId: stored });
+        dispatch({
+          type: 'progress-tick',
+          payload: {
+            pagesProcessed: progress.pages_processed,
+            pagesTotal: progress.pages_total,
+            itemsCount: progress.items_count,
+            backendStatus: progress.status,
+            phase: progress.phase,
+            currentPageLabel: progress.current_page_label,
+            elapsedSeconds: progress.elapsed_seconds,
+            etaSeconds: progress.eta_seconds,
+          },
+        });
+        await pollProgress(stored);
+      } catch (err) {
+        // Job не найден / Redis нет — снимаем флаг, не показываем error.
+        if (err instanceof IsmetaApiError && err.status === 404) {
+          writeActiveJobId(null);
+        }
+      }
+    })();
+    return () => {
+      aborted = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return { state, start, reset };
 }

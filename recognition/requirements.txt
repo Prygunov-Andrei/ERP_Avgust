@@ -24,6 +24,10 @@ opencv-python-headless>=4.13
 # Python binding для Ghostscript (Camelot lattice rasterizer).
 ghostscript>=0.8
 
+# F8-Sprint4: optional live-progress в Redis (recognition:progress:<job_id>).
+# Если REDIS_URL пуст или redis package недоступен — emitter работает в noop режиме.
+redis>=5.0
+
 # Dev/test
 pytest>=8.2
 pytest-asyncio>=0.23

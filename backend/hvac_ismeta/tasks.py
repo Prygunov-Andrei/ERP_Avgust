@@ -33,13 +33,20 @@ def _resolve_recognition_url(pipeline: str) -> str:
 
 
 def _build_headers(job: IsmetaJob) -> dict[str, str]:
-    """Собирает headers для recognition: X-API-Key + X-LLM-* override.
+    """Собирает headers для recognition: X-API-Key + X-LLM-* override + X-Job-Id.
 
     Если llm_profile_id не задан — recognition использует свой default
     (settings.llm_api_key), что для public endpoint обычно не желательно.
     Логируем warning и оставляем выбор за оператором (через UI/настройки).
+
+    F8-Sprint4: X-Job-Id используется recognition для записи live-progress
+    в Redis (`recognition:progress:<job.id>`). Backend `/progress` endpoint
+    читает этот ключ и сливает live-state с БД.
     """
-    headers: dict[str, str] = {"X-API-Key": settings.RECOGNITION_API_KEY}
+    headers: dict[str, str] = {
+        "X-API-Key": settings.RECOGNITION_API_KEY,
+        "X-Job-Id": str(job.id),
+    }
 
     if job.llm_profile_id is None:
         logger.warning("IsmetaJob %s без llm_profile_id; recognition использует default", job.id)

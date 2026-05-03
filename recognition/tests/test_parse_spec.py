@@ -200,6 +200,24 @@ class TestParseSpecEndpoint:
         assert data["pages_stats"]["total"] == 2
         assert all("page_number" in it for it in data["items"])
 
+    def test_x_job_id_header_accepted(self, client, auth_headers):
+        """F8-Sprint4: /v1/parse/spec должен принять X-Job-Id и не упасть.
+
+        Если REDIS_URL пуст (default в тестах) — emitter уйдёт в noop и parse
+        отработает как обычно. Тут мы проверяем только, что header не ломает
+        endpoint и не появляется 422 на лишнем заголовке.
+        """
+        mock = MockProvider()
+        app.dependency_overrides[get_provider] = lambda: mock
+        pdf = _make_real_pdf(1)
+        resp = client.post(
+            "/v1/parse/spec",
+            files={"file": ("spec.pdf", io.BytesIO(pdf), "application/pdf")},
+            headers={**auth_headers, "X-Job-Id": "test-job-12345"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] in ("done", "partial", "error")
+
     def test_errors_only_status_error(self, client, auth_headers):
         """Extract always fails → status=error, 200 response, errors populated."""
 

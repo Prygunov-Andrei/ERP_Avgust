@@ -34,10 +34,19 @@ function fakeFile(): File {
   return new File([new Uint8Array(0)], 'a.pdf', { type: 'application/pdf' });
 }
 
+const ACTIVE_JOB_KEY = 'ismeta_active_job';
+
 beforeEach(() => {
   mocked.parsePdf.mockReset();
   mocked.getProgress.mockReset();
   mocked.getResult.mockReset();
+  // F8-Sprint4: каждый тест стартует с чистым localStorage, иначе resume-effect
+  // подхватывает чужого job'а из предыдущего теста.
+  try {
+    window.localStorage.removeItem(ACTIVE_JOB_KEY);
+  } catch {
+    /* jsdom without storage — игнор */
+  }
 });
 
 afterEach(() => {
@@ -207,6 +216,82 @@ describe('useIsmetaJob — state transitions', () => {
       result.current.reset();
     });
     expect(result.current.state.status).toBe('idle');
+  });
+
+  it('start кладёт jobId в localStorage, finish — убирает', async () => {
+    mocked.parsePdf.mockResolvedValue({ job_id: 'job-store' });
+    mocked.getProgress.mockResolvedValueOnce({
+      status: 'done',
+      pages_total: 1,
+      pages_processed: 1,
+      items_count: 0,
+      error_message: '',
+    });
+    mocked.getResult.mockResolvedValue({
+      items: [],
+      pages_stats: { total: 1, processed: 1, skipped: 0 },
+      cost_usd: 0,
+    });
+    const { result } = renderHook(() => useIsmetaJob());
+    await act(async () => {
+      await result.current.start(fakeFile(), {});
+    });
+    await waitFor(() => {
+      expect(result.current.state.status).toBe('done');
+    });
+    expect(window.localStorage.getItem(ACTIVE_JOB_KEY)).toBeNull();
+  });
+
+  it('reset очищает localStorage', async () => {
+    window.localStorage.setItem(ACTIVE_JOB_KEY, 'orphan-job');
+    const { result } = renderHook(() => useIsmetaJob());
+    act(() => {
+      result.current.reset();
+    });
+    expect(window.localStorage.getItem(ACTIVE_JOB_KEY)).toBeNull();
+  });
+
+  it('progress-tick прокидывает phase/eta из live-state', async () => {
+    mocked.parsePdf.mockResolvedValue({ job_id: 'job-live' });
+    // Первый tick — processing с live-state, второй — done.
+    mocked.getProgress
+      .mockResolvedValueOnce({
+        status: 'processing',
+        pages_total: 10,
+        pages_processed: 3,
+        items_count: 42,
+        error_message: '',
+        phase: 'llm_normalize',
+        current_page_label: 'Страница 3 из 10',
+        elapsed_seconds: 22,
+        eta_seconds: 38,
+      })
+      .mockResolvedValue({
+        status: 'done',
+        pages_total: 10,
+        pages_processed: 10,
+        items_count: 50,
+        error_message: '',
+      });
+    mocked.getResult.mockResolvedValue({
+      items: [],
+      pages_stats: { total: 10, processed: 10, skipped: 0 },
+      cost_usd: 0,
+    });
+
+    const { result } = renderHook(() => useIsmetaJob());
+    await act(async () => {
+      await result.current.start(fakeFile(), {});
+    });
+    await waitFor(() => {
+      // После первого tick state ещё processing с live-полями.
+      expect(['processing', 'done']).toContain(result.current.state.status);
+    });
+    if (result.current.state.status === 'processing') {
+      expect(result.current.state.phase).toBe('llm_normalize');
+      expect(result.current.state.currentPageLabel).toBe('Страница 3 из 10');
+      expect(result.current.state.etaSeconds).toBe(38);
+    }
   });
 
   it('cancelled на progress → state=error с осмысленным сообщением', async () => {

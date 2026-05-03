@@ -34,6 +34,7 @@ from .excel import build_workbook
 from .llm_profile_client import list_llm_profiles
 from .logging import log_concurrency_block, log_rate_limit_hit
 from .models import HvacIsmetaSettings, IsmetaFeedback, IsmetaJob
+from .progress_redis import read_live_progress
 from .ratelimit import check_daily_ip, check_hourly_ip, check_hourly_session
 from .tasks import process_ismeta_job
 
@@ -294,22 +295,68 @@ class IsmetaPublicViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["get"], url_path="progress")
     def progress(self, request: Request, pk: str | None = None) -> Response:
+        """F8-Sprint4: БД + Redis live-state.
+
+        Recognition пишет phase/pages_processed/items_count в Redis после
+        каждой ключевой фазы. Backend склеивает: финальное состояние из БД
+        для done/error/cancelled, иначе берёт processing-снапшот и поверх
+        накатывает свежий live-state (явный приоритет live над БД для
+        полей pages_processed, items_count, phase, current_page_label, eta).
+        """
         job = self._get_job(pk or "")
         if job is None:
             return Response({"error": "Не найдено"}, status=status.HTTP_404_NOT_FOUND)
-        return Response(
-            {
-                "job_id": str(job.id),
-                "status": job.status,
-                "pages_total": job.pages_total,
-                "pages_processed": job.pages_processed,
-                "items_count": job.items_count,
-                "pipeline": job.pipeline,
-                "started_at": job.started_at,
-                "completed_at": job.completed_at,
-                "error_message": job.error_message,
-            }
-        )
+
+        base = {
+            "job_id": str(job.id),
+            "status": job.status,
+            "pages_total": job.pages_total,
+            "pages_processed": job.pages_processed,
+            "items_count": job.items_count,
+            "pipeline": job.pipeline,
+            "started_at": job.started_at,
+            "completed_at": job.completed_at,
+            "error_message": job.error_message,
+            # Поля live-state. Если Redis нет — заполнятся defaults, фронт
+            # покажет minimal info (как до Sprint 4).
+            "phase": "",
+            "current_page_label": "",
+            "elapsed_seconds": None,
+            "eta_seconds": None,
+            "last_event_ts": None,
+        }
+
+        # Финальное состояние — БД источник истины. Live-state в Redis может
+        # отстать на 1-2 polling-цикла после save(); если status уже done —
+        # игнорируем live, чтобы UI сразу переключился на ResultView.
+        if job.status in (
+            IsmetaJob.STATUS_DONE,
+            IsmetaJob.STATUS_ERROR,
+            IsmetaJob.STATUS_CANCELLED,
+        ):
+            base["phase"] = "done" if job.status == IsmetaJob.STATUS_DONE else job.status
+            return Response(base)
+
+        live = read_live_progress(str(job.id))
+        if live:
+            # Live source выигрывает у БД для активных полей. БД pages_*/items_*
+            # обновляются только в финале task'а — тут они нули.
+            for key in (
+                "phase",
+                "current_page_label",
+                "elapsed_seconds",
+                "eta_seconds",
+                "last_event_ts",
+            ):
+                if key in live:
+                    base[key] = live[key]
+            for key in ("pages_total", "pages_processed", "items_count"):
+                if key in live and isinstance(live[key], int):
+                    # pages_total в Redis может быть точнее (recognition уже
+                    # открыл PDF), pages_processed/items_count — единственный
+                    # источник live-цифр до финала.
+                    base[key] = live[key]
+        return Response(base)
 
     @action(detail=True, methods=["get"], url_path="result")
     def result(self, request: Request, pk: str | None = None) -> Response:
