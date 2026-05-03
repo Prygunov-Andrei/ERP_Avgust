@@ -7,7 +7,6 @@ import type {
 } from '@/lib/api/types/hvac-ismeta-public';
 import { hvacIsmetaPublicService } from '@/lib/api/services/hvac-ismeta-public';
 import UploadZone from './UploadZone';
-import SettingsPanel from './SettingsPanel';
 import ProgressView from './ProgressView';
 import ResultView from './ResultView';
 import FeedbackForm from './FeedbackForm';
@@ -22,22 +21,28 @@ const FALLBACK_PIPELINES: IsmetaPipelineOption[] = [
   },
 ];
 
+function isValidEmail(value: string): boolean {
+  if (!value) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 export default function IsmetaApp() {
   const { state, start, reset } = useIsmetaJob();
 
+  // SettingsPanel убран по решению PO 2026-05-03 — pipeline и LLM-провайдер
+  // выбираются в ERP админке (HvacIsmetaSettings.default_*). Публичный UI
+  // использует backend defaults; запрос /options всё ещё дёргаем, чтобы
+  // знать какой pipeline передать в Celery task (на будущее).
   const [pipelines, setPipelines] = useState<IsmetaPipelineOption[]>(
     FALLBACK_PIPELINES,
   );
   const [llmProfiles, setLlmProfiles] = useState<IsmetaLlmProfileOption[]>([]);
-  const [pipelineId, setPipelineId] = useState<string>(
-    FALLBACK_PIPELINES[0].id,
-  );
+  const [pipelineId, setPipelineId] = useState<string>(FALLBACK_PIPELINES[0].id);
   const [llmProfileId, setLlmProfileId] = useState<number | null>(null);
   const [email, setEmail] = useState('');
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
-  // Load /options on mount.
   useEffect(() => {
     let cancelled = false;
     hvacIsmetaPublicService
@@ -68,11 +73,12 @@ export default function IsmetaApp() {
   }, []);
 
   const isBusy = state.status === 'uploading' || state.status === 'processing';
+  const emailValid = isValidEmail(email);
   const canSubmit =
     state.status === 'idle' &&
     file !== null &&
     pipelines.length > 0 &&
-    (llmProfiles.length === 0 || llmProfileId !== null);
+    emailValid;
 
   const handleSubmit = () => {
     if (!file) return;
@@ -88,6 +94,9 @@ export default function IsmetaApp() {
     reset();
   };
 
+  // Чтобы ничего не болталось: подавим warning о неиспользуемом llmProfiles в UI.
+  void llmProfiles;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {(state.status === 'idle' ||
@@ -100,41 +109,56 @@ export default function IsmetaApp() {
             selectedFileName={file?.name ?? null}
           />
 
-          <SettingsPanel
-            pipelines={pipelines}
-            llmProfiles={llmProfiles}
-            pipelineId={pipelineId}
-            llmProfileId={llmProfileId}
-            email={email}
-            onPipelineChange={setPipelineId}
-            onLlmChange={setLlmProfileId}
-            onEmailChange={setEmail}
-            disabled={isBusy}
-          />
-
-          {optionsError && (
-            <div
-              role="alert"
-              style={{
-                marginTop: 12,
-                fontSize: 13,
-                color: 'hsl(0 60% 35%)',
-              }}
-            >
-              Не удалось загрузить настройки: {optionsError}. Используем
-              значения по умолчанию.
-            </div>
-          )}
-
+          {/* Email + Распознать одной строкой */}
           <div
             style={{
-              marginTop: 24,
+              marginTop: 18,
               display: 'flex',
+              gap: 10,
+              alignItems: 'flex-start',
               flexWrap: 'wrap',
-              gap: 12,
-              alignItems: 'center',
             }}
           >
+            <div style={{ flex: '1 1 280px', minWidth: 260 }}>
+              <input
+                id="ismeta-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isBusy}
+                placeholder="email — пришлём ссылку на готовую таблицу (опционально)"
+                autoComplete="email"
+                aria-invalid={!emailValid || undefined}
+                aria-label="Email для уведомления о готовности"
+                data-testid="ismeta-email-input"
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  borderRadius: 10,
+                  border: `1px solid ${
+                    emailValid
+                      ? 'hsl(var(--rt-border-subtle))'
+                      : 'hsl(0 60% 55%)'
+                  }`,
+                  background: 'hsl(var(--rt-paper))',
+                  color: 'hsl(var(--rt-ink))',
+                  fontSize: 15,
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                }}
+              />
+              {!emailValid && (
+                <div
+                  style={{
+                    marginTop: 6,
+                    fontSize: 12,
+                    color: 'hsl(0 60% 45%)',
+                  }}
+                >
+                  Похоже, email указан с опечаткой.
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={handleSubmit}
@@ -153,25 +177,25 @@ export default function IsmetaApp() {
                 cursor: canSubmit && !isBusy ? 'pointer' : 'not-allowed',
                 fontFamily: 'inherit',
                 transition: 'background 120ms',
+                whiteSpace: 'nowrap',
               }}
             >
-              {state.status === 'uploading'
-                ? 'Загружаем…'
-                : 'Распознать →'}
+              {state.status === 'uploading' ? 'Загружаем…' : 'Распознать →'}
             </button>
             {file && state.status === 'idle' && (
               <button
                 type="button"
                 onClick={() => setFile(null)}
                 style={{
-                  padding: '12px 18px',
+                  padding: '14px 18px',
                   background: 'transparent',
                   color: 'hsl(var(--rt-ink-60))',
                   border: '1px solid hsl(var(--rt-border-subtle))',
-                  borderRadius: 8,
+                  borderRadius: 10,
                   fontSize: 13,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 Убрать файл
@@ -179,12 +203,26 @@ export default function IsmetaApp() {
             )}
           </div>
 
+          {optionsError && (
+            <div
+              role="alert"
+              style={{
+                marginTop: 12,
+                fontSize: 13,
+                color: 'hsl(0 60% 35%)',
+              }}
+            >
+              Не удалось загрузить настройки: {optionsError}. Используем
+              значения по умолчанию.
+            </div>
+          )}
+
           {state.status === 'error' && (
             <div
               role="alert"
               data-testid="ismeta-error"
               style={{
-                marginTop: 16,
+                marginTop: 18,
                 padding: '14px 16px',
                 borderRadius: 10,
                 background: state.serviceDown

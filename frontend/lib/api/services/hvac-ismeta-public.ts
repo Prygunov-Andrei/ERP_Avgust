@@ -199,7 +199,8 @@ async function mockGetResult(jobId: string): Promise<IsmetaJobResult> {
     throw new IsmetaApiError(404, 'Job not found');
   }
   const items = Array.from({ length: 8 }, (_, i) => ({
-    position: i + 1,
+    sort_order: i + 1,
+    section_name: i < 4 ? 'Кондиционирование' : 'Электрика и крепёж',
     name: [
       'Сплит-система настенная',
       'Внешний блок инверторного типа',
@@ -210,9 +211,12 @@ async function mockGetResult(jobId: string): Promise<IsmetaJobResult> {
       'Декоративный канал ПВХ 60×60',
       'Автоматический выключатель C16',
     ][i % 8],
-    model: ['AS-12HU', 'OU-12HU', 'PB-100', 'ВВГнг 4×1.5', 'CU 1/4+3/8', 'KU-300', 'TC-60', 'BA47-29'][i % 8],
-    qty: i === 4 ? 12 : 1,
+    model_name: ['AS-12HU', 'OU-12HU', 'PB-100', 'ВВГнг 4×1.5', 'CU 1/4+3/8', 'KU-300', 'TC-60', 'BA47-29'][i % 8],
+    brand: ['Hisense', 'Hisense', 'Aspen', 'РЭК-Prysmian', 'Wieland', 'Stilcon', 'Decor', 'IEK'][i % 8],
+    manufacturer: ['Hisense', 'Hisense', 'Aspen', 'РЭК', 'Wieland', 'Stilcon', 'Decor', 'IEK'][i % 8],
+    quantity: i === 4 ? 12 : 1,
     unit: i === 4 ? 'м' : 'шт',
+    page_number: 1 + Math.floor(i / 4),
   }));
   return {
     items,

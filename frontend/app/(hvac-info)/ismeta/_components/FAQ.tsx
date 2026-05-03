@@ -1,17 +1,28 @@
-import type { CSSProperties } from 'react';
+/**
+ * FAQ под /ismeta — простой текст без collapsible. Privacy-disclaimer убран:
+ * вопрос «Безопасно ли загружать PDF» уже отвечает на это.
+ */
 
-const ITEMS: Array<{ q: string; a: string }> = [
+const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   {
     q: 'Какие PDF поддерживаются?',
-    a: 'Спецификации ОВиК с табличной разметкой — выгрузки из AutoCAD, Revit, MagiCAD и аналогов. Сканы (растровые PDF) обрабатываются хуже: лучше использовать электронные версии. Поддерживаются книжная и альбомная ориентация, многостраничные файлы.',
+    a: 'PDF спецификации ОВиК — оригинальные выгрузки из AutoCAD, Revit, MagiCAD и сканы. Лимит — 50 МБ.',
   },
   {
-    q: 'Сколько это занимает?',
-    a: 'Быстрый движок (TD-17g) обрабатывает спецификацию в 3–10 листов за 2–7 минут. Точный движок (main) запускает полный pipeline и нужен для нестандартных таблиц — там обработка занимает до часа.',
+    q: 'Сколько ждать результат?',
+    a: 'Обычно 3–7 минут на спецификацию до 30 страниц. Большие документы (50+ страниц) — до получаса.',
   },
   {
-    q: 'Что мы делаем с PDF?',
-    a: 'PDF используется только для распознавания. Мы не передаём файл и распознанные данные третьим лицам, не используем для обучения моделей. Файлы и результаты автоматически удаляются с серверов через несколько суток.',
+    q: 'Что я получу в Excel?',
+    a: 'Таблицу со столбцами: № позиции, раздел, наименование, модель/марка, бренд, производитель, ед. изм., количество, страница. Готова к копированию в смету.',
+  },
+  {
+    q: 'Безопасно ли загружать PDF?',
+    a: 'Загруженные файлы используются только для распознавания и хранятся на наших серверах для контроля качества. Мы не передаём данные третьим лицам и не используем их для обучения моделей.',
+  },
+  {
+    q: 'Если распознало неточно?',
+    a: 'Оставьте отзыв 👎 + комментарий — поможете нам сделать инструмент лучше. Каждый отзыв читаем вручную.',
   },
 ];
 
@@ -19,67 +30,56 @@ export default function FAQ() {
   return (
     <section
       style={{
-        marginTop: 48,
+        marginTop: 56,
         paddingTop: 32,
         borderTop: '1px solid hsl(var(--rt-border-subtle))',
       }}
     >
       <h2
         style={{
-          fontSize: 20,
-          fontWeight: 700,
+          fontFamily: 'var(--rt-font-serif), serif',
+          fontSize: 22,
+          fontWeight: 600,
           color: 'hsl(var(--rt-ink))',
-          marginBottom: 16,
+          margin: 0,
+          marginBottom: 24,
         }}
       >
         Частые вопросы
       </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {ITEMS.map((item) => (
-          <details key={item.q} style={detailsStyle}>
-            <summary style={summaryStyle}>{item.q}</summary>
-            <p
+      <dl
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 22,
+          margin: 0,
+        }}
+      >
+        {FAQ_ITEMS.map((item) => (
+          <div key={item.q}>
+            <dt
               style={{
-                margin: '8px 0 0',
+                fontSize: 15,
+                fontWeight: 600,
+                color: 'hsl(var(--rt-ink))',
+                marginBottom: 6,
+              }}
+            >
+              {item.q}
+            </dt>
+            <dd
+              style={{
+                margin: 0,
                 fontSize: 14,
                 lineHeight: 1.55,
                 color: 'hsl(var(--rt-ink-80))',
               }}
             >
               {item.a}
-            </p>
-          </details>
+            </dd>
+          </div>
         ))}
-      </div>
-      <p
-        style={{
-          marginTop: 24,
-          padding: '12px 16px',
-          borderRadius: 8,
-          background: 'hsl(var(--rt-alt))',
-          fontSize: 13,
-          color: 'hsl(var(--rt-ink-60))',
-          lineHeight: 1.5,
-        }}
-      >
-        Загруженные PDF используются только для распознавания. Мы не передаём
-        файлы и данные третьим лицам и не используем их для обучения моделей.
-      </p>
+      </dl>
     </section>
   );
 }
-
-const detailsStyle: CSSProperties = {
-  padding: '14px 16px',
-  borderRadius: 10,
-  border: '1px solid hsl(var(--rt-border-subtle))',
-  background: 'hsl(var(--rt-paper))',
-};
-
-const summaryStyle: CSSProperties = {
-  cursor: 'pointer',
-  fontSize: 15,
-  fontWeight: 600,
-  color: 'hsl(var(--rt-ink))',
-  listStyle: 'revert',
-};
