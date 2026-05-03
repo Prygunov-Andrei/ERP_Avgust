@@ -118,7 +118,6 @@ export default function ResultView({
                 width: '100%',
                 borderCollapse: 'collapse',
                 fontSize: 13,
-                minWidth: 560,
               }}
             >
               <thead>
@@ -129,26 +128,38 @@ export default function ResultView({
                     textAlign: 'left',
                   }}
                 >
-                  <Th style={{ width: 56 }}>Поз</Th>
+                  <Th style={{ width: 56, textAlign: 'center' }}>№</Th>
+                  <Th>Раздел</Th>
                   <Th>Наименование</Th>
-                  <Th>Тип / марка</Th>
-                  <Th style={{ width: 80, textAlign: 'right' }}>Кол-во</Th>
-                  <Th style={{ width: 64 }}>Ед.</Th>
+                  <Th>Модель / марка</Th>
+                  <Th>Бренд</Th>
+                  <Th style={{ width: 90, textAlign: 'right' }}>Кол-во</Th>
+                  <Th style={{ width: 70 }}>Ед.</Th>
+                  <Th style={{ width: 64, textAlign: 'center' }}>Стр.</Th>
                 </tr>
               </thead>
               <tbody>
                 {previewItems.map((item, idx) => (
                   <tr
-                    key={`${item.position}-${idx}`}
+                    key={`${item.sort_order ?? idx}-${idx}`}
                     style={{
                       borderTop: '1px solid hsl(var(--rt-border-subtle))',
                     }}
                   >
-                    <Td>{item.position}</Td>
-                    <Td>{item.name}</Td>
-                    <Td>{item.model}</Td>
-                    <Td style={{ textAlign: 'right' }}>{item.qty}</Td>
-                    <Td>{item.unit}</Td>
+                    <Td style={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
+                      {item.sort_order ?? ''}
+                    </Td>
+                    <Td>{item.section_name ?? ''}</Td>
+                    <Td>{item.name ?? ''}</Td>
+                    <Td>{item.model_name ?? ''}</Td>
+                    <Td>{item.brand ?? item.manufacturer ?? ''}</Td>
+                    <Td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {item.quantity ?? ''}
+                    </Td>
+                    <Td>{item.unit ?? ''}</Td>
+                    <Td style={{ textAlign: 'center', color: 'hsl(var(--rt-ink-60))' }}>
+                      {item.page_number ?? ''}
+                    </Td>
                   </tr>
                 ))}
               </tbody>
@@ -175,6 +186,7 @@ function Th({
         fontSize: 12,
         textTransform: 'uppercase',
         letterSpacing: 0.3,
+        whiteSpace: 'nowrap',
         ...style,
       }}
     >

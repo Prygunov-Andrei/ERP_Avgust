@@ -1,7 +1,7 @@
 /**
  * Типы публичного API распознавания спецификаций (hvac-info.com/ismeta).
- * Endpoint prefix: /api/hvac/ismeta (через Next.js rewrite на backend
- * /api/v1/hvac/public/ismeta).
+ * Endpoint prefix: /api/hvac/ismeta (Next.js rewrite на backend
+ * /api/hvac/ismeta).
  *
  * Не путать с `hvac-ismeta.ts` — там админский singleton настроек ERP.
  */
@@ -11,7 +11,6 @@ export type IsmetaPipelineId = 'main' | 'td17g';
 export interface IsmetaPipelineOption {
   id: IsmetaPipelineId | string;
   label: string;
-  /** Краткая подсказка под select'ом / в tooltip. */
   description?: string;
   default?: boolean;
 }
@@ -43,21 +42,30 @@ export interface IsmetaJobProgress {
   error_message: string;
 }
 
+/**
+ * Item в результате — структура соответствует recognition.SpecItem
+ * (см. backend/hvac_ismeta/excel.py COLUMNS). Все поля опциональные:
+ * recognition может не вытащить часть на сложных PDF.
+ */
 export interface IsmetaItem {
-  /** Номер позиции в спецификации (как в исходном PDF). */
-  position: number | string;
+  /** Номер позиции (sort_order в recognition). */
+  sort_order?: number | string;
+  /** Раздел спецификации. */
+  section_name?: string;
   /** Наименование. */
-  name: string;
+  name?: string;
   /** Тип / марка / модель. */
-  model: string;
-  /** Количество. */
-  qty: number | string;
-  /** Единица измерения (шт, м, м³, ...). */
-  unit: string;
-  /** Доп. характеристики, если есть. */
-  specs?: string;
+  model_name?: string;
+  /** Бренд. */
+  brand?: string;
   /** Производитель. */
   manufacturer?: string;
+  /** Единица измерения. */
+  unit?: string;
+  /** Количество. */
+  quantity?: number | string;
+  /** Страница в исходном PDF. */
+  page_number?: number;
 }
 
 export interface IsmetaPagesStats {

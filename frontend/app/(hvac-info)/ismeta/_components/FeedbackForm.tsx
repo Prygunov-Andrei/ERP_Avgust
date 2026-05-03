@@ -2,7 +2,11 @@
 
 import { useState } from 'react';
 import { hvacIsmetaPublicService } from '@/lib/api/services/hvac-ismeta-public';
-import { isValidEmail } from './SettingsPanel';
+
+function isValidEmail(value: string): boolean {
+  if (!value) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
 
 export interface FeedbackFormProps {
   jobId: string;
