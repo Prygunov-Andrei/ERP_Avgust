@@ -1,7 +1,10 @@
 /**
  * Hero блок главной /ismeta — на всю ширину, с цветным фоном.
  * Стилистика и max-width 1280 повторяют HeroBlock из rating-split-system.
- * Места под illustration — справа, аналогично rating hero.
+ *
+ * Illustration: иллюстрация стопки спецификаций от руки на белом фоне.
+ * Dark theme через CSS filter invert+hue-rotate (как в rating HeroIllustration)
+ * — одна WebP покрывает обе темы, не плодим артефактов.
  */
 import { Eyebrow } from '../../rating-split-system/_components/primitives';
 
@@ -22,7 +25,7 @@ export default function IsmetaHero() {
           padding: '40px 40px 36px',
           display: 'flex',
           gap: 32,
-          alignItems: 'flex-start',
+          alignItems: 'center',
           flexWrap: 'wrap',
         }}
       >
@@ -59,28 +62,51 @@ export default function IsmetaHero() {
           </p>
         </div>
 
-        {/* Место под illustration — заполнит дизайнер. */}
-        <div
-          aria-hidden
-          className="rt-ismeta-hero-illustration"
-          style={{
-            flex: '0 0 320px',
-            minHeight: 200,
-            borderRadius: 16,
-            background:
-              'linear-gradient(135deg, hsl(var(--rt-accent) / 0.10), hsl(var(--rt-accent) / 0.02))',
-            border: '1px dashed hsl(var(--rt-border-subtle))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'hsl(var(--rt-ink-40))',
-            fontSize: 13,
-            fontFamily: 'var(--rt-font-mono)',
-          }}
-        >
-          illustration
-        </div>
+        <HeroIllustration />
       </div>
     </section>
+  );
+}
+
+function HeroIllustration() {
+  return (
+    <div
+      className="rt-ismeta-hero-illustration"
+      role="img"
+      aria-label="Иллюстрация — стопка чертежей со спецификацией оборудования ОВиК"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/ismeta-hero/ismeta-hero.webp"
+        alt=""
+        width={520}
+        height={350}
+        loading="eager"
+        decoding="async"
+        style={{
+          width: '100%',
+          height: 'auto',
+          display: 'block',
+          objectFit: 'contain',
+        }}
+      />
+      <style>{`
+        .rt-ismeta-hero-illustration {
+          flex: 0 0 420px;
+          max-width: 520px;
+          padding: 4px;
+        }
+        @media (max-width: 899px) {
+          .rt-ismeta-hero-illustration {
+            flex: 1 1 100%;
+            max-width: 100%;
+          }
+        }
+        @media (prefers-color-scheme: dark) {
+          .rt-ismeta-hero-illustration img { filter: invert(1) hue-rotate(180deg) brightness(1.25); }
+        }
+        .dark .rt-ismeta-hero-illustration img { filter: invert(1) hue-rotate(180deg) brightness(1.25); }
+      `}</style>
+    </div>
   );
 }
