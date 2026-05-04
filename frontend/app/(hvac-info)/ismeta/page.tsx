@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import HvacInfoHeader from '@/components/hvac-info/HvacInfoHeader';
 import SectionFooter from '../_components/SectionFooter';
-import IsmetaHero from './_components/IsmetaHero';
-import IsmetaTabs from './_components/IsmetaTabs';
+import StickyCollapseHero from '../rating-split-system/_components/StickyCollapseHero';
+import IsmetaHero, { IsmetaHeroCollapsed } from './_components/IsmetaHero';
 import IsmetaApp from './_components/IsmetaApp';
 import FAQ from './_components/FAQ';
 
@@ -31,8 +31,10 @@ export default function IsmetaPage() {
   return (
     <>
       <HvacInfoHeader />
-      <IsmetaHero />
-      <IsmetaTabs />
+      <StickyCollapseHero
+        full={<IsmetaHero />}
+        collapsed={<IsmetaHeroCollapsed />}
+      />
       <main
         className="hvac-content"
         style={{
