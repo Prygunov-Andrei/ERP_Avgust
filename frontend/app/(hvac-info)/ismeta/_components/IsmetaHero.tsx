@@ -173,6 +173,7 @@ function HeroIllustration() {
         }
         .dark .rt-ismeta-hero-img-light { display: none; }
         .dark .rt-ismeta-hero-img-dark { display: block; }
+      `}</style>
     </div>
   );
 }
