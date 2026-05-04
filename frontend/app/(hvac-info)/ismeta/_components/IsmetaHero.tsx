@@ -167,10 +167,9 @@ function HeroIllustration() {
           border-radius: 6px;
         }
         .rt-ismeta-hero-img-dark { display: none; }
-        @media (prefers-color-scheme: dark) {
-          .rt-ismeta-hero-img-light { display: none; }
-          .rt-ismeta-hero-img-dark { display: block; }
-        }
+        /* Тема приложения управляется ТОЛЬКО через .dark класс на html.
+           prefers-color-scheme media НЕ используем — system dark mode не
+           должен переключать картинку, если сайт остался в light theme. */
         .dark .rt-ismeta-hero-img-light { display: none; }
         .dark .rt-ismeta-hero-img-dark { display: block; }
       `}</style>
