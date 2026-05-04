@@ -130,20 +130,28 @@ function HeroIllustration() {
       role="img"
       aria-label="Иллюстрация — стопка чертежей со спецификацией оборудования ОВиК"
     >
+      {/* Две версии: light = фото с белой бумагой (как «лист чертежа»),
+          dark = инвертированная. Переключение через .dark класс или
+          prefers-color-scheme. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/ismeta-hero/ismeta-hero.webp"
+        className="rt-ismeta-hero-img rt-ismeta-hero-img-light"
+        src="/ismeta-hero/ismeta-hero-light.webp"
         alt=""
         width={520}
         height={350}
         loading="eager"
         decoding="async"
-        style={{
-          width: '100%',
-          height: 'auto',
-          display: 'block',
-          objectFit: 'contain',
-        }}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className="rt-ismeta-hero-img rt-ismeta-hero-img-dark"
+        src="/ismeta-hero/ismeta-hero-dark.webp"
+        alt=""
+        width={520}
+        height={350}
+        loading="eager"
+        decoding="async"
       />
       <style>{`
         .rt-ismeta-hero-illustration {
@@ -151,11 +159,20 @@ function HeroIllustration() {
           align-items: center;
           padding: 8px;
         }
-        @media (prefers-color-scheme: dark) {
-          .rt-ismeta-hero-illustration img { filter: invert(1) hue-rotate(180deg) brightness(1.05); }
+        .rt-ismeta-hero-img {
+          width: 100%;
+          height: auto;
+          display: block;
+          object-fit: contain;
+          border-radius: 6px;
         }
-        .dark .rt-ismeta-hero-illustration img { filter: invert(1) hue-rotate(180deg) brightness(1.05); }
-      `}</style>
+        .rt-ismeta-hero-img-dark { display: none; }
+        @media (prefers-color-scheme: dark) {
+          .rt-ismeta-hero-img-light { display: none; }
+          .rt-ismeta-hero-img-dark { display: block; }
+        }
+        .dark .rt-ismeta-hero-img-light { display: none; }
+        .dark .rt-ismeta-hero-img-dark { display: block; }
     </div>
   );
 }
