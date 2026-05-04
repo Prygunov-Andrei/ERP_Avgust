@@ -172,10 +172,9 @@ function ModelRow({
           color: 'hsl(var(--rt-ink-40))',
           fontWeight: 500,
           letterSpacing: -0.5,
-          paddingLeft: isAd ? 4 : 0,
         }}
       >
-        {isAd ? <AdBadge /> : model._displayRank}
+        {isAd ? null : model._displayRank}
       </div>
       <div
         style={{
