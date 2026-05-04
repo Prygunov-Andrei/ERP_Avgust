@@ -164,7 +164,6 @@ function HeroIllustration() {
           height: auto;
           display: block;
           object-fit: contain;
-          border-radius: 6px;
         }
         .rt-ismeta-hero-img-dark { display: none; }
         /* Тема приложения управляется ТОЛЬКО через .dark класс на html.
