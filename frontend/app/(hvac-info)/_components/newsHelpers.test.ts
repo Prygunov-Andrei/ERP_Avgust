@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { HvacNews } from '@/lib/api/types/hvac';
 import {
+  enhanceBodyImages,
   formatNewsDate,
   formatNewsDateShort,
   getNewsBodyWithoutHero,
@@ -173,6 +174,56 @@ describe('getNewsBodyWithoutHero', () => {
     const result = getNewsBodyWithoutHero(news);
     expect(result).toContain('Первый абзац');
     expect(result).toContain('Второй');
+  });
+});
+
+describe('enhanceBodyImages', () => {
+  it('добавляет loading="lazy" и decoding="async" к <img>', () => {
+    const html = '<p>Текст</p><img src="/a.jpg"><p>конец</p>';
+    const out = enhanceBodyImages(html);
+    expect(out).toContain('loading="lazy"');
+    expect(out).toContain('decoding="async"');
+    expect(out).toContain('src="/a.jpg"');
+  });
+
+  it('не дублирует loading если уже задан', () => {
+    const html = '<img src="/a.jpg" loading="eager">';
+    const out = enhanceBodyImages(html);
+    expect(out).toContain('loading="eager"');
+    expect(out).not.toContain('loading="lazy"');
+    expect(out).toContain('decoding="async"');
+  });
+
+  it('не дублирует decoding если уже задан', () => {
+    const html = '<img src="/a.jpg" decoding="sync">';
+    const out = enhanceBodyImages(html);
+    expect(out).toContain('decoding="sync"');
+    expect(out.match(/decoding=/g)?.length).toBe(1);
+  });
+
+  it('обрабатывает несколько <img> в HTML', () => {
+    const html = '<img src="/a.jpg"><p>X</p><img src="/b.png">';
+    const out = enhanceBodyImages(html);
+    expect(out.match(/loading="lazy"/g)?.length).toBe(2);
+    expect(out.match(/decoding="async"/g)?.length).toBe(2);
+  });
+
+  it('пустую/null строку возвращает как есть', () => {
+    expect(enhanceBodyImages('')).toBe('');
+  });
+
+  it('не ломает HTML без картинок', () => {
+    const html = '<p>Без картинок</p>';
+    expect(enhanceBodyImages(html)).toBe(html);
+  });
+
+  it('сохраняет существующие атрибуты <img>', () => {
+    const html = '<img src="/a.jpg" alt="фото" width="600">';
+    const out = enhanceBodyImages(html);
+    expect(out).toContain('src="/a.jpg"');
+    expect(out).toContain('alt="фото"');
+    expect(out).toContain('width="600"');
+    expect(out).toContain('loading="lazy"');
   });
 });
 

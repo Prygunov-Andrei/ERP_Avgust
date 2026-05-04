@@ -104,7 +104,22 @@ export function getNewsBodyWithoutHero(news: NewsItem): string {
   // preview (обрезанный до 200 символов), а body показывает текст полностью.
   // Дубль hero-lede и body-первого-параграфа — нормальный newspaper-pattern.
 
-  return body.trim();
+  return enhanceBodyImages(body.trim());
+}
+
+/**
+ * Добавляет lazy-loading атрибуты к inline <img> в body новости.
+ * Все <img> в body это off-screen на первом экране (hero уже отдельно),
+ * поэтому safely lazy. decoding=async — снимает работу с main thread.
+ */
+export function enhanceBodyImages(html: string): string {
+  if (!html) return html;
+  return html.replace(/<img\b([^>]*)>/gi, (full, attrs: string) => {
+    let next = attrs;
+    if (!/\bloading\s*=/i.test(next)) next += ' loading="lazy"';
+    if (!/\bdecoding\s*=/i.test(next)) next += ' decoding="async"';
+    return `<img${next}>`;
+  });
 }
 
 /**
