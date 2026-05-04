@@ -8,6 +8,12 @@ const RATING_LINKS: Array<[string, string]> = [
   ['Добавить модель', '/rating-split-system/submit/'],
 ];
 
+const ISMETA_LINKS: Array<[string, string]> = [
+  ['Распознавание спецификации', '/ismeta'],
+];
+
+const ISMETA_STUBS = ['Прайс-лист', 'Полное описание'];
+
 /** Wave 10.4 P3.4: внутренняя перелинковка с подвала на популярные landing'и
  *  (price, preset, каталоги). У главной не было прямых ссылок на эти разделы —
  *  Максим в SEO-аудите 28.04.2026 пометил это как причину низкого CTR. */
@@ -136,6 +142,20 @@ export default function SectionFooter() {
                   →
                 </span>
               </Link>
+            ))}
+          </FooterColumn>
+
+          <FooterColumn heading="ISmeta">
+            {ISMETA_LINKS.map(([label, href]) => (
+              <Link key={label} href={href} style={linkStyle}>
+                <T size={13}>{label}</T>
+                <span style={{ color: 'hsl(var(--rt-ink-40))', fontSize: 12 }}>
+                  →
+                </span>
+              </Link>
+            ))}
+            {ISMETA_STUBS.map((label) => (
+              <FooterStub key={label} label={label} />
             ))}
           </FooterColumn>
 

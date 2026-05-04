@@ -18,18 +18,26 @@ vi.mock('next/link', () => ({
 }));
 
 describe('SectionFooter', () => {
-  it('рендерит 3 колонки с заголовками «О рейтинге» и «Новости»', () => {
+  it('рендерит 4 колонки с заголовками «О рейтинге», «ISmeta» и «Новости»', () => {
     const { container } = render(<SectionFooter />);
     const grid = container.querySelector('.rt-section-footer-grid');
     expect(grid).not.toBeNull();
     const cols = grid!.querySelectorAll('.rt-section-footer-col');
-    expect(cols.length).toBe(3);
+    expect(cols.length).toBe(4);
 
     expect(within(cols[0] as HTMLElement).getByText('О рейтинге')).toBeInTheDocument();
-    expect(within(cols[1] as HTMLElement).getByText('Новости')).toBeInTheDocument();
-    // 3-я колонка без Eyebrow — spacer, но никакого текстового заголовка
-    expect(within(cols[2] as HTMLElement).queryByText('О рейтинге')).toBeNull();
-    expect(within(cols[2] as HTMLElement).queryByText('Новости')).toBeNull();
+    expect(within(cols[1] as HTMLElement).getByText('ISmeta')).toBeInTheDocument();
+    expect(within(cols[2] as HTMLElement).getByText('Новости')).toBeInTheDocument();
+    // 4-я колонка без Eyebrow — spacer, но никакого текстового заголовка
+    expect(within(cols[3] as HTMLElement).queryByText('О рейтинге')).toBeNull();
+    expect(within(cols[3] as HTMLElement).queryByText('Новости')).toBeNull();
+  });
+
+  it('колонка «ISmeta» содержит ссылку на /ismeta + 2 заглушки', () => {
+    render(<SectionFooter />);
+    expect(
+      screen.getByRole('link', { name: /Распознавание спецификации/i }),
+    ).toHaveAttribute('href', '/ismeta');
   });
 
   it('ссылки колонки «О рейтинге» живые с правильными href', () => {
@@ -45,14 +53,16 @@ describe('SectionFooter', () => {
     ).toHaveAttribute('href', '/rating-split-system/submit/');
   });
 
-  it('заглушки «Прислать новость», «Контакты», «Нашли ошибку?» — не-ссылки с cursor:default, title=Скоро и aria-disabled', () => {
+  it('заглушки «Прислать новость», «Контакты», «Нашли ошибку?», «Прайс-лист», «Полное описание» — не-ссылки с cursor:default, title=Скоро и aria-disabled', () => {
     const { container } = render(<SectionFooter />);
     const stubs = container.querySelectorAll('.rt-section-footer-stub');
-    expect(stubs.length).toBe(3);
+    expect(stubs.length).toBe(5);
     const labels = Array.from(stubs).map((n) => n.textContent || '');
     expect(labels.some((l) => l.includes('Прислать новость'))).toBe(true);
     expect(labels.some((l) => l.includes('Контакты'))).toBe(true);
     expect(labels.some((l) => l.includes('Нашли ошибку?'))).toBe(true);
+    expect(labels.some((l) => l.includes('Прайс-лист'))).toBe(true);
+    expect(labels.some((l) => l.includes('Полное описание'))).toBe(true);
 
     stubs.forEach((el) => {
       expect((el as HTMLElement).tagName).toBe('SPAN');
