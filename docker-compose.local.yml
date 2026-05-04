@@ -116,6 +116,12 @@ services:
       LLM_MULTIMODAL_RETRY_THRESHOLD: ${RECOGNITION_LLM_MULTIMODAL_RETRY_THRESHOLD:-0.7}
       # F8-01 добавит PDF storage volume + флаги Docling/Camelot/Vision pipeline.
       PDF_STORAGE_PATH: /uploads
+      # F8-Sprint4 — live progress emit в Redis. URL = redis-local:6379/2,
+      # Backend читает то же по RECOGNITION_PROGRESS_REDIS_URL (default
+      # redis://localhost:6379/2 из CELERY_BROKER_URL).
+      REDIS_URL: redis://redis-local:6379/2
+      PROGRESS_TTL_SECONDS: "3600"
+      PROGRESS_EMITTER_ENABLED: "true"
     volumes:
       # F8-01 ожидает копирование PDF в этот путь (см. 01-pipeline-production.md).
       - ./storage/ismeta-uploads:/uploads:rw
